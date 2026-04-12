@@ -57,9 +57,9 @@ body {
 }
 .top-bar h1 {
   font-family: 'Inter', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+  letter-spacing: var(--type-heading-md-ls);
   color: var(--md-on-surface);
 }
 .top-bar .icon-badge {
@@ -102,11 +102,13 @@ body {
   background: none; border: none;
   color: var(--md-on-surface-variant);
   font-family: 'Inter', sans-serif;
-  font-size: 11px; font-weight: 500; letter-spacing: 0.2px;
+  font-size: var(--type-overline-size);
+  font-weight: 500;
+  letter-spacing: 0.2px;
   padding: 8px 0 10px; cursor: pointer;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   min-width: 52px;
-  transition: color 0.3s var(--ease-out);
+  transition: color 0.2s var(--ease-out);
   position: relative;
 }
 .nav-item .nav-icon-wrap {
@@ -166,6 +168,16 @@ body {
 @keyframes sfSnackIn {
   from { opacity: 0; transform: translateX(-50%) translateY(16px) scale(0.96); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+/* ── PAGE HEADINGS ──────────────────────────────────────────────── */
+.page-heading {
+  font-family: 'Inter', sans-serif;
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+  letter-spacing: var(--type-heading-md-ls);
+  color: var(--md-on-surface);
+  flex: 1;
 }
 
 /* ── UTILS ──────────────────────────────────────────────────────── */

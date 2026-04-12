@@ -86,6 +86,39 @@
   /* Easing */
   --ease-out:    cubic-bezier(0.4, 0, 0.2, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Escala tipográfica ──────────────────────────────────────────
+     display     → números grandes, totales
+     heading-lg  → títulos de página / modal
+     heading-md  → subtítulos de sección
+     title       → nombre de ítem, label prominente
+     body        → texto corrido (hereda body)
+     label-lg    → etiquetas de campo, botones
+     overline    → sección overline (caps pequeñas)
+     ──────────────────────────────────────────────────────────────── */
+  --type-display-size:    34px;
+  --type-display-weight:  900;
+  --type-display-ls:      -1px;
+
+  --type-heading-lg-size:   22px;
+  --type-heading-lg-weight: 800;
+  --type-heading-lg-ls:     -0.3px;
+
+  --type-heading-md-size:   18px;
+  --type-heading-md-weight: 700;
+  --type-heading-md-ls:     -0.2px;
+
+  --type-title-size:    15px;
+  --type-title-weight:  700;
+  --type-title-ls:      0px;
+
+  --type-label-lg-size:   13px;
+  --type-label-lg-weight: 600;
+  --type-label-lg-ls:     0px;
+
+  --type-overline-size:   11px;
+  --type-overline-weight: 700;
+  --type-overline-ls:     0.6px;
 }
 
 /* ── DARK — lavanda profunda ──────────────────────────────────────── */
