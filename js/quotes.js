@@ -1,0 +1,913 @@
+/* ===== QUOTES ===== */
+
+/* Next unique quote number — never reuses */
+function nextQuoteNum() {
+  quoteCounter++;
+  sv('quoteCounter', quoteCounter);
+  return 'COT-' + String(quoteCounter).padStart(4, '0');
+}
+
+/* ── Draft quote (multi-producto en borrador) ─────────────────── */
+var draftQuote = (function() {
+  try {
+    var v = sessionStorage.getItem('c3d_draftQuote');
+    return v ? JSON.parse(v) : null;
+  } catch { return null; }
+})();
+
+function saveDraftQuote(draft) {
+  draftQuote = draft;
+  try { sessionStorage.setItem('c3d_draftQuote', JSON.stringify(draft)); } catch {}
+}
+
+function clearDraftQuote() {
+  draftQuote = null;
+  try { sessionStorage.removeItem('c3d_draftQuote'); } catch {}
+}
+
+/* Actualiza el label del botón Cotizar en la calculadora */
+function refreshDraftIndicator() {
+  var btn = document.getElementById('btn-cotizar');
+  if (!btn) return;
+  if (draftQuote && draftQuote.items && draftQuote.items.length > 0) {
+    var n = draftQuote.items.length;
+    btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">receipt_long</span> Cotizar <span class="draft-badge">' + n + '</span>';
+  } else {
+    btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">receipt_long</span> Cotizar';
+  }
+}
+
+/* ── Agregar producto actual al borrador ──────────────────────── */
+function addItemToDraft() {
+  if (!lastCalc) { snack('Primero calcula un costo'); return; }
+
+  var newItem = {
+    desc:       lastCalc.desc,
+    printer:    lastCalc.printer,
+    material:   lastCalc.material,
+    weight:     lastCalc.weight,
+    timeH:      lastCalc.timeH,
+    designH:    lastCalc.designH || 0,
+    margin:     lastCalc.margin,
+    matCost:    lastCalc.matCost,
+    energyCost: lastCalc.energyCost,
+    laborCost:  lastCalc.laborCost || 0,
+    deprecCost: lastCalc.deprecCost,
+    fixedCost:  lastCalc.fixedCost,
+    wasteCost:  lastCalc.wasteCost,
+    baseCost:   lastCalc.baseCost,
+    totalCost:  lastCalc.totalCost,
+    qty:        1
+  };
+
+  if (!draftQuote) {
+    saveDraftQuote({ client: '', phone: '', notes: '', items: [newItem] });
+  } else {
+    draftQuote.items.push(newItem);
+    saveDraftQuote(draftQuote);
+  }
+
+  var n = draftQuote.items.length;
+  snack(n === 1 ? 'Producto agregado a la orden' : n + ' productos en la orden');
+  refreshDraftIndicator();
+
+  /* Marcar el botón como "ya agregado" — resultado sigue visible para cotizar/guardar */
+  var btnAdd = document.getElementById('btn-add-item');
+  if (btnAdd) {
+    btnAdd.classList.add('item-added');
+    btnAdd.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">check_circle</span> Agregado';
+    btnAdd.disabled = true;
+  }
+}
+
+/* ── Abrir modal de cotización ────────────────────────────────── */
+function generateQuote() {
+  if (!draftQuote || !draftQuote.items.length) {
+    snack('Agrega al menos un producto a la orden primero'); return;
+  }
+  renderDraftModal();
+}
+
+/* ── Modal multi-producto ─────────────────────────────────────── */
+function renderDraftModal() {
+  var draft = draftQuote;
+  if (!draft) return;
+  var cur = config.currency;
+
+  var grandTotal = draft.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+
+  var itemsHTML = draft.items.map(function(item, i) {
+    return '<div class="draft-item">' +
+      '<div class="draft-item-info">' +
+        '<div class="draft-item-desc">' + esc(item.desc) + '</div>' +
+        '<div class="draft-item-sub">' + esc(item.printer) + ' &middot; ' + esc(item.material) + '</div>' +
+      '</div>' +
+      '<div class="draft-item-controls">' +
+        '<button class="draft-qty-btn" onclick="draftItemQty(' + i + ',-1)">&#8722;</button>' +
+        '<span class="draft-qty-val" id="dqi-' + i + '">' + item.qty + '</span>' +
+        '<button class="draft-qty-btn" onclick="draftItemQty(' + i + ',1)">&#43;</button>' +
+        '<span class="draft-item-price" id="dqp-' + i + '">' + cur + (item.totalCost * item.qty).toFixed(2) + '</span>' +
+        '<button class="draft-remove-btn" onclick="removeDraftItem(' + i + ')" title="Quitar">&#10005;</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('modal-container').innerHTML =
+    '<div class="m3-scrim" onclick="closeModal()"></div>' +
+    '<div class="m3-bottom-sheet">' +
+      '<div class="m3-drag-handle"></div>' +
+      '<h2>Nueva cotizaci\u00f3n</h2>' +
+      '<div class="flex-row">' +
+        '<div class="m3-field" style="flex:2">' +
+          '<input type="text" id="q-client" placeholder=" " value="' + esc(draft.client || '') + '">' +
+          '<label for="q-client">Nombre del cliente</label>' +
+        '</div>' +
+        '<div class="m3-field optional" style="flex:1">' +
+          '<input type="tel" id="q-phone" inputmode="tel" placeholder=" " value="' + esc(draft.phone || '') + '">' +
+          '<label for="q-phone">Tel\u00e9fono</label>' +
+        '</div>' +
+      '</div>' +
+      '<div class="m3-field optional">' +
+        '<input type="text" id="q-notes" placeholder=" " value="' + esc(draft.notes || '') + '">' +
+        '<label for="q-notes">Notas adicionales</label>' +
+      '</div>' +
+      '<div class="draft-items-section">' +
+        '<div class="draft-items-header">' +
+          '<span>PRODUCTOS (' + draft.items.length + ')</span>' +
+          '<button class="m3-btn-text" style="font-size:13px;width:auto;padding:0 8px;height:36px" onclick="addMoreToQuote()">' +
+            '<span class="material-symbols-rounded" style="font-size:16px">add</span> Agregar producto' +
+          '</button>' +
+        '</div>' +
+        itemsHTML +
+      '</div>' +
+      '<div class="draft-total-row">' +
+        '<span>TOTAL</span>' +
+        '<span id="draft-grand-total">' + cur + grandTotal.toFixed(2) + '</span>' +
+      '</div>' +
+      '<div class="m3-sheet-actions">' +
+        '<button class="m3-btn-outlined" onclick="closeModal()">Cancelar</button>' +
+        '<button class="m3-btn-filled" onclick="saveQuote()">Generar cotizaci\u00f3n</button>' +
+      '</div>' +
+    '</div>';
+}
+
+/* Ajustar cantidad de un ítem en el borrador */
+function draftItemQty(i, delta) {
+  if (!draftQuote) return;
+  var item = draftQuote.items[i];
+  if (!item) return;
+  item.qty = Math.max(1, (item.qty || 1) + delta);
+  saveDraftQuote(draftQuote);
+
+  var cur = config.currency;
+  var grandTotal = draftQuote.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+  var qtyEl   = document.getElementById('dqi-' + i);
+  var priceEl = document.getElementById('dqp-' + i);
+  var totalEl = document.getElementById('draft-grand-total');
+  if (qtyEl)   qtyEl.textContent   = item.qty;
+  if (priceEl) priceEl.textContent = cur + (item.totalCost * item.qty).toFixed(2);
+  if (totalEl) totalEl.textContent = cur + grandTotal.toFixed(2);
+}
+
+/* Quitar un ítem del borrador */
+function removeDraftItem(i) {
+  if (!draftQuote) return;
+  if (draftQuote.items.length <= 1) { snack('La orden debe tener al menos un producto'); return; }
+  draftQuote.items.splice(i, 1);
+  saveDraftQuote(draftQuote);
+  renderDraftModal();
+}
+
+/* Ir a la calculadora a calcular otro producto */
+function addMoreToQuote() {
+  var clientEl = document.getElementById('q-client');
+  var phoneEl  = document.getElementById('q-phone');
+  var notesEl  = document.getElementById('q-notes');
+  if (draftQuote) {
+    if (clientEl) draftQuote.client = clientEl.value.trim();
+    if (phoneEl)  draftQuote.phone  = phoneEl.value.trim();
+    if (notesEl)  draftQuote.notes  = notesEl.value.trim();
+    saveDraftQuote(draftQuote);
+  }
+  closeModal();
+  snack('Calcula el siguiente producto y presiona \u00abAgregar a orden\u00bb');
+  showPage('calc');
+  refreshDraftIndicator();
+}
+
+/* Finalizar y guardar la cotización */
+function saveQuote() {
+  var clientEl = document.getElementById('q-client');
+  var client = clientEl ? clientEl.value.trim() : '';
+  if (!client) { snack('Ingresa el nombre del cliente'); return; }
+
+  var phone = ((document.getElementById('q-phone') || {}).value || '').trim();
+  var notes = ((document.getElementById('q-notes') || {}).value || '').trim();
+  var items = draftQuote ? draftQuote.items : [];
+  var grandTotal = items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+
+  var q = {
+    id:        Date.now().toString(),
+    quoteNum:  nextQuoteNum(),
+    quoteDate: new Date().toISOString(),
+    client:    client,
+    phone:     phone,
+    notes:     notes,
+    items:     items,
+    grandTotal: grandTotal,
+    status:    'pendiente'
+  };
+
+  quotes.unshift(q);
+  sv('quotes', quotes);
+  clearDraftQuote();
+  clearLastCalc();
+  document.getElementById('calc-result').classList.add('hidden');
+  closeModal();
+  refreshDraftIndicator();
+  snack('Cotizaci\u00f3n ' + q.quoteNum + ' generada');
+  showPage('quotes');
+}
+
+/* ── Listado de cotizaciones ──────────────────────────────────── */
+var quoteSearchTerm = '';
+
+function renderQuotes() {
+  var el = document.getElementById('quotes-list');
+  if (!quotes.length) {
+    el.innerHTML = '<div class="empty-state"><span class="material-symbols-rounded">receipt_long</span><p>No hay cotizaciones. Calcula un costo y presiona \u00abCotizar\u00bb.</p></div>';
+    return;
+  }
+
+  var filtered = quotes;
+  if (quoteSearchTerm) {
+    var term = quoteSearchTerm.toLowerCase();
+    filtered = quotes.filter(function(q) {
+      var matchClient = q.client && q.client.toLowerCase().indexOf(term) !== -1;
+      var matchNum    = q.quoteNum && q.quoteNum.toLowerCase().indexOf(term) !== -1;
+      var matchItems  = q.items && q.items.some(function(it) {
+        return it.desc && it.desc.toLowerCase().indexOf(term) !== -1;
+      });
+      var matchDesc   = q.desc && q.desc.toLowerCase().indexOf(term) !== -1;
+      return matchClient || matchNum || matchItems || matchDesc;
+    });
+  }
+
+  var cur = config.currency;
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty-state"><span class="material-symbols-rounded">search_off</span><p>Sin resultados para \u00ab' + esc(quoteSearchTerm) + '\u00bb</p></div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(function(q) {
+    var i = quotes.indexOf(q);
+    var total = q.grandTotal != null ? q.grandTotal : (q.totalWithQty != null ? q.totalWithQty : (q.totalCost || 0));
+    var itemCount = q.items ? q.items.length : 1;
+    var firstItem = q.items ? q.items[0] : q;
+    var status = q.status || 'pendiente';
+
+    var chipsHTML = itemCount > 1
+      ? '<span class="hist-chip">' + itemCount + ' productos</span>' +
+        '<span class="hist-chip">' + esc(firstItem.desc) + '\u2026</span>' +
+        '<span class="hist-chip">' + esc(firstItem.material) + '</span>'
+      : '<span class="hist-chip">' + esc(firstItem.desc || q.desc || '') + '</span>' +
+        '<span class="hist-chip">' + esc(firstItem.material || q.material || '') + '</span>';
+
+    var statusHTML = '<span class="status-badge status-' + status + '">' + statusLabel(status) + '</span>';
+
+    var waBtn = (q.phone || config.bizPhone)
+      ? '<button class="m3-btn-text m3-btn-sm" style="color:#25D366" onclick="whatsappQuote(' + i + ')">' +
+          '<span class="material-symbols-rounded" style="font-size:16px">chat</span> WA' +
+        '</button>'
+      : '';
+
+    var statusBtns = '';
+    if (status !== 'aceptada') {
+      statusBtns += '<button class="m3-btn-text m3-btn-sm" style="color:var(--accent-mint)" onclick="setQuoteStatus(' + i + ',\'aceptada\')">' +
+        '<span class="material-symbols-rounded" style="font-size:16px">check_circle</span> Aceptar' +
+      '</button>';
+    }
+    if (status !== 'rechazada') {
+      statusBtns += '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="setQuoteStatus(' + i + ',\'rechazada\')">' +
+        '<span class="material-symbols-rounded" style="font-size:16px">cancel</span> Rechazar' +
+      '</button>';
+    }
+    if (status !== 'pendiente') {
+      statusBtns += '<button class="m3-btn-text m3-btn-sm" onclick="setQuoteStatus(' + i + ',\'pendiente\')">' +
+        '<span class="material-symbols-rounded" style="font-size:16px">schedule</span> Pendiente' +
+      '</button>';
+    }
+
+    return '<div class="hist-item">' +
+      '<div class="hist-header">' +
+        '<div>' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<div style="font-size:12px;color:var(--md-primary);font-weight:500">' + esc(q.quoteNum) + '</div>' +
+            statusHTML +
+          '</div>' +
+          '<div class="hist-desc">' + esc(q.client) + '</div>' +
+          '<div class="hist-date">' + new Date(q.quoteDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) + '</div>' +
+        '</div>' +
+        '<div class="hist-total">' + cur + total.toFixed(2) + '</div>' +
+      '</div>' +
+      '<div class="hist-chips">' + chipsHTML + '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+        '<button class="m3-btn-text m3-btn-sm" onclick="viewQuote(' + i + ')">' +
+          '<span class="material-symbols-rounded" style="font-size:16px">visibility</span> Ver' +
+        '</button>' +
+        '<button class="m3-btn-text m3-btn-sm" onclick="shareQuote(' + i + ')">' +
+          '<span class="material-symbols-rounded" style="font-size:16px">share</span> Compartir' +
+        '</button>' +
+        waBtn +
+        '<button class="m3-btn-text m3-btn-sm" onclick="duplicateQuote(' + i + ')">' +
+          '<span class="material-symbols-rounded" style="font-size:16px">content_copy</span> Duplicar' +
+        '</button>' +
+        '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteQuote(' + i + ')">' +
+          '<span class="material-symbols-rounded" style="font-size:16px">delete</span>' +
+        '</button>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;border-top:1px solid var(--md-outline);padding-top:8px">' +
+        statusBtns +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function onQuoteSearch(input) {
+  quoteSearchTerm = input.value.trim();
+  renderQuotes();
+}
+
+/* ── Etiqueta de estado ───────────────────────────────────────────── */
+function statusLabel(s) {
+  return s === 'aceptada' ? '\u2713 Aceptada' : s === 'rechazada' ? '\u2715 Rechazada' : '\u23F3 Pendiente';
+}
+
+/* ── Cambiar estado de cotización ────────────────────────────────── */
+function setQuoteStatus(i, status) {
+  var q = quotes[i]; if (!q) return;
+  q.status = status;
+  sv('quotes', quotes);
+  renderQuotes();
+  renderDashboard();
+  var labels = { aceptada: 'Cotización aceptada \u2713', rechazada: 'Cotización rechazada', pendiente: 'Marcada como pendiente' };
+  snack(labels[status] || 'Estado actualizado');
+}
+
+/* ── WhatsApp ─────────────────────────────────────────────────────── */
+function whatsappQuote(i) {
+  var q = quotes[i]; if (!q) return;
+  var cur  = config.currency || '$';
+  var biz  = config.bizName || 'Mi Negocio 3D';
+  var phone = (q.phone || config.bizPhone || '').replace(/\D/g, '');
+  if (!phone) { snack('No hay tel\u00e9fono en la cotizaci\u00f3n'); return; }
+
+  var items = q.items || [{ desc: q.desc, material: q.material, qty: q.qty || 1, totalCost: q.totalCost }];
+  var grandTotal = q.grandTotal != null ? q.grandTotal : (q.totalWithQty != null ? q.totalWithQty : items[0].totalCost);
+
+  var txt = 'Hola ' + q.client + ', te comparto tu cotizaci\u00f3n de ' + biz + ':\n\n';
+  txt += '\uD83D\uDCCB *' + q.quoteNum + '*\n';
+  txt += '\uD83D\uDCC5 ' + new Date(q.quoteDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) + '\n\n';
+
+  items.forEach(function(it) {
+    var qty = it.qty || 1;
+    var sub = it.totalCost * qty;
+    txt += '\u2022 *' + it.desc + '*';
+    if (it.material) txt += ' (' + it.material + ')';
+    txt += '\n  Precio: ' + cur + it.totalCost.toFixed(2);
+    if (qty > 1) txt += ' x' + qty + ' = ' + cur + sub.toFixed(2);
+    txt += '\n';
+  });
+
+  txt += '\n*TOTAL: ' + cur + grandTotal.toFixed(2) + '*';
+  if (q.notes) txt += '\n\nNotas: ' + q.notes;
+  if (config.bizPhone) txt += '\n\nContacto: ' + config.bizPhone;
+
+  var url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(txt);
+  window.open(url, '_blank');
+}
+
+/* ── Duplicar cotización ──────────────────────────────────────── */
+function duplicateQuote(i) {
+  var orig = quotes[i]; if (!orig) return;
+  var dup = JSON.parse(JSON.stringify(orig));
+  dup.id = Date.now().toString();
+  dup.quoteNum = nextQuoteNum();
+  dup.quoteDate = new Date().toISOString();
+  quotes.unshift(dup);
+  sv('quotes', quotes);
+  renderQuotes();
+  snack('Cotizaci\u00f3n duplicada como ' + dup.quoteNum);
+}
+
+/* ── HTML de la cotización — sin costos internos ──────────────── */
+function buildQuoteHTML(q, qrDataURL) {
+  var s = quoteStyle;
+  var cur = config.currency;
+  var biz = esc(config.bizName || 'Mi Negocio 3D');
+  var social = config.bizSocial ? esc(config.bizSocial) : '';
+
+  var logoHTML = s.logo
+    ? '<img src="' + s.logo + '" alt="Logo" class="qf-logo-img">'
+    : '<div class="qf-biz-name-large">' + biz + '</div>';
+
+  var dateStr = new Date(q.quoteDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  /* Normalize: new format (items[]) o legacy flat */
+  var items;
+  if (q.items && q.items.length > 0) {
+    items = q.items;
+  } else {
+    items = [{
+      desc:      q.desc || 'Producto',
+      printer:   q.printer || '',
+      material:  q.material || '',
+      weight:    q.weight || 0,
+      timeH:     q.timeH || 0,
+      totalCost: q.totalCost || 0,
+      qty:       q.qty || 1
+    }];
+  }
+  var grandTotal = q.grandTotal != null ? q.grandTotal
+    : (q.totalWithQty != null ? q.totalWithQty
+    : items.reduce(function(acc, it) { return acc + it.totalCost * (it.qty || 1); }, 0));
+
+  /* Filas de la tabla — sin desglose interno */
+  var itemRows = items.map(function(item) {
+    var qty = item.qty || 1;
+    var subtotal = item.totalCost * qty;
+    return '<tr>' +
+      '<td class="qf-td-left">' + esc(item.desc) +
+        '<div class="qf-td-sub">' + esc(item.material) + (item.weight ? ' &middot; ' + item.weight + 'g' : '') + '</div>' +
+      '</td>' +
+      '<td class="qf-td-center">' + qty + '</td>' +
+      '<td class="qf-td-right">' + cur + item.totalCost.toFixed(2) + '</td>' +
+      '<td class="qf-td-right qf-td-bold">' + cur + subtotal.toFixed(2) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  var notesHTML = (s.showNotas && q.notes)
+    ? '<div class="qf-notes-block">' + esc(q.notes) + '</div>' : '';
+  var termsHTML = s.termsText
+    ? '<div class="qf-terms-block">' + esc(s.termsText) + '</div>' : '';
+  var footerHTML = s.footerText
+    ? '<div class="qf-footer-block">' + esc(s.footerText) + '</div>' : '';
+
+  return '<div class="qf" style="background:' + s.bgColor + ';color:' + s.textColor + '">' +
+    '<div class="qf-deco qf-deco-tl"  style="background:' + s.primaryColor + '"></div>' +
+    '<div class="qf-deco qf-deco-tl2" style="background:' + s.accentColor  + '"></div>' +
+    '<div class="qf-deco qf-deco-br"  style="background:' + s.primaryColor + '"></div>' +
+    '<div class="qf-deco qf-deco-br2" style="background:' + s.accentColor  + '"></div>' +
+
+    (social ? '<div class="qf-social" style="color:' + s.primaryColor + '">' + social + '</div>' : '') +
+
+    '<div class="qf-header-row">' +
+      '<div>' +
+        '<h1 class="qf-title" style="color:' + s.primaryColor + '">COTIZACI\u00d3N</h1>' +
+        '<div class="qf-order-num" style="color:' + s.primaryColor + '">' + esc(q.quoteNum) + '</div>' +
+      '</div>' +
+      logoHTML +
+    '</div>' +
+
+    '<div class="qf-info-section">' +
+      '<div class="qf-date">' + dateStr + '</div>' +
+      '<div class="qf-client-grid">' +
+        '<span class="qf-info-label">Cliente:</span><span>' + esc(q.client) + '</span>' +
+        (q.phone ? '<span class="qf-info-label">Tel:</span><span>' + esc(q.phone) + '</span>' : '') +
+      '</div>' +
+    '</div>' +
+
+    '<table class="qf-table">' +
+      '<thead><tr>' +
+        '<th class="qf-th-left"  style="background:' + s.primaryColor + ';color:#fff">Descripci\u00f3n</th>' +
+        '<th class="qf-th-center" style="background:' + s.primaryColor + ';color:#fff">Cant.</th>' +
+        '<th class="qf-th-right" style="background:' + s.primaryColor + ';color:#fff">Precio unit.</th>' +
+        '<th class="qf-th-right" style="background:' + s.primaryColor + ';color:#fff">Subtotal</th>' +
+      '</tr></thead>' +
+      '<tbody>' + itemRows + '</tbody>' +
+    '</table>' +
+
+    '<div class="qf-totals">' +
+      '<div class="qf-total-line" style="color:' + s.primaryColor + '">' +
+        '<span>TOTAL</span><span>' + cur + grandTotal.toFixed(2) + '</span>' +
+      '</div>' +
+    '</div>' +
+
+    notesHTML + termsHTML +
+
+    '<div class="qf-biz-footer' + (qrDataURL ? ' qf-biz-footer--qr' : '') + '">' +
+      '<div class="qf-biz-contact">' +
+        '<span>' + biz + '</span>' +
+        '<span>' +
+          (config.bizPhone ? esc(config.bizPhone) : '') +
+          (config.bizEmail ? ' | ' + esc(config.bizEmail) : '') +
+        '</span>' +
+      '</div>' +
+      (qrDataURL
+        ? '<div class="qf-qr-block">' +
+            '<img src="' + qrDataURL + '" width="72" height="72" style="display:block;border-radius:4px">' +
+            '<div class="qf-qr-label">Escaneame</div>' +
+          '</div>'
+        : '') +
+    '</div>' +
+    footerHTML +
+  '</div>';
+}
+
+/* ── Ver cotización ───────────────────────────────────────────── */
+function viewQuote(i) {
+  var q = quotes[i]; if (!q) return;
+  var imgBtnLabel = btnImgLabel();
+
+  getQRDataURL().then(function(qrDataURL) {
+    document.getElementById('modal-container').innerHTML =
+      '<div class="m3-scrim" onclick="closeModal()"></div>' +
+      '<div class="m3-bottom-sheet">' +
+        '<div class="m3-drag-handle"></div>' +
+        '<div id="quote-render-area">' + buildQuoteHTML(q, qrDataURL) + '</div>' +
+        '<div class="m3-sheet-actions">' +
+          '<button class="m3-btn-outlined" onclick="closeModal()">Cerrar</button>' +
+          '<button class="m3-btn-text" id="btn-export-pdf-' + i + '" onclick="exportQuotePDF(' + i + ')" style="flex:none;width:auto;padding:0 16px">' +
+            '<span class="material-symbols-rounded" style="font-size:18px">picture_as_pdf</span> PDF' +
+          '</button>' +
+          '<button class="m3-btn-tonal" id="btn-export-img-' + i + '" onclick="exportQuoteImage(' + i + ')" style="width:auto;flex:none;padding:0 20px">' +
+            imgBtnLabel +
+          '</button>' +
+        '</div>' +
+      '</div>';
+  });
+}
+
+/* ── Compartir como texto (sin costos internos) ───────────────── */
+function shareQuote(i) {
+  var q = quotes[i]; if (!q) return;
+  var cur = config.currency;
+  var biz = config.bizName || 'Mi Negocio 3D';
+
+  var txt = biz + '\n' + q.quoteNum + '\n';
+  txt += 'Fecha: ' + new Date(q.quoteDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) + '\n\n';
+  txt += 'Cliente: ' + q.client + '\n';
+  if (q.phone) txt += 'Tel: ' + q.phone + '\n';
+  txt += '\n';
+
+  var items = q.items || [{ desc: q.desc, material: q.material, qty: q.qty || 1, totalCost: q.totalCost }];
+  items.forEach(function(it) {
+    var qty = it.qty || 1;
+    var sub = it.totalCost * qty;
+    txt += it.desc + '\n';
+    txt += '  Material: ' + it.material + (it.weight ? ' | ' + it.weight + 'g' : '') + '\n';
+    txt += '  Precio: ' + cur + it.totalCost.toFixed(2);
+    if (qty > 1) txt += ' x' + qty + ' = ' + cur + sub.toFixed(2);
+    txt += '\n\n';
+  });
+
+  var grandTotal = q.grandTotal != null ? q.grandTotal : (q.totalWithQty != null ? q.totalWithQty : items[0].totalCost);
+  txt += 'TOTAL: ' + cur + grandTotal.toFixed(2) + '\n';
+
+  if (q.notes && quoteStyle.showNotas) txt += '\nNotas: ' + q.notes + '\n';
+  if (quoteStyle.termsText) txt += '\n' + quoteStyle.termsText + '\n';
+  if (config.bizPhone) txt += '\nContacto: ' + config.bizPhone;
+
+  if (navigator.share) {
+    navigator.share({ title: q.quoteNum + ' - ' + q.client, text: txt }).catch(function() {});
+  } else {
+    navigator.clipboard.writeText(txt).then(function() {
+      snack('Cotizaci\u00f3n copiada');
+    }).catch(function() {
+      var ta = document.createElement('textarea');
+      ta.value = txt;
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      snack('Cotizaci\u00f3n copiada');
+    });
+  }
+}
+
+/* ── Cargar librería QR desde CDN (lazy) ──────────────────────── */
+function loadQRLib() {
+  return new Promise(function(resolve, reject) {
+    if (window.qrcode) { resolve(window.qrcode); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+    s.onload  = function() { resolve(window.qrcode); };
+    s.onerror = function() { reject(new Error('QR no disponible sin conexión')); };
+    document.head.appendChild(s);
+  });
+}
+
+function getQRDataURL() {
+  var url = (config.bizQrUrl || '').trim();
+  if (!url) return Promise.resolve(null);
+  return loadQRLib().then(function(qrGen) {
+    var qr = qrGen(0, 'M');   /* typeNumber 0 = auto */
+    qr.addData(url);
+    qr.make();
+    var cells    = qr.getModuleCount();
+    var cellSize = 4;
+    var canvas   = document.createElement('canvas');
+    canvas.width = canvas.height = cells * cellSize;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#000000';
+    for (var r = 0; r < cells; r++) {
+      for (var c = 0; c < cells; c++) {
+        if (qr.isDark(r, c)) ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+      }
+    }
+    return canvas.toDataURL('image/png');
+  }).catch(function() { return null; });
+}
+
+/* ── Cargar html2canvas desde CDN (lazy) ──────────────────────── */
+function loadHtml2Canvas() {
+  return new Promise(function(resolve, reject) {
+    if (window.html2canvas) { resolve(window.html2canvas); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload  = function() { resolve(window.html2canvas); };
+    s.onerror = function() { reject(new Error('Sin conexi\u00f3n para cargar el exportador')); };
+    document.head.appendChild(s);
+  });
+}
+
+/* ── Exportar / compartir imagen de la cotización ─────────────── */
+function exportQuoteImage(i) {
+  var q = quotes[i]; if (!q) return;
+
+  var btn = document.getElementById('btn-export-img-' + i);
+  if (btn) { btn.disabled = true; btn.textContent = 'Generando\u2026'; }
+  snack('Generando imagen\u2026');
+
+  /* Crear contenedor off-screen con ancho fijo — formato vertical consistente */
+  var QUOTE_WIDTH = 440;
+  var PADDING     = 28;
+
+  var wrapper = document.createElement('div');
+  wrapper.style.cssText = [
+    'position:fixed',
+    'left:-9999px',
+    'top:0',
+    'width:' + QUOTE_WIDTH + 'px',
+    'background:#f8f7fc',          /* fondo neutro exterior */
+    'padding:' + PADDING + 'px',
+    'box-sizing:border-box',
+    'font-family:Inter,sans-serif'
+  ].join(';');
+  document.body.appendChild(wrapper);
+
+  getQRDataURL().then(function(qrDataURL) {
+    wrapper.innerHTML = buildQuoteHTML(q, qrDataURL);
+    return loadHtml2Canvas();
+  }).then(function(h2c) {
+    return h2c(wrapper, {
+      scale:           2,            /* 2x para pantallas retina */
+      useCORS:         true,
+      allowTaint:      true,
+      backgroundColor: '#f8f7fc',
+      logging:         false,
+      width:           QUOTE_WIDTH,
+      windowWidth:     QUOTE_WIDTH
+    });
+  }).then(function(canvas) {
+    document.body.removeChild(wrapper);
+
+    canvas.toBlob(function(blob) {
+      if (!blob) { snack('Error al generar la imagen'); return; }
+
+      var filename = q.quoteNum + '_' + q.client.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '') + '.png';
+      var file = new File([blob], filename, { type: 'image/png' });
+
+      /* Móvil con Web Share API (archivos) */
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({
+          title: q.quoteNum + ' \u2014 ' + q.client,
+          files: [file]
+        }).catch(function(e) {
+          if (e.name !== 'AbortError') downloadBlob(blob, filename);
+        });
+      } else {
+        downloadBlob(blob, filename);
+        snack('Imagen descargada');
+      }
+
+      if (btn) { btn.disabled = false; btn.innerHTML = btnImgLabel(); }
+    }, 'image/png');
+
+  }).catch(function(err) {
+    if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+    snack(err.message || 'Error al generar la imagen');
+    if (btn) { btn.disabled = false; btn.innerHTML = btnImgLabel(); }
+  });
+}
+
+function btnImgLabel() {
+  var canShare = !!(navigator.share && navigator.canShare);
+  return canShare
+    ? '<span class="material-symbols-rounded" style="font-size:18px">share</span> Imagen'
+    : '<span class="material-symbols-rounded" style="font-size:18px">download</span> Imagen';
+}
+
+function downloadBlob(blob, filename) {
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  a.click();
+  setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+}
+
+/* ── Cargar pdf-lib desde CDN (lazy) ─────────────────────────── */
+function loadPdfLib() {
+  return new Promise(function(resolve, reject) {
+    if (window.PDFLib) { resolve(window.PDFLib); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+    s.onload  = function() { resolve(window.PDFLib); };
+    s.onerror = function() { reject(new Error('PDF no disponible sin conexi\u00f3n')); };
+    document.head.appendChild(s);
+  });
+}
+
+/* ── Exportar cotización como PDF ────────────────────────────── */
+function exportQuotePDF(i) {
+  var q = quotes[i]; if (!q) return;
+  var btn = document.getElementById('btn-export-pdf-' + i);
+  if (btn) { btn.disabled = true; btn.textContent = 'Generando\u2026'; }
+  snack('Generando PDF\u2026');
+
+  var s  = quoteStyle;
+  var cur = config.currency || '$';
+  var items = q.items || [{ desc: q.desc || '', material: q.material || '', qty: q.qty || 1, totalCost: q.totalCost }];
+  var grandTotal = q.grandTotal != null ? q.grandTotal : (q.totalWithQty != null ? q.totalWithQty : items[0].totalCost);
+
+  function hexRgb(hex) {
+    hex = (hex || '#6750A4').replace('#','');
+    if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+    return [parseInt(hex.slice(0,2),16)/255, parseInt(hex.slice(2,4),16)/255, parseInt(hex.slice(4,6),16)/255];
+  }
+  function safeStr(v) {
+    return String(v || '').replace(/[^\x20-\xFF]/g, function(c) {
+      var map = {'\u00e1':'a','\u00e9':'e','\u00ed':'i','\u00f3':'o','\u00fa':'u',
+                 '\u00c1':'A','\u00c9':'E','\u00cd':'I','\u00d3':'O','\u00da':'U',
+                 '\u00f1':'n','\u00d1':'N','\u00fc':'u','\u00dc':'U'};
+      return map[c] || '?';
+    });
+  }
+  function trunc(str, n) { str = safeStr(str); return str.length > n ? str.slice(0,n-1)+'\u2026' : str; }
+  function dataUrlToUint8(dataUrl) {
+    var b64 = dataUrl.split(',')[1];
+    var bin = atob(b64);
+    var arr = new Uint8Array(bin.length);
+    for (var k = 0; k < bin.length; k++) arr[k] = bin.charCodeAt(k);
+    return arr;
+  }
+
+  Promise.all([loadPdfLib(), getQRDataURL()]).then(function(res) {
+    var PDFLib = res[0], qrDataURL = res[1];
+    var PDFDocument = PDFLib.PDFDocument;
+    var rgb = PDFLib.rgb;
+    var SF  = PDFLib.StandardFonts;
+
+    var pc = hexRgb(s.primaryColor);
+    var tc = hexRgb(s.textColor);
+    var primary = rgb(pc[0],pc[1],pc[2]);
+    var textCol = rgb(tc[0],tc[1],tc[2]);
+    var white   = rgb(1,1,1);
+    var muted   = rgb(0.55,0.55,0.55);
+    var light   = rgb(0.96,0.96,0.97);
+    var divider = rgb(0.85,0.85,0.85);
+
+    var W=595, H=842, M=40, CW=515;
+    var colQ=M+CW*0.54, colU=M+CW*0.68, colS=M+CW*0.84;
+
+    return PDFDocument.create().then(function(doc) {
+      return doc.embedFont(SF.Helvetica).then(function(font) {
+      return doc.embedFont(SF.HelveticaBold).then(function(bold) {
+
+        var page = doc.addPage([W,H]);
+        var y = H;
+
+        /* ── Header bar ── */
+        page.drawRectangle({x:0, y:y-68, width:W, height:68, color:primary});
+        page.drawText('COTIZACION', {x:M, y:y-44, size:20, font:bold, color:white});
+        var qn = safeStr(q.quoteNum||'');
+        page.drawText(qn, {x:W-M-bold.widthOfTextAtSize(qn,12), y:y-34, size:12, font:bold, color:white});
+        var ds = safeStr(new Date(q.quoteDate).toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}));
+        page.drawText(ds, {x:W-M-font.widthOfTextAtSize(ds,8), y:y-50, size:8, font:font, color:rgb(0.85,0.85,0.85)});
+        y -= 80;
+
+        /* ── Biz name ── */
+        var biz = safeStr(config.bizName||'Mi Negocio 3D');
+        page.drawText(biz, {x:M, y, size:13, font:bold, color:primary});
+        y -= 14;
+        if (config.bizSocial) {
+          page.drawText(safeStr(config.bizSocial), {x:M, y, size:9, font:font, color:muted});
+          y -= 13;
+        }
+        y -= 6;
+        page.drawLine({start:{x:M,y}, end:{x:W-M,y}, thickness:0.5, color:divider});
+        y -= 14;
+
+        /* ── Client info ── */
+        page.drawText('Cliente:', {x:M, y, size:9, font:bold, color:muted});
+        page.drawText(safeStr(q.client), {x:M+46, y, size:9, font:font, color:textCol});
+        y -= 13;
+        if (q.phone) {
+          page.drawText('Tel:', {x:M, y, size:9, font:bold, color:muted});
+          page.drawText(safeStr(q.phone), {x:M+46, y, size:9, font:font, color:textCol});
+          y -= 13;
+        }
+        y -= 10;
+
+        /* ── Table header ── */
+        var rH = 22;
+        page.drawRectangle({x:M, y:y-rH+5, width:CW, height:rH, color:primary});
+        page.drawText('Descripcion', {x:M+4, y:y-rH+11, size:9, font:bold, color:white});
+        page.drawText('Cant.', {x:colQ+4, y:y-rH+11, size:9, font:bold, color:white});
+        page.drawText('Precio unit.', {x:colU+4, y:y-rH+11, size:9, font:bold, color:white});
+        page.drawText('Subtotal', {x:colS+4, y:y-rH+11, size:9, font:bold, color:white});
+        y -= rH;
+
+        /* ── Rows ── */
+        items.forEach(function(it, idx) {
+          var rowBg = idx%2===1 ? light : white;
+          page.drawRectangle({x:M, y:y-rH+5, width:CW, height:rH, color:rowBg});
+          var qty = it.qty||1;
+          page.drawText(trunc(it.desc||'',44), {x:M+4, y:y-rH+11, size:9, font:font, color:textCol});
+          page.drawText(String(qty),            {x:colQ+4, y:y-rH+11, size:9, font:font, color:textCol});
+          page.drawText(cur+(it.totalCost||0).toFixed(2), {x:colU+4, y:y-rH+11, size:9, font:font, color:textCol});
+          page.drawText(cur+((it.totalCost||0)*qty).toFixed(2), {x:colS+4, y:y-rH+11, size:9, font:bold, color:textCol});
+          y -= rH;
+        });
+
+        /* ── Total ── */
+        y -= 6;
+        page.drawLine({start:{x:M,y}, end:{x:W-M,y}, thickness:0.5, color:divider});
+        y -= 18;
+        var totalStr = cur+grandTotal.toFixed(2);
+        page.drawText('TOTAL', {x:colS+4, y, size:10, font:bold, color:primary});
+        y -= 16;
+        page.drawText(totalStr, {x:colS+4, y, size:14, font:bold, color:primary});
+        y -= 24;
+
+        /* ── Notes ── */
+        if (q.notes && s.showNotas) {
+          y -= 6;
+          page.drawText('Notas: '+safeStr(q.notes), {x:M, y, size:8, font:font, color:muted, maxWidth:CW, lineHeight:12});
+          y -= 24;
+        }
+
+        /* ── Terms ── */
+        if (s.termsText) {
+          y -= 4;
+          page.drawLine({start:{x:M,y}, end:{x:W-M,y}, thickness:0.3, color:divider});
+          y -= 14;
+          page.drawText(safeStr(s.termsText), {x:M, y, size:8, font:font, color:muted, maxWidth:CW, lineHeight:11});
+          y -= 20;
+        }
+
+        /* ── Footer bar ── */
+        page.drawRectangle({x:0, y:0, width:W, height:58, color:light});
+        page.drawLine({start:{x:0,y:58}, end:{x:W,y:58}, thickness:0.5, color:divider});
+        page.drawText(biz, {x:M, y:40, size:9, font:bold, color:textCol});
+        var contact = [config.bizPhone, config.bizEmail].filter(Boolean).map(safeStr).join(' | ');
+        if (contact) page.drawText(contact, {x:M, y:27, size:8, font:font, color:muted});
+        if (config.bizSocial) page.drawText(safeStr(config.bizSocial), {x:M, y:14, size:8, font:font, color:muted});
+
+        /* ── QR en footer ── */
+        var qrEmbed = qrDataURL
+          ? doc.embedPng(dataUrlToUint8(qrDataURL)).then(function(img) {
+              page.drawImage(img, {x:W-M-52, y:4, width:52, height:52});
+            })
+          : Promise.resolve();
+
+        return qrEmbed.then(function() { return doc.save(); });
+      });});
+    });
+  }).then(function(pdfBytes) {
+    var blob = new Blob([pdfBytes], {type:'application/pdf'});
+    var fname = (q.quoteNum||'cotizacion')+'_'+safeStr(q.client||'').replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'')+'.pdf';
+    if (navigator.share && navigator.canShare) {
+      var file = new File([blob], fname, {type:'application/pdf'});
+      if (navigator.canShare({files:[file]})) {
+        navigator.share({title:q.quoteNum, files:[file]}).catch(function(e) {
+          if (e.name!=='AbortError') { downloadBlob(blob, fname); snack('PDF descargado'); }
+        });
+        if (btn) { btn.disabled=false; btn.innerHTML='<span class="material-symbols-rounded" style="font-size:18px">picture_as_pdf</span> PDF'; }
+        return;
+      }
+    }
+    downloadBlob(blob, fname);
+    snack('PDF descargado');
+    if (btn) { btn.disabled=false; btn.innerHTML='<span class="material-symbols-rounded" style="font-size:18px">picture_as_pdf</span> PDF'; }
+  }).catch(function(err) {
+    snack(err.message||'Error al generar el PDF');
+    if (btn) { btn.disabled=false; btn.innerHTML='<span class="material-symbols-rounded" style="font-size:18px">picture_as_pdf</span> PDF'; }
+  });
+}
+
+/* ── Eliminar cotización ──────────────────────────────────────── */
+function deleteQuote(i) {
+  m3Confirm('\u00bfEliminar cotizaci\u00f3n?', function() {
+    quotes.splice(i, 1); sv('quotes', quotes); renderQuotes();
+  });
+}

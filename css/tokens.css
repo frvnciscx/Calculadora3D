@@ -1,0 +1,152 @@
+/* ===================================================================
+   DESIGN TOKENS — Soft Health / Clean Mobile
+   Arquetipo: SaaS Moderno + Health Wellness
+   Paleta: Lavanda-gris · Charcoal · Peach cálido · Lavanda suave
+   =================================================================== */
+
+/* ── LIGHT (default) ─────────────────────────────────────────────── */
+:root, [data-theme="light"], [data-theme="auto"] {
+
+  /* Primario — Charcoal oscuro (FAB, nav activo, botones) */
+  --md-primary:                  #1A1A2E;
+  --md-on-primary:               #FFFFFF;
+  --md-primary-container:        #ECEAF8;   /* lavanda muy suave */
+  --md-on-primary-container:     #1A1A2E;
+
+  /* Secundario — Lavanda media */
+  --md-secondary:                #6E63A4;
+  --md-on-secondary:             #FFFFFF;
+  --md-secondary-container:      #E8E3F8;
+  --md-on-secondary-container:   #2A2050;
+
+  /* Terciario — Peach cálido */
+  --md-tertiary:                 #C07840;
+  --md-on-tertiary:              #FFFFFF;
+  --md-tertiary-container:       #FAEBD5;
+  --md-on-tertiary-container:    #5A3010;
+
+  /* Error */
+  --md-error:                    #B3261E;
+  --md-on-error:                 #FFFFFF;
+  --md-error-container:          #FDECEA;
+  --md-on-error-container:       #7A0D08;
+
+  /* Superficies */
+  --md-surface:                  #FFFFFF;
+  --md-surface-dim:              #EAEAF4;   /* FONDO principal — lavanda-gris suave */
+  --md-surface-bright:           #FFFFFF;
+  --md-surface-container-lowest: #FFFFFF;
+  --md-surface-container-low:    #FFFFFF;
+  --md-surface-container:        #F4F3FB;
+  --md-surface-container-high:   #EDECF6;
+  --md-surface-container-highest:#E4E2F2;
+
+  /* Texto */
+  --md-on-surface:               #1A1A2E;
+  --md-on-surface-variant:       #5E5E78;   /* ratio 5.2:1 sobre blanco — WCAG AA ✓ */
+
+  /* Bordes */
+  --md-outline:                  #E4E2F0;
+  --md-outline-variant:          #EDECF8;
+
+  /* Nav pill — permanece oscuro en ambos modos */
+  --nav-active-bg:               #1A1A2E;
+  --nav-active-icon:             #FFFFFF;
+  --nav-active-label:            #1A1A2E;
+
+  /* Inverso (snackbar) */
+  --md-inverse-surface:          #1A1A2E;
+  --md-inverse-on-surface:       #F4F3FB;
+
+  /* Accents — Bento cards */
+  --accent-warm:                 #F5B97A;
+  --accent-warm-tint:            #FEF0DC;   /* peach/naranja suave */
+  --accent-warm-border:          rgba(200, 120, 50, 0.18);
+
+  --accent-lavanda:              #9B8EC4;
+  --accent-lavanda-tint:         #EAE4F8;   /* lavanda suave */
+  --accent-lavanda-border:       rgba(100, 80, 160, 0.18);
+
+  --accent-mint:                 #5DB08A;
+  --accent-mint-tint:            #DDF3EA;   /* verde menta */
+  --accent-mint-border:          rgba(60, 140, 100, 0.18);
+
+  /* Sombras */
+  --shadow-card:   0 2px 12px rgba(30, 28, 60, 0.07);
+  --shadow-float:  0 6px 24px rgba(30, 28, 60, 0.12);
+  --shadow-modal:  0 12px 40px rgba(30, 28, 60, 0.18);
+
+  /* Radios */
+  --radius-sm:   10px;
+  --radius-md:   16px;
+  --radius-lg:   20px;
+  --radius-xl:   24px;
+  --radius-pill: 999px;
+
+  /* Easing */
+  --ease-out:    cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── DARK — lavanda profunda ──────────────────────────────────────── */
+[data-theme="dark"] {
+
+  --md-primary:                  #C4BCEE;
+  --md-on-primary:               #1A1050;
+  --md-primary-container:        #2E2860;
+  --md-on-primary-container:     #E8E3F8;
+
+  --md-secondary:                #B0A8D8;
+  --md-on-secondary:             #201860;
+  --md-secondary-container:      #302870;
+  --md-on-secondary-container:   #E8E3F8;
+
+  --md-tertiary:                 #E8B880;
+  --md-on-tertiary:              #401800;
+  --md-tertiary-container:       #602800;
+  --md-on-tertiary-container:    #FAEBD5;
+
+  --md-error:                    #F2B8B5;
+  --md-on-error:                 #601410;
+  --md-error-container:          #7A1A16;
+  --md-on-error-container:       #FDECEA;
+
+  --md-surface:                  #141220;
+  --md-surface-dim:              #0E0C1A;
+  --md-surface-bright:           #221E38;
+  --md-surface-container-lowest: #090818;
+  --md-surface-container-low:    #141220;
+  --md-surface-container:        #1C1A30;
+  --md-surface-container-high:   #241E3A;
+  --md-surface-container-highest:#2E2848;
+
+  --md-on-surface:               #E8E4F8;
+  --md-on-surface-variant:       #9C96B8;
+
+  --md-outline:                  #3E3860;
+  --md-outline-variant:          #2A2448;
+
+  /* Nav pill — oscuro fijo también en dark mode */
+  --nav-active-bg:               #2E2A58;
+  --nav-active-icon:             #E8E4F8;
+  --nav-active-label:            #E8E4F8;
+
+  --md-inverse-surface:          #E8E4F8;
+  --md-inverse-on-surface:       #141220;
+
+  --accent-warm:                 #E8A868;
+  --accent-warm-tint:            #3C2010;
+  --accent-warm-border:          rgba(200, 120, 50, 0.25);
+
+  --accent-lavanda:              #9B8EC4;
+  --accent-lavanda-tint:         #201840;
+  --accent-lavanda-border:       rgba(100, 80, 160, 0.25);
+
+  --accent-mint:                 #5DB08A;
+  --accent-mint-tint:            #0E2820;
+  --accent-mint-border:          rgba(60, 140, 100, 0.25);
+
+  --shadow-card:  0 2px 12px rgba(0, 0, 0, 0.30);
+  --shadow-float: 0 6px 24px rgba(0, 0, 0, 0.40);
+  --shadow-modal: 0 12px 40px rgba(0, 0, 0, 0.50);
+}

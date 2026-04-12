@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#EAEAF4" id="meta-theme">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Calc 3D">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="assets/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0,0&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/quote.css">
+<title>Calculadora de Costos 3D</title>
+</head>
+<body data-theme="light">
+
+<!-- OFFLINE BANNER -->
+<div id="offline-banner" class="offline-banner hidden" role="alert" aria-live="polite">
+  <span class="material-symbols-rounded" style="font-size:18px">wifi_off</span>
+  Sin conexión — los datos se guardan localmente
+</div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="icon-badge"><span class="material-symbols-rounded">view_in_ar</span></div>
+  <h1>Calculadora 3D</h1>
+  <div class="spacer"></div>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
+    <span class="material-symbols-rounded" id="theme-icon">light_mode</span>
+  </button>
+</div>
+
+<!-- ===== PAGE: DASHBOARD ===== -->
+<div id="page-dashboard" class="page active">
+  <div class="dash-stats" id="dash-stats"></div>
+  <div class="m3-card" id="dash-monthly-history">
+    <div class="m3-card-title">Historial mensual — ingresos aceptados</div>
+    <div id="dash-monthly-content"></div>
+  </div>
+  <div class="m3-card" id="dash-recent">
+    <div class="m3-card-title">Cotizaciones recientes</div>
+    <div id="dash-recent-list"></div>
+  </div>
+</div>
+
+<!-- ===== PAGE: CALCULATOR ===== -->
+<div id="page-calc" class="page">
+
+  <div id="calc-result" class="hidden">
+    <div class="result-card">
+      <div class="result-header">
+        <div>
+          <div class="result-subtitle">COSTO TOTAL</div>
+          <div class="result-total" id="result-total">$0.00</div>
+        </div>
+        <div class="result-base-col">
+          <div class="result-subtitle">COSTO BASE</div>
+          <div class="result-base-val" id="result-base">$0.00</div>
+        </div>
+      </div>
+      <div class="breakdown-grid">
+        <div class="breakdown-chip"><div class="val" id="r-mat">$0</div><div class="lbl">Material</div></div>
+        <div class="breakdown-chip"><div class="val" id="r-energy">$0</div><div class="lbl">Energía</div></div>
+        <div class="breakdown-chip"><div class="val" id="r-labor">$0</div><div class="lbl">Diseño</div></div>
+        <div class="breakdown-chip"><div class="val" id="r-deprec">$0</div><div class="lbl">Depreciación</div></div>
+        <div class="breakdown-chip"><div class="val" id="r-fixed">$0</div><div class="lbl">Costos fijos</div></div>
+        <div class="breakdown-chip"><div class="val" id="r-waste">$0</div><div class="lbl">Desperdicio</div></div>
+      </div>
+    </div>
+    <div class="flex-row mt-8">
+      <button class="m3-btn-text" onclick="saveToHistory()" style="flex:none;width:auto;padding:0 16px">
+        <span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span> Guardar
+      </button>
+      <button class="m3-btn-text" onclick="saveCurrentPreset()" style="flex:none;width:auto;padding:0 16px">
+        <span class="material-symbols-rounded" style="font-size:18px">star</span> Preset
+      </button>
+      <button class="m3-btn-outlined" id="btn-cotizar" onclick="generateQuote()" style="flex:1">
+        <span class="material-symbols-rounded" style="font-size:18px">receipt_long</span> Cotizar
+      </button>
+    </div>
+    <button class="m3-btn-text mt-8" onclick="showPage('history')" style="width:auto;align-self:center">
+      <span class="material-symbols-rounded" style="font-size:18px">history</span> Ver historial
+    </button>
+  </div>
+
+  <button class="m3-btn-outlined mt-4" onclick="showCatalogModal()" style="width:100%;margin-bottom:24px">
+    <span class="material-symbols-rounded" style="font-size:18px">category</span> Catálogo de productos
+  </button>
+
+  <div class="m3-card">
+    <div class="m3-card-title">Datos de la pieza</div>
+    <div class="m3-field">
+      <input type="text" id="calc-desc" placeholder=" ">
+      <label for="calc-desc">Descripción</label>
+    </div>
+    <div class="flex-row">
+      <div class="m3-field">
+        <input type="number" id="calc-weight" placeholder=" " min="0" step="0.1" inputmode="decimal">
+        <label for="calc-weight">Peso (g)</label>
+      </div>
+      <div class="m3-field">
+        <input type="number" id="calc-time" placeholder=" " min="0" step="0.01" inputmode="decimal">
+        <label for="calc-time">Tiempo (hrs)</label>
+      </div>
+    </div>
+    <div class="m3-field optional">
+      <input type="number" id="calc-design-time" placeholder=" " min="0" step="0.1" inputmode="decimal">
+      <label for="calc-design-time">Tiempo de diseño (hrs)</label>
+    </div>
+  </div>
+
+  <div id="calc-presets"></div>
+
+  <div class="m3-card">
+    <div class="m3-card-title">Impresora y material</div>
+    <div class="m3-field">
+      <select id="calc-printer"></select>
+      <label for="calc-printer">Impresora</label>
+    </div>
+    <div class="m3-field">
+      <select id="calc-material"></select>
+      <label for="calc-material">Material</label>
+    </div>
+  </div>
+
+  <div class="m3-card">
+    <div class="m3-card-title">Margen de ganancia</div>
+    <div class="m3-slider-wrap">
+      <input type="range" id="calc-margin" min="0" max="200" value="50">
+      <span class="m3-slider-val" id="calc-margin-display">50%</span>
+    </div>
+  </div>
+
+  <button class="m3-btn-tonal mt-8" onclick="addItemToDraft()" id="btn-add-item" style="width:100%">
+    <span class="material-symbols-rounded" style="font-size:18px">add_shopping_cart</span> Agregar a orden
+  </button>
+
+</div>
+
+<!-- ===== PAGE: PRINTERS ===== -->
+<div id="page-printers" class="page">
+  <div class="page-tabs">
+    <button class="page-tab active" onclick="showPage('printers')" data-tab="printers">Impresoras</button>
+    <button class="page-tab" onclick="showPage('materials')" data-tab="materials">Materiales</button>
+    <button class="page-tab" onclick="showPage('inventory')" data-tab="inventory">Inventario</button>
+  </div>
+  <div id="printer-list"></div>
+  <button class="m3-fab" onclick="showPrinterModal()" id="fab-printer">
+    <span class="material-symbols-rounded">add</span>
+  </button>
+</div>
+
+<!-- ===== PAGE: MATERIALS ===== -->
+<div id="page-materials" class="page">
+  <div class="page-tabs">
+    <button class="page-tab" onclick="showPage('printers')" data-tab="printers">Impresoras</button>
+    <button class="page-tab active" onclick="showPage('materials')" data-tab="materials">Materiales</button>
+    <button class="page-tab" onclick="showPage('inventory')" data-tab="inventory">Inventario</button>
+  </div>
+  <div id="material-list"></div>
+  <button class="m3-fab" onclick="showMaterialModal()" id="fab-material">
+    <span class="material-symbols-rounded">add</span>
+  </button>
+</div>
+
+<!-- ===== PAGE: INVENTORY ===== -->
+<div id="page-inventory" class="page">
+  <div class="page-tabs">
+    <button class="page-tab" onclick="showPage('printers')" data-tab="printers">Impresoras</button>
+    <button class="page-tab" onclick="showPage('materials')" data-tab="materials">Materiales</button>
+    <button class="page-tab active" onclick="showPage('inventory')" data-tab="inventory">Inventario</button>
+  </div>
+  <div id="inventory-list"></div>
+  <button class="m3-fab" onclick="showInventoryModal()" id="fab-inventory">
+    <span class="material-symbols-rounded">add</span>
+  </button>
+</div>
+
+<!-- ===== PAGE: HISTORY ===== -->
+<div id="page-history" class="page">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <button class="m3-btn-text" onclick="showPage('calc')" style="width:auto;padding:0 8px">
+      <span class="material-symbols-rounded">arrow_back</span>
+    </button>
+    <h2 class="page-heading">Historial de cálculos</h2>
+    <button class="m3-btn-text m3-btn-sm" onclick="clearHistory()" style="color:var(--md-error)">Limpiar</button>
+  </div>
+  <div id="history-list"></div>
+</div>
+
+<!-- ===== PAGE: QUOTES ===== -->
+<div id="page-quotes" class="page">
+  <div class="page-tabs">
+    <button class="page-tab active" onclick="showPage('quotes')" data-tab="quotes">Cotizaciones</button>
+    <button class="page-tab" onclick="showPage('clients')" data-tab="clients">Clientes</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+    <div class="m3-field" style="flex:1;margin:0">
+      <input type="text" id="quote-search" placeholder=" " oninput="onQuoteSearch(this)">
+      <label><span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle">search</span> Buscar cotización</label>
+    </div>
+    <button class="m3-btn-tonal m3-btn-sm" onclick="showPage('quote-editor')" style="flex-shrink:0">
+      <span class="material-symbols-rounded" style="font-size:16px">palette</span> Diseño
+    </button>
+  </div>
+  <div id="quotes-list"></div>
+</div>
+
+<!-- ===== PAGE: CLIENTS ===== -->
+<div id="page-clients" class="page">
+  <div class="page-tabs">
+    <button class="page-tab" onclick="showPage('quotes')" data-tab="quotes">Cotizaciones</button>
+    <button class="page-tab active" onclick="showPage('clients')" data-tab="clients">Clientes</button>
+  </div>
+  <div id="clients-list"></div>
+  <button class="m3-fab" onclick="showClientModal()" id="fab-clients">
+    <span class="material-symbols-rounded">person_add</span>
+  </button>
+</div>
+
+<!-- ===== PAGE: QUOTE EDITOR ===== -->
+<div id="page-quote-editor" class="page">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <button class="m3-btn-text" onclick="showPage('quotes')" style="width:auto;padding:0 8px">
+      <span class="material-symbols-rounded">arrow_back</span>
+    </button>
+    <h2 class="page-heading">Diseño de cotización</h2>
+    <button class="m3-btn-text m3-btn-sm" onclick="resetQuoteStyle()" style="color:var(--md-error)">Reset</button>
+  </div>
+
+  <!-- Logo -->
+  <div class="m3-card">
+    <div class="m3-card-title">Logo</div>
+    <div class="logo-upload-area" onclick="document.getElementById('logo-input').click()" id="logo-preview-area">
+      <span class="material-symbols-rounded" style="font-size:32px;opacity:0.4">add_photo_alternate</span>
+      <p>Subir logo (PNG/JPG, max 500KB)</p>
+    </div>
+    <input type="file" id="logo-input" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="handleLogoUpload(event)">
+    <button class="m3-btn-text m3-btn-sm" onclick="removeLogo()" style="color:var(--md-error)">
+      <span class="material-symbols-rounded" style="font-size:16px">delete</span> Quitar logo
+    </button>
+  </div>
+
+  <!-- Colors -->
+  <div class="m3-card">
+    <div class="m3-card-title">Colores de marca</div>
+    <div class="color-row">
+      <label>Color primario</label>
+      <div class="color-swatch" id="sw-primary"><input type="color" id="qe-primary" value="#6750A4" oninput="onColorChange('primaryColor',this)"></div>
+    </div>
+    <div class="color-row">
+      <label>Color acento</label>
+      <div class="color-swatch" id="sw-accent"><input type="color" id="qe-accent" value="#D0BCFF" oninput="onColorChange('accentColor',this)"></div>
+    </div>
+    <div class="color-row">
+      <label>Color de texto</label>
+      <div class="color-swatch" id="sw-text"><input type="color" id="qe-text" value="#1C1B1F" oninput="onColorChange('textColor',this)"></div>
+    </div>
+    <div class="color-row">
+      <label>Color de fondo</label>
+      <div class="color-swatch" id="sw-bg"><input type="color" id="qe-bg" value="#FFFFFF" oninput="onColorChange('bgColor',this)"></div>
+    </div>
+  </div>
+
+  <!-- Fields -->
+  <div class="m3-card">
+    <div class="m3-card-title">Campos visibles</div>
+    <div class="m3-switch"><label>Mostrar desglose de costos</label><input type="checkbox" id="qe-showDesglose" onchange="onToggleChange('showDesglose',this)"></div>
+    <div class="m3-switch"><label>Mostrar depreciación</label><input type="checkbox" id="qe-showDepreciacion" onchange="onToggleChange('showDepreciacion',this)"></div>
+    <div class="m3-switch"><label>Mostrar costos fijos</label><input type="checkbox" id="qe-showCostosFijos" onchange="onToggleChange('showCostosFijos',this)"></div>
+    <div class="m3-switch"><label>Mostrar desperdicio</label><input type="checkbox" id="qe-showDesperdicio" onchange="onToggleChange('showDesperdicio',this)"></div>
+    <div class="m3-switch"><label>Mostrar tiempo de diseño</label><input type="checkbox" id="qe-showDiseno" onchange="onToggleChange('showDiseno',this)"></div>
+    <div class="m3-switch"><label>Mostrar notas</label><input type="checkbox" id="qe-showNotas" onchange="onToggleChange('showNotas',this)"></div>
+  </div>
+
+  <!-- Texts -->
+  <div class="m3-card">
+    <div class="m3-card-title">Textos personalizados</div>
+    <div class="m3-field optional">
+      <textarea id="qe-terms" placeholder=" " oninput="onTextChange('termsText',this)"></textarea>
+      <label>Términos y condiciones</label>
+    </div>
+    <div class="m3-field optional">
+      <textarea id="qe-footer" placeholder=" " oninput="onTextChange('footerText',this)"></textarea>
+      <label>Pie de página</label>
+    </div>
+  </div>
+
+  <!-- Preview -->
+  <div class="m3-card">
+    <div class="m3-card-title">Vista previa</div>
+    <div id="qe-live-preview" style="overflow-x:auto;"></div>
+  </div>
+</div>
+
+<!-- ===== PAGE: CONFIG ===== -->
+<div id="page-config" class="page">
+  <div class="config-section">
+    <div class="config-section-title">Electricidad y trabajo</div>
+    <div class="m3-card">
+      <div class="m3-field"><input type="number" id="cfg-kwh" step="0.01" min="0" placeholder=" " inputmode="decimal"><label for="cfg-kwh">Costo por kWh</label><span class="suffix">$/kWh</span></div>
+      <div class="m3-field"><input type="number" id="cfg-labor" step="0.1" min="0" placeholder=" " inputmode="decimal"><label for="cfg-labor">Costo hora de diseño</label><span class="suffix">$/hr</span></div>
+    </div>
+  </div>
+  <div class="config-section">
+    <div class="config-section-title">Costos fijos mensuales</div>
+    <div class="m3-card">
+      <div class="m3-field"><input type="number" id="cfg-fixed-monthly" step="1" min="0" placeholder=" " inputmode="decimal"><label for="cfg-fixed-monthly">Total costos fijos/mes</label><span class="suffix">$/mes</span></div>
+      <div class="m3-field"><input type="number" id="cfg-monthly-hours" step="1" min="0" placeholder=" " inputmode="decimal"><label for="cfg-monthly-hours">Horas de impresión/mes</label><span class="suffix">hrs/mes</span></div>
+    </div>
+  </div>
+  <div class="config-section">
+    <div class="config-section-title">Desperdicio y fallas</div>
+    <div class="m3-card">
+      <div class="m3-field"><input type="number" id="cfg-waste" step="1" min="0" max="100" placeholder=" " inputmode="decimal"><label for="cfg-waste">Factor de desperdicio</label><span class="suffix">%</span></div>
+    </div>
+  </div>
+  <div class="config-section">
+    <div class="config-section-title">Moneda</div>
+    <div class="m3-card">
+      <div class="m3-field"><select id="cfg-currency"><option value="$">$ MXN</option><option value="US$">US$ USD</option><option value="€">€ EUR</option></select><label for="cfg-currency">Moneda</label></div>
+    </div>
+  </div>
+  <div class="config-section">
+    <div class="config-section-title">Datos del negocio</div>
+    <div class="m3-card">
+      <div class="m3-field"><input type="text" id="cfg-biz-name" placeholder=" "><label for="cfg-biz-name">Nombre del negocio</label></div>
+      <div class="m3-field"><input type="tel" id="cfg-biz-phone" placeholder=" " inputmode="tel"><label for="cfg-biz-phone">Teléfono / WhatsApp</label></div>
+      <div class="m3-field"><input type="email" id="cfg-biz-email" placeholder=" " inputmode="email"><label for="cfg-biz-email">Email</label></div>
+      <div class="m3-field optional"><input type="text" id="cfg-biz-social" placeholder=" "><label for="cfg-biz-social">Red social (@usuario)</label></div>
+      <div class="m3-field optional"><input type="url" id="cfg-biz-qr" placeholder=" " inputmode="url"><label for="cfg-biz-qr">URL para QR en cotización</label></div>
+    </div>
+  </div>
+  <div class="config-section">
+    <div class="config-section-title">Apariencia</div>
+    <div class="m3-card">
+      <div class="theme-segment">
+        <button id="theme-dark-btn" onclick="setTheme('dark')"><span class="material-symbols-rounded" style="font-size:18px">dark_mode</span> Oscuro</button>
+        <button id="theme-light-btn" onclick="setTheme('light')"><span class="material-symbols-rounded" style="font-size:18px">light_mode</span> Claro</button>
+        <button id="theme-auto-btn" onclick="setTheme('auto')"><span class="material-symbols-rounded" style="font-size:18px">brightness_auto</span> Auto</button>
+      </div>
+    </div>
+  </div>
+  <button class="m3-btn-filled mb-16" onclick="saveConfig()"><span class="material-symbols-rounded" style="font-size:18px">save</span> Guardar configuración</button>
+  <hr class="m3-divider">
+  <div class="config-section">
+    <div class="config-section-title">Respaldo</div>
+    <div class="flex-row">
+      <button class="m3-btn-outlined" onclick="exportData()"><span class="material-symbols-rounded" style="font-size:18px">download</span> Exportar</button>
+      <button class="m3-btn-outlined" onclick="document.getElementById('import-file').click()"><span class="material-symbols-rounded" style="font-size:18px">upload</span> Importar</button>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</div>
+
+<!-- NAV BAR -->
+<nav class="nav-bar" role="navigation" aria-label="Navegación principal">
+  <button class="nav-item" onclick="showPage('dashboard')" data-page="dashboard" aria-label="Inicio - Dashboard">
+    <div class="nav-icon-wrap"><span class="material-symbols-rounded">dashboard</span></div>Inicio
+  </button>
+  <button class="nav-item" onclick="showPage('calc')" data-page="calc" aria-label="Calculadora de costos">
+    <div class="nav-icon-wrap"><span class="material-symbols-rounded">calculate</span></div>Calcular
+  </button>
+  <button class="nav-item" onclick="showPage('quotes')" data-page="quotes" aria-label="Cotizaciones">
+    <div class="nav-icon-wrap"><span class="material-symbols-rounded">receipt_long</span></div>Cotizaciones
+  </button>
+  <button class="nav-item" onclick="showPage('printers')" data-page="printers" aria-label="Impresoras y materiales">
+    <div class="nav-icon-wrap"><span class="material-symbols-rounded">print</span></div>Catálogo
+  </button>
+  <button class="nav-item" onclick="showPage('config')" data-page="config" aria-label="Configuración">
+    <div class="nav-icon-wrap"><span class="material-symbols-rounded">settings</span></div>Ajustes
+  </button>
+</nav>
+
+<div id="modal-container"></div>
+
+<!-- JS Modules -->
+<script src="js/store.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/calculator.js"></script>
+<script src="js/history.js"></script>
+<script src="js/printers.js"></script>
+<script src="js/materials.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/quotes.js"></script>
+<script src="js/quote-editor.js"></script>
+<script src="js/clients.js"></script>
+<script src="js/inventory.js"></script>
+<script src="js/config.js"></script>
+<script src="js/dashboard.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    var marginSlider = document.getElementById('calc-margin');
+    if (marginSlider) {
+      marginSlider.addEventListener('input', function(){
+        document.getElementById('calc-margin-display').textContent = this.value + '%';
+      });
+    }
+    document.querySelectorAll('.m3-fab').forEach(function(f) { f.style.display = 'none'; });
+    populateSelects();
+    initCalcValidation();
+    applyTheme();
+    showPage('dashboard');
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(function(){});
+  } catch(e) {
+    console.error('Init error:', e);
+  }
+});
+</script>
+</body>
+</html>
