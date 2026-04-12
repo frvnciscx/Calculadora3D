@@ -71,23 +71,25 @@
         <div class="breakdown-chip"><div class="val" id="r-waste">$0</div><div class="lbl">Desperdicio</div></div>
       </div>
     </div>
-    <div class="flex-row mt-8">
-      <button class="m3-btn-text" onclick="saveToHistory()" style="flex:none;width:auto;padding:0 16px">
-        <span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span> Guardar
-      </button>
-      <button class="m3-btn-text" onclick="saveCurrentPreset()" style="flex:none;width:auto;padding:0 16px">
-        <span class="material-symbols-rounded" style="font-size:18px">star</span> Preset
-      </button>
-      <button class="m3-btn-outlined" id="btn-cotizar" onclick="generateQuote()" style="flex:1">
+    <div class="result-actions mt-8">
+      <button class="m3-btn-filled" id="btn-cotizar" onclick="generateQuote()">
         <span class="material-symbols-rounded" style="font-size:18px">receipt_long</span> Cotizar
       </button>
+      <div class="result-secondary-actions">
+        <button class="m3-btn-text" onclick="saveToHistory()">
+          <span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span> Guardar
+        </button>
+        <button class="m3-btn-text" onclick="saveCurrentPreset()">
+          <span class="material-symbols-rounded" style="font-size:18px">star</span> Preset
+        </button>
+        <button class="m3-btn-text" onclick="showPage('history')">
+          <span class="material-symbols-rounded" style="font-size:18px">history</span> Historial
+        </button>
+      </div>
     </div>
-    <button class="m3-btn-text mt-8" onclick="showPage('history')" style="width:auto;align-self:center">
-      <span class="material-symbols-rounded" style="font-size:18px">history</span> Ver historial
-    </button>
   </div>
 
-  <button class="m3-btn-outlined mt-4" onclick="showCatalogModal()" style="width:100%;margin-bottom:24px">
+  <button class="m3-btn-tonal mt-4" onclick="showCatalogModal()" style="width:100%;margin-bottom:24px">
     <span class="material-symbols-rounded" style="font-size:18px">category</span> Catálogo de productos
   </button>
 
@@ -135,7 +137,7 @@
     </div>
   </div>
 
-  <button class="m3-btn-tonal mt-8" onclick="addItemToDraft()" id="btn-add-item" style="width:100%">
+  <button class="m3-btn-filled mt-8" onclick="addItemToDraft()" id="btn-add-item" style="width:100%">
     <span class="material-symbols-rounded" style="font-size:18px">add_shopping_cart</span> Agregar a orden
   </button>
 

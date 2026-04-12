@@ -721,9 +721,9 @@
 
 /* ── BOTÓN AGREGAR A ORDEN — estado "ya agregado" ────────────────── */
 #btn-add-item.item-added {
-  background: var(--md-surface-container-high);
-  color: var(--md-on-surface-variant);
-  border-color: var(--md-outline-variant);
+  background: var(--md-surface-container-high) !important;
+  color: var(--md-on-surface-variant) !important;
+  box-shadow: none !important;
   opacity: 0.75;
   cursor: default;
 }
@@ -926,6 +926,33 @@
 }
 .m3-ripple:hover::after { opacity: 0.06; }
 .m3-ripple:active::after { opacity: 0.12; }
+
+/* ── RESULT ACTIONS ─────────────────────────────────────────────── */
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.result-actions .m3-btn-filled {
+  width: 100%;
+}
+.result-secondary-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  flex-wrap: wrap;
+}
+.result-secondary-actions .m3-btn-text {
+  flex: none;
+  width: auto;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--md-on-surface-variant);
+  height: 36px;
+}
+.result-secondary-actions .m3-btn-text .material-symbols-rounded {
+  font-size: 16px !important;
+}
 
 /* ── STATUS BADGES ──────────────────────────────────────────────── */
 .status-badge {
