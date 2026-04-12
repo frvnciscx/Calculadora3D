@@ -1,4 +1,4 @@
-const CACHE_NAME = 'calc3d-v25';
+const CACHE_NAME = 'calc3d-v27';
 const ASSETS = [
   './index.html',
   './manifest.json',
@@ -21,7 +21,8 @@ const ASSETS = [
   './js/config.js',
   './js/dashboard.js',
   './assets/icon-192.png',
-  './assets/icon-512.png'
+  './assets/icon-512.png',
+  './assets/icon.svg'
 ];
 
 self.addEventListener('install', event => {

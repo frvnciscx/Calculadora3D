@@ -12,15 +12,16 @@ function calculate(silent) {
   if (silent) {
     /* Modo live — solo calcula si hay datos válidos, sin errores visuales */
     if (weight <= 0 || timeH <= 0 || !printer || !material) return;
+    /* Actualizar estados valid en tiempo real */
+    _setFieldState('field-weight', 'helper-weight', weight > 0 ? 'valid' : 'neutral', weight > 0 ? '' : 'Ej: 15g para un topper');
+    _setFieldState('field-time',   'helper-time',   timeH  > 0 ? 'valid' : 'neutral', timeH  > 0 ? '' : 'Ej: 1.5 hrs');
   } else {
     /* Modo explícito — muestra errores */
     var hasError = false;
-    var wField = document.getElementById('calc-weight').closest('.m3-field');
-    var tField = document.getElementById('calc-time').closest('.m3-field');
-    if (weight <= 0) { wField.classList.add('m3-field-error'); hasError = true; }
-    else { wField.classList.remove('m3-field-error'); }
-    if (timeH <= 0)  { tField.classList.add('m3-field-error'); hasError = true; }
-    else { tField.classList.remove('m3-field-error'); }
+    if (weight <= 0) { _setFieldState('field-weight', 'helper-weight', 'error', 'Ingresa el peso de la pieza'); hasError = true; }
+    else { _setFieldState('field-weight', 'helper-weight', 'valid', ''); }
+    if (timeH <= 0)  { _setFieldState('field-time', 'helper-time', 'error', 'Ingresa el tiempo de impresión'); hasError = true; }
+    else { _setFieldState('field-time', 'helper-time', 'valid', ''); }
     if (hasError) { snack('Ingresa peso y tiempo de impresión'); return; }
     if (!printer || !material) { snack('Selecciona impresora y material'); return; }
   }
@@ -187,4 +188,17 @@ function deletePreset(i) {
   presets.splice(i, 1);
   sv('presets', presets);
   renderPresets();
+}
+
+/* ── Helper: estado visual de un campo ───────────────────────────
+   state: 'error' | 'valid' | 'neutral'
+   ──────────────────────────────────────────────────────────────── */
+function _setFieldState(fieldId, helperId, state, msg) {
+  var field  = document.getElementById(fieldId);
+  var helper = document.getElementById(helperId);
+  if (!field) return;
+  field.classList.remove('m3-field-error', 'm3-field-valid');
+  if (state === 'error') field.classList.add('m3-field-error');
+  if (state === 'valid') field.classList.add('m3-field-valid');
+  if (helper && msg !== undefined) helper.textContent = msg;
 }

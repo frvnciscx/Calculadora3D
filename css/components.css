@@ -8,13 +8,13 @@
 .m3-card {
   background: var(--md-surface);
   border-radius: var(--radius-xl);
-  padding: 20px;
-  margin-bottom: 14px;
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
   border: 1px solid var(--md-outline);
   box-shadow: var(--shadow-card);
-  transition: background-color 0.4s var(--ease-out),
-              border-color 0.4s var(--ease-out),
-              box-shadow 0.3s var(--ease-out);
+  transition: background-color 0.2s var(--ease-out),
+              border-color 0.2s var(--ease-out),
+              box-shadow 0.2s var(--ease-out);
 }
 .m3-card-title {
   font-family: 'Inter', sans-serif;
@@ -23,7 +23,7 @@
   color: var(--md-on-surface-variant);
   letter-spacing: var(--type-overline-ls);
   text-transform: uppercase;
-  margin-bottom: 14px;
+  margin-bottom: var(--space-4);
 }
 /* Títulos de sección con más peso visual */
 .m3-section-title {
@@ -36,12 +36,12 @@
 }
 
 /* ── TEXT FIELDS ────────────────────────────────────────────────── */
-.m3-field { position: relative; margin-bottom: 16px; }
+.m3-field { position: relative; margin-bottom: var(--space-4); }
 .m3-field input,
 .m3-field select,
 .m3-field textarea {
   width: 100%;
-  padding: 22px 16px 8px;
+  padding: 22px var(--space-4) var(--space-2);
   background: var(--md-surface-container-high);
   border: 1px solid var(--md-outline);
   border-radius: var(--radius-md);
@@ -49,9 +49,9 @@
   font-family: 'Inter', sans-serif;
   font-size: 15px;
   outline: none;
-  transition: border-color 0.3s var(--ease-out),
-              background-color 0.3s var(--ease-out),
-              box-shadow 0.3s var(--ease-out);
+  transition: border-color 0.2s var(--ease-out),
+              background-color 0.2s var(--ease-out),
+              box-shadow 0.2s var(--ease-out);
   -webkit-appearance: none; appearance: none;
 }
 .m3-field textarea { resize: vertical; min-height: 60px; padding-top: 28px; }
@@ -91,18 +91,31 @@
 
 /* Error state */
 .m3-field.m3-field-error input,
-.m3-field.m3-field-error select {
+.m3-field.m3-field-error select,
+.m3-field.m3-field-error textarea {
   border-color: var(--md-error);
   box-shadow: 0 0 0 3px var(--md-error-container);
 }
 .m3-field.m3-field-error label { color: var(--md-error); }
-.m3-field .m3-helper {
-  font-size: 12px; color: var(--md-on-surface-variant);
-  margin-top: 4px; padding-left: 16px; display: none;
+
+/* Valid state */
+.m3-field.m3-field-valid input,
+.m3-field.m3-field-valid textarea {
+  border-color: var(--accent-mint);
 }
-.m3-field.m3-field-error .m3-helper {
-  display: block; color: var(--md-error);
+.m3-field.m3-field-valid label { color: var(--accent-mint); }
+
+/* Helper text */
+.m3-helper {
+  font-size: 12px;
+  color: var(--md-on-surface-variant);
+  margin-top: var(--space-1);
+  padding-left: var(--space-4);
+  display: block;
+  line-height: 1.4;
 }
+.m3-field.m3-field-error .m3-helper { color: var(--md-error); }
+.m3-field.m3-field-valid .m3-helper { color: var(--accent-mint); }
 
 /* ── BUTTONS — Pill-shaped con micro-elevación ──────────────────── */
 .m3-btn-filled {
@@ -292,7 +305,7 @@
   max-height: 92vh; overflow-y: auto; z-index: 201;
   animation: sfSlideUp 0.35s var(--ease-out);
   box-shadow: var(--shadow-modal);
-  transition: background-color 0.4s var(--ease-out);
+  transition: background-color 0.2s var(--ease-out);
 }
 @keyframes sfSlideUp {
   from { transform: translateY(100%); opacity: 0.8; }
@@ -379,8 +392,8 @@
 .hist-item {
   background: var(--md-surface);
   border-radius: var(--radius-xl);
-  padding: 18px;
-  margin-bottom: 10px;
+  padding: var(--space-5);
+  margin-bottom: var(--space-3);
   border: 1px solid var(--md-outline);
   box-shadow: var(--shadow-card);
   transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
@@ -408,7 +421,7 @@
 }
 
 /* ── CONFIG ─────────────────────────────────────────────────────── */
-.config-section { margin-bottom: 24px; }
+.config-section { margin-bottom: var(--space-6); }
 .config-section-title {
   font-family: 'Inter', sans-serif;
   font-size: var(--type-overline-size);
@@ -545,26 +558,33 @@
 
 /* ── PAGE TABS ──────────────────────────────────────────────────── */
 .page-tabs {
-  display: flex; gap: 4px;
-  margin-bottom: 18px;
-  background: var(--md-surface-container-high);
-  border-radius: var(--radius-pill);
-  padding: 4px;
-  border: 1px solid var(--md-outline);
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-5);
+  border-bottom: 2px solid var(--md-outline);
+  padding-bottom: 0;
 }
 .page-tab {
-  flex: 1; padding: 10px 16px;
+  flex: 1;
+  padding: var(--space-2) var(--space-4) 10px;
   background: none; border: none;
-  border-radius: var(--radius-pill);
-  font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
-  color: var(--md-on-surface-variant); cursor: pointer;
-  transition: all 0.3s var(--ease-out);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-family: 'Inter', sans-serif;
+  font-size: var(--type-label-lg-size);
+  font-weight: 600;
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+  transition: color 0.2s var(--ease-out),
+              border-color 0.2s var(--ease-out);
   text-align: center;
+  white-space: nowrap;
 }
+.page-tab:hover { color: var(--md-on-surface); }
 .page-tab.active {
-  background: var(--md-surface);
-  color: var(--md-on-surface);
-  box-shadow: var(--shadow-card);
+  color: var(--md-primary);
+  border-bottom-color: var(--md-primary);
+  font-weight: 700;
 }
 
 /* ── DASHBOARD — Bento Grid ─────────────────────────────────────── */
@@ -582,7 +602,7 @@
   border: 1px solid var(--md-outline);
   box-shadow: var(--shadow-card);
   transition: transform 0.2s var(--ease-out),
-              background-color 0.4s var(--ease-out);
+              background-color 0.2s var(--ease-out);
   display: flex; flex-direction: column; align-items: center; gap: 6px;
 }
 .dash-stat-card:active { transform: scale(0.98); }
@@ -1000,8 +1020,8 @@
 .client-card {
   background: var(--md-surface);
   border-radius: var(--radius-xl);
-  padding: 18px;
-  margin-bottom: 10px;
+  padding: var(--space-5);
+  margin-bottom: var(--space-3);
   border: 1px solid var(--md-outline);
   box-shadow: var(--shadow-card);
 }
@@ -1045,8 +1065,8 @@
 .inv-card {
   background: var(--md-surface);
   border-radius: var(--radius-xl);
-  padding: 18px;
-  margin-bottom: 10px;
+  padding: var(--space-5);
+  margin-bottom: var(--space-3);
   border: 1px solid var(--md-outline);
   box-shadow: var(--shadow-card);
 }
@@ -1085,7 +1105,7 @@
 .inv-bar {
   height: 100%;
   border-radius: var(--radius-pill);
-  transition: width 0.4s var(--ease-out);
+  transition: width 0.2s var(--ease-out);
   min-width: 4px;
 }
 .inv-stats {

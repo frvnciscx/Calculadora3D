@@ -26,8 +26,10 @@
 
 <!-- TOP BAR -->
 <div class="top-bar">
-  <div class="icon-badge"><span class="material-symbols-rounded">view_in_ar</span></div>
-  <h1>Calculadora 3D</h1>
+  <div class="icon-badge">
+    <img src="assets/icon.svg" alt="La Casita del Molde" style="width:24px;height:24px;display:block;">
+  </div>
+  <h1>La Casita del Molde</h1>
   <div class="spacer"></div>
   <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
     <span class="material-symbols-rounded" id="theme-icon">light_mode</span>
@@ -100,13 +102,15 @@
       <label for="calc-desc">Descripción</label>
     </div>
     <div class="flex-row">
-      <div class="m3-field">
+      <div class="m3-field" id="field-weight">
         <input type="number" id="calc-weight" placeholder=" " min="0" step="0.1" inputmode="decimal">
         <label for="calc-weight">Peso (g)</label>
+        <span class="m3-helper" id="helper-weight">Ej: 15g para un topper</span>
       </div>
-      <div class="m3-field">
+      <div class="m3-field" id="field-time">
         <input type="number" id="calc-time" placeholder=" " min="0" step="0.01" inputmode="decimal">
         <label for="calc-time">Tiempo (hrs)</label>
+        <span class="m3-helper" id="helper-time">Ej: 1.5 hrs</span>
       </div>
     </div>
     <div class="m3-field optional">
@@ -408,10 +412,11 @@ document.addEventListener('DOMContentLoaded', function() {
     populateSelects();
     initCalcValidation();
     applyTheme();
-    showPage('dashboard');
+    showPage('dashboard'); /* Siempre inicia en dashboard */
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(function(){});
   } catch(e) {
     console.error('Init error:', e);
+    showPage('dashboard'); /* Fallback */
   }
 });
 </script>
