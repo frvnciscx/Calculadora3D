@@ -183,7 +183,14 @@ function tplClientCard(c, i, quoteCount, totalSpent, cur) {
       '</a>'
     : '';
 
-  return '<div class="client-card">' +
+  var quotesToggle = quoteCount > 0
+    ? '<button class="m3-btn-text m3-btn-sm" onclick="toggleClientQuotes(' + i + ')">' +
+        tplIcon('receipt_long', 16) +
+        ' <span id="cq-toggle-label-' + i + '">Ver ' + quoteCount + ' cotizaci' + (quoteCount === 1 ? 'ón' : 'ones') + '</span>' +
+      '</button>'
+    : '';
+
+  return '<div class="client-card" id="client-card-' + i + '">' +
     '<div class="client-header">' +
       '<div class="client-avatar">' + (c.name || '?')[0].toUpperCase() + '</div>' +
       '<div class="client-info">' +
@@ -194,17 +201,48 @@ function tplClientCard(c, i, quoteCount, totalSpent, cur) {
       '<div class="client-stats">' +
         '<div class="client-stat-val">' + quoteCount + '</div>' +
         '<div class="client-stat-lbl">cotizaciones</div>' +
+        (totalSpent > 0 ? '<div class="client-stat-total">' + cur + totalSpent.toFixed(0) + '</div>' : '') +
       '</div>' +
     '</div>' +
     (c.notes ? '<div class="client-notes">' + esc(c.notes) + '</div>' : '') +
     '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">' +
-      (totalSpent > 0 ? '<span class="hist-chip">' + cur + totalSpent.toFixed(2) + ' cotizado</span>' : '') +
       waBtn +
+      quotesToggle +
       '<button class="m3-btn-text m3-btn-sm" onclick="showClientModal(' + i + ')">' +
         tplIcon('edit', 16) + ' Editar' +
       '</button>' +
       '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteClient(' + i + ')">' +
         tplIcon('delete', 16) +
+      '</button>' +
+    '</div>' +
+    /* Sección expandible de cotizaciones — oculta por defecto */
+    '<div id="cq-section-' + i + '" class="client-quotes-section hidden">' +
+      '<div class="cq-tabs">' +
+        '<button class="cq-tab active" id="cq-tab-pendiente-' + i + '" onclick="setClientQuoteTab(' + i + ',\'pendiente\')">' +
+          '⏳ Pendientes' +
+        '</button>' +
+        '<button class="cq-tab" id="cq-tab-aceptada-' + i + '" onclick="setClientQuoteTab(' + i + ',\'aceptada\')">' +
+          '✓ Aceptadas' +
+        '</button>' +
+      '</div>' +
+      '<div id="cq-list-' + i + '" class="cq-list"></div>' +
+    '</div>' +
+  '</div>';
+}
+
+/* Mini-fila de cotización dentro del card de cliente */
+function tplClientQuoteRow(q, qi, cur) {
+  var total = q.grandTotal != null ? q.grandTotal : (q.totalCost || 0);
+  var date  = new Date(q.quoteDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+  return '<div class="cq-row">' +
+    '<div class="cq-row-left">' +
+      '<span class="cq-row-num">' + esc(q.quoteNum) + '</span>' +
+      '<span class="cq-row-date">' + date + '</span>' +
+    '</div>' +
+    '<div class="cq-row-right">' +
+      '<span class="cq-row-total">' + cur + total.toFixed(2) + '</span>' +
+      '<button class="m3-btn-text m3-btn-sm" onclick="viewQuote(' + qi + ')" style="padding:0 6px;height:28px">' +
+        tplIcon('visibility', 14) +
       '</button>' +
     '</div>' +
   '</div>';
@@ -447,15 +485,18 @@ function tplDraftModal(draft, cur) {
   return '<div class="m3-scrim" onclick="closeModal()"></div>' +
     '<div class="m3-bottom-sheet">' +
       tplSheetHeader('Nueva cotización') +
-      '<div class="flex-row">' +
-        '<div class="m3-field" style="flex:2">' +
-          '<input type="text" id="q-client" placeholder=" " value="' + esc(draft.client || '') + '">' +
+      /* Campo cliente con autocompletado */
+      '<div class="client-autocomplete-wrap">' +
+        '<div class="m3-field">' +
+          '<input type="text" id="q-client" placeholder=" " value="' + esc(draft.client || '') + '" ' +
+            'oninput="onClientInput(this)" autocomplete="off">' +
           '<label for="q-client">Nombre del cliente</label>' +
         '</div>' +
-        '<div class="m3-field optional" style="flex:1">' +
-          '<input type="tel" id="q-phone" inputmode="tel" placeholder=" " value="' + esc(draft.phone || '') + '">' +
-          '<label for="q-phone">Teléfono</label>' +
-        '</div>' +
+        '<div id="q-client-suggestions" class="client-suggestions"></div>' +
+      '</div>' +
+      '<div class="m3-field optional">' +
+        '<input type="tel" id="q-phone" inputmode="tel" placeholder=" " value="' + esc(draft.phone || '') + '">' +
+        '<label for="q-phone">Teléfono</label>' +
       '</div>' +
       '<div class="m3-field optional">' +
         '<input type="text" id="q-notes" placeholder=" " value="' + esc(draft.notes || '') + '">' +
