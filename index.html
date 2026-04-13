@@ -72,6 +72,25 @@
         <div class="breakdown-chip"><div class="val" id="r-fixed">$0</div><div class="lbl">Costos fijos</div></div>
         <div class="breakdown-chip"><div class="val" id="r-waste">$0</div><div class="lbl">Desperdicio</div></div>
       </div>
+      <!-- Bloque de post-proceso resina — oculto por defecto -->
+      <div id="r-resin-block" class="hidden resin-postproc-block">
+        <div class="resin-block-title">
+          <span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle">water_drop</span>
+          Post-proceso Resina
+        </div>
+        <div class="resin-detail-row">
+          <span class="resin-detail-lbl">Peso con soportes</span>
+          <span id="r-resin-weight" class="resin-detail-val">—</span>
+        </div>
+        <div class="resin-detail-row">
+          <span class="resin-detail-lbl">Lavado IPA (Elegoo Mercury+)</span>
+          <span id="r-ipa" class="resin-detail-val">$0</span>
+        </div>
+        <div class="resin-detail-row">
+          <span class="resin-detail-lbl">Curado UV (Elegoo Mercury+)</span>
+          <span id="r-uv" class="resin-detail-val">$0</span>
+        </div>
+      </div>
     </div>
     <div class="result-actions mt-8">
       <button class="m3-btn-filled" id="btn-cotizar" onclick="generateQuote()">
@@ -130,6 +149,32 @@
     <div class="m3-field">
       <select id="calc-material"></select>
       <label for="calc-material">Material</label>
+    </div>
+  </div>
+
+  <!-- Bloque resina — visible solo cuando se selecciona impresora de tipo Resina -->
+  <div id="calc-resin-params" class="hidden m3-card resin-params-card">
+    <div class="resin-params-header">
+      <span class="material-symbols-rounded" style="font-size:18px;color:#87CEFA">water_drop</span>
+      <span class="m3-card-title" style="margin:0">Post-proceso Resina</span>
+    </div>
+    <p class="resin-params-hint">Elegoo Mercury Plus · lavado IPA + curado UV</p>
+    <div class="flex-row">
+      <div class="m3-field">
+        <input type="number" id="cfg-resin-support-pct" step="1" min="0" max="100" placeholder=" " inputmode="decimal" oninput="saveResinParams()">
+        <label for="cfg-resin-support-pct">Soportes</label>
+        <span class="suffix">%</span>
+      </div>
+      <div class="m3-field">
+        <input type="number" id="cfg-ipa-ml" step="1" min="0" placeholder=" " inputmode="decimal" oninput="saveResinParams()">
+        <label for="cfg-ipa-ml">IPA por impresión</label>
+        <span class="suffix">ml</span>
+      </div>
+    </div>
+    <div class="m3-field">
+      <input type="number" id="cfg-ipa-liter-cost" step="1" min="0" placeholder=" " inputmode="decimal" oninput="saveResinParams()">
+      <label for="cfg-ipa-liter-cost">Costo del litro de IPA</label>
+      <span class="suffix">$/L</span>
     </div>
   </div>
 
@@ -386,6 +431,7 @@
 
 <!-- JS Modules -->
 <script src="js/store.js"></script>
+<script src="js/templates.js"></script>
 <script src="js/theme.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/calculator.js"></script>
@@ -401,6 +447,8 @@
 <script src="js/dashboard.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  /* applyTheme SIEMPRE corre — fuera del try para que un error posterior no lo omita */
+  applyTheme();
   try {
     var marginSlider = document.getElementById('calc-margin');
     if (marginSlider) {
@@ -410,8 +458,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     document.querySelectorAll('.m3-fab').forEach(function(f) { f.style.display = 'none'; });
     populateSelects();
-    initCalcValidation();
-    applyTheme();
     showPage('dashboard'); /* Siempre inicia en dashboard */
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(function(){});
   } catch(e) {

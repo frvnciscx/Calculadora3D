@@ -6,58 +6,12 @@ function renderMaterials() {
     return;
   }
   const cur = config.currency;
-  el.innerHTML = materials.map(m => `
-    <div class="m3-list-item">
-      <div class="leading"><span class="material-symbols-rounded">category</span></div>
-      <div class="content">
-        <h3>${m.name}</h3>
-        <p>${cur}${m.costPerKg}/kg · ${m.type} · ${m.density} g/cm³</p>
-      </div>
-      <div class="actions">
-        <button class="m3-btn-text m3-btn-sm" onclick="showMaterialModal('${m.id}')">
-          <span class="material-symbols-rounded" style="font-size:18px">edit</span>
-        </button>
-        <button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteMaterial('${m.id}')">
-          <span class="material-symbols-rounded" style="font-size:18px">delete</span>
-        </button>
-      </div>
-    </div>
-  `).join('');
+  el.innerHTML = materials.map(m => tplMaterialItem(m, cur)).join('');
 }
 
 function showMaterialModal(editId) {
   const e = editId ? materials.find(m => m.id === editId) : null;
-  document.getElementById('modal-container').innerHTML = `
-    <div class="m3-scrim" onclick="closeModal()"></div>
-    <div class="m3-bottom-sheet">
-      <div class="m3-drag-handle"></div>
-      <h2>${e ? 'Editar' : 'Nuevo'} material</h2>
-      <div class="m3-field">
-        <input type="text" id="mod-m-name" value="${e ? e.name : ''}" placeholder=" ">
-        <label>Nombre</label>
-      </div>
-      <div class="flex-row">
-        <div class="m3-field">
-          <input type="number" id="mod-m-cost" value="${e ? e.costPerKg : ''}" placeholder=" " min="0" step="0.01">
-          <label>Costo/kg</label>
-        </div>
-        <div class="m3-field">
-          <input type="number" id="mod-m-density" value="${e ? e.density : '1.24'}" placeholder=" " min="0" step="0.01">
-          <label>Densidad (g/cm³)</label>
-        </div>
-      </div>
-      <div class="m3-field">
-        <select id="mod-m-type">
-          <option value="FDM" ${e && e.type === 'FDM' ? 'selected' : ''}>FDM (Filamento)</option>
-          <option value="Resina" ${e && e.type === 'Resina' ? 'selected' : ''}>Resina</option>
-        </select>
-        <label>Tipo</label>
-      </div>
-      <div class="m3-sheet-actions">
-        <button class="m3-btn-outlined" onclick="closeModal()">Cancelar</button>
-        <button class="m3-btn-filled" onclick="saveMaterial('${editId || ''}')">Guardar</button>
-      </div>
-    </div>`;
+  document.getElementById('modal-container').innerHTML = tplMaterialModal(e, editId);
 }
 
 function saveMaterial(editId) {

@@ -13,7 +13,11 @@ const DEF_CONFIG = {
   bizQrUrl: '',
   theme: 'dark',
   lastPrinterId: '',
-  lastMaterialId: ''
+  lastMaterialId: '',
+  /* Resina — post-proceso */
+  ipaLiterCost: 80,      /* Costo del litro de IPA (MXN) */
+  ipaMlPerPrint: 150,    /* ml de IPA usados por impresión */
+  resinSupportPct: 20    /* % de soporte sobre el peso base */
 };
 
 const DEF_QUOTE_STYLE = {

@@ -12,47 +12,7 @@ function renderInventory() {
   var cur = config.currency || '$';
 
   el.innerHTML = inventory.map(function(item, i) {
-    var total   = parseFloat(item.totalG)     || 0;
-    var remain  = parseFloat(item.remainingG) || 0;
-    if (remain > total) remain = total;
-    var pct     = total > 0 ? Math.round((remain / total) * 100) : 0;
-    var used    = total - remain;
-
-    /* Color indicator */
-    var barColor = pct > 50 ? 'var(--accent-mint)' : pct > 20 ? '#F9A825' : 'var(--md-error)';
-    var alertIcon = pct <= 20 ? '<span class="material-symbols-rounded" style="color:var(--md-error);font-size:16px;margin-left:4px" title="Stock bajo">warning</span>' : '';
-
-    return '<div class="inv-card">' +
-      '<div class="inv-header">' +
-        '<div class="inv-info">' +
-          '<div class="inv-name">' + esc(item.material) + alertIcon + '</div>' +
-          '<div class="inv-sub">' + esc(item.brand || '') + (item.color ? ' &middot; ' + esc(item.color) : '') + '</div>' +
-        '</div>' +
-        '<div class="inv-weight-block">' +
-          '<div class="inv-weight-val">' + remain.toFixed(0) + '<span class="inv-weight-unit">g</span></div>' +
-          '<div class="inv-weight-sub">de ' + total.toFixed(0) + 'g</div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="inv-bar-wrap">' +
-        '<div class="inv-bar" style="width:' + pct + '%;background:' + barColor + '"></div>' +
-      '</div>' +
-      '<div class="inv-stats">' +
-        '<span>' + pct + '% restante</span>' +
-        '<span>' + used.toFixed(0) + 'g usado</span>' +
-        (item.costPerKg ? '<span>' + cur + ((remain / 1000) * item.costPerKg).toFixed(2) + ' en stock</span>' : '') +
-      '</div>' +
-      '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
-        '<button class="m3-btn-text m3-btn-sm" onclick="showDeductModal(' + i + ')">' +
-          '<span class="material-symbols-rounded" style="font-size:16px">remove</span> Descontar' +
-        '</button>' +
-        '<button class="m3-btn-text m3-btn-sm" onclick="showInventoryModal(' + i + ')">' +
-          '<span class="material-symbols-rounded" style="font-size:16px">edit</span> Editar' +
-        '</button>' +
-        '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteInventory(' + i + ')">' +
-          '<span class="material-symbols-rounded" style="font-size:16px">delete</span>' +
-        '</button>' +
-      '</div>' +
-    '</div>';
+    return tplInventoryCard(item, i, cur);
   }).join('');
 }
 
@@ -68,44 +28,7 @@ function showInventoryModal(editIndex) {
   }).join('');
   if (!materials.length) matOptions = '<option value="">Sin materiales</option>';
 
-  document.getElementById('modal-container').innerHTML =
-    '<div class="m3-scrim" onclick="closeModal()"></div>' +
-    '<div class="m3-bottom-sheet">' +
-      '<div class="m3-drag-handle"></div>' +
-      '<h2>' + title + '</h2>' +
-      '<div class="flex-row">' +
-        '<div class="m3-field" style="flex:2">' +
-          '<select id="inv-material">' + matOptions + '</select>' +
-          '<label for="inv-material">Material</label>' +
-        '</div>' +
-        '<div class="m3-field optional" style="flex:1">' +
-          '<input type="text" id="inv-color" placeholder=" " value="' + esc(item ? item.color || '' : '') + '">' +
-          '<label for="inv-color">Color</label>' +
-        '</div>' +
-      '</div>' +
-      '<div class="m3-field optional">' +
-        '<input type="text" id="inv-brand" placeholder=" " value="' + esc(item ? item.brand || '' : '') + '">' +
-        '<label for="inv-brand">Marca</label>' +
-      '</div>' +
-      '<div class="flex-row">' +
-        '<div class="m3-field" style="flex:1">' +
-          '<input type="number" id="inv-total" placeholder=" " inputmode="decimal" min="1" step="1" value="' + (item ? item.totalG || '' : '1000') + '">' +
-          '<label for="inv-total">Peso total (g)</label>' +
-        '</div>' +
-        '<div class="m3-field" style="flex:1">' +
-          '<input type="number" id="inv-remaining" placeholder=" " inputmode="decimal" min="0" step="1" value="' + (item ? item.remainingG || '' : '1000') + '">' +
-          '<label for="inv-remaining">Restante (g)</label>' +
-        '</div>' +
-      '</div>' +
-      '<div class="m3-field optional">' +
-        '<input type="number" id="inv-cost" placeholder=" " inputmode="decimal" min="0" step="1" value="' + (item ? item.costPerKg || '' : '') + '">' +
-        '<label for="inv-cost">Costo por kg (opcional)</label>' +
-      '</div>' +
-      '<div class="m3-sheet-actions">' +
-        '<button class="m3-btn-outlined" onclick="closeModal()">Cancelar</button>' +
-        '<button class="m3-btn-filled" onclick="saveInventory(' + (editIndex != null ? editIndex : 'null') + ')">Guardar</button>' +
-      '</div>' +
-    '</div>';
+  document.getElementById('modal-container').innerHTML = tplInventoryModal(item, editIndex, matOptions);
 }
 
 /* ── Guardar filamento ───────────────────────────────────────────── */
@@ -151,24 +74,7 @@ function saveInventory(editIndex) {
 function showDeductModal(i) {
   var item = inventory[i]; if (!item) return;
 
-  document.getElementById('modal-container').innerHTML =
-    '<div class="m3-scrim" onclick="closeModal()"></div>' +
-    '<div class="m3-bottom-sheet">' +
-      '<div class="m3-drag-handle"></div>' +
-      '<h2>Descontar filamento</h2>' +
-      '<p style="font-size:14px;color:var(--md-on-surface-variant);margin-bottom:16px">' +
-        esc(item.material) + (item.color ? ' ' + esc(item.color) : '') +
-        ' &mdash; Restante: ' + (parseFloat(item.remainingG)||0).toFixed(0) + 'g' +
-      '</p>' +
-      '<div class="m3-field">' +
-        '<input type="number" id="deduct-g" placeholder=" " inputmode="decimal" min="1" step="0.1">' +
-        '<label for="deduct-g">Gramos a descontar</label>' +
-      '</div>' +
-      '<div class="m3-sheet-actions">' +
-        '<button class="m3-btn-outlined" onclick="closeModal()">Cancelar</button>' +
-        '<button class="m3-btn-filled" onclick="deductInventory(' + i + ')">Descontar</button>' +
-      '</div>' +
-    '</div>';
+  document.getElementById('modal-container').innerHTML = tplDeductModal(item, i);
 }
 
 function deductInventory(i) {

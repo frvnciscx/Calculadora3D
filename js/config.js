@@ -11,6 +11,13 @@ function loadConfig() {
   document.getElementById('cfg-biz-email').value = config.bizEmail || '';
   document.getElementById('cfg-biz-social').value = config.bizSocial || '';
   document.getElementById('cfg-biz-qr').value = config.bizQrUrl || '';
+  /* Resina */
+  var cfgIpaLiter = document.getElementById('cfg-ipa-liter-cost');
+  var cfgIpaMl    = document.getElementById('cfg-ipa-ml');
+  var cfgSupportPct = document.getElementById('cfg-resin-support-pct');
+  if (cfgIpaLiter)   cfgIpaLiter.value   = config.ipaLiterCost   || 80;
+  if (cfgIpaMl)      cfgIpaMl.value      = config.ipaMlPerPrint  || 150;
+  if (cfgSupportPct) cfgSupportPct.value = config.resinSupportPct || 20;
   applyTheme();
 }
 
@@ -40,6 +47,13 @@ function saveConfig() {
   config.bizEmail = document.getElementById('cfg-biz-email').value.trim();
   config.bizSocial = document.getElementById('cfg-biz-social').value.trim();
   config.bizQrUrl  = document.getElementById('cfg-biz-qr').value.trim();
+  /* Resina */
+  var ipaLiter    = parseFloat((document.getElementById('cfg-ipa-liter-cost') || {}).value);
+  var ipaMl       = parseFloat((document.getElementById('cfg-ipa-ml') || {}).value);
+  var supportPct  = parseFloat((document.getElementById('cfg-resin-support-pct') || {}).value);
+  if (!isNaN(ipaLiter)   && ipaLiter   >= 0) config.ipaLiterCost    = ipaLiter;
+  if (!isNaN(ipaMl)      && ipaMl      >= 0) config.ipaMlPerPrint   = ipaMl;
+  if (!isNaN(supportPct) && supportPct >= 0 && supportPct <= 100) config.resinSupportPct = supportPct;
   sv('config', config);
   snack('Configuración guardada ✓');
 }

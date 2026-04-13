@@ -92,63 +92,7 @@ function generateQuote() {
 function renderDraftModal() {
   var draft = draftQuote;
   if (!draft) return;
-  var cur = config.currency;
-
-  var grandTotal = draft.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
-
-  var itemsHTML = draft.items.map(function(item, i) {
-    return '<div class="draft-item">' +
-      '<div class="draft-item-info">' +
-        '<div class="draft-item-desc">' + esc(item.desc) + '</div>' +
-        '<div class="draft-item-sub">' + esc(item.printer) + ' &middot; ' + esc(item.material) + '</div>' +
-      '</div>' +
-      '<div class="draft-item-controls">' +
-        '<button class="draft-qty-btn" onclick="draftItemQty(' + i + ',-1)">&#8722;</button>' +
-        '<span class="draft-qty-val" id="dqi-' + i + '">' + item.qty + '</span>' +
-        '<button class="draft-qty-btn" onclick="draftItemQty(' + i + ',1)">&#43;</button>' +
-        '<span class="draft-item-price" id="dqp-' + i + '">' + cur + (item.totalCost * item.qty).toFixed(2) + '</span>' +
-        '<button class="draft-remove-btn" onclick="removeDraftItem(' + i + ')" title="Quitar">&#10005;</button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-
-  document.getElementById('modal-container').innerHTML =
-    '<div class="m3-scrim" onclick="closeModal()"></div>' +
-    '<div class="m3-bottom-sheet">' +
-      '<div class="m3-drag-handle"></div>' +
-      '<h2>Nueva cotizaci\u00f3n</h2>' +
-      '<div class="flex-row">' +
-        '<div class="m3-field" style="flex:2">' +
-          '<input type="text" id="q-client" placeholder=" " value="' + esc(draft.client || '') + '">' +
-          '<label for="q-client">Nombre del cliente</label>' +
-        '</div>' +
-        '<div class="m3-field optional" style="flex:1">' +
-          '<input type="tel" id="q-phone" inputmode="tel" placeholder=" " value="' + esc(draft.phone || '') + '">' +
-          '<label for="q-phone">Tel\u00e9fono</label>' +
-        '</div>' +
-      '</div>' +
-      '<div class="m3-field optional">' +
-        '<input type="text" id="q-notes" placeholder=" " value="' + esc(draft.notes || '') + '">' +
-        '<label for="q-notes">Notas adicionales</label>' +
-      '</div>' +
-      '<div class="draft-items-section">' +
-        '<div class="draft-items-header">' +
-          '<span>PRODUCTOS (' + draft.items.length + ')</span>' +
-          '<button class="m3-btn-text" style="font-size:13px;width:auto;padding:0 8px;height:36px" onclick="addMoreToQuote()">' +
-            '<span class="material-symbols-rounded" style="font-size:16px">add</span> Agregar producto' +
-          '</button>' +
-        '</div>' +
-        itemsHTML +
-      '</div>' +
-      '<div class="draft-total-row">' +
-        '<span>TOTAL</span>' +
-        '<span id="draft-grand-total">' + cur + grandTotal.toFixed(2) + '</span>' +
-      '</div>' +
-      '<div class="m3-sheet-actions">' +
-        '<button class="m3-btn-outlined" onclick="closeModal()">Cancelar</button>' +
-        '<button class="m3-btn-filled" onclick="saveQuote()">Generar cotizaci\u00f3n</button>' +
-      '</div>' +
-    '</div>';
+  document.getElementById('modal-container').innerHTML = tplDraftModal(draft, config.currency);
 }
 
 /* Ajustar cantidad de un ítem en el borrador */
@@ -260,76 +204,7 @@ function renderQuotes() {
   }
 
   el.innerHTML = filtered.map(function(q) {
-    var i = quotes.indexOf(q);
-    var total = q.grandTotal != null ? q.grandTotal : (q.totalWithQty != null ? q.totalWithQty : (q.totalCost || 0));
-    var itemCount = q.items ? q.items.length : 1;
-    var firstItem = q.items ? q.items[0] : q;
-    var status = q.status || 'pendiente';
-
-    var chipsHTML = itemCount > 1
-      ? '<span class="hist-chip">' + itemCount + ' productos</span>' +
-        '<span class="hist-chip">' + esc(firstItem.desc) + '\u2026</span>' +
-        '<span class="hist-chip">' + esc(firstItem.material) + '</span>'
-      : '<span class="hist-chip">' + esc(firstItem.desc || q.desc || '') + '</span>' +
-        '<span class="hist-chip">' + esc(firstItem.material || q.material || '') + '</span>';
-
-    var statusHTML = '<span class="status-badge status-' + status + '">' + statusLabel(status) + '</span>';
-
-    var waBtn = (q.phone || config.bizPhone)
-      ? '<button class="m3-btn-text m3-btn-sm" style="color:#25D366" onclick="whatsappQuote(' + i + ')">' +
-          '<span class="material-symbols-rounded" style="font-size:16px">chat</span> WA' +
-        '</button>'
-      : '';
-
-    var statusBtns = '';
-    if (status !== 'aceptada') {
-      statusBtns += '<button class="m3-btn-text m3-btn-sm" style="color:var(--accent-mint)" onclick="setQuoteStatus(' + i + ',\'aceptada\')">' +
-        '<span class="material-symbols-rounded" style="font-size:16px">check_circle</span> Aceptar' +
-      '</button>';
-    }
-    if (status !== 'rechazada') {
-      statusBtns += '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="setQuoteStatus(' + i + ',\'rechazada\')">' +
-        '<span class="material-symbols-rounded" style="font-size:16px">cancel</span> Rechazar' +
-      '</button>';
-    }
-    if (status !== 'pendiente') {
-      statusBtns += '<button class="m3-btn-text m3-btn-sm" onclick="setQuoteStatus(' + i + ',\'pendiente\')">' +
-        '<span class="material-symbols-rounded" style="font-size:16px">schedule</span> Pendiente' +
-      '</button>';
-    }
-
-    return '<div class="hist-item">' +
-      '<div class="hist-header">' +
-        '<div>' +
-          '<div style="display:flex;align-items:center;gap:8px;">' +
-            '<div style="font-size:12px;color:var(--md-primary);font-weight:500">' + esc(q.quoteNum) + '</div>' +
-            statusHTML +
-          '</div>' +
-          '<div class="hist-desc">' + esc(q.client) + '</div>' +
-          '<div class="hist-date">' + new Date(q.quoteDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) + '</div>' +
-        '</div>' +
-        '<div class="hist-total">' + cur + total.toFixed(2) + '</div>' +
-      '</div>' +
-      '<div class="hist-chips">' + chipsHTML + '</div>' +
-      '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
-        '<button class="m3-btn-text m3-btn-sm" onclick="viewQuote(' + i + ')">' +
-          '<span class="material-symbols-rounded" style="font-size:16px">visibility</span> Ver' +
-        '</button>' +
-        '<button class="m3-btn-text m3-btn-sm" onclick="shareQuote(' + i + ')">' +
-          '<span class="material-symbols-rounded" style="font-size:16px">share</span> Compartir' +
-        '</button>' +
-        waBtn +
-        '<button class="m3-btn-text m3-btn-sm" onclick="duplicateQuote(' + i + ')">' +
-          '<span class="material-symbols-rounded" style="font-size:16px">content_copy</span> Duplicar' +
-        '</button>' +
-        '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteQuote(' + i + ')">' +
-          '<span class="material-symbols-rounded" style="font-size:16px">delete</span>' +
-        '</button>' +
-      '</div>' +
-      '<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;border-top:1px solid var(--md-outline);padding-top:8px">' +
-        statusBtns +
-      '</div>' +
-    '</div>';
+    return tplQuoteCard(q, quotes.indexOf(q), cur);
   }).join('');
 }
 
@@ -909,5 +784,40 @@ function exportQuotePDF(i) {
 function deleteQuote(i) {
   m3Confirm('\u00bfEliminar cotizaci\u00f3n?', function() {
     quotes.splice(i, 1); sv('quotes', quotes); renderQuotes();
+  });
+}
+
+/* ── Enviar cotización a Notion ──────────────────────────────── */
+function sendToNotion(i) {
+  var q = quotes[i]; if (!q) return;
+  var btn = document.getElementById('notion-btn-' + i);
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando\u2026'; }
+
+  fetch('/api/notion', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ quote: q })
+  })
+  .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+  .then(function(r) {
+    if (r.ok) {
+      snack('\u2713 Enviado a Notion: ' + q.quoteNum);
+      /* Guardar el ID de página Notion en la cotización */
+      q.notionPageId = r.data.notionPageId;
+      q.notionSyncedAt = new Date().toISOString();
+      sv('quotes', quotes);
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 100 100" fill="currentColor" style="vertical-align:middle;margin-right:4px"><path d="M8 7c0-2.8 2.2-5 5-5h60l19 19v72c0 2.8-2.2 5-5 5H13c-2.8 0-5-2.2-5-5V7z" fill="none" stroke="currentColor" stroke-width="8"/><path d="M73 2v19h19" fill="none" stroke="currentColor" stroke-width="8"/><line x1="25" y1="40" x2="75" y2="40" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><line x1="25" y1="58" x2="75" y2="58" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><line x1="25" y1="76" x2="55" y2="76" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg>\u2713 Sincronizado';
+        btn.style.color = 'var(--accent-mint)';
+      }
+    } else {
+      snack('Error Notion: ' + (r.data.error || 'Revisa la configuraci\u00f3n'));
+      if (btn) { btn.disabled = false; btn.textContent = 'Notion'; }
+    }
+  })
+  .catch(function(err) {
+    snack('Error de red al conectar con Notion');
+    if (btn) { btn.disabled = false; btn.textContent = 'Notion'; }
   });
 }

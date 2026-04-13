@@ -8,30 +8,7 @@ function renderHistory() {
   }
   var cur = config.currency;
   el.innerHTML = history.map(function(h, i) {
-    return '<div class="hist-item">' +
-      '<div class="hist-header">' +
-        '<div>' +
-          '<div class="hist-desc">' + esc(h.desc) + '</div>' +
-          '<div class="hist-date">' + new Date(h.date).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) + '</div>' +
-        '</div>' +
-        '<div class="hist-total">' + cur + h.totalCost.toFixed(2) + '</div>' +
-      '</div>' +
-      '<div class="hist-chips">' +
-        '<span class="hist-chip">' + esc(h.printer) + '</span>' +
-        '<span class="hist-chip">' + esc(h.material) + '</span>' +
-        '<span class="hist-chip">' + h.weight + 'g</span>' +
-        '<span class="hist-chip">' + h.timeH + 'hrs</span>' +
-        '<span class="hist-chip">Margen ' + h.margin + '%</span>' +
-      '</div>' +
-      '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
-        '<button class="m3-btn-text m3-btn-sm" onclick="reuseCalc(' + i + ')">' +
-          '<span class="material-symbols-rounded" style="font-size:16px">replay</span> Reusar' +
-        '</button>' +
-        '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteHistoryItem(' + i + ')">' +
-          '<span class="material-symbols-rounded" style="font-size:16px">delete</span>' +
-        '</button>' +
-      '</div>' +
-    '</div>';
+    return tplHistoryItem(h, i, cur);
   }).join('');
 }
 

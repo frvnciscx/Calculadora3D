@@ -27,12 +27,36 @@ function calculate(silent) {
   }
 
   var cur = config.currency;
-  var matCost    = (weight / 1000) * material.costPerKg;
+
+  /* ── ¿Impresora de resina? ── */
+  var isResin = (printer.type === 'Resina');
+
+  /* Peso efectivo: si es resina se agrega % de soportes */
+  var supportPct = isResin ? (config.resinSupportPct || 20) : 0;
+  var effectiveWeight = weight * (1 + supportPct / 100);
+
+  var matCost    = (effectiveWeight / 1000) * material.costPerKg;
   var energyCost = (printer.power / 1000) * timeH * config.kwhCost;
   var laborCost  = designH * config.laborCostPerHour;
   var deprecCost = (printer.lifeHours > 0) ? (printer.cost / printer.lifeHours) * timeH : 0;
   var fixedCost  = (config.monthlyPrintHours > 0) ? (config.fixedMonthlyCost / config.monthlyPrintHours) * timeH : 0;
-  var subtotal   = matCost + energyCost + laborCost + deprecCost + fixedCost;
+
+  /* ── Post-proceso resina (IPA + UV) ── */
+  var ipaCost  = 0;
+  var uvCost   = 0;
+  if (isResin) {
+    /* IPA: ml × ($/L ÷ 1000) */
+    var mlPerPrint   = config.ipaMlPerPrint  || 150;
+    var ipaLiterCost = config.ipaLiterCost   || 80;
+    ipaCost = mlPerPrint * (ipaLiterCost / 1000);
+
+    /* Elegoo Mercury Plus: ~24W×5min lavado + ~36W×3min curado = 0.0038 kWh */
+    var washKwh  = (24 / 1000) * (5 / 60);   /* ≈ 0.002 kWh */
+    var cureKwh  = (36 / 1000) * (3 / 60);   /* ≈ 0.0018 kWh */
+    uvCost = (washKwh + cureKwh) * config.kwhCost;
+  }
+
+  var subtotal   = matCost + energyCost + laborCost + deprecCost + fixedCost + ipaCost + uvCost;
   var wasteCost  = subtotal * (config.wastePercent / 100);
   var baseCost   = subtotal + wasteCost;
   var totalCost  = baseCost * (1 + margin / 100);
@@ -45,6 +69,21 @@ function calculate(silent) {
   document.getElementById('r-waste').textContent    = cur + wasteCost.toFixed(2);
   document.getElementById('result-base').textContent = cur +baseCost.toFixed(2);
   document.getElementById('result-total').textContent = cur + totalCost.toFixed(2);
+
+  /* ── Bloque de post-proceso resina ── */
+  var resinBlock = document.getElementById('r-resin-block');
+  if (resinBlock) {
+    if (isResin) {
+      document.getElementById('r-resin-weight').textContent =
+        effectiveWeight.toFixed(1) + 'g (' + weight.toFixed(1) + 'g + ' + supportPct + '% soportes)';
+      document.getElementById('r-ipa').textContent   = cur + ipaCost.toFixed(2);
+      document.getElementById('r-uv').textContent    = cur + uvCost.toFixed(2);
+      resinBlock.classList.remove('hidden');
+    } else {
+      resinBlock.classList.add('hidden');
+    }
+  }
+
   document.getElementById('calc-result').classList.remove('hidden');
 
   /* Resetear botón "Agregar a orden" si estaba en estado "agregado" */
@@ -61,13 +100,19 @@ function calculate(silent) {
   sv('config', config);
 
   saveLastCalc({
-    desc:      document.getElementById('calc-desc').value || 'Sin descripción',
+    desc:           document.getElementById('calc-desc').value || 'Sin descripción',
     weight, timeH, designH, margin,
-    printer:   printer.name,
-    material:  material.name,
-    printerId: printer.id,
-    materialId: material.id,
-    matCost, energyCost, laborCost, deprecCost, fixedCost, wasteCost,
+    printer:        printer.name,
+    material:       material.name,
+    printerId:      printer.id,
+    materialId:     material.id,
+    isResin:        isResin,
+    effectiveWeight: isResin ? effectiveWeight : weight,
+    supportPct:     supportPct,
+    matCost, energyCost, laborCost, deprecCost, fixedCost,
+    ipaCost:        ipaCost,
+    uvCost:         uvCost,
+    wasteCost,
     baseCost, totalCost,
     date: new Date().toISOString()
   });
@@ -89,10 +134,51 @@ function initCalcLive() {
   liveSelects.forEach(function(id) {
     var el = document.getElementById(id);
     if (el && !el._liveCalc) {
-      el.addEventListener('change', function() { calculate(true); });
+      el.addEventListener('change', function() {
+        if (id === 'calc-printer') {
+          _filterMaterials();   /* actualiza materiales compatibles */
+          _updateResinParamsBlock();
+        }
+        calculate(true);
+      });
       el._liveCalc = true;
     }
   });
+}
+
+/* ── Mostrar/ocultar bloque resina según impresora seleccionada ── */
+function _updateResinParamsBlock() {
+  var printerEl = document.getElementById('calc-printer');
+  var block     = document.getElementById('calc-resin-params');
+  if (!block || !printerEl) return;
+
+  var printer = printers.find(function(p) { return p.id === printerEl.value; });
+  var isResin = printer && printer.type === 'Resina';
+
+  if (isResin) {
+    /* Rellenar con valores actuales de config */
+    var fldSupport = document.getElementById('cfg-resin-support-pct');
+    var fldMl      = document.getElementById('cfg-ipa-ml');
+    var fldLiter   = document.getElementById('cfg-ipa-liter-cost');
+    if (fldSupport && !fldSupport.value) fldSupport.value = config.resinSupportPct || 20;
+    if (fldMl      && !fldMl.value)      fldMl.value      = config.ipaMlPerPrint   || 150;
+    if (fldLiter   && !fldLiter.value)   fldLiter.value   = config.ipaLiterCost    || 80;
+    block.classList.remove('hidden');
+  } else {
+    block.classList.add('hidden');
+  }
+}
+
+/* ── Guardar cambios de resina en config al vuelo ─────────────── */
+function saveResinParams() {
+  var fldSupport = parseFloat((document.getElementById('cfg-resin-support-pct') || {}).value);
+  var fldMl      = parseFloat((document.getElementById('cfg-ipa-ml')            || {}).value);
+  var fldLiter   = parseFloat((document.getElementById('cfg-ipa-liter-cost')    || {}).value);
+  if (!isNaN(fldSupport) && fldSupport >= 0 && fldSupport <= 100) config.resinSupportPct = fldSupport;
+  if (!isNaN(fldMl)      && fldMl >= 0)                           config.ipaMlPerPrint   = fldMl;
+  if (!isNaN(fldLiter)   && fldLiter >= 0)                        config.ipaLiterCost    = fldLiter;
+  sv('config', config);
+  calculate(true);  /* recalcular en tiempo real */
 }
 
 /* ── Guardar en historial ─────────────────────────────────────── */
@@ -126,8 +212,25 @@ function restoreCalcResult() {
   document.getElementById('r-deprec').textContent         = cur + lastCalc.deprecCost.toFixed(2);
   document.getElementById('r-fixed').textContent          = cur + lastCalc.fixedCost.toFixed(2);
   document.getElementById('r-waste').textContent          = cur + lastCalc.wasteCost.toFixed(2);
-  document.getElementById('result-base').textContent      = cur +lastCalc.baseCost.toFixed(2);
+  document.getElementById('result-base').textContent      = cur + lastCalc.baseCost.toFixed(2);
   document.getElementById('result-total').textContent     = cur + lastCalc.totalCost.toFixed(2);
+
+  /* Restaurar bloque resina si aplica */
+  var resinBlock = document.getElementById('r-resin-block');
+  if (resinBlock) {
+    if (lastCalc.isResin) {
+      var ew = lastCalc.effectiveWeight || lastCalc.weight;
+      var sp = lastCalc.supportPct || 20;
+      document.getElementById('r-resin-weight').textContent =
+        ew.toFixed(1) + 'g (' + lastCalc.weight.toFixed(1) + 'g + ' + sp + '% soportes)';
+      document.getElementById('r-ipa').textContent  = cur + (lastCalc.ipaCost || 0).toFixed(2);
+      document.getElementById('r-uv').textContent   = cur + (lastCalc.uvCost  || 0).toFixed(2);
+      resinBlock.classList.remove('hidden');
+    } else {
+      resinBlock.classList.add('hidden');
+    }
+  }
+
   document.getElementById('calc-result').classList.remove('hidden');
 }
 

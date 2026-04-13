@@ -57,7 +57,7 @@ function showPage(name) {
   if (name === 'quotes')       renderQuotes();
   if (name === 'clients')      { renderClients();    document.getElementById('fab-clients').style.display = 'flex'; }
   if (name === 'config')       loadConfig();
-  if (name === 'calc')         { populateSelects(); restoreCalcResult(); refreshDraftIndicator(); initCalcLive(); renderPresets(); }
+  if (name === 'calc')         { populateSelects(); restoreCalcResult(); refreshDraftIndicator(); initCalcLive(); renderPresets(); _updateResinParamsBlock(); }
   if (name === 'history')      renderHistory();
   if (name === 'quote-editor') loadQuoteEditor();
 }
@@ -66,8 +66,34 @@ function populateSelects() {
   const ps = document.getElementById('calc-printer');
   const ms = document.getElementById('calc-material');
   const pv = ps.value, mv = ms.value;
+
   ps.innerHTML = printers.map(p => `<option value="${p.id}">${p.name} (${p.power}W)</option>`).join('');
-  ms.innerHTML = materials.map(m => `<option value="${m.id}">${m.name} (${config.currency}${m.costPerKg}/kg)</option>`).join('');
   if (pv) ps.value = pv;
-  if (mv) ms.value = mv;
+
+  /* Filtrar materiales según tipo de impresora seleccionada */
+  _filterMaterials(mv);
+}
+
+/* Filtra el select de materiales según el tipo de la impresora activa */
+function _filterMaterials(keepMaterialId) {
+  const ps = document.getElementById('calc-printer');
+  const ms = document.getElementById('calc-material');
+  if (!ps || !ms) return;
+
+  const printer     = printers.find(p => p.id === ps.value);
+  const printerType = printer ? printer.type : null;
+
+  /* Si la impresora tiene tipo definido, mostrar solo materiales compatibles */
+  const filtered = printerType
+    ? materials.filter(m => m.type === printerType)
+    : materials;
+
+  ms.innerHTML = filtered.length
+    ? filtered.map(m => `<option value="${m.id}">${m.name} (${config.currency}${m.costPerKg}/kg)</option>`).join('')
+    : `<option value="">Sin materiales para ${printerType}</option>`;
+
+  /* Intentar conservar la selección previa si sigue siendo compatible */
+  if (keepMaterialId && filtered.some(m => m.id === keepMaterialId)) {
+    ms.value = keepMaterialId;
+  }
 }
