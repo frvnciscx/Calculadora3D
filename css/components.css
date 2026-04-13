@@ -301,11 +301,15 @@
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   border: 1px solid var(--md-outline);
   border-bottom: none;
-  padding: 0 24px 32px;
-  max-height: 92vh; overflow-y: auto; z-index: 201;
+  /* safe-area-inset-bottom: espacio para la barra de gestos de iOS/Android */
+  padding: 0 24px calc(env(safe-area-inset-bottom, 0px) + 32px);
+  max-height: 92dvh; overflow-y: auto; z-index: 201;
   animation: sfSlideUp 0.35s var(--ease-out);
   box-shadow: var(--shadow-modal);
   transition: background-color 0.2s var(--ease-out);
+  /* Cursor de agarre en la zona del handle */
+  touch-action: pan-y;
+  will-change: transform;
 }
 @keyframes sfSlideUp {
   from { transform: translateY(100%); opacity: 0.8; }
