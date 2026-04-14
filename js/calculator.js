@@ -56,7 +56,11 @@ function calculate(silent) {
     uvCost = (washKwh + cureKwh) * config.kwhCost;
   }
 
-  var subtotal   = matCost + energyCost + laborCost + deprecCost + fixedCost + ipaCost + uvCost;
+  /* ── Post-procesado (pintura, primer, barniz, tiempo pintado) ── */
+  var pp = _getPostProcData();
+  var postProcCost = pp ? pp.totalPostCost : 0;
+
+  var subtotal   = matCost + energyCost + laborCost + deprecCost + fixedCost + ipaCost + uvCost + postProcCost;
   var wasteCost  = subtotal * (config.wastePercent / 100);
   var baseCost   = subtotal + wasteCost;
   var totalCost  = baseCost * (1 + margin / 100);
@@ -69,6 +73,9 @@ function calculate(silent) {
   document.getElementById('r-waste').textContent    = cur + wasteCost.toFixed(2);
   document.getElementById('result-base').textContent = cur +baseCost.toFixed(2);
   document.getElementById('result-total').textContent = cur + totalCost.toFixed(2);
+
+  /* ── Bloque de post-procesado (pintura) ── */
+  _renderPostProcBlock(pp, cur);
 
   /* ── Bloque de post-proceso resina ── */
   var resinBlock = document.getElementById('r-resin-block');
@@ -112,6 +119,8 @@ function calculate(silent) {
     matCost, energyCost, laborCost, deprecCost, fixedCost,
     ipaCost:        ipaCost,
     uvCost:         uvCost,
+    postProc:       pp,
+    postProcCost:   postProcCost,
     wasteCost,
     baseCost, totalCost,
     date: new Date().toISOString()
@@ -136,7 +145,7 @@ function initCalcLive() {
     if (el && !el._liveCalc) {
       el.addEventListener('change', function() {
         if (id === 'calc-printer') {
-          _filterMaterials();   /* actualiza materiales compatibles */
+          _filterMaterials();
           _updateResinParamsBlock();
         }
         calculate(true);
@@ -144,6 +153,21 @@ function initCalcLive() {
       el._liveCalc = true;
     }
   });
+
+  /* Sincronización bidireccional: slider ↔ input numérico de margen */
+  var rangeEl  = document.getElementById('calc-margin');
+  var numEl    = document.getElementById('calc-margin-num');
+  if (rangeEl && numEl && !rangeEl._marginSync) {
+    rangeEl.addEventListener('input', function() {
+      numEl.value = rangeEl.value;
+    });
+    numEl.addEventListener('input', function() {
+      var v = Math.min(200, Math.max(0, parseFloat(numEl.value) || 0));
+      rangeEl.value = v;
+      calculate(true);
+    });
+    rangeEl._marginSync = true;
+  }
 }
 
 /* ── Mostrar/ocultar bloque resina según impresora seleccionada ── */
@@ -201,6 +225,8 @@ function restoreCalcResult() {
   document.getElementById('calc-time').value              = lastCalc.timeH || '';
   document.getElementById('calc-design-time').value       = lastCalc.designH || 0;
   document.getElementById('calc-margin').value            = lastCalc.margin || 50;
+  var mnEl = document.getElementById('calc-margin-num');
+  if (mnEl) mnEl.value = lastCalc.margin || 50;
   document.getElementById('calc-margin-display').textContent = (lastCalc.margin || 50) + '%';
   var ps = document.getElementById('calc-printer');
   var ms = document.getElementById('calc-material');
@@ -261,6 +287,8 @@ function applyPreset(i) {
   if (ms) ms.value = p.materialId;
   if (mr) mr.value = p.margin;
   if (md) md.textContent = p.margin + '%';
+  var mnEl = document.getElementById('calc-margin-num');
+  if (mnEl) mnEl.value = p.margin;
   calculate(true);
   snack('Config aplicada: ' + p.name);
 }
@@ -291,6 +319,130 @@ function deletePreset(i) {
   presets.splice(i, 1);
   sv('presets', presets);
   renderPresets();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   POST-PROCESADO — pintura, primer, barniz, tiempo de pintado
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Toggle header de la tarjeta (clic en cualquier parte excepto el switch) */
+function togglePostProc(event) {
+  var cb = document.getElementById('postproc-enabled');
+  if (!cb) return;
+  cb.checked = !cb.checked;
+  onPostProcToggle();
+}
+
+/* Mostrar/ocultar campos al activar el switch */
+function onPostProcToggle() {
+  var cb     = document.getElementById('postproc-enabled');
+  var fields = document.getElementById('postproc-fields');
+  if (!fields) return;
+  if (cb && cb.checked) {
+    fields.classList.remove('hidden');
+    /* Si no hay colores todavía, agrega uno vacío por defecto */
+    var list = document.getElementById('paint-colors-list');
+    if (list && !list.children.length) addPaintColor();
+  } else {
+    fields.classList.add('hidden');
+  }
+  if (lastCalc) calculate(true);
+}
+
+/* Contador para IDs únicos de filas de color */
+var _paintColorId = 0;
+
+/* Agrega una fila de color de pintura */
+function addPaintColor() {
+  var list = document.getElementById('paint-colors-list');
+  if (!list) return;
+  var id = ++_paintColorId;
+  var row = document.createElement('div');
+  row.className = 'paint-color-row';
+  row.dataset.colorId = id;
+  row.innerHTML =
+    '<div class="m3-field" style="flex:2;margin:0">' +
+      '<input type="text" placeholder=" " class="paint-color-name">' +
+      '<label>Color</label>' +
+    '</div>' +
+    '<div class="m3-field" style="flex:1.5;margin:0">' +
+      '<input type="number" placeholder=" " min="0" step="0.01" inputmode="decimal" class="paint-color-cost" oninput="calculate(true)">' +
+      '<label>Costo</label>' +
+      '<span class="suffix">$</span>' +
+    '</div>' +
+    '<button class="paint-remove-btn" onclick="removePaintColor(this)" title="Quitar color">' +
+      '<span class="material-symbols-rounded">close</span>' +
+    '</button>';
+  list.appendChild(row);
+}
+
+/* Elimina una fila de color */
+function removePaintColor(btn) {
+  var row = btn.closest('.paint-color-row');
+  if (row) { row.remove(); calculate(true); }
+}
+
+/* Lee todos los datos de post-procesado del DOM */
+function _getPostProcData() {
+  var enabled = document.getElementById('postproc-enabled');
+  if (!enabled || !enabled.checked) return null;
+
+  var paints = [];
+  var rows = document.querySelectorAll('#paint-colors-list .paint-color-row');
+  rows.forEach(function(row) {
+    var nameEl = row.querySelector('.paint-color-name');
+    var costEl = row.querySelector('.paint-color-cost');
+    var cost   = parseFloat((costEl && costEl.value) || 0) || 0;
+    if (cost > 0 || (nameEl && nameEl.value.trim())) {
+      paints.push({ name: (nameEl ? nameEl.value.trim() : '') || 'Sin nombre', cost: cost });
+    }
+  });
+
+  var primerCost   = parseFloat((document.getElementById('postproc-primer')  || {}).value || 0) || 0;
+  var varnishCost  = parseFloat((document.getElementById('postproc-varnish') || {}).value || 0) || 0;
+  var paintingTimeH = parseFloat((document.getElementById('postproc-time')   || {}).value || 0) || 0;
+  var paintingLaborCost = paintingTimeH * (config.laborCostPerHour || 0);
+  var paintMatCost = paints.reduce(function(s, p) { return s + p.cost; }, 0);
+  var totalPostCost = paintMatCost + primerCost + varnishCost + paintingLaborCost;
+
+  return { paints, primerCost, varnishCost, paintingTimeH, paintingLaborCost, paintMatCost, totalPostCost };
+}
+
+/* Renderiza el bloque de post-procesado en resultados */
+function _renderPostProcBlock(pp, cur) {
+  var block = document.getElementById('r-postproc-block');
+  if (!block) return;
+
+  if (!pp || pp.totalPostCost === 0) {
+    block.classList.add('hidden');
+    return;
+  }
+
+  /* Filas de colores */
+  var rowsEl = document.getElementById('r-postproc-rows');
+  if (rowsEl) {
+    var html = '';
+    pp.paints.forEach(function(p) {
+      html += '<div class="resin-detail-row">' +
+        '<span class="resin-detail-lbl">🎨 ' + esc(p.name) + '</span>' +
+        '<span class="resin-detail-val">' + cur + p.cost.toFixed(2) + '</span>' +
+      '</div>';
+    });
+    if (pp.primerCost > 0) html +=
+      '<div class="resin-detail-row"><span class="resin-detail-lbl">Primer</span>' +
+      '<span class="resin-detail-val">' + cur + pp.primerCost.toFixed(2) + '</span></div>';
+    if (pp.varnishCost > 0) html +=
+      '<div class="resin-detail-row"><span class="resin-detail-lbl">Barniz</span>' +
+      '<span class="resin-detail-val">' + cur + pp.varnishCost.toFixed(2) + '</span></div>';
+    rowsEl.innerHTML = html;
+  }
+
+  var paintLaborEl  = document.getElementById('r-paint-labor');
+  var ppTotalEl     = document.getElementById('r-postproc-total');
+  if (paintLaborEl) paintLaborEl.textContent = cur + pp.paintingLaborCost.toFixed(2);
+  if (ppTotalEl)    ppTotalEl.textContent    = cur + pp.totalPostCost.toFixed(2);
+
+  block.classList.remove('hidden');
 }
 
 /* ── Helper: estado visual de un campo ───────────────────────────

@@ -17,7 +17,9 @@ const DEF_CONFIG = {
   /* Resina — post-proceso */
   ipaLiterCost: 80,      /* Costo del litro de IPA (MXN) */
   ipaMlPerPrint: 150,    /* ml de IPA usados por impresión */
-  resinSupportPct: 20    /* % de soporte sobre el peso base */
+  resinSupportPct: 20,   /* % de soporte sobre el peso base */
+  /* Costos fijos — desglose por categoría */
+  fixedCostItems: []     /* [{name:'Luz', amount:500}, ...] */
 };
 
 const DEF_QUOTE_STYLE = {

@@ -71,12 +71,36 @@ function addItemToDraft() {
   snack(n === 1 ? 'Producto agregado a la orden' : n + ' productos en la orden');
   refreshDraftIndicator();
 
-  /* Marcar el botón como "ya agregado" — resultado sigue visible para cotizar/guardar */
+  /* Limpiar campos para la siguiente pieza */
+  var fields = ['calc-desc', 'calc-weight', 'calc-time', 'calc-design-time'];
+  fields.forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.value = '';
+  });
+  _setFieldState('field-weight', 'helper-weight', 'neutral', 'Ej: 15g para un topper');
+  _setFieldState('field-time', 'helper-time', 'neutral', 'Ej: 1.5 hrs');
+  var resEl = document.getElementById('calc-result');
+  if (resEl) resEl.classList.add('hidden');
+  clearLastCalc();
+
+  /* Limpiar post-procesado si estaba activo */
+  var ppEnabled = document.getElementById('postproc-enabled');
+  if (ppEnabled && ppEnabled.checked) {
+    ppEnabled.checked = false;
+    var ppFields = document.getElementById('postproc-fields');
+    if (ppFields) ppFields.classList.add('hidden');
+    ['postproc-primer','postproc-varnish','postproc-time'].forEach(function(id) {
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    var colorList = document.getElementById('paint-colors-list');
+    if (colorList) colorList.innerHTML = '';
+  }
+
+  /* Rehabilitar el botón para la siguiente pieza */
   var btnAdd = document.getElementById('btn-add-item');
   if (btnAdd) {
-    btnAdd.classList.add('item-added');
-    btnAdd.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">check_circle</span> Agregado';
-    btnAdd.disabled = true;
+    btnAdd.classList.remove('item-added');
+    btnAdd.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">add_shopping_cart</span> Agregar a orden';
+    btnAdd.disabled = false;
   }
 }
 
@@ -95,6 +119,25 @@ function renderDraftModal() {
   document.getElementById('modal-container').innerHTML = tplDraftModal(draft, config.currency);
 }
 
+/* ── Cambio de descuento en el modal ──────────────────────────── */
+function onDiscountChange() {
+  if (!draftQuote) return;
+  var discountEl = document.getElementById('q-discount');
+  var discount   = Math.min(100, Math.max(0, parseFloat((discountEl && discountEl.value) || 0) || 0));
+  var cur        = config.currency;
+  var subtotal   = draftQuote.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+  var discountAmt = subtotal * (discount / 100);
+  var grandTotal  = subtotal - discountAmt;
+
+  draftQuote.discount = discount;
+  saveDraftQuote(draftQuote);
+
+  var amtEl   = document.getElementById('draft-discount-amt');
+  var totalEl = document.getElementById('draft-grand-total');
+  if (amtEl)   amtEl.textContent   = discountAmt > 0 ? '−' + cur + discountAmt.toFixed(2) : '—';
+  if (totalEl) totalEl.textContent = cur + grandTotal.toFixed(2);
+}
+
 /* Ajustar cantidad de un ítem en el borrador */
 function draftItemQty(i, delta) {
   if (!draftQuote) return;
@@ -103,14 +146,21 @@ function draftItemQty(i, delta) {
   item.qty = Math.max(1, (item.qty || 1) + delta);
   saveDraftQuote(draftQuote);
 
-  var cur = config.currency;
-  var grandTotal = draftQuote.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
-  var qtyEl   = document.getElementById('dqi-' + i);
-  var priceEl = document.getElementById('dqp-' + i);
-  var totalEl = document.getElementById('draft-grand-total');
-  if (qtyEl)   qtyEl.textContent   = item.qty;
-  if (priceEl) priceEl.textContent = cur + (item.totalCost * item.qty).toFixed(2);
-  if (totalEl) totalEl.textContent = cur + grandTotal.toFixed(2);
+  var cur      = config.currency;
+  var discount = draftQuote.discount || 0;
+  var subtotal = draftQuote.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+  var discAmt  = subtotal * (discount / 100);
+  var grandTotal = subtotal - discAmt;
+  var qtyEl    = document.getElementById('dqi-' + i);
+  var priceEl  = document.getElementById('dqp-' + i);
+  var subEl    = document.getElementById('draft-subtotal');
+  var amtEl    = document.getElementById('draft-discount-amt');
+  var totalEl  = document.getElementById('draft-grand-total');
+  if (qtyEl)    qtyEl.textContent    = item.qty;
+  if (priceEl)  priceEl.textContent  = cur + (item.totalCost * item.qty).toFixed(2);
+  if (subEl)    subEl.textContent    = cur + subtotal.toFixed(2);
+  if (amtEl)    amtEl.textContent    = discAmt > 0 ? '−' + cur + discAmt.toFixed(2) : '—';
+  if (totalEl)  totalEl.textContent  = cur + grandTotal.toFixed(2);
 }
 
 /* Quitar un ítem del borrador */
@@ -145,21 +195,30 @@ function saveQuote() {
   var client = clientEl ? clientEl.value.trim() : '';
   if (!client) { snack('Ingresa el nombre del cliente'); return; }
 
-  var phone = ((document.getElementById('q-phone') || {}).value || '').trim();
-  var notes = ((document.getElementById('q-notes') || {}).value || '').trim();
-  var items = draftQuote ? draftQuote.items : [];
-  var grandTotal = items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+  var phone    = ((document.getElementById('q-phone')    || {}).value || '').trim();
+  var notes    = ((document.getElementById('q-notes')    || {}).value || '').trim();
+  var discount = Math.min(100, Math.max(0, parseFloat(((document.getElementById('q-discount') || {}).value) || 0) || 0));
+  var items    = draftQuote ? draftQuote.items : [];
+  var subtotal = items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+  var discountAmt = subtotal * (discount / 100);
+  var grandTotal  = subtotal - discountAmt;
+  /* Base cost total para calcular ganancia en dashboard */
+  var totalBaseCost = items.reduce(function(s, it) { return s + (it.baseCost || 0) * (it.qty || 1); }, 0);
 
   var q = {
-    id:        Date.now().toString(),
-    quoteNum:  nextQuoteNum(),
-    quoteDate: new Date().toISOString(),
-    client:    client,
-    phone:     phone,
-    notes:     notes,
-    items:     items,
-    grandTotal: grandTotal,
-    status:    'pendiente'
+    id:           Date.now().toString(),
+    quoteNum:     nextQuoteNum(),
+    quoteDate:    new Date().toISOString(),
+    client:       client,
+    phone:        phone,
+    notes:        notes,
+    items:        items,
+    subtotal:     subtotal,
+    discount:     discount,
+    discountAmt:  discountAmt,
+    grandTotal:   grandTotal,
+    totalBaseCost: totalBaseCost,
+    status:       'pendiente'
   };
 
   quotes.unshift(q);

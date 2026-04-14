@@ -6,6 +6,7 @@ function loadConfig() {
   document.getElementById('cfg-fixed-monthly').value = config.fixedMonthlyCost || 0;
   document.getElementById('cfg-monthly-hours').value = config.monthlyPrintHours || 0;
   document.getElementById('cfg-waste').value = config.wastePercent || 0;
+  renderFixedCostItems();
   document.getElementById('cfg-biz-name').value = config.bizName || '';
   document.getElementById('cfg-biz-phone').value = config.bizPhone || '';
   document.getElementById('cfg-biz-email').value = config.bizEmail || '';
@@ -36,6 +37,22 @@ function saveConfig() {
     snack('Ingresa horas de impresión/mes para calcular costos fijos'); document.getElementById('cfg-monthly-hours').focus(); return;
   }
 
+  /* Leer ítems del desglose */
+  var fciRows = document.querySelectorAll('#fixed-cost-items-list .fci-row');
+  var fciItems = [];
+  fciRows.forEach(function(row) {
+    var nameEl   = row.querySelector('.fci-name');
+    var amountEl = row.querySelector('.fci-amount');
+    var name   = (nameEl   && nameEl.value.trim())   || '';
+    var amount = parseFloat((amountEl && amountEl.value) || 0) || 0;
+    if (name || amount > 0) fciItems.push({ name: name || 'Sin nombre', amount: amount });
+  });
+  /* Si hay ítems, el total es la suma; si no, usar el campo manual */
+  if (fciItems.length > 0) {
+    fixed = fciItems.reduce(function(s, it) { return s + it.amount; }, 0);
+  }
+  config.fixedCostItems = fciItems;
+
   config.kwhCost = kwh || 0;
   config.laborCostPerHour = labor || 0;
   config.currency = document.getElementById('cfg-currency').value;
@@ -56,6 +73,79 @@ function saveConfig() {
   if (!isNaN(supportPct) && supportPct >= 0 && supportPct <= 100) config.resinSupportPct = supportPct;
   sv('config', config);
   snack('Configuración guardada ✓');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COSTOS FIJOS — desglose por categoría
+   ═══════════════════════════════════════════════════════════════ */
+
+var _fciCounter = 0;
+
+/* Renderiza las filas desde config.fixedCostItems */
+function renderFixedCostItems() {
+  var list = document.getElementById('fixed-cost-items-list');
+  if (!list) return;
+  var items = config.fixedCostItems || [];
+  if (items.length === 0) {
+    list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = items.map(function(item, i) {
+    return _fciRow(item.name, item.amount);
+  }).join('');
+  updateFixedCostTotal();
+}
+
+/* Genera el HTML de una fila */
+function _fciRow(name, amount) {
+  var id = ++_fciCounter;
+  return '<div class="fci-row" data-fci="' + id + '">' +
+    '<div class="m3-field" style="flex:2;margin:0">' +
+      '<input type="text" placeholder=" " class="fci-name" value="' + esc(name || '') + '">' +
+      '<label>Categoría</label>' +
+    '</div>' +
+    '<div class="m3-field" style="flex:1.5;margin:0">' +
+      '<input type="number" placeholder=" " min="0" step="1" inputmode="decimal" ' +
+        'class="fci-amount" value="' + (amount || '') + '" oninput="updateFixedCostTotal()">' +
+      '<label>Monto</label>' +
+      '<span class="suffix">$</span>' +
+    '</div>' +
+    '<button class="paint-remove-btn" onclick="removeFCIRow(this)" title="Eliminar">' +
+      '<span class="material-symbols-rounded">close</span>' +
+    '</button>' +
+  '</div>';
+}
+
+/* Agrega una fila vacía */
+function addFixedCostItem() {
+  var list = document.getElementById('fixed-cost-items-list');
+  if (!list) return;
+  var div = document.createElement('div');
+  div.innerHTML = _fciRow('', '');
+  list.appendChild(div.firstChild);
+  /* Foco en el campo de nombre */
+  var nameEl = list.lastElementChild && list.lastElementChild.querySelector('.fci-name');
+  if (nameEl) nameEl.focus();
+}
+
+/* Elimina una fila */
+function removeFCIRow(btn) {
+  var row = btn.closest('.fci-row');
+  if (row) { row.remove(); updateFixedCostTotal(); }
+}
+
+/* Suma todos los montos y actualiza el campo total.
+   manualEdit=true: el usuario está editando el total directamente → no sobreescribir */
+function updateFixedCostTotal(manualEdit) {
+  if (manualEdit) return; /* el usuario escribe directo en el total */
+  var rows  = document.querySelectorAll('#fixed-cost-items-list .fci-row');
+  var total = 0;
+  rows.forEach(function(row) {
+    var amEl = row.querySelector('.fci-amount');
+    total += parseFloat((amEl && amEl.value) || 0) || 0;
+  });
+  var totalEl = document.getElementById('cfg-fixed-monthly');
+  if (totalEl && rows.length > 0) totalEl.value = total.toFixed(0);
 }
 
 /* ===== EXPORT / IMPORT ===== */

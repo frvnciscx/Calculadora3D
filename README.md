@@ -12,20 +12,31 @@ PWA para calcular costos de impresión 3D y generar cotizaciones profesionales.
 - Cálculo en tiempo real al escribir (peso, tiempo, impresora, material, margen)
 - Validación visual con helper text preventivo en campos requeridos
 - Presets de configuración rápida (guardar combinaciones impresora+material+margen)
-- Catálogo de productos con dos tipos: costo calculado (toppercakes) y tabla de precios (cortadores de galleta por tamaño)
+- Filtrado de materiales según tipo de impresora seleccionada (FDM / Resina)
+- Catálogo de productos con dos tipos: costo calculado y tabla de precios por tamaño
 - Exportar lista de precios a Excel
+
+### Impresión en resina
+- Bloque contextual "Post-proceso Resina" aparece automáticamente al seleccionar impresora tipo Resina
+- Peso efectivo = peso base + % de soportes (configurable, default 20%)
+- Costo de lavado IPA: ml por impresión × costo por litro (configurable)
+- Costo de curado UV: Elegoo Mercury Plus — 24W × 5 min lavado + 36W × 3 min curado ≈ 0.0038 kWh
+- Parámetros editables directamente en la calculadora, se guardan en config automáticamente
 
 ### Cotizaciones
 - Orden multi-producto con cantidades individuales
-- Estados: **pendiente** / **aceptada** / **rechazada** — con badge visual y cambio directo desde la lista
+- Estados: **pendiente** / **aceptada** / **rechazada** — badge visual y cambio directo desde la lista
 - Botón de WhatsApp con mensaje preformateado listo para enviar
 - Exportar a PDF, imagen compartible o texto plano
 - QR del negocio en cada cotización (configurar URL en Ajustes)
 - Búsqueda por cliente, número o producto
+- Sincronización con Notion: botón "Notion" en cotizaciones aceptadas → crea entrada en DB "Ventas 2026"
 
 ### Base de clientes
 - CRUD con nombre, teléfono, email y notas
-- Historial de cotizaciones y total cotizado por cliente
+- **Autocompletado** en el modal de cotización: al escribir el nombre sugiere clientes registrados y auto-rellena el teléfono
+- Vista expandible por cliente con tabs **Pendientes / Aceptadas**
+- Total cotizado y conteo de cotizaciones por cliente
 - Acceso rápido a WhatsApp desde la card
 
 ### Inventario de filamento
@@ -51,6 +62,25 @@ HTML + CSS + JS vanilla — sin frameworks ni build step.
 | html2canvas 1.4.1 | Exportar imagen | Lazy |
 | SheetJS 0.18.5 | Exportar Excel | Lazy |
 | qrcode-generator 1.4.4 | QR en cotizaciones | Lazy |
+
+---
+
+## Arquitectura JS
+
+Los módulos siguen separación de responsabilidades:
+
+| Archivo | Responsabilidad |
+|---|---|
+| `store.js` | Data store, localStorage helpers, estado global |
+| `templates.js` | **Funciones puras de HTML** — sin lógica, solo retornan strings |
+| `ui.js` | Navegación, snack, modal, filtrado de materiales |
+| `calculator.js` | Cálculo live, validación, presets, lógica de resina |
+| `quotes.js` | CRUD cotizaciones, estados, WhatsApp, PDF, Notion |
+| `clients.js` | CRUD clientes, autocompletado, tabs de cotizaciones |
+| `native.js` | Drag bottom sheets, transiciones, haptic feedback |
+| `config.js` | Configuración general, export/import JSON |
+| `dashboard.js` | Métricas, historial mensual |
+| `theme.js` | Tema claro/oscuro/auto |
 
 ---
 
@@ -92,24 +122,28 @@ HTML + CSS + JS vanilla — sin frameworks ni build step.
 ```
 ├── index.html
 ├── manifest.json
-├── sw.js                  — Service worker (v27)
-├── deploy.sh              — Script de deploy: git add + commit + push
+├── sw.js                  — Service Worker (v28)
+├── deploy.sh              — git add + commit + push en un paso
+├── api/
+│   └── notion.js          — Vercel Function: POST /api/notion
 ├── assets/
 │   ├── icon.svg           — Logo casita magenta (fuente)
 │   ├── icon-192.png
 │   └── icon-512.png
 ├── css/
 │   ├── tokens.css         — Design tokens: colores, tipografía, espaciado, sombras
-│   ├── base.css           — Reset, layout, nav bar, utilidades
+│   ├── base.css           — Reset, layout, nav bar, safe areas, utilidades
 │   ├── components.css     — Todos los componentes UI
 │   └── quote.css          — Template visual de cotización
 └── js/
     ├── store.js           — Data store y helpers localStorage (prefijo c3d_)
+    ├── templates.js       — Funciones puras de HTML (sin DOM, sin estado)
     ├── ui.js              — showPage(), navegación, snack, modal
-    ├── calculator.js      — Lógica de cálculo + validación en tiempo real
-    ├── catalog.js         — Catálogo de productos, tabla cortadores, exportar Excel
-    ├── quotes.js          — Cotizaciones, estados, WhatsApp, PDF, imagen
-    ├── clients.js         — Base de clientes CRUD
+    ├── native.js          — Safe areas, drag sheets, transiciones, haptic
+    ├── calculator.js      — Lógica de cálculo + validación + resina
+    ├── catalog.js         — Catálogo de productos, tabla cortadores, Excel
+    ├── quotes.js          — Cotizaciones, estados, WhatsApp, PDF, Notion
+    ├── clients.js         — Clientes CRUD + autocomplete + tabs cotizaciones
     ├── inventory.js       — Inventario de filamento
     ├── dashboard.js       — Métricas, historial mensual
     ├── printers.js        — CRUD impresoras
@@ -119,6 +153,30 @@ HTML + CSS + JS vanilla — sin frameworks ni build step.
     ├── config.js          — Configuración general, export/import
     └── theme.js           — Tema claro/oscuro/auto
 ```
+
+---
+
+## Integraciones
+
+### Notion Sync
+- Función serverless en `api/notion.js` (Vercel la detecta automáticamente)
+- Recibe un objeto `quote` y crea una página en la DB "Ventas 2026"
+- **Configuración requerida:** agregar `NOTION_API_KEY` en Vercel → Settings → Environment Variables
+- El botón aparece únicamente en cotizaciones con estado *Aceptada*
+- Guarda `notionPageId` y `notionSyncedAt` en el objeto quote tras sincronizar
+
+---
+
+## Native App Feel
+
+Mejoras implementadas para comportamiento de app nativa:
+
+| Mejora | Implementación |
+|---|---|
+| Safe areas (notch / isla dinámica) | `viewport-fit=cover` + `env(safe-area-inset-*)` en top bar, nav y sheets |
+| Drag to dismiss en bottom sheets | Touch gesture con umbral 35% + spring back con cubic-bezier |
+| Transiciones de página | Slide horizontal suave al cambiar entre tabs |
+| Haptic feedback | Vibration API — patrón diferente para éxito, error y navegación |
 
 ---
 
@@ -140,13 +198,17 @@ chmod +x deploy.sh
 
 ## Datos locales
 
-Todos los datos se guardan en `localStorage` del dispositivo con el prefijo `c3d_`. Usa **Ajustes → Exportar** para respaldar en JSON e **Importar** para restaurar.
+Todos los datos se guardan en `localStorage` del dispositivo con el prefijo `c3d_`.  
+Claves: `printers`, `materials`, `config`, `quoteStyle`, `history`, `quotes`, `quoteCounter`, `presets`, `clients`, `inventory`.
+
+Usa **Ajustes → Exportar** para respaldar en JSON e **Importar** para restaurar.
 
 ---
 
 ## Próximas iteraciones
 
 - Seguimiento de pedidos en producción (en cola → imprimiendo → listo → entregado)
-- Recordatorio de cotizaciones pendientes sin respuesta
+- Recordatorio de cotizaciones pendientes sin respuesta después de X días
 - Exportar catálogo de precios como PDF con logo
 - Rediseño en Figma
+- Publicar en Google Play vía PWABuilder (TWA)

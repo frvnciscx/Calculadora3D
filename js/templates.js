@@ -479,7 +479,10 @@ function tplDraftItem(item, i, cur) {
 }
 
 function tplDraftModal(draft, cur) {
-  var grandTotal = draft.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+  var subtotal   = draft.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+  var discount   = draft.discount || 0;
+  var discountAmt = subtotal * (discount / 100);
+  var grandTotal = subtotal - discountAmt;
   var itemsHTML  = draft.items.map(function(item, i) { return tplDraftItem(item, i, cur); }).join('');
 
   return '<div class="m3-scrim" onclick="closeModal()"></div>' +
@@ -510,6 +513,24 @@ function tplDraftModal(draft, cur) {
           '</button>' +
         '</div>' +
         itemsHTML +
+      '</div>' +
+      /* Subtotal + descuento */
+      '<div class="draft-subtotal-row">' +
+        '<span>Subtotal</span>' +
+        '<span id="draft-subtotal">' + cur + subtotal.toFixed(2) + '</span>' +
+      '</div>' +
+      '<div class="draft-discount-row">' +
+        '<label for="q-discount" style="display:flex;align-items:center;gap:6px">' +
+          '<span class="material-symbols-rounded" style="font-size:16px">percent</span> Descuento' +
+        '</label>' +
+        '<div style="display:flex;align-items:center;gap:6px">' +
+          '<input type="number" id="q-discount" class="discount-input" min="0" max="100" step="0.5" ' +
+            'value="' + discount + '" inputmode="decimal" oninput="onDiscountChange()">' +
+          '<span style="font-size:13px;color:var(--md-on-surface-variant)">%</span>' +
+          '<span id="draft-discount-amt" class="discount-amount">' +
+            (discountAmt > 0 ? '−' + cur + discountAmt.toFixed(2) : '—') +
+          '</span>' +
+        '</div>' +
       '</div>' +
       '<div class="draft-total-row">' +
         '<span>TOTAL</span>' +

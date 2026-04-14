@@ -1297,3 +1297,204 @@
 }
 .month-rev   { font-size: 13px; font-weight: 700; color: var(--md-on-surface); }
 .month-count { font-size: 10px; color: var(--md-on-surface-variant); }
+
+/* ── INPUT NUMÉRICO DE MARGEN ───────────────────────────────────── */
+.margin-num-input {
+  width: 64px;
+  text-align: center;
+  border: none;
+  border-bottom: 2px solid var(--md-primary);
+  border-radius: 0;
+  background: transparent;
+  color: var(--md-on-surface);
+  font-family: 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  padding: 2px 4px;
+  outline: none;
+  letter-spacing: -0.5px;
+  -moz-appearance: textfield;
+}
+.margin-num-input::-webkit-inner-spin-button,
+.margin-num-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.margin-num-input:focus { border-bottom-color: var(--md-secondary); }
+
+/* ── POST-PROCESADO / PINTURA ───────────────────────────────────── */
+.postproc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+.postproc-section-label {
+  font-size: var(--type-overline-size);
+  font-weight: var(--type-overline-weight);
+  letter-spacing: var(--type-overline-ls);
+  text-transform: uppercase;
+  color: var(--md-on-surface-variant);
+  margin: 12px 0 8px;
+}
+.paint-color-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.paint-color-row .m3-field { margin-bottom: 0; }
+.paint-remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  align-self: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--md-error);
+  border-radius: var(--radius-pill);
+  transition: background 0.15s;
+}
+.paint-remove-btn:hover { background: color-mix(in srgb, var(--md-error) 10%, transparent); }
+.paint-remove-btn .material-symbols-rounded { font-size: 18px; }
+
+/* ── TOGGLE SWITCH (M3-style) ───────────────────────────────────── */
+.m3-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.m3-switch input[type="checkbox"] { display: none; }
+.m3-switch-track {
+  width: 52px;
+  height: 32px;
+  background: var(--md-surface-variant);
+  border: 2px solid var(--md-outline);
+  border-radius: 16px;
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+}
+.m3-switch-track::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: var(--md-outline);
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s var(--ease-spring), background 0.2s;
+}
+.m3-switch input:checked + .m3-switch-track {
+  background: var(--md-primary);
+  border-color: var(--md-primary);
+}
+.m3-switch input:checked + .m3-switch-track::after {
+  transform: translateX(20px);
+  background: var(--md-on-primary);
+}
+
+/* ── COSTOS FIJOS — desglose ────────────────────────────────────── */
+.fci-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.fci-row .m3-field { margin-bottom: 0; }
+.config-hint {
+  font-size: 12px;
+  color: var(--md-on-surface-variant);
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+.fixed-cost-total-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--md-surface-container);
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  margin-top: 4px;
+}
+.fixed-cost-total-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--md-on-surface-variant);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.fixed-cost-total-val {
+  width: 90px;
+  text-align: right;
+  border: none;
+  border-bottom: 2px solid var(--md-primary);
+  background: transparent;
+  color: var(--md-on-surface);
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 2px 4px;
+  outline: none;
+}
+.fixed-cost-total-val:focus { border-bottom-color: var(--md-secondary); }
+.fixed-cost-total-currency {
+  font-size: 13px;
+  color: var(--md-on-surface-variant);
+  margin-left: 4px;
+}
+
+/* ── DESCUENTO EN COTIZACIONES ──────────────────────────────────── */
+.draft-subtotal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--md-on-surface-variant);
+  border-top: 1px solid var(--md-outline);
+  margin-top: 8px;
+}
+.draft-discount-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 13px;
+  color: var(--md-on-surface-variant);
+}
+.discount-input {
+  width: 60px;
+  text-align: center;
+  border: none;
+  border-bottom: 2px solid var(--md-primary);
+  background: transparent;
+  color: var(--md-on-surface);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 2px 4px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.discount-input::-webkit-inner-spin-button,
+.discount-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.discount-input:focus { border-bottom-color: var(--md-secondary); }
+.discount-amount {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--md-error);
+  min-width: 72px;
+  text-align: right;
+}
+
+/* ── DASHBOARD — ganancia y margen ──────────────────────────────── */
+.dash-stat-profit .dash-stat-icon { color: var(--accent-mint, #43A047); }
+.dash-stat-profit .dash-stat-val  { color: var(--accent-mint, #43A047); }
+.dash-stat-margin .dash-stat-icon { color: var(--md-tertiary); }
+.dash-stat-margin .dash-stat-val  { color: var(--md-tertiary); }

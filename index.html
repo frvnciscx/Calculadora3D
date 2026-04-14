@@ -72,6 +72,22 @@
         <div class="breakdown-chip"><div class="val" id="r-fixed">$0</div><div class="lbl">Costos fijos</div></div>
         <div class="breakdown-chip"><div class="val" id="r-waste">$0</div><div class="lbl">Desperdicio</div></div>
       </div>
+      <!-- Bloque de post-procesado (pintura) — oculto por defecto -->
+      <div id="r-postproc-block" class="hidden resin-postproc-block">
+        <div class="resin-block-title">
+          <span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle">palette</span>
+          Post-procesado / Pintura
+        </div>
+        <div id="r-postproc-rows"></div>
+        <div class="resin-detail-row">
+          <span class="resin-detail-lbl">Mano de obra (pintado)</span>
+          <span id="r-paint-labor" class="resin-detail-val">$0</span>
+        </div>
+        <div class="resin-detail-row" style="font-weight:600">
+          <span class="resin-detail-lbl">Total post-procesado</span>
+          <span id="r-postproc-total" class="resin-detail-val">$0</span>
+        </div>
+      </div>
       <!-- Bloque de post-proceso resina — oculto por defecto -->
       <div id="r-resin-block" class="hidden resin-postproc-block">
         <div class="resin-block-title">
@@ -178,11 +194,51 @@
     </div>
   </div>
 
+  <!-- Tarjeta de post-procesado (pintura, primer, barniz) -->
+  <div class="m3-card" id="calc-postproc-card">
+    <div class="postproc-header" onclick="togglePostProc(event)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="material-symbols-rounded" style="font-size:18px;color:var(--md-tertiary)">palette</span>
+        <span class="m3-card-title" style="margin:0">Post-procesado / Pintura</span>
+      </div>
+      <label class="m3-switch" onclick="event.stopPropagation()">
+        <input type="checkbox" id="postproc-enabled" onchange="onPostProcToggle()">
+        <span class="m3-switch-track"></span>
+      </label>
+    </div>
+
+    <div id="postproc-fields" class="hidden">
+      <div class="postproc-section-label">Colores de pintura</div>
+      <div id="paint-colors-list"></div>
+      <button class="m3-btn-text m3-btn-sm" onclick="addPaintColor()" style="margin-top:4px;width:auto">
+        <span class="material-symbols-rounded" style="font-size:16px">add</span> Agregar color
+      </button>
+
+      <div class="flex-row" style="margin-top:12px">
+        <div class="m3-field">
+          <input type="number" id="postproc-primer" placeholder=" " min="0" step="0.01" inputmode="decimal" oninput="calculate(true)">
+          <label for="postproc-primer">Primer</label>
+          <span class="suffix">$</span>
+        </div>
+        <div class="m3-field">
+          <input type="number" id="postproc-varnish" placeholder=" " min="0" step="0.01" inputmode="decimal" oninput="calculate(true)">
+          <label for="postproc-varnish">Barniz</label>
+          <span class="suffix">$</span>
+        </div>
+      </div>
+      <div class="m3-field">
+        <input type="number" id="postproc-time" placeholder=" " min="0" step="0.1" inputmode="decimal" oninput="calculate(true)">
+        <label for="postproc-time">Tiempo de pintado (hrs)</label>
+      </div>
+    </div>
+  </div>
+
   <div class="m3-card">
     <div class="m3-card-title">Margen de ganancia</div>
     <div class="m3-slider-wrap">
       <input type="range" id="calc-margin" min="0" max="200" value="50">
-      <span class="m3-slider-val" id="calc-margin-display">50%</span>
+      <input type="number" id="calc-margin-num" class="margin-num-input" min="0" max="200" value="50" inputmode="numeric">
+      <span class="m3-slider-val" id="calc-margin-display" hidden>50%</span>
     </div>
   </div>
 
@@ -360,8 +416,26 @@
   <div class="config-section">
     <div class="config-section-title">Costos fijos mensuales</div>
     <div class="m3-card">
-      <div class="m3-field"><input type="number" id="cfg-fixed-monthly" step="1" min="0" placeholder=" " inputmode="decimal"><label for="cfg-fixed-monthly">Total costos fijos/mes</label><span class="suffix">$/mes</span></div>
-      <div class="m3-field"><input type="number" id="cfg-monthly-hours" step="1" min="0" placeholder=" " inputmode="decimal"><label for="cfg-monthly-hours">Horas de impresión/mes</label><span class="suffix">hrs/mes</span></div>
+      <p class="config-hint">Desglosa tus gastos fijos por categoría para mayor claridad.</p>
+      <div id="fixed-cost-items-list"></div>
+      <button class="m3-btn-text m3-btn-sm" onclick="addFixedCostItem()" style="margin:4px 0 12px;width:auto">
+        <span class="material-symbols-rounded" style="font-size:16px">add</span> Agregar categoría
+      </button>
+      <div class="fixed-cost-total-bar">
+        <span class="fixed-cost-total-label">
+          <span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle">calculate</span>
+          Total/mes
+        </span>
+        <div style="display:flex;align-items:center;gap:4px">
+          <input type="number" id="cfg-fixed-monthly" step="1" min="0" placeholder="0" inputmode="decimal" class="fixed-cost-total-val" oninput="updateFixedCostTotal(true)">
+          <span class="fixed-cost-total-currency">$/mes</span>
+        </div>
+      </div>
+      <div class="m3-field" style="margin-top:12px">
+        <input type="number" id="cfg-monthly-hours" step="1" min="0" placeholder=" " inputmode="decimal">
+        <label for="cfg-monthly-hours">Horas de impresión/mes</label>
+        <span class="suffix">hrs/mes</span>
+      </div>
     </div>
   </div>
   <div class="config-section">

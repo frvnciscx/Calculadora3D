@@ -41,6 +41,18 @@ function renderDashboard() {
     return s + (q.grandTotal != null ? q.grandTotal : (q.totalWithQty || 0));
   }, 0);
 
+  /* Ganancia y margen del mes (solo cotizaciones que tienen totalBaseCost) */
+  var monthWithCost = monthAccepted.filter(function(q) { return q.totalBaseCost != null; });
+  var monthBaseCost = monthWithCost.reduce(function(s, q) { return s + (q.totalBaseCost || 0); }, 0);
+  var monthRevenueWithCost = monthWithCost.reduce(function(s, q) {
+    return s + (q.grandTotal != null ? q.grandTotal : (q.totalWithQty || 0));
+  }, 0);
+  var monthProfit = monthRevenueWithCost - monthBaseCost;
+  var monthMarginPct = monthRevenueWithCost > 0
+    ? Math.round((monthProfit / monthRevenueWithCost) * 100)
+    : null;
+  var hasMarginData = monthWithCost.length > 0;
+
   var pendingCount = quotes.filter(function(q) { return !q.status || q.status === 'pendiente'; }).length;
 
   /* Inventory alerts */
@@ -76,7 +88,17 @@ function renderDashboard() {
     '<div class="dash-stat-card">' +
       '<span class="material-symbols-rounded dash-stat-icon">trending_up</span>' +
       '<div class="dash-stat-val">' + cur + formatNum(monthRevenue) + '</div>' +
-      '<div class="dash-stat-label">Este mes ✓</div>' +
+      '<div class="dash-stat-label">Ingresos del mes</div>' +
+    '</div>' +
+    '<div class="dash-stat-card dash-stat-profit">' +
+      '<span class="material-symbols-rounded dash-stat-icon">savings</span>' +
+      '<div class="dash-stat-val">' + (hasMarginData ? cur + formatNum(monthProfit) : '—') + '</div>' +
+      '<div class="dash-stat-label">Ganancia del mes</div>' +
+    '</div>' +
+    '<div class="dash-stat-card dash-stat-margin">' +
+      '<span class="material-symbols-rounded dash-stat-icon">percent</span>' +
+      '<div class="dash-stat-val">' + (monthMarginPct !== null ? monthMarginPct + '%' : '—') + '</div>' +
+      '<div class="dash-stat-label">Margen del mes</div>' +
     '</div>' +
     '<div class="dash-stat-card">' +
       '<span class="material-symbols-rounded dash-stat-icon">schedule</span>' +
