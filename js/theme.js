@@ -17,7 +17,7 @@ function applyTheme() {
   }
   document.body.setAttribute('data-theme', effective);
   document.getElementById('theme-icon').textContent = effective === 'dark' ? 'light_mode' : 'dark_mode';
-  document.getElementById('meta-theme').content = effective === 'dark' ? '#0E0C1A' : '#EAEAF4';
+  document.getElementById('meta-theme').content = effective === 'dark' ? '#0a0a0a' : '#fafafa';
   document.querySelectorAll('.theme-segment button').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById('theme-' + config.theme + '-btn');
   if (btn) btn.classList.add('active');

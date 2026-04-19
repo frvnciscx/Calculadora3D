@@ -1,95 +1,138 @@
 /* ===================================================================
-   DESIGN TOKENS — Soft Health / Clean Mobile
-   Arquetipo: SaaS Moderno + Health Wellness
-   Paleta: Lavanda-gris · Charcoal · Peach cálido · Lavanda suave
+   DESIGN TOKENS — Dark Luxe · La Casita del Molde
+   Sistema: dark-first. Light override via [data-theme="light"]
    =================================================================== */
 
-/* ── LIGHT (default) ─────────────────────────────────────────────── */
-:root, [data-theme="light"], [data-theme="auto"] {
+/* ── DARK (default) ──────────────────────────────────────────────── */
+:root {
+  /* Tipografía */
+  --font-sans:    'Geist', -apple-system, system-ui, sans-serif;
+  --font-mono:    'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+  --font-display: 'Geist', -apple-system, system-ui, sans-serif;
+  --font-data:    'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
 
-  /* Primario — Charcoal oscuro (FAB, nav activo, botones) */
-  --md-primary:                  #1A1A2E;
-  --md-on-primary:               #FFFFFF;
-  --md-primary-container:        #ECEAF8;   /* lavanda muy suave */
-  --md-on-primary-container:     #1A1A2E;
-
-  /* Secundario — Lavanda media */
-  --md-secondary:                #6E63A4;
-  --md-on-secondary:             #FFFFFF;
-  --md-secondary-container:      #E8E3F8;
-  --md-on-secondary-container:   #2A2050;
-
-  /* Terciario — Peach cálido */
-  --md-tertiary:                 #C07840;
-  --md-on-tertiary:              #FFFFFF;
-  --md-tertiary-container:       #FAEBD5;
-  --md-on-tertiary-container:    #5A3010;
-
-  /* Error */
-  --md-error:                    #B3261E;
-  --md-on-error:                 #FFFFFF;
-  --md-error-container:          #FDECEA;
-  --md-on-error-container:       #7A0D08;
-
-  /* Superficies */
-  --md-surface:                  #FFFFFF;
-  --md-surface-dim:              #EAEAF4;   /* FONDO principal — lavanda-gris suave */
-  --md-surface-bright:           #FFFFFF;
-  --md-surface-container-lowest: #FFFFFF;
-  --md-surface-container-low:    #FFFFFF;
-  --md-surface-container:        #F4F3FB;
-  --md-surface-container-high:   #EDECF6;
-  --md-surface-container-highest:#E4E2F2;
+  /* Fondos */
+  --bg:       #0a0a0a;
+  --bg-elev:  #141414;
+  --bg-sunk:  #050505;
 
   /* Texto */
-  --md-on-surface:               #1A1A2E;
-  --md-on-surface-variant:       #5E5E78;   /* ratio 5.2:1 sobre blanco — WCAG AA ✓ */
+  --ink:   #f5f5f5;
+  --ink-2: #a8a8a8;
+  --ink-3: #707070;
+  --ink-4: #3a3a3a;
 
   /* Bordes */
-  --md-outline:                  #E4E2F0;
-  --md-outline-variant:          #EDECF8;
+  --line:   #1f1f1f;
+  --line-2: #161616;
 
-  /* Nav pill — permanece oscuro en ambos modos */
-  --nav-active-bg:               #1A1A2E;
-  --nav-active-icon:             #FFFFFF;
-  --nav-active-label:            #1A1A2E;
+  /* Acento — neon lime */
+  --accent:      #c6ff3d;
+  --accent-tint: #1a2407;
 
-  /* Inverso (snackbar) */
-  --md-inverse-surface:          #1A1A2E;
-  --md-inverse-on-surface:       #F4F3FB;
-
-  /* Accents — Bento cards */
-  --accent-warm:                 #F5B97A;
-  --accent-warm-tint:            #FEF0DC;   /* peach/naranja suave */
-  --accent-warm-border:          rgba(200, 120, 50, 0.18);
-
-  --accent-lavanda:              #9B8EC4;
-  --accent-lavanda-tint:         #EAE4F8;   /* lavanda suave */
-  --accent-lavanda-border:       rgba(100, 80, 160, 0.18);
-
-  --accent-mint:                 #5DB08A;
-  --accent-mint-tint:            #DDF3EA;   /* verde menta */
-  --accent-mint-border:          rgba(60, 140, 100, 0.18);
-
-  /* Sombras — 3 niveles de elevación coherentes */
-  --shadow-card:   0 1px 4px rgba(30, 28, 60, 0.06), 0 2px 8px rgba(30, 28, 60, 0.05);
-  --shadow-float:  0 2px 8px rgba(30, 28, 60, 0.08), 0 4px 16px rgba(30, 28, 60, 0.08);
-  --shadow-modal:  0 8px 24px rgba(30, 28, 60, 0.12), 0 16px 40px rgba(30, 28, 60, 0.10);
+  /* Semánticos */
+  --ok:      #c6ff3d;
+  --ok-tint: #1a2407;
+  --warn:    #ffb84d;
+  --danger:  #ff5a5a;
 
   /* Radios */
-  --radius-sm:   10px;
-  --radius-md:   16px;
+  --r-s: 10px;
+  --r-m: 16px;
+  --r-l: 24px;
+
+  /* Nav */
+  --nav-h: 72px;
+
+  /* ── Aliases MD3 → Dark Luxe ────────────────────────────────────
+     Mantienen compatibilidad con todas las clases .m3-* existentes
+     sin tocar el HTML ni el JS.
+     ────────────────────────────────────────────────────────────── */
+
+  /* Primario */
+  --md-primary:                  var(--accent);
+  --md-on-primary:               #000000;
+  --md-primary-container:        var(--accent-tint);
+  --md-on-primary-container:     var(--accent);
+
+  /* Secundario */
+  --md-secondary:                var(--ink-2);
+  --md-on-secondary:             var(--bg);
+  --md-secondary-container:      var(--bg-elev);
+  --md-on-secondary-container:   var(--ink);
+
+  /* Terciario */
+  --md-tertiary:                 var(--warn);
+  --md-on-tertiary:              #000;
+  --md-tertiary-container:       #2a1f00;
+  --md-on-tertiary-container:    var(--warn);
+
+  /* Error */
+  --md-error:                    var(--danger);
+  --md-on-error:                 #ffffff;
+  --md-error-container:          #2a0a0a;
+  --md-on-error-container:       var(--danger);
+
+  /* Superficies */
+  --md-surface:                  var(--bg-elev);
+  --md-surface-dim:              var(--bg-sunk);
+  --md-surface-bright:           #1e1e1e;
+  --md-surface-container-lowest: var(--bg-sunk);
+  --md-surface-container-low:    var(--bg);
+  --md-surface-container:        var(--bg-elev);
+  --md-surface-container-high:   #1c1c1c;
+  --md-surface-container-highest:#222222;
+
+  /* Texto */
+  --md-on-surface:               var(--ink);
+  --md-on-surface-variant:       var(--ink-3);
+
+  /* Bordes */
+  --md-outline:                  var(--line);
+  --md-outline-variant:          var(--line-2);
+
+  /* Surface variant (switch track, etc.) */
+  --md-surface-variant:          var(--bg-sunk);
+
+  /* Nav activo — lime sobre oscuro */
+  --nav-active-bg:               var(--accent-tint);
+  --nav-active-icon:             var(--accent);
+  --nav-active-label:            var(--ink);
+
+  /* Inverso (snackbar) */
+  --md-inverse-surface:          var(--ink);
+  --md-inverse-on-surface:       var(--bg);
+
+  /* Accents bento */
+  --accent-warm:           var(--warn);
+  --accent-warm-tint:      #2a1800;
+  --accent-warm-border:    rgba(255, 184, 77, 0.18);
+
+  --accent-lavanda:        #b09cff;
+  --accent-lavanda-tint:   #1a1428;
+  --accent-lavanda-border: rgba(176, 156, 255, 0.18);
+
+  --accent-mint:           #3fdba0;
+  --accent-mint-tint:      #0e2820;
+  --accent-mint-border:    rgba(63, 219, 160, 0.18);
+
+  /* Sombras */
+  --shadow-card:   0 1px 4px rgba(0,0,0,0.40), 0 2px 8px rgba(0,0,0,0.30);
+  --shadow-float:  0 2px 8px rgba(0,0,0,0.50), 0 4px 16px rgba(0,0,0,0.40);
+  --shadow-modal:  0 8px 24px rgba(0,0,0,0.60), 0 16px 40px rgba(0,0,0,0.50);
+
+  /* Radios (aliases) */
+  --radius-sm:   var(--r-s);
+  --radius-md:   var(--r-m);
   --radius-lg:   20px;
-  --radius-xl:   24px;
+  --radius-xl:   var(--r-l);
   --radius-pill: 999px;
 
   /* Easing */
   --ease-out:    cubic-bezier(0.4, 0, 0.2, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* ── Escala de espaciado ─────────────────────────────────────────
-     Múltiplos de 4px. Usar siempre estos valores, no arbitrarios.
-     ──────────────────────────────────────────────────────────────── */
+  /* Espaciado */
   --space-1:  4px;
   --space-2:  8px;
   --space-3: 12px;
@@ -99,99 +142,84 @@
   --space-7: 28px;
   --space-8: 32px;
 
-  /* ── Escala tipográfica ──────────────────────────────────────────
-     display     → números grandes, totales
-     heading-lg  → títulos de página / modal
-     heading-md  → subtítulos de sección
-     title       → nombre de ítem, label prominente
-     body        → texto corrido (hereda body)
-     label-lg    → etiquetas de campo, botones
-     overline    → sección overline (caps pequeñas)
-     ──────────────────────────────────────────────────────────────── */
+  /* Escala tipográfica */
   --type-display-size:    34px;
-  --type-display-weight:  900;
-  --type-display-ls:      -1px;
+  --type-display-weight:  600;
+  --type-display-ls:      -0.04em;
 
-  --type-heading-lg-size:   22px;
-  --type-heading-lg-weight: 800;
-  --type-heading-lg-ls:     -0.3px;
+  --type-heading-lg-size:   28px;
+  --type-heading-lg-weight: 600;
+  --type-heading-lg-ls:     -0.03em;
 
-  --type-heading-md-size:   18px;
-  --type-heading-md-weight: 700;
-  --type-heading-md-ls:     -0.2px;
+  --type-heading-md-size:   22px;
+  --type-heading-md-weight: 600;
+  --type-heading-md-ls:     -0.025em;
 
   --type-title-size:    15px;
-  --type-title-weight:  700;
-  --type-title-ls:      0px;
+  --type-title-weight:  500;
+  --type-title-ls:      -0.01em;
 
   --type-label-lg-size:   13px;
-  --type-label-lg-weight: 600;
-  --type-label-lg-ls:     0px;
+  --type-label-lg-weight: 500;
+  --type-label-lg-ls:     -0.01em;
 
-  --type-overline-size:   11px;
-  --type-overline-weight: 700;
-  --type-overline-ls:     0.6px;
+  --type-overline-size:   10px;
+  --type-overline-weight: 500;
+  --type-overline-ls:     0.14em;
 }
 
-/* ── DARK — lavanda profunda ──────────────────────────────────────── */
-[data-theme="dark"] {
+/* ── LIGHT override ───────────────────────────────────────────────── */
+:root[data-theme="light"] {
+  --bg:       #fafafa;
+  --bg-elev:  #ffffff;
+  --bg-sunk:  #f0f0f0;
+  --ink:      #0a0a0a;
+  --ink-2:    #555555;
+  --ink-3:    #888888;
+  --ink-4:    #c0c0c0;
+  --line:     #e8e8e8;
+  --line-2:   #f0f0f0;
+  --accent:      #5cb800;
+  --accent-tint: #eaffcf;
+  --ok:      #5cb800;
+  --ok-tint: #eaffcf;
 
-  --md-primary:                  #C4BCEE;
-  --md-on-primary:               #1A1050;
-  --md-primary-container:        #2E2860;
-  --md-on-primary-container:     #E8E3F8;
+  /* MD3 aliases para light — recalculados sobre fondo claro */
+  --md-surface:                  #ffffff;
+  --md-surface-dim:              #f0f0f0;
+  --md-surface-bright:           #ffffff;
+  --md-surface-container-lowest: #ffffff;
+  --md-surface-container-low:    #fafafa;
+  --md-surface-container:        #f5f5f5;
+  --md-surface-container-high:   #eeeeee;
+  --md-surface-container-highest:#e8e8e8;
 
-  --md-secondary:                #B0A8D8;
-  --md-on-secondary:             #201860;
-  --md-secondary-container:      #302870;
-  --md-on-secondary-container:   #E8E3F8;
+  --md-on-surface:               #0a0a0a;
+  --md-on-surface-variant:       #555555;
+  --md-outline:                  #e8e8e8;
+  --md-outline-variant:          #f0f0f0;
+  --md-surface-variant:          #f0f0f0;
 
-  --md-tertiary:                 #E8B880;
-  --md-on-tertiary:              #401800;
-  --md-tertiary-container:       #602800;
-  --md-on-tertiary-container:    #FAEBD5;
+  --nav-active-bg:               var(--accent-tint);
+  --nav-active-icon:             var(--accent);
+  --nav-active-label:            #0a0a0a;
 
-  --md-error:                    #F2B8B5;
-  --md-on-error:                 #601410;
-  --md-error-container:          #7A1A16;
-  --md-on-error-container:       #FDECEA;
+  --md-inverse-surface:          #0a0a0a;
+  --md-inverse-on-surface:       #f5f5f5;
 
-  --md-surface:                  #141220;
-  --md-surface-dim:              #0E0C1A;
-  --md-surface-bright:           #221E38;
-  --md-surface-container-lowest: #090818;
-  --md-surface-container-low:    #141220;
-  --md-surface-container:        #1C1A30;
-  --md-surface-container-high:   #241E3A;
-  --md-surface-container-highest:#2E2848;
+  --shadow-card:   0 1px 4px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-float:  0 2px 8px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-modal:  0 8px 24px rgba(0,0,0,0.12), 0 16px 40px rgba(0,0,0,0.08);
 
-  --md-on-surface:               #E8E4F8;
-  --md-on-surface-variant:       #9C96B8;
+  --accent-warm:           #f59e0b;
+  --accent-warm-tint:      #fffbeb;
+  --accent-warm-border:    rgba(245, 158, 11, 0.18);
 
-  --md-outline:                  #3E3860;
-  --md-outline-variant:          #2A2448;
+  --accent-lavanda:        #7c3aed;
+  --accent-lavanda-tint:   #f5f3ff;
+  --accent-lavanda-border: rgba(124, 58, 237, 0.18);
 
-  /* Nav pill — oscuro fijo también en dark mode */
-  --nav-active-bg:               #2E2A58;
-  --nav-active-icon:             #E8E4F8;
-  --nav-active-label:            #E8E4F8;
-
-  --md-inverse-surface:          #E8E4F8;
-  --md-inverse-on-surface:       #141220;
-
-  --accent-warm:                 #E8A868;
-  --accent-warm-tint:            #3C2010;
-  --accent-warm-border:          rgba(200, 120, 50, 0.25);
-
-  --accent-lavanda:              #9B8EC4;
-  --accent-lavanda-tint:         #201840;
-  --accent-lavanda-border:       rgba(100, 80, 160, 0.25);
-
-  --accent-mint:                 #5DB08A;
-  --accent-mint-tint:            #0E2820;
-  --accent-mint-border:          rgba(60, 140, 100, 0.25);
-
-  --shadow-card:  0 1px 4px rgba(0,0,0,0.20), 0 2px 8px rgba(0,0,0,0.16);
-  --shadow-float: 0 2px 8px rgba(0,0,0,0.24), 0 4px 16px rgba(0,0,0,0.20);
-  --shadow-modal: 0 8px 24px rgba(0,0,0,0.30), 0 16px 40px rgba(0,0,0,0.24);
+  --accent-mint:           #059669;
+  --accent-mint-tint:      #ecfdf5;
+  --accent-mint-border:    rgba(5, 150, 105, 0.18);
 }
