@@ -215,6 +215,12 @@ input, textarea, select { font: inherit; color: inherit; }
   padding-bottom: calc(var(--nav-h) + 60px + env(safe-area-inset-bottom, 0px) + 16px);
 }
 
+/* Config: scroll horizontal contenido para evitar desbordamiento visible */
+#page-config {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* ── PAGE HEADER ─────────────────────────────────────────────────── */
 .page-header-block {
   padding: 28px 20px 18px;
