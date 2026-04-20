@@ -147,8 +147,8 @@ input, textarea, select { font: inherit; color: inherit; }
   backdrop-filter: blur(16px) saturate(160%);
   -webkit-backdrop-filter: blur(16px) saturate(160%);
   border-top: 0.5px solid var(--line);
-  display: flex; justify-content: space-around;
-  padding: 10px 8px calc(10px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  padding: 10px 4px calc(10px + env(safe-area-inset-bottom, 0px));
   z-index: 100;
   height: var(--nav-h);
 }
@@ -158,15 +158,18 @@ input, textarea, select { font: inherit; color: inherit; }
   font-family: var(--font-sans);
   font-size: 10px;
   font-weight: 500;
-  padding: 0;
+  padding: 0 2px;
   cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  min-width: 44px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
   transition: color 0.15s;
   position: relative;
 }
 .nav-item .nav-icon-wrap {
-  width: 44px; height: 30px;
+  width: 100%; max-width: 44px; height: 30px;
   display: flex; align-items: center; justify-content: center;
   position: relative;
 }
@@ -197,6 +200,8 @@ input, textarea, select { font: inherit; color: inherit; }
   padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 32px);
   animation: pageIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
   min-height: 100dvh;
+  overflow-x: hidden; /* evita scroll horizontal en Android Chrome */
+  width: 100%;
 }
 .page.active { display: block; }
 

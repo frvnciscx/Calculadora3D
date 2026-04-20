@@ -541,22 +541,22 @@
   <div style="padding:0 20px 20px">
     <div class="micro" style="margin-bottom:10px">Electricidad y trabajo</div>
     <div class="card" style="padding:18px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-        <div class="field">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;min-width:0">
+        <div class="field" style="min-width:0;overflow:hidden">
           <label>Costo kWh</label>
-          <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid var(--line);padding-bottom:8px">
-            <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">$</span>
+          <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid var(--line);padding-bottom:8px;min-width:0">
+            <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono);flex-shrink:0">$</span>
             <input type="number" id="cfg-kwh" step="0.01" min="0" inputmode="decimal"
-                   style="border:none;flex:1;padding:0;font-size:19px;background:transparent;color:var(--ink);font-family:var(--font-mono);outline:none">
+                   style="border:none;flex:1;min-width:0;padding:0;font-size:19px;background:transparent;color:var(--ink);font-family:var(--font-mono);outline:none">
           </div>
         </div>
-        <div class="field">
+        <div class="field" style="min-width:0;overflow:hidden">
           <label>Hora de diseño</label>
-          <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid var(--line);padding-bottom:8px">
-            <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">$</span>
+          <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid var(--line);padding-bottom:8px;min-width:0">
+            <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono);flex-shrink:0">$</span>
             <input type="number" id="cfg-labor" step="1" min="0" inputmode="decimal"
-                   style="border:none;flex:1;padding:0;font-size:19px;background:transparent;color:var(--ink);font-family:var(--font-mono);outline:none">
-            <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">/hr</span>
+                   style="border:none;flex:1;min-width:0;padding:0;font-size:19px;background:transparent;color:var(--ink);font-family:var(--font-mono);outline:none">
+            <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono);flex-shrink:0">/hr</span>
           </div>
         </div>
       </div>
@@ -592,7 +592,7 @@
       <input type="number" id="cfg-monthly-hours" step="1" min="0" inputmode="decimal"
              style="border:none;padding:0;font-size:52px;font-weight:600;letter-spacing:-0.04em;
                     background:transparent;color:var(--ink);font-family:var(--font-sans);
-                    outline:none;width:160px;line-height:1"
+                    outline:none;width:160px;max-width:55vw;min-width:0;line-height:1"
              oninput="_updateFixedPerHourDisplay()">
       <span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-3)">hrs/mes</span>
     </div>
