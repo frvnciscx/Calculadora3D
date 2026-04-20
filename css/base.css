@@ -25,7 +25,7 @@ body {
   -webkit-tap-highlight-color: transparent;
   font-size: 15px;
   line-height: 1.5;
-  /* NO overflow-x:hidden en body — rompe scroll en iOS Safari */
+  overflow-x: clip; /* clip no crea scroll context — seguro en iOS Safari */
 }
 
 /* App shell: centrado, max 440px, borde redondeado en desktop */

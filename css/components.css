@@ -1837,11 +1837,14 @@
   background: var(--bg-elev);
   border: 0.5px solid var(--line);
   border-radius: var(--r-m);
+  overflow: hidden;
+  max-width: 100%;
 }
 
 /* ── FIELD — underline style ─────────────────────────────────────── */
 .field {
   display: flex; flex-direction: column; gap: 6px;
+  min-width: 0; overflow: hidden;
 }
 .field label {
   font-family: var(--font-mono); font-size: 10px;
@@ -1922,7 +1925,7 @@
   border-bottom: 0.5px solid var(--line);
 }
 .row:last-child { border-bottom: none; }
-.row-label { color: var(--ink-2); font-size: 14px; }
+.row-label { color: var(--ink-2); font-size: 14px; flex-shrink: 0; white-space: nowrap; margin-right: 12px; }
 .row-value {
   font-family: var(--font-mono); font-variant-numeric: tabular-nums;
   color: var(--ink); font-size: 14px;
