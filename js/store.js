@@ -59,6 +59,11 @@ function ld(k, d) {
 }
 function sv(k, v) { localStorage.setItem('c3d_' + k, JSON.stringify(v)); }
 
+/* Redondea al múltiplo de 5 más cercano hacia arriba (terminación 5 o 10) */
+function roundToFive(n) {
+  return Math.ceil(n / 5) * 5;
+}
+
 /* HTML sanitizer — prevents XSS in template strings */
 function esc(str) {
   if (typeof str !== 'string') return str;
@@ -91,10 +96,12 @@ let lastCalc = (function() {
 function saveLastCalc(calc) {
   lastCalc = calc;
   try { sessionStorage.setItem('c3d_lastCalc', JSON.stringify(calc)); } catch {}
+  if (typeof refreshDraftIndicator === 'function') refreshDraftIndicator();
 }
 function clearLastCalc() {
   lastCalc = null;
   try { sessionStorage.removeItem('c3d_lastCalc'); } catch {}
+  if (typeof refreshDraftIndicator === 'function') refreshDraftIndicator();
 }
 
 /* Ensure quoteCounter >= max existing quote number */

@@ -9,7 +9,12 @@
 }
 
 /* ── Body / App Shell ───────────────────────────────────────────── */
-html, body {
+html {
+  /* clip no crea nuevo scroll context (fix iOS Safari scroll) */
+  overflow-x: clip;
+  /* SIN height:100% — en iOS Safari fija el html al viewport y el body no puede desbordarlo */
+}
+body {
   background: var(--bg-sunk);
   color: var(--ink);
   font-family: var(--font-sans);
@@ -17,15 +22,10 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.01em;
   min-height: 100dvh;
-  overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
   font-size: 15px;
   line-height: 1.5;
-  overscroll-behavior: none;
-}
-body {
-  /* Reservar espacio para nav bar */
-  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
+  /* NO overflow-x:hidden en body — rompe scroll en iOS Safari */
 }
 
 /* App shell: centrado, max 440px, borde redondeado en desktop */
@@ -89,6 +89,9 @@ input, textarea, select { font: inherit; color: inherit; }
   display: flex; align-items: center; gap: 8px; justify-content: center;
   animation: pageIn 0.3s var(--ease-out);
 }
+
+/* Cada página tiene su propio header — top-bar global oculto */
+.top-bar { display: none; }
 
 /* ── TOP BAR ────────────────────────────────────────────────────── */
 .top-bar {
@@ -189,14 +192,22 @@ input, textarea, select { font: inherit; color: inherit; }
 /* ── PAGES ──────────────────────────────────────────────────────── */
 .page {
   display: none;
-  padding: var(--space-4) var(--space-4) var(--space-5);
+  padding: var(--space-4) var(--space-4) 0;
+  /* Padding inferior: espacio nav + safe area + holgura */
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 32px);
   animation: pageIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  min-height: 100dvh;
 }
 .page.active { display: block; }
 
 @keyframes pageIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Page de cotizaciones: espacio extra por la barra de acción fija */
+#page-quotes {
+  padding-bottom: calc(var(--nav-h) + 60px + env(safe-area-inset-bottom, 0px) + 16px);
 }
 
 /* ── PAGE HEADER ─────────────────────────────────────────────────── */

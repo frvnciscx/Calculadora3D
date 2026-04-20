@@ -19,8 +19,14 @@ function reuseCalc(i) {
   document.getElementById('calc-weight').value = h.weight || '';
   document.getElementById('calc-time').value = h.timeH || '';
   document.getElementById('calc-design-time').value = h.designH || 0;
-  document.getElementById('calc-margin').value = h.margin || 50;
-  document.getElementById('calc-margin-display').textContent = (h.margin || 50) + '%';
+  var savedMargin = h.margin || 50;
+  document.getElementById('calc-margin').value = savedMargin;
+  var md2r = document.getElementById('calc-margin-display2');
+  if (md2r) md2r.textContent = savedMargin;
+  var mnElR = document.getElementById('calc-margin-num');
+  if (mnElR) mnElR.value = savedMargin;
+  var mlblR = document.getElementById('calc-margin-label');
+  if (mlblR) mlblR.textContent = savedMargin + '% margen';
 
   /* Try to select matching printer/material */
   var ps = document.getElementById('calc-printer');

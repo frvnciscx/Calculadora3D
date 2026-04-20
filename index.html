@@ -40,120 +40,158 @@
     <div class="micro" style="margin-top:1px;" id="top-bar-subtitle">Estudio</div>
   </div>
   <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
-    <span class="material-symbols-rounded" id="theme-icon" style="font-size:20px">light_mode</span>
+    <span class="material-symbols-rounded" id="theme-icon-topbar" style="font-size:20px">light_mode</span>
   </button>
 </div>
 
 <!-- ===== PAGE: DASHBOARD ===== -->
-<div id="page-dashboard" class="page active">
-  <div class="dash-stats" id="dash-stats"></div>
-  <div class="m3-card" id="dash-monthly-history">
-    <div class="m3-card-title">Historial mensual — ingresos aceptados</div>
-    <div id="dash-monthly-content"></div>
-  </div>
-  <div class="m3-card" id="dash-recent">
-    <div class="m3-card-title">Cotizaciones recientes</div>
-    <div id="dash-recent-list"></div>
-  </div>
+<div id="page-dashboard" class="page active" style="padding-top:0">
+
+  <!-- Dynamic content (rendered by dashboard.js) -->
+  <div id="dash-content"></div>
 </div>
 
 <!-- ===== PAGE: CALCULATOR ===== -->
-<div id="page-calc" class="page">
+<div id="page-calc" class="page" style="padding-top:0">
 
-  <div id="calc-result" class="hidden">
-    <div class="result-card">
-      <div class="result-header">
-        <div>
-          <div class="result-subtitle">COSTO TOTAL</div>
-          <div class="result-total" id="result-total">$0.00</div>
-        </div>
-        <div class="result-base-col">
-          <div class="result-subtitle">COSTO BASE</div>
-          <div class="result-base-val" id="result-base">$0.00</div>
-        </div>
-      </div>
-      <div class="breakdown-grid">
-        <div class="breakdown-chip"><div class="val" id="r-mat">$0</div><div class="lbl">Material</div></div>
-        <div class="breakdown-chip"><div class="val" id="r-energy">$0</div><div class="lbl">Energía</div></div>
-        <div class="breakdown-chip"><div class="val" id="r-labor">$0</div><div class="lbl">Diseño</div></div>
-        <div class="breakdown-chip"><div class="val" id="r-deprec">$0</div><div class="lbl">Depreciación</div></div>
-        <div class="breakdown-chip"><div class="val" id="r-fixed">$0</div><div class="lbl">Costos fijos</div></div>
-        <div class="breakdown-chip"><div class="val" id="r-waste">$0</div><div class="lbl">Desperdicio</div></div>
-      </div>
-      <!-- Bloque de post-procesado (pintura) — oculto por defecto -->
-      <div id="r-postproc-block" class="hidden resin-postproc-block">
-        <div class="resin-block-title">
-          <span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle">palette</span>
-          Post-procesado / Pintura
-        </div>
-        <div id="r-postproc-rows"></div>
-        <div class="resin-detail-row">
-          <span class="resin-detail-lbl">Mano de obra (pintado)</span>
-          <span id="r-paint-labor" class="resin-detail-val">$0</span>
-        </div>
-        <div class="resin-detail-row" style="font-weight:600">
-          <span class="resin-detail-lbl">Total post-procesado</span>
-          <span id="r-postproc-total" class="resin-detail-val">$0</span>
-        </div>
-      </div>
-      <!-- Bloque de post-proceso resina — oculto por defecto -->
-      <div id="r-resin-block" class="hidden resin-postproc-block">
-        <div class="resin-block-title">
-          <span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle">water_drop</span>
-          Post-proceso Resina
-        </div>
-        <div class="resin-detail-row">
-          <span class="resin-detail-lbl">Peso con soportes</span>
-          <span id="r-resin-weight" class="resin-detail-val">—</span>
-        </div>
-        <div class="resin-detail-row">
-          <span class="resin-detail-lbl">Lavado IPA (Elegoo Mercury+)</span>
-          <span id="r-ipa" class="resin-detail-val">$0</span>
-        </div>
-        <div class="resin-detail-row">
-          <span class="resin-detail-lbl">Curado UV (Elegoo Mercury+)</span>
-          <span id="r-uv" class="resin-detail-val">$0</span>
-        </div>
-      </div>
+  <!-- ── Mini-header: atrás + seg ─── -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 4px">
+    <button onclick="showPage('quotes')" style="display:flex;align-items:center;gap:6px;color:var(--ink-3);font-size:13px">
+      <span class="material-symbols-rounded" style="font-size:18px">arrow_back_ios</span>Cotizaciones
+    </button>
+    <div class="seg" style="font-size:12px">
+      <button id="calc-tab-cotizar" class="active" onclick="showCalcTab('cotizar')">Cotizar</button>
+      <button id="calc-tab-historial" onclick="showCalcTab('historial')">Historial</button>
     </div>
-    <div class="result-actions mt-8">
-      <button class="m3-btn-filled" id="btn-cotizar" onclick="generateQuote()">
-        <span class="material-symbols-rounded" style="font-size:18px">receipt_long</span> Cotizar
-      </button>
-      <div class="result-secondary-actions">
-        <button class="m3-btn-text" onclick="saveToHistory()">
-          <span class="material-symbols-rounded" style="font-size:18px">bookmark_add</span> Guardar
-        </button>
-        <button class="m3-btn-text" onclick="saveCurrentPreset()">
-          <span class="material-symbols-rounded" style="font-size:18px">star</span> Preset
-        </button>
-        <button class="m3-btn-text" onclick="showPage('history')">
-          <span class="material-symbols-rounded" style="font-size:18px">history</span> Historial
-        </button>
+  </div>
+
+  <!-- ── HERO: resultado siempre visible ─── -->
+  <div id="calc-result" style="padding:18px 20px 0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div class="micro">Costo total sugerido</div>
+      <div class="micro" style="color:var(--ink-4)" id="calc-margin-label">50% margen</div>
+    </div>
+    <div class="display" style="font-size:clamp(48px,12vw,72px);line-height:0.9;letter-spacing:-0.03em" id="result-total">$0.00</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:var(--ink-2)">
+      <span>Costo base</span>
+      <span class="num" style="color:var(--ink)" id="result-base">$0.00</span>
+      <span style="color:var(--ink-4)">·</span>
+      <span>Ganancia</span>
+      <span class="num" style="color:var(--ok)" id="result-profit">+$0.00</span>
+    </div>
+
+    <!-- Barra de composición de costos -->
+    <div id="cost-composition-bar" style="margin-top:14px;height:4px;border-radius:2px;overflow:hidden;display:flex;background:var(--line)">
+      <div id="ccb-mat"    style="background:var(--ink);flex:0;transition:flex 0.35s"></div>
+      <div id="ccb-energy" style="background:var(--ink-2);flex:0;transition:flex 0.35s"></div>
+      <div id="ccb-design" style="background:var(--accent);flex:0;transition:flex 0.35s"></div>
+      <div id="ccb-deprec" style="background:var(--ink-3);flex:0;transition:flex 0.35s"></div>
+      <div id="ccb-fixed"  style="background:var(--ink-4);flex:0;transition:flex 0.35s"></div>
+      <div id="ccb-waste"  style="background:var(--line);flex:0;transition:flex 0.35s"></div>
+      <div id="ccb-post"   style="background:var(--warn);flex:0;transition:flex 0.35s"></div>
+    </div>
+
+    <!-- Toggle desglose -->
+    <button id="btn-breakdown-toggle" onclick="toggleBreakdown()" style="margin-top:12px;width:100%;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border:0.5px solid var(--line);border-radius:10px;font-size:13px;color:var(--ink-2);background:transparent">
+      <span id="breakdown-label">Ver desglose · 6 rubros</span>
+      <span class="material-symbols-rounded" id="breakdown-chev" style="font-size:16px;transition:transform 0.2s">chevron_right</span>
+    </button>
+
+    <div id="breakdown-detail" class="hidden">
+      <div class="card" style="padding:4px 16px;margin-top:10px">
+        <div class="row" style="padding:11px 0">
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--ink)"></span><span style="font-size:13px">Material</span></div>
+          <div class="num" style="font-size:13px" id="r-mat">$0</div>
+        </div>
+        <div class="row" style="padding:11px 0">
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--ink-2)"></span><span style="font-size:13px">Energía</span></div>
+          <div class="num" style="font-size:13px" id="r-energy">$0</div>
+        </div>
+        <div class="row" style="padding:11px 0">
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--accent)"></span><span style="font-size:13px">Diseño</span></div>
+          <div class="num" style="font-size:13px" id="r-labor">$0</div>
+        </div>
+        <div class="row" style="padding:11px 0">
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--ink-3)"></span><span style="font-size:13px">Depreciación</span></div>
+          <div class="num" style="font-size:13px" id="r-deprec">$0</div>
+        </div>
+        <div class="row" style="padding:11px 0">
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--ink-4)"></span><span style="font-size:13px">Costos fijos</span></div>
+          <div class="num" style="font-size:13px" id="r-fixed">$0</div>
+        </div>
+        <div class="row" style="padding:11px 0">
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--line)"></span><span style="font-size:13px">Desperdicio</span></div>
+          <div class="num" style="font-size:13px" id="r-waste">$0</div>
+        </div>
+        <!-- Post-procesado rows (inyectadas por JS) -->
+        <div id="r-postproc-block" class="hidden">
+          <div id="r-postproc-rows"></div>
+          <div class="row" style="padding:11px 0">
+            <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--warn)"></span><span style="font-size:13px">Mano de obra pintado</span></div>
+            <div class="num" style="font-size:13px" id="r-paint-labor">$0</div>
+          </div>
+          <div class="row" style="padding:11px 0;font-weight:600">
+            <span style="font-size:13px">Total post-procesado</span>
+            <div class="num" style="font-size:13px" id="r-postproc-total">$0</div>
+          </div>
+        </div>
+        <!-- Resina block -->
+        <div id="r-resin-block" class="hidden">
+          <div class="row" style="padding:11px 0">
+            <span style="font-size:13px;color:var(--ink-2)">Peso con soportes</span>
+            <div class="num" style="font-size:13px" id="r-resin-weight">—</div>
+          </div>
+          <div class="row" style="padding:11px 0">
+            <span style="font-size:13px;color:var(--ink-2)">Lavado IPA</span>
+            <div class="num" style="font-size:13px" id="r-ipa">$0</div>
+          </div>
+          <div class="row" style="padding:11px 0">
+            <span style="font-size:13px;color:var(--ink-2)">Curado UV</span>
+            <div class="num" style="font-size:13px" id="r-uv">$0</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <button class="m3-btn-tonal mt-4" onclick="showCatalogModal()" style="width:100%;margin-bottom:24px">
-    <span class="material-symbols-rounded" style="font-size:18px">category</span> Catálogo de productos
-  </button>
+  <!-- Acciones rápidas -->
+  <div style="padding:16px 20px 0;display:flex;gap:10px">
+    <button class="btn btn-ghost" style="flex:1" onclick="saveCurrentPreset()">
+      <span class="material-symbols-rounded" style="font-size:16px">star</span> Preset
+    </button>
+    <button class="btn btn-primary" style="flex:2" id="btn-cotizar" onclick="addItemToDraft()">
+      <span class="material-symbols-rounded" style="font-size:16px">receipt_long</span>
+      <span id="btn-cotizar-label">Agregar a orden</span>
+    </button>
+  </div>
 
-  <div class="m3-card">
-    <div class="m3-card-title">Datos de la pieza</div>
-    <div class="m3-field">
+  <!-- ── Sección 01: Datos de la pieza ─── -->
+  <div style="padding:28px 20px 0">
+    <div class="rule micro" style="margin-bottom:18px">01 · Datos de la pieza</div>
+
+    <button class="card" onclick="showCatalogModal()" style="width:100%;padding:14px;display:flex;align-items:center;gap:14px;text-align:left;margin-bottom:16px">
+      <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">category</span>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500">Catálogo de productos</div>
+        <div style="font-size:11px;color:var(--ink-3);margin-top:2px">Presets de pieza guardados</div>
+      </div>
+      <span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-4)">chevron_right</span>
+    </button>
+
+    <div class="m3-field" style="margin-bottom:16px">
       <input type="text" id="calc-desc" placeholder=" ">
       <label for="calc-desc">Descripción</label>
     </div>
-    <div class="flex-row">
+    <div class="flex-row" style="margin-bottom:16px">
       <div class="m3-field" id="field-weight">
         <input type="number" id="calc-weight" placeholder=" " min="0" step="0.1" inputmode="decimal">
         <label for="calc-weight">Peso (g)</label>
-        <span class="m3-helper" id="helper-weight">Ej: 15g para un topper</span>
+        <span class="m3-helper" id="helper-weight">Ej: 15g</span>
       </div>
       <div class="m3-field" id="field-time">
         <input type="number" id="calc-time" placeholder=" " min="0" step="0.01" inputmode="decimal">
         <label for="calc-time">Tiempo (hrs)</label>
-        <span class="m3-helper" id="helper-time">Ej: 1.5 hrs</span>
+        <span class="m3-helper" id="helper-time">Ej: 1.5h</span>
       </div>
     </div>
     <div class="m3-field optional">
@@ -162,138 +200,153 @@
     </div>
   </div>
 
-  <div id="calc-presets"></div>
+  <div id="calc-presets" style="padding:0 20px"></div>
 
-  <div class="m3-card">
-    <div class="m3-card-title">Impresora y material</div>
-    <div class="m3-field">
-      <select id="calc-printer"></select>
-      <label for="calc-printer">Impresora</label>
-    </div>
-    <div class="m3-field">
-      <select id="calc-material"></select>
-      <label for="calc-material">Material</label>
-    </div>
-  </div>
-
-  <!-- Bloque resina — visible solo cuando se selecciona impresora de tipo Resina -->
-  <div id="calc-resin-params" class="hidden m3-card resin-params-card">
-    <div class="resin-params-header">
-      <span class="material-symbols-rounded" style="font-size:18px;color:#87CEFA">water_drop</span>
-      <span class="m3-card-title" style="margin:0">Post-proceso Resina</span>
-    </div>
-    <p class="resin-params-hint">Elegoo Mercury Plus · lavado IPA + curado UV</p>
-    <div class="flex-row">
+  <!-- ── Sección 02: Impresora y material ─── -->
+  <div style="padding:28px 20px 0">
+    <div class="rule micro" style="margin-bottom:18px">02 · Impresora y material</div>
+    <div class="m3-card">
       <div class="m3-field">
-        <input type="number" id="cfg-resin-support-pct" step="1" min="0" max="100" placeholder=" " inputmode="decimal" oninput="saveResinParams()">
-        <label for="cfg-resin-support-pct">Soportes</label>
-        <span class="suffix">%</span>
+        <select id="calc-printer"></select>
+        <label for="calc-printer">Impresora</label>
       </div>
       <div class="m3-field">
-        <input type="number" id="cfg-ipa-ml" step="1" min="0" placeholder=" " inputmode="decimal" oninput="saveResinParams()">
-        <label for="cfg-ipa-ml">IPA por impresión</label>
-        <span class="suffix">ml</span>
+        <select id="calc-material"></select>
+        <label for="calc-material">Material</label>
       </div>
     </div>
-    <div class="m3-field">
-      <input type="number" id="cfg-ipa-liter-cost" step="1" min="0" placeholder=" " inputmode="decimal" oninput="saveResinParams()">
-      <label for="cfg-ipa-liter-cost">Costo del litro de IPA</label>
-      <span class="suffix">$/L</span>
-    </div>
-  </div>
 
-  <!-- Tarjeta de post-procesado (pintura, primer, barniz) -->
-  <div class="m3-card" id="calc-postproc-card">
-    <div class="postproc-header" onclick="togglePostProc(event)">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="material-symbols-rounded" style="font-size:18px;color:var(--md-tertiary)">palette</span>
-        <span class="m3-card-title" style="margin:0">Post-procesado / Pintura</span>
+    <!-- Params resina — visible solo con impresora Resina -->
+    <div id="calc-resin-params" class="hidden m3-card resin-params-card" style="margin-top:10px">
+      <div class="resin-params-header">
+        <span class="material-symbols-rounded" style="font-size:18px;color:var(--accent)">water_drop</span>
+        <span class="m3-card-title" style="margin:0">Post-proceso Resina</span>
       </div>
-      <label class="m3-switch" onclick="event.stopPropagation()">
-        <input type="checkbox" id="postproc-enabled" onchange="onPostProcToggle()">
-        <span class="m3-switch-track"></span>
-      </label>
-    </div>
-
-    <div id="postproc-fields" class="hidden">
-      <div class="postproc-section-label">Colores de pintura</div>
-      <div id="paint-colors-list"></div>
-      <button class="m3-btn-text m3-btn-sm" onclick="addPaintColor()" style="margin-top:4px;width:auto">
-        <span class="material-symbols-rounded" style="font-size:16px">add</span> Agregar color
-      </button>
-
-      <div class="flex-row" style="margin-top:12px">
+      <p class="resin-params-hint">Elegoo Mercury Plus · lavado IPA + curado UV</p>
+      <div class="flex-row">
         <div class="m3-field">
-          <input type="number" id="postproc-primer" placeholder=" " min="0" step="0.01" inputmode="decimal" oninput="calculate(true)">
-          <label for="postproc-primer">Primer</label>
-          <span class="suffix">$</span>
+          <input type="number" id="cfg-resin-support-pct" step="1" min="0" max="100" placeholder=" " inputmode="decimal" oninput="saveResinParams()">
+          <label for="cfg-resin-support-pct">Soportes</label>
+          <span class="suffix">%</span>
         </div>
         <div class="m3-field">
-          <input type="number" id="postproc-varnish" placeholder=" " min="0" step="0.01" inputmode="decimal" oninput="calculate(true)">
-          <label for="postproc-varnish">Barniz</label>
-          <span class="suffix">$</span>
+          <input type="number" id="cfg-ipa-ml" step="1" min="0" placeholder=" " inputmode="decimal" oninput="saveResinParams()">
+          <label for="cfg-ipa-ml">IPA por impresión</label>
+          <span class="suffix">ml</span>
         </div>
       </div>
       <div class="m3-field">
-        <input type="number" id="postproc-time" placeholder=" " min="0" step="0.1" inputmode="decimal" oninput="calculate(true)">
-        <label for="postproc-time">Tiempo de pintado (hrs)</label>
+        <input type="number" id="cfg-ipa-liter-cost" step="1" min="0" placeholder=" " inputmode="decimal" oninput="saveResinParams()">
+        <label for="cfg-ipa-liter-cost">Costo del litro de IPA</label>
+        <span class="suffix">$/L</span>
       </div>
     </div>
   </div>
 
-  <div class="m3-card">
-    <div class="m3-card-title">Margen de ganancia</div>
-    <div class="m3-slider-wrap">
-      <input type="range" id="calc-margin" min="0" max="200" value="50">
-      <input type="number" id="calc-margin-num" class="margin-num-input" min="0" max="200" value="50" inputmode="numeric">
-      <span class="m3-slider-val" id="calc-margin-display" hidden>50%</span>
+  <!-- ── Sección 03: Post-procesado ─── -->
+  <div style="padding:28px 20px 0">
+    <div class="rule micro" style="margin-bottom:18px">03 · Post-procesado</div>
+
+    <!-- Pintura -->
+    <div class="card" style="padding:16px;margin-bottom:10px" id="calc-postproc-card">
+      <div class="postproc-header" onclick="togglePostProc(event)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-2)">palette</span>
+          <div>
+            <div style="font-size:14px;font-weight:500">Pintura</div>
+            <div style="font-size:11px;color:var(--ink-3);margin-top:2px">Primer, color, barniz</div>
+          </div>
+        </div>
+        <label class="m3-switch" onclick="event.stopPropagation()">
+          <input type="checkbox" id="postproc-enabled" onchange="onPostProcToggle()">
+          <span class="m3-switch-track"></span>
+        </label>
+      </div>
+      <div id="postproc-fields" class="hidden" style="margin-top:14px">
+        <div class="postproc-section-label">Colores de pintura</div>
+        <div id="paint-colors-list"></div>
+        <button class="m3-btn-text m3-btn-sm" onclick="addPaintColor()" style="margin-top:4px;width:auto">
+          <span class="material-symbols-rounded" style="font-size:16px">add</span> Agregar color
+        </button>
+        <div class="flex-row" style="margin-top:12px">
+          <div class="m3-field">
+            <input type="number" id="postproc-primer" placeholder=" " min="0" step="0.01" inputmode="decimal" oninput="calculate(true)">
+            <label for="postproc-primer">Primer</label>
+            <span class="suffix">$</span>
+          </div>
+          <div class="m3-field">
+            <input type="number" id="postproc-varnish" placeholder=" " min="0" step="0.01" inputmode="decimal" oninput="calculate(true)">
+            <label for="postproc-varnish">Barniz</label>
+            <span class="suffix">$</span>
+          </div>
+        </div>
+        <div class="m3-field">
+          <input type="number" id="postproc-time" placeholder=" " min="0" step="0.1" inputmode="decimal" oninput="calculate(true)">
+          <label for="postproc-time">Tiempo de pintado (hrs)</label>
+        </div>
+      </div>
     </div>
   </div>
 
-  <button class="m3-btn-filled mt-8" onclick="addItemToDraft()" id="btn-add-item" style="width:100%">
-    <span class="material-symbols-rounded" style="font-size:18px">add_shopping_cart</span> Agregar a orden
-  </button>
-
-</div>
-
-<!-- ===== PAGE: PRINTERS ===== -->
-<div id="page-printers" class="page">
-  <div class="page-tabs">
-    <button class="page-tab active" onclick="showPage('printers')" data-tab="printers">Impresoras</button>
-    <button class="page-tab" onclick="showPage('materials')" data-tab="materials">Materiales</button>
-    <button class="page-tab" onclick="showPage('inventory')" data-tab="inventory">Inventario</button>
+  <!-- ── Sección 04: Margen de ganancia ─── -->
+  <div style="padding:28px 20px 0">
+    <div class="rule micro" style="margin-bottom:18px">04 · Margen de ganancia</div>
+    <div class="card" style="padding:20px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
+        <div class="display" style="font-size:44px">
+          <span id="calc-margin-display2">50</span><span style="font-size:22px;color:var(--ink-3)">%</span>
+        </div>
+        <div style="text-align:right;font-size:12px;color:var(--ink-3)">
+          <div>Ganancia</div>
+          <div class="num" style="font-size:15px;color:var(--ok);font-weight:500" id="result-margin-gain">+$0.00</div>
+        </div>
+      </div>
+      <input class="slider" type="range" id="calc-margin" min="0" max="200" value="50">
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:var(--ink-4);font-family:var(--font-mono)">
+        <span>0%</span><span>50%</span><span>100%</span><span>150%</span><span>200%</span>
+      </div>
+      <!-- Hidden num input mantenido para compatibilidad con JS -->
+      <input type="number" id="calc-margin-num" class="margin-num-input" min="0" max="200" value="50" inputmode="numeric" style="display:none">
+    </div>
   </div>
-  <div id="printer-list"></div>
-  <button class="m3-fab" onclick="showPrinterModal()" id="fab-printer">
-    <span class="material-symbols-rounded">add</span>
-  </button>
+
+  <!-- Botón agregar a orden (duplicado al final para mobile UX) -->
+  <div style="padding:20px 20px 0">
+    <button class="btn btn-primary" style="width:100%" id="btn-add-item" onclick="addItemToDraft()">
+      <span class="material-symbols-rounded" style="font-size:16px">add_shopping_cart</span> Agregar a orden
+    </button>
+  </div>
+
 </div>
 
-<!-- ===== PAGE: MATERIALS ===== -->
-<div id="page-materials" class="page">
-  <div class="page-tabs">
-    <button class="page-tab" onclick="showPage('printers')" data-tab="printers">Impresoras</button>
-    <button class="page-tab active" onclick="showPage('materials')" data-tab="materials">Materiales</button>
-    <button class="page-tab" onclick="showPage('inventory')" data-tab="inventory">Inventario</button>
+<!-- ===== PAGE: CATALOG (impresoras + materiales + inventario) ===== -->
+<div id="page-catalog" class="page" style="padding-top:0">
+
+  <!-- PageHeader -->
+  <div style="padding:28px 20px 18px">
+    <div class="micro" style="margin-bottom:8px;letter-spacing:0.16em">Recursos del estudio</div>
+    <h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Catálogo</h1>
   </div>
-  <div id="material-list"></div>
-  <button class="m3-fab" onclick="showMaterialModal()" id="fab-material">
-    <span class="material-symbols-rounded">add</span>
-  </button>
+
+  <!-- Seg tabs -->
+  <div style="padding:0 20px 16px">
+    <div class="seg" style="width:100%;display:flex">
+      <button class="active" id="cat-tab-printers"  onclick="showCatalogTab('printers')"  style="flex:1">Impresoras</button>
+      <button id="cat-tab-materials" onclick="showCatalogTab('materials')" style="flex:1">Materiales</button>
+      <button id="cat-tab-inventory" onclick="showCatalogTab('inventory')" style="flex:1">Inventario</button>
+    </div>
+  </div>
+
+  <!-- Panels (only active one is visible) -->
+  <div id="printer-list"  style="padding:0 20px"></div>
+  <div id="material-list" style="padding:0 20px;display:none"></div>
+  <div id="inventory-list" style="padding:0 20px;display:none"></div>
 </div>
 
-<!-- ===== PAGE: INVENTORY ===== -->
-<div id="page-inventory" class="page">
-  <div class="page-tabs">
-    <button class="page-tab" onclick="showPage('printers')" data-tab="printers">Impresoras</button>
-    <button class="page-tab" onclick="showPage('materials')" data-tab="materials">Materiales</button>
-    <button class="page-tab active" onclick="showPage('inventory')" data-tab="inventory">Inventario</button>
-  </div>
-  <div id="inventory-list"></div>
-  <button class="m3-fab" onclick="showInventoryModal()" id="fab-inventory">
-    <span class="material-symbols-rounded">add</span>
-  </button>
-</div>
+<!-- Legacy redirects — páginas antiguas conservadas para backward-compat con JS interno -->
+<div id="page-printers"  class="page" style="display:none!important"></div>
+<div id="page-materials" class="page" style="display:none!important"></div>
+<div id="page-inventory" class="page" style="display:none!important"></div>
 
 <!-- ===== PAGE: HISTORY ===== -->
 <div id="page-history" class="page">
@@ -308,21 +361,52 @@
 </div>
 
 <!-- ===== PAGE: QUOTES ===== -->
-<div id="page-quotes" class="page">
-  <div class="page-tabs">
-    <button class="page-tab active" onclick="showPage('quotes')" data-tab="quotes">Cotizaciones</button>
-    <button class="page-tab" onclick="showPage('clients')" data-tab="clients">Clientes</button>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-    <div class="m3-field" style="flex:1;margin:0">
-      <input type="text" id="quote-search" placeholder=" " oninput="onQuoteSearch(this)">
-      <label><span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle">search</span> Buscar cotización</label>
+<div id="page-quotes" class="page" style="padding-top:0">
+
+  <!-- PageHeader -->
+  <div style="padding:28px 20px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
+    <div>
+      <div class="micro" style="margin-bottom:8px;letter-spacing:0.16em" id="quotes-eyebrow">Cotizaciones</div>
+      <h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Cotizaciones</h1>
     </div>
-    <button class="m3-btn-tonal m3-btn-sm" onclick="showPage('quote-editor')" style="flex-shrink:0">
-      <span class="material-symbols-rounded" style="font-size:16px">palette</span> Diseño
-    </button>
   </div>
-  <div id="quotes-list"></div>
+
+  <!-- Seg tabs: Cotizaciones / Clientes -->
+  <div style="padding:0 20px 16px">
+    <div class="seg" style="width:100%;display:flex">
+      <button class="active" id="qt-tab-quotes" onclick="showQuotesTab('quotes')" style="flex:1">Cotizaciones</button>
+      <button id="qt-tab-clients" onclick="showQuotesTab('clients')" style="flex:1">Clientes</button>
+    </div>
+  </div>
+
+  <!-- Search bar (estilo prototipo) -->
+  <div id="quotes-search-wrap" style="padding:0 20px 12px">
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-sunk);border:0.5px solid var(--line);border-radius:10px">
+      <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-3)">search</span>
+      <input id="quote-search" type="text" placeholder="Buscar cotización, cliente o pieza"
+             style="flex:1;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans)"
+             oninput="onQuoteSearch(this)">
+    </div>
+  </div>
+
+  <!-- Filter chips (rendered by JS) -->
+  <div id="quotes-filter-chips" class="hscroll" style="padding:0 20px 16px;display:flex;gap:6px;overflow-x:auto"></div>
+
+  <!-- List (rendered by JS) -->
+  <div id="quotes-list" style="padding:0 20px"></div>
+
+  <!-- Clients tab — buscador + lista (oculto por defecto, sin class="hidden" para que JS pueda togglearlo) -->
+  <div id="clients-tab-content" style="display:none">
+    <div style="padding:0 20px 12px">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-sunk);border:0.5px solid var(--line);border-radius:10px">
+        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-3)">search</span>
+        <input type="text" id="client-search" placeholder="Buscar cliente"
+               style="flex:1;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans)"
+               oninput="onClientSearch(this)">
+      </div>
+    </div>
+    <div id="clients-list-panel" style="padding:0 20px 16px"></div>
+  </div>
 </div>
 
 <!-- ===== PAGE: CLIENTS ===== -->
@@ -413,98 +497,237 @@
 </div>
 
 <!-- ===== PAGE: CONFIG ===== -->
-<div id="page-config" class="page">
-  <div class="config-section">
-    <div class="config-section-title">Electricidad y trabajo</div>
-    <div class="m3-card">
-      <div class="m3-field"><input type="number" id="cfg-kwh" step="0.01" min="0" placeholder=" " inputmode="decimal"><label for="cfg-kwh">Costo por kWh</label><span class="suffix">$/kWh</span></div>
-      <div class="m3-field"><input type="number" id="cfg-labor" step="0.1" min="0" placeholder=" " inputmode="decimal"><label for="cfg-labor">Costo hora de diseño</label><span class="suffix">$/hr</span></div>
+<div id="page-config" class="page" style="padding-top:0">
+
+  <!-- PageHeader -->
+  <div style="padding:28px 20px 18px">
+    <div class="micro" style="margin-bottom:8px;letter-spacing:0.16em">Configuración del estudio</div>
+    <h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Ajustes</h1>
+  </div>
+
+  <!-- Datos del negocio -->
+  <div style="padding:0 20px 20px">
+    <div class="micro" style="margin-bottom:10px">Datos del negocio</div>
+    <div class="card" style="padding:0 18px">
+      <div class="row">
+        <div class="row-label">Nombre</div>
+        <input type="text" id="cfg-biz-name" placeholder="Mi Negocio 3D"
+               style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
+      </div>
+      <div class="row">
+        <div class="row-label">WhatsApp</div>
+        <input type="tel" id="cfg-biz-phone" placeholder="+52 55 0000 0000" inputmode="tel"
+               style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
+      </div>
+      <div class="row">
+        <div class="row-label">Email</div>
+        <input type="email" id="cfg-biz-email" placeholder="hola@studio.mx" inputmode="email"
+               style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
+      </div>
+      <div class="row">
+        <div class="row-label">Instagram</div>
+        <input type="text" id="cfg-biz-social" placeholder="@estudio"
+               style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
+      </div>
+      <div class="row" style="border-bottom:none">
+        <div class="row-label">URL para QR</div>
+        <input type="url" id="cfg-biz-qr" placeholder="https://..." inputmode="url"
+               style="text-align:right;background:transparent;border:none;outline:none;font-size:13px;color:var(--ink-2);font-family:var(--font-sans);flex:1;min-width:0">
+      </div>
     </div>
   </div>
-  <div class="config-section">
-    <div class="config-section-title">Costos fijos mensuales</div>
-    <div class="m3-card">
-      <p class="config-hint">Desglosa tus gastos fijos por categoría para mayor claridad.</p>
-      <div id="fixed-cost-items-list"></div>
-      <button class="m3-btn-text m3-btn-sm" onclick="addFixedCostItem()" style="margin:4px 0 12px;width:auto">
-        <span class="material-symbols-rounded" style="font-size:16px">add</span> Agregar categoría
-      </button>
-      <div class="fixed-cost-total-bar">
-        <span class="fixed-cost-total-label">
-          <span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle">calculate</span>
-          Total/mes
-        </span>
-        <div style="display:flex;align-items:center;gap:4px">
-          <input type="number" id="cfg-fixed-monthly" step="1" min="0" placeholder="0" inputmode="decimal" class="fixed-cost-total-val" oninput="updateFixedCostTotal(true)">
-          <span class="fixed-cost-total-currency">$/mes</span>
+
+  <!-- Electricidad y trabajo -->
+  <div style="padding:0 20px 20px">
+    <div class="micro" style="margin-bottom:10px">Electricidad y trabajo</div>
+    <div class="card" style="padding:18px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="field">
+          <label>Costo kWh</label>
+          <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid var(--line);padding-bottom:8px">
+            <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">$</span>
+            <input type="number" id="cfg-kwh" step="0.01" min="0" inputmode="decimal"
+                   style="border:none;flex:1;padding:0;font-size:19px;background:transparent;color:var(--ink);font-family:var(--font-mono);outline:none">
+          </div>
+        </div>
+        <div class="field">
+          <label>Hora de diseño</label>
+          <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid var(--line);padding-bottom:8px">
+            <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">$</span>
+            <input type="number" id="cfg-labor" step="1" min="0" inputmode="decimal"
+                   style="border:none;flex:1;padding:0;font-size:19px;background:transparent;color:var(--ink);font-family:var(--font-mono);outline:none">
+            <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">/hr</span>
+          </div>
         </div>
       </div>
-      <div class="m3-field" style="margin-top:12px">
-        <input type="number" id="cfg-monthly-hours" step="1" min="0" placeholder=" " inputmode="decimal">
-        <label for="cfg-monthly-hours">Horas de impresión/mes</label>
-        <span class="suffix">hrs/mes</span>
+    </div>
+  </div>
+
+  <!-- Costos fijos -->
+  <div style="padding:0 20px 20px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px">
+      <div class="micro">Costos fijos mensuales</div>
+      <button onclick="addFixedCostItem()" style="font-size:12px;color:var(--ink-2);display:inline-flex;align-items:center;gap:4px">
+        <span class="material-symbols-rounded" style="font-size:14px">add</span> Categoría
+      </button>
+    </div>
+    <div class="card" style="padding:0 18px">
+      <div id="fixed-cost-items-list"></div>
+      <div class="row" style="border-top:1px solid var(--ink-4);margin-top:4px;border-bottom:none">
+        <div style="font-size:13px;font-weight:500">Total/mes</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" id="cfg-fixed-monthly" step="1" min="0" placeholder="0" inputmode="decimal"
+                 style="text-align:right;background:transparent;border:none;outline:none;font-size:18px;font-weight:500;color:var(--ink);font-family:var(--font-mono);width:90px"
+                 oninput="updateFixedCostTotal(true)">
+          <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">/mes</span>
+        </div>
       </div>
     </div>
   </div>
-  <div class="config-section">
-    <div class="config-section-title">Desperdicio y fallas</div>
-    <div class="m3-card">
-      <div class="m3-field"><input type="number" id="cfg-waste" step="1" min="0" max="100" placeholder=" " inputmode="decimal"><label for="cfg-waste">Factor de desperdicio</label><span class="suffix">%</span></div>
+
+  <!-- Horas de impresión / mes — standalone con número grande -->
+  <div style="padding:0 20px 20px">
+    <div class="micro" style="margin-bottom:12px">Horas de impresión / mes</div>
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <input type="number" id="cfg-monthly-hours" step="1" min="0" inputmode="decimal"
+             style="border:none;padding:0;font-size:52px;font-weight:600;letter-spacing:-0.04em;
+                    background:transparent;color:var(--ink);font-family:var(--font-sans);
+                    outline:none;width:160px;line-height:1"
+             oninput="_updateFixedPerHourDisplay()">
+      <span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-3)">hrs/mes</span>
+    </div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:8px" id="cfg-fixed-per-hour-display">
+      Costos fijos por hora de impresión: <span class="num" style="color:var(--ink)">—</span>
     </div>
   </div>
-  <div class="config-section">
-    <div class="config-section-title">Moneda</div>
-    <div class="m3-card">
-      <div class="m3-field"><select id="cfg-currency"><option value="$">$ MXN</option><option value="US$">US$ USD</option><option value="€">€ EUR</option></select><label for="cfg-currency">Moneda</label></div>
-    </div>
-  </div>
-  <div class="config-section">
-    <div class="config-section-title">Datos del negocio</div>
-    <div class="m3-card">
-      <div class="m3-field"><input type="text" id="cfg-biz-name" placeholder=" "><label for="cfg-biz-name">Nombre del negocio</label></div>
-      <div class="m3-field"><input type="tel" id="cfg-biz-phone" placeholder=" " inputmode="tel"><label for="cfg-biz-phone">Teléfono / WhatsApp</label></div>
-      <div class="m3-field"><input type="email" id="cfg-biz-email" placeholder=" " inputmode="email"><label for="cfg-biz-email">Email</label></div>
-      <div class="m3-field optional"><input type="text" id="cfg-biz-social" placeholder=" "><label for="cfg-biz-social">Red social (@usuario)</label></div>
-      <div class="m3-field optional"><input type="url" id="cfg-biz-qr" placeholder=" " inputmode="url"><label for="cfg-biz-qr">URL para QR en cotización</label></div>
-    </div>
-  </div>
-  <div class="config-section">
-    <div class="config-section-title">Apariencia</div>
-    <div class="m3-card">
-      <div class="theme-segment">
-        <button id="theme-dark-btn" onclick="setTheme('dark')"><span class="material-symbols-rounded" style="font-size:18px">dark_mode</span> Oscuro</button>
-        <button id="theme-light-btn" onclick="setTheme('light')"><span class="material-symbols-rounded" style="font-size:18px">light_mode</span> Claro</button>
-        <button id="theme-auto-btn" onclick="setTheme('auto')"><span class="material-symbols-rounded" style="font-size:18px">brightness_auto</span> Auto</button>
+
+  <!-- Desperdicio -->
+  <div style="padding:0 20px 20px">
+    <div class="micro" style="margin-bottom:10px">Desperdicio y fallas</div>
+    <div class="card" style="padding:18px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+        <div style="font-size:13px;color:var(--ink-2)">Factor de desperdicio</div>
+        <div class="display" style="font-size:28px">
+          <span id="cfg-waste-display">7</span><span style="font-size:14px;color:var(--ink-3)">%</span>
+        </div>
       </div>
+      <input class="slider" type="range" id="cfg-waste" min="0" max="25" step="1" value="7"
+             oninput="document.getElementById('cfg-waste-display').textContent=this.value">
     </div>
   </div>
-  <button class="m3-btn-filled mb-16" onclick="saveConfig()"><span class="material-symbols-rounded" style="font-size:18px">save</span> Guardar configuración</button>
-  <hr class="m3-divider">
-  <div class="config-section">
-    <div class="config-section-title">Respaldo</div>
-    <div class="flex-row">
-      <button class="m3-btn-outlined" onclick="exportData()"><span class="material-symbols-rounded" style="font-size:18px">download</span> Exportar</button>
-      <button class="m3-btn-outlined" onclick="document.getElementById('import-file').click()"><span class="material-symbols-rounded" style="font-size:18px">upload</span> Importar</button>
+
+  <!-- Moneda -->
+  <div style="padding:0 20px 20px">
+    <div class="micro" style="margin-bottom:10px">Moneda</div>
+    <div class="seg" style="width:100%;display:flex">
+      <button id="cur-mxn" class="active" onclick="setCurrencyUI('$','mxn')" style="flex:1">$ MXN</button>
+      <button id="cur-usd" onclick="setCurrencyUI('US$','usd')" style="flex:1">US$ USD</button>
+      <button id="cur-eur" onclick="setCurrencyUI('€','eur')" style="flex:1">€ EUR</button>
+    </div>
+    <!-- Hidden select mantiene compatibilidad con saveConfig() -->
+    <select id="cfg-currency" style="display:none">
+      <option value="$">$ MXN</option>
+      <option value="US$">US$ USD</option>
+      <option value="€">€ EUR</option>
+    </select>
+  </div>
+
+  <!-- Apariencia -->
+  <div style="padding:0 20px 20px">
+    <div class="micro" style="margin-bottom:10px">Apariencia</div>
+    <div class="seg theme-segment" style="width:100%;display:flex">
+      <button id="theme-light-btn" onclick="setTheme('light')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">
+        <span class="material-symbols-rounded" style="font-size:14px">light_mode</span> Claro
+      </button>
+      <button id="theme-dark-btn" onclick="setTheme('dark')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">
+        <span class="material-symbols-rounded" style="font-size:14px">dark_mode</span> Oscuro
+      </button>
+      <button id="theme-auto-btn" onclick="setTheme('auto')" style="flex:1">Auto</button>
+    </div>
+  </div>
+
+  <!-- Plantilla cotización -->
+  <div style="padding:0 20px 20px">
+    <div class="micro" style="margin-bottom:10px">Plantilla de cotización</div>
+    <button onclick="showPage('quote-editor')" class="card" style="width:100%;padding:18px;display:flex;align-items:center;gap:14px;text-align:left">
+      <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-2)">palette</span>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500">Diseño de cotización</div>
+        <div style="font-size:11px;color:var(--ink-3);margin-top:2px">Logo, colores, campos visibles, textos</div>
+      </div>
+      <span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-4)">chevron_right</span>
+    </button>
+  </div>
+
+  <!-- Guardar -->
+  <div style="padding:0 20px 20px">
+    <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">
+      <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar configuración
+    </button>
+  </div>
+
+  <!-- Respaldo -->
+  <div style="padding:0 20px 20px">
+    <div class="micro" style="margin-bottom:10px">Respaldo</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="btn btn-ghost" onclick="exportData()">
+        <span class="material-symbols-rounded" style="font-size:16px">download</span> Exportar
+      </button>
+      <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">
+        <span class="material-symbols-rounded" style="font-size:16px">upload</span> Importar
+      </button>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
   </div>
+
+  <!-- Footer -->
+  <div style="padding:12px 20px 0;text-align:center">
+    <div class="micro" style="color:var(--ink-4)">v2.1.0 · La Casita del Molde</div>
+  </div>
+</div>
+
+<!-- BARRA DE ACCIÓN FIJA — cotizaciones y catálogo -->
+<div id="page-action-bar" style="
+  display:none;
+  position:fixed;
+  bottom:var(--nav-h);
+  left:50%;
+  transform:translateX(-50%);
+  width:min(440px,100%);
+  padding:10px 20px;
+  background:color-mix(in oklab, var(--bg) 88%, transparent);
+  backdrop-filter:blur(16px) saturate(160%);
+  -webkit-backdrop-filter:blur(16px) saturate(160%);
+  border-top:0.5px solid var(--line);
+  z-index:90;
+">
+  <!-- Cotizaciones: nueva cotización -->
+  <button id="qa-btn-quotes" class="btn btn-ghost" style="width:100%;display:none" onclick="showPage('calc')">
+    <span class="material-symbols-rounded" style="font-size:16px">add</span> Nueva cotización
+  </button>
+  <!-- Cotizaciones: nuevo cliente -->
+  <button id="qa-btn-clients" class="btn btn-ghost" style="width:100%;display:none" onclick="showClientModal()">
+    <span class="material-symbols-rounded" style="font-size:16px">person_add</span> Nuevo cliente
+  </button>
+  <!-- Catálogo: agregar ítem -->
+  <button id="qa-btn-catalog" class="btn btn-ghost" style="width:100%;display:none" onclick="catalogAdd()">
+    <span class="material-symbols-rounded" style="font-size:16px">add</span>
+    <span id="catalog-add-label">Agregar</span>
+  </button>
 </div>
 
 <!-- NAV BAR -->
 <nav class="nav-bar" role="navigation" aria-label="Navegación principal">
-  <button class="nav-item" onclick="showPage('dashboard')" data-page="dashboard" aria-label="Inicio - Dashboard">
-    <div class="nav-icon-wrap"><span class="material-symbols-rounded">dashboard</span></div>Inicio
-  </button>
-  <button class="nav-item" onclick="showPage('calc')" data-page="calc" aria-label="Calculadora de costos">
-    <div class="nav-icon-wrap"><span class="material-symbols-rounded">calculate</span></div>Calcular
+  <button class="nav-item" onclick="showPage('dashboard')" data-page="dashboard" aria-label="Inicio">
+    <div class="nav-icon-wrap"><span class="material-symbols-rounded">home</span></div>Inicio
   </button>
   <button class="nav-item" onclick="showPage('quotes')" data-page="quotes" aria-label="Cotizaciones">
     <div class="nav-icon-wrap"><span class="material-symbols-rounded">receipt_long</span></div>Cotizaciones
   </button>
-  <button class="nav-item" onclick="showPage('printers')" data-page="printers" aria-label="Impresoras y materiales">
-    <div class="nav-icon-wrap"><span class="material-symbols-rounded">print</span></div>Catálogo
+  <button class="nav-item" onclick="showPage('catalog')" data-page="catalog" aria-label="Catálogo">
+    <div class="nav-icon-wrap"><span class="material-symbols-rounded">category</span></div>Catálogo
   </button>
-  <button class="nav-item" onclick="showPage('config')" data-page="config" aria-label="Configuración">
+  <button class="nav-item" onclick="showPage('config')" data-page="config" aria-label="Ajustes">
     <div class="nav-icon-wrap"><span class="material-symbols-rounded">settings</span></div>Ajustes
   </button>
 </nav>
@@ -533,12 +756,6 @@ document.addEventListener('DOMContentLoaded', function() {
   /* applyTheme SIEMPRE corre — fuera del try para que un error posterior no lo omita */
   applyTheme();
   try {
-    var marginSlider = document.getElementById('calc-margin');
-    if (marginSlider) {
-      marginSlider.addEventListener('input', function(){
-        document.getElementById('calc-margin-display').textContent = this.value + '%';
-      });
-    }
     document.querySelectorAll('.m3-fab').forEach(function(f) { f.style.display = 'none'; });
     populateSelects();
     showPage('dashboard'); /* Siempre inicia en dashboard */

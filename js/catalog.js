@@ -258,7 +258,6 @@ function loadCostProduct(i) {
   var timeEl    = document.getElementById('calc-time');
   var designEl  = document.getElementById('calc-design-time');
   var marginEl  = document.getElementById('calc-margin');
-  var marginDisp = document.getElementById('calc-margin-display');
 
   if (descEl)   descEl.value   = p.name;
   if (designEl) designEl.value = p.designH || 1;
@@ -266,7 +265,12 @@ function loadCostProduct(i) {
   if (p.defaultTimeH  && timeEl)    timeEl.value    = p.defaultTimeH;
   if (p.defaultMargin && marginEl) {
     marginEl.value = p.defaultMargin;
-    if (marginDisp) marginDisp.textContent = p.defaultMargin + '%';
+    var md2c = document.getElementById('calc-margin-display2');
+    if (md2c) md2c.textContent = p.defaultMargin;
+    var mnElC = document.getElementById('calc-margin-num');
+    if (mnElC) mnElC.value = p.defaultMargin;
+    var mlblC = document.getElementById('calc-margin-label');
+    if (mlblC) mlblC.textContent = p.defaultMargin + '% margen';
   }
 
   closeModal();

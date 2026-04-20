@@ -63,7 +63,7 @@ function calculate(silent) {
   var subtotal   = matCost + energyCost + laborCost + deprecCost + fixedCost + ipaCost + uvCost + postProcCost;
   var wasteCost  = subtotal * (config.wastePercent / 100);
   var baseCost   = subtotal + wasteCost;
-  var totalCost  = baseCost * (1 + margin / 100);
+  var totalCost  = roundToFive(baseCost * (1 + margin / 100));
 
   document.getElementById('r-mat').textContent     = cur + matCost.toFixed(2);
   document.getElementById('r-energy').textContent   = cur + energyCost.toFixed(2);
@@ -71,8 +71,45 @@ function calculate(silent) {
   document.getElementById('r-deprec').textContent   = cur + deprecCost.toFixed(2);
   document.getElementById('r-fixed').textContent    = cur + fixedCost.toFixed(2);
   document.getElementById('r-waste').textContent    = cur + wasteCost.toFixed(2);
-  document.getElementById('result-base').textContent = cur +baseCost.toFixed(2);
-  document.getElementById('result-total').textContent = cur + totalCost.toFixed(2);
+  document.getElementById('result-base').textContent  = cur + baseCost.toFixed(2);
+  document.getElementById('result-total').textContent = cur + totalCost.toFixed(0);
+
+  /* ── Ganancia ── */
+  var profitAmt = totalCost - baseCost;
+  var profitStr = (profitAmt >= 0 ? '+' : '') + cur + profitAmt.toFixed(2);
+  var profitEl  = document.getElementById('result-profit');
+  if (profitEl) profitEl.textContent = profitStr;
+  var gainEl2 = document.getElementById('result-margin-gain');
+  if (gainEl2) gainEl2.textContent = profitStr;
+
+  /* ── Margen display y label ── */
+  var md2 = document.getElementById('calc-margin-display2');
+  if (md2) md2.textContent = margin;
+  var mlbl = document.getElementById('calc-margin-label');
+  if (mlbl) mlbl.textContent = margin + '% margen';
+
+  /* ── Barra de composición de costos (CCB) ── */
+  var ccbParts = [
+    { id: 'ccb-mat',    val: matCost },
+    { id: 'ccb-energy', val: energyCost },
+    { id: 'ccb-design', val: laborCost },
+    { id: 'ccb-deprec', val: deprecCost },
+    { id: 'ccb-fixed',  val: fixedCost },
+    { id: 'ccb-waste',  val: wasteCost },
+    { id: 'ccb-post',   val: postProcCost + ipaCost + uvCost },
+  ];
+  var ccbTotal = baseCost || 1; /* evitar ÷0 */
+  ccbParts.forEach(function(p) {
+    var el = document.getElementById(p.id);
+    if (el) el.style.flex = String(Math.max(0, p.val / ccbTotal));
+  });
+
+  /* ── Etiqueta de desglose ── */
+  var rubroCount = 6; /* mat, energy, labor, deprec, fixed, waste */
+  if (postProcCost > 0)          rubroCount++;
+  if (isResin && (ipaCost + uvCost) > 0) rubroCount++;
+  var lblEl = document.getElementById('breakdown-label');
+  if (lblEl) lblEl.textContent = 'Ver desglose · ' + rubroCount + ' rubros';
 
   /* ── Bloque de post-procesado (pintura) ── */
   _renderPostProcBlock(pp, cur);
@@ -90,8 +127,6 @@ function calculate(silent) {
       resinBlock.classList.add('hidden');
     }
   }
-
-  document.getElementById('calc-result').classList.remove('hidden');
 
   /* Resetear botón "Agregar a orden" si estaba en estado "agregado" */
   var btnAdd = document.getElementById('btn-add-item');
@@ -158,12 +193,20 @@ function initCalcLive() {
   var rangeEl  = document.getElementById('calc-margin');
   var numEl    = document.getElementById('calc-margin-num');
   if (rangeEl && numEl && !rangeEl._marginSync) {
+    function _syncMarginDisplays(v) {
+      if (numEl) numEl.value = v;
+      var md2 = document.getElementById('calc-margin-display2');
+      if (md2) md2.textContent = v;
+      var mlbl = document.getElementById('calc-margin-label');
+      if (mlbl) mlbl.textContent = v + '% margen';
+    }
     rangeEl.addEventListener('input', function() {
-      numEl.value = rangeEl.value;
+      _syncMarginDisplays(rangeEl.value);
     });
     numEl.addEventListener('input', function() {
       var v = Math.min(200, Math.max(0, parseFloat(numEl.value) || 0));
       rangeEl.value = v;
+      _syncMarginDisplays(v);
       calculate(true);
     });
     rangeEl._marginSync = true;
@@ -212,7 +255,7 @@ function saveToHistory() {
   if (history.length > 100) history.pop();
   sv('history', history);
   clearLastCalc();
-  document.getElementById('calc-result').classList.add('hidden');
+  /* No ocultamos calc-result — el hero siempre es visible en el nuevo layout */
   snack('Guardado en historial');
 }
 
@@ -227,7 +270,11 @@ function restoreCalcResult() {
   document.getElementById('calc-margin').value            = lastCalc.margin || 50;
   var mnEl = document.getElementById('calc-margin-num');
   if (mnEl) mnEl.value = lastCalc.margin || 50;
-  document.getElementById('calc-margin-display').textContent = (lastCalc.margin || 50) + '%';
+  var savedMargin = lastCalc.margin || 50;
+  var md2 = document.getElementById('calc-margin-display2');
+  if (md2) md2.textContent = savedMargin;
+  var mlbl = document.getElementById('calc-margin-label');
+  if (mlbl) mlbl.textContent = savedMargin + '% margen';
   var ps = document.getElementById('calc-printer');
   var ms = document.getElementById('calc-material');
   if (lastCalc.printerId)  ps.value = lastCalc.printerId;
@@ -239,7 +286,14 @@ function restoreCalcResult() {
   document.getElementById('r-fixed').textContent          = cur + lastCalc.fixedCost.toFixed(2);
   document.getElementById('r-waste').textContent          = cur + lastCalc.wasteCost.toFixed(2);
   document.getElementById('result-base').textContent      = cur + lastCalc.baseCost.toFixed(2);
-  document.getElementById('result-total').textContent     = cur + lastCalc.totalCost.toFixed(2);
+  document.getElementById('result-total').textContent     = cur + lastCalc.totalCost.toFixed(0);
+  /* Ganancia */
+  var profitAmt = lastCalc.totalCost - lastCalc.baseCost;
+  var profitStr = (profitAmt >= 0 ? '+' : '') + cur + profitAmt.toFixed(2);
+  var profitEl  = document.getElementById('result-profit');
+  if (profitEl) profitEl.textContent = profitStr;
+  var gainEl2 = document.getElementById('result-margin-gain');
+  if (gainEl2) gainEl2.textContent = profitStr;
 
   /* Restaurar bloque resina si aplica */
   var resinBlock = document.getElementById('r-resin-block');
@@ -256,8 +310,9 @@ function restoreCalcResult() {
       resinBlock.classList.add('hidden');
     }
   }
-
-  document.getElementById('calc-result').classList.remove('hidden');
+  /* Garantizar que el panel de resultado sea visible */
+  var resEl = document.getElementById('calc-result');
+  if (resEl) resEl.classList.remove('hidden');
 }
 
 /* ── Presets de configuración rápida ─────────────────────────── */
@@ -282,13 +337,15 @@ function applyPreset(i) {
   var ps = document.getElementById('calc-printer');
   var ms = document.getElementById('calc-material');
   var mr = document.getElementById('calc-margin');
-  var md = document.getElementById('calc-margin-display');
   if (ps) ps.value = p.printerId;
   if (ms) ms.value = p.materialId;
   if (mr) mr.value = p.margin;
-  if (md) md.textContent = p.margin + '%';
   var mnEl = document.getElementById('calc-margin-num');
   if (mnEl) mnEl.value = p.margin;
+  var md2 = document.getElementById('calc-margin-display2');
+  if (md2) md2.textContent = p.margin;
+  var mlbl = document.getElementById('calc-margin-label');
+  if (mlbl) mlbl.textContent = p.margin + '% margen';
   calculate(true);
   snack('Config aplicada: ' + p.name);
 }
@@ -443,6 +500,28 @@ function _renderPostProcBlock(pp, cur) {
   if (ppTotalEl)    ppTotalEl.textContent    = cur + pp.totalPostCost.toFixed(2);
 
   block.classList.remove('hidden');
+}
+
+/* ── Toggle desglose ─────────────────────────────────────────── */
+function toggleBreakdown() {
+  var detail = document.getElementById('breakdown-detail');
+  var chev   = document.getElementById('breakdown-chev');
+  var lbl    = document.getElementById('breakdown-label');
+  if (!detail) return;
+  var isOpen = !detail.classList.contains('hidden');
+  if (isOpen) {
+    detail.classList.add('hidden');
+    if (chev) chev.style.transform = '';
+    if (lbl && lbl.textContent.startsWith('Ocultar')) {
+      lbl.textContent = lbl.textContent.replace('Ocultar', 'Ver');
+    }
+  } else {
+    detail.classList.remove('hidden');
+    if (chev) chev.style.transform = 'rotate(90deg)';
+    if (lbl && lbl.textContent.startsWith('Ver')) {
+      lbl.textContent = lbl.textContent.replace('Ver', 'Ocultar');
+    }
+  }
 }
 
 /* ── Helper: estado visual de un campo ───────────────────────────

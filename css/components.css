@@ -1816,3 +1816,191 @@
 
 /* FAB position */
 .m3-fab { bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom, 0px)); }
+
+/* ====================================================================
+   DARK LUXE UTILITY CLASSES — del sistema de diseño del prototipo
+   (styles.css del handoff). Usados en nuevo HTML y como base forward.
+   ==================================================================== */
+
+/* ── TAG pill ────────────────────────────────────────────────────── */
+.tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-2);
+  padding: 4px 9px; border-radius: 999px;
+  background: var(--bg-elev); border: 0.5px solid var(--line);
+}
+
+/* ── CARD standalone ─────────────────────────────────────────────── */
+.card {
+  background: var(--bg-elev);
+  border: 0.5px solid var(--line);
+  border-radius: var(--r-m);
+}
+
+/* ── FIELD — underline style ─────────────────────────────────────── */
+.field {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.field label {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.field input,
+.field textarea,
+.field select {
+  background: transparent; border: none;
+  border-bottom: 1px solid var(--line);
+  padding: 8px 0 10px; font-size: 17px;
+  font-family: var(--font-sans); color: var(--ink);
+  outline: none; transition: border-color 0.15s;
+  -webkit-appearance: none; appearance: none;
+}
+.field input:focus,
+.field textarea:focus {
+  border-bottom-color: var(--accent);
+}
+.field input.num-input {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 19px;
+}
+.field .suffix {
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--ink-3); letter-spacing: 0.05em;
+}
+
+/* ── BTN — botones pill ──────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 52px; padding: 0 22px;
+  border-radius: 999px;
+  font-family: var(--font-sans); font-size: 14px;
+  font-weight: 500; letter-spacing: -0.01em;
+  transition: transform 0.1s, filter 0.15s;
+  cursor: pointer; border: none;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary  { background: var(--accent); color: #000; font-weight: 600; }
+.btn-primary:hover { filter: brightness(1.06); }
+.btn-ghost    { background: var(--bg-elev); color: var(--ink); border: 0.5px solid var(--line); }
+.btn-ghost:hover { filter: brightness(1.2); }
+.btn-accent   { background: var(--accent); color: #000; }
+
+/* ── SEG — segmented control ─────────────────────────────────────── */
+.seg {
+  display: inline-flex; background: var(--bg-sunk);
+  padding: 3px; border-radius: 999px; border: 0.5px solid var(--line);
+}
+.seg button {
+  padding: 8px 14px; border-radius: 999px;
+  font-size: 13px; color: var(--ink-3); font-weight: 500;
+  transition: all 0.15s; white-space: nowrap;
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-sans);
+}
+.seg button.active { background: var(--ink); color: var(--bg); }
+
+/* ── RULE — separador de sección con texto ───────────────────────── */
+.rule {
+  display: flex; align-items: center; gap: 12px;
+  color: var(--ink-3);
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+}
+.rule::before,
+.rule::after {
+  content: ""; flex: 1; height: 0.5px; background: var(--line);
+}
+
+/* ── ROW — fila con borde inferior ──────────────────────────────── */
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 0.5px solid var(--line);
+}
+.row:last-child { border-bottom: none; }
+.row-label { color: var(--ink-2); font-size: 14px; }
+.row-value {
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  color: var(--ink); font-size: 14px;
+}
+
+/* ── SWITCH — toggle simple ─────────────────────────────────────── */
+.switch {
+  position: relative; width: 42px; height: 24px;
+  background: var(--line); border-radius: 999px;
+  cursor: pointer; transition: background 0.2s; flex-shrink: 0;
+}
+.switch.on { background: var(--accent); }
+.switch::after {
+  content: ""; position: absolute; top: 2px; left: 2px;
+  width: 20px; height: 20px;
+  background: var(--bg-elev); border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+.switch.on::after { transform: translateX(18px); background: #000; }
+
+/* ── SLIDER ──────────────────────────────────────────────────────── */
+.slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 2px;
+  background: var(--line); border-radius: 2px; outline: none;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px;
+  background: var(--accent); border-radius: 50%;
+  cursor: pointer; border: 3px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.slider::-moz-range-thumb {
+  width: 20px; height: 20px;
+  background: var(--accent); border-radius: 50%;
+  cursor: pointer; border: 3px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* ── PIE — dot/swatch de color ────────────────────────────────────── */
+.pie { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+
+/* ── NUM INPUT standalone ─────────────────────────────────────────── */
+input.num-input {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 19px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--ink);
+}
+input.num-input::-webkit-inner-spin-button,
+input.num-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+/* ── SUFFIX standalone ────────────────────────────────────────────── */
+span.suffix {
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--ink-3); letter-spacing: 0.05em;
+}
+
+/* ── PAGE HEADER block ────────────────────────────────────────────── */
+.page-header {
+  padding: 28px 20px 18px;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
+}
+.page-header h1 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 600; font-size: 34px;
+  line-height: 0.98; letter-spacing: -0.035em;
+  color: var(--ink);
+}
+.page-header h1 em { font-style: normal; color: var(--accent); }
+.page-header .eyebrow {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: 8px;
+}

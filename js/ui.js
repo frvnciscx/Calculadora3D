@@ -29,6 +29,14 @@ function m3Confirm(message, onConfirm) {
 }
 
 function showPage(name) {
+  // Catálogo: sub-páginas antiguas se redirigen al catálogo unificado
+  if (name === 'printers' || name === 'materials' || name === 'inventory') {
+    var catTab = name === 'printers' ? 'printers' : name === 'materials' ? 'materials' : 'inventory';
+    showPage('catalog');
+    showCatalogTab(catTab);
+    return;
+  }
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
 
@@ -36,13 +44,14 @@ function showPage(name) {
   if (!pageEl) { console.warn('Page not found:', name); return; }
   pageEl.classList.add('active');
 
+  // Exponer página actual en body para CSS
+  document.body.dataset.page = name;
+
   // Map sub-pages to their parent nav item
   const navMap = {
     'quote-editor': 'quotes',
     'clients':      'quotes',
-    'materials':    'printers',
-    'inventory':    'printers',
-    'history':      'calc'
+    'catalog':      'catalog',
   };
   const navPage = navMap[name] || name;
   const navBtn = document.querySelector(`[data-page="${navPage}"]`);
@@ -50,16 +59,93 @@ function showPage(name) {
 
   document.querySelectorAll('.m3-fab').forEach(f => f.style.display = 'none');
 
+  /* Barra de acción fija — visible en cotizaciones y catálogo */
+  var qaBar = document.getElementById('page-action-bar');
+  if (qaBar) qaBar.style.display = (name === 'quotes' || name === 'catalog') ? '' : 'none';
+  /* Mostrar el botón correcto según página */
+  _showActionBtn(name === 'quotes' ? (_activeQuotesTab || 'quotes') : name === 'catalog' ? 'catalog' : null);
+
   if (name === 'dashboard')    renderDashboard();
-  if (name === 'printers')     { renderPrinters();   document.getElementById('fab-printer').style.display = 'flex'; }
-  if (name === 'materials')    { renderMaterials();  document.getElementById('fab-material').style.display = 'flex'; }
-  if (name === 'inventory')    { renderInventory();  document.getElementById('fab-inventory').style.display = 'flex'; }
-  if (name === 'quotes')       renderQuotes();
-  if (name === 'clients')      { renderClients();    document.getElementById('fab-clients').style.display = 'flex'; }
+  if (name === 'catalog')      { showCatalogTab(_activeCatalogTab || 'printers'); }
+  if (name === 'quotes')       { renderQuotes(); showQuotesTab(_activeQuotesTab || 'quotes'); }
+  if (name === 'clients')      { showQuotesTab('clients'); showPage('quotes'); return; }
   if (name === 'config')       loadConfig();
   if (name === 'calc')         { populateSelects(); restoreCalcResult(); refreshDraftIndicator(); initCalcLive(); renderPresets(); _updateResinParamsBlock(); }
   if (name === 'history')      renderHistory();
   if (name === 'quote-editor') loadQuoteEditor();
+}
+
+/* ── Barra de acción: muestra el botón correcto según contexto ─── */
+function _showActionBtn(context) {
+  var btns = { quotes: 'qa-btn-quotes', clients: 'qa-btn-clients', catalog: 'qa-btn-catalog' };
+  Object.keys(btns).forEach(function(k) {
+    var el = document.getElementById(btns[k]);
+    if (el) el.style.display = (k === context) ? '' : 'none';
+  });
+}
+
+/* ── Tabs del header de calculadora ─── */
+function showCalcTab(tab) {
+  var tabCotizar   = document.getElementById('calc-tab-cotizar');
+  var tabHistorial = document.getElementById('calc-tab-historial');
+  if (tabCotizar)   tabCotizar.classList.toggle('active',   tab === 'cotizar');
+  if (tabHistorial) tabHistorial.classList.toggle('active', tab === 'historial');
+  if (tab === 'historial') showPage('history');
+}
+
+/* ── Catálogo — tab entre Impresoras / Materiales / Inventario ─── */
+var _activeCatalogTab = 'printers';
+var _catalogAddLabels = { printers: 'Impresora', materials: 'Material', inventory: 'Filamento' };
+function showCatalogTab(tab) {
+  _activeCatalogTab = tab;
+  var panels = { printers: 'printer-list', materials: 'material-list', inventory: 'inventory-list' };
+  var tabs   = { printers: 'cat-tab-printers', materials: 'cat-tab-materials', inventory: 'cat-tab-inventory' };
+  Object.keys(panels).forEach(function(key) {
+    var panelEl = document.getElementById(panels[key]);
+    var tabEl   = document.getElementById(tabs[key]);
+    if (panelEl) panelEl.style.display = key === tab ? '' : 'none';
+    if (tabEl)   tabEl.classList.toggle('active', key === tab);
+  });
+  var labelEl = document.getElementById('catalog-add-label');
+  if (labelEl) labelEl.textContent = _catalogAddLabels[tab] || 'Agregar';
+  _showActionBtn('catalog');
+  if (tab === 'printers')  renderPrinters();
+  if (tab === 'materials') renderMaterials();
+  if (tab === 'inventory') renderInventory();
+}
+
+/* ── Catálogo — botón + del encabezado ─── */
+function catalogAdd() {
+  if (_activeCatalogTab === 'printers')  { showPrinterModal(); return; }
+  if (_activeCatalogTab === 'materials') { showMaterialModal(); return; }
+  if (_activeCatalogTab === 'inventory') { showInventoryModal(); return; }
+}
+
+/* ── Cotizaciones — tab entre Cotizaciones / Clientes ─── */
+var _activeQuotesTab = 'quotes';
+function showQuotesTab(tab) {
+  _activeQuotesTab = tab;
+  var quotesPanel    = document.getElementById('quotes-list');
+  var clientsContent = document.getElementById('clients-tab-content');
+  var filterChips    = document.getElementById('quotes-filter-chips');
+  var searchWrap     = document.getElementById('quotes-search-wrap');
+  var qtQuotes       = document.getElementById('qt-tab-quotes');
+  var qtClients      = document.getElementById('qt-tab-clients');
+  /* Barra de acción fija */
+  var qaBar          = document.getElementById('quotes-action-bar');
+  var qaBtnQuotes    = document.getElementById('qa-btn-quotes');
+  var qaBtnClients   = document.getElementById('qa-btn-clients');
+
+  var isQuotes = tab === 'quotes';
+  if (quotesPanel)    quotesPanel.style.display    = isQuotes ? '' : 'none';
+  if (filterChips)    filterChips.style.display    = isQuotes ? '' : 'none';
+  if (searchWrap)     searchWrap.style.display     = isQuotes ? '' : 'none';
+  if (clientsContent) clientsContent.style.display = isQuotes ? 'none' : '';
+  if (qtQuotes)       qtQuotes.classList.toggle('active',  isQuotes);
+  if (qtClients)      qtClients.classList.toggle('active', !isQuotes);
+  _showActionBtn(isQuotes ? 'quotes' : 'clients');
+
+  if (tab === 'clients') renderClients();
 }
 
 function populateSelects() {

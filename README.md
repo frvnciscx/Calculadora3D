@@ -44,8 +44,29 @@ PWA para calcular costos de impresión 3D y generar cotizaciones profesionales.
 - Barra de progreso con alerta visual cuando queda ≤ 20%
 - Botón "Descontar" para registrar gramos usados tras cada impresión
 
+### Post-procesado / Pintura
+- Tarjeta opcional en la calculadora (toggle switch)
+- Colores de pintura dinámicos: "Agregar color" genera filas con nombre + costo individual
+- Campos de primer, barniz y tiempo de pintado (usa tarifa de labor de Ajustes)
+- Costos incluidos en el subtotal antes del % desperdicio
+- Bloque de desglose aparece en resultados con total de post-procesado
+- Al agregar a la orden: campos de la pieza se limpian automáticamente para la siguiente
+
+### Cotizaciones
+- Orden multi-producto con cantidades individuales
+- **Descuento:** campo % en el modal de borrador — actualiza subtotal / monto / total en tiempo real
+- Estados: **pendiente** / **aceptada** / **rechazada** — badge visual y cambio directo desde la lista
+- Botón de WhatsApp con mensaje preformateado listo para enviar
+- Exportar a PDF, imagen compartible o texto plano
+- QR del negocio en cada cotización (configurar URL en Ajustes)
+- Búsqueda por cliente, número o producto
+- Sincronización con Notion: botón "Notion" en cotizaciones aceptadas → crea entrada en DB "Ventas 2026"
+- Cada cotización guarda: `subtotal`, `discount`, `discountAmt`, `grandTotal`, `totalBaseCost`
+
 ### Dashboard
-- Ingresos del mes (solo cotizaciones aceptadas)
+- Ingresos del mes (cotizaciones aceptadas)
+- **Ganancia del mes** = ingresos − costo base (solo cotizaciones con `totalBaseCost`)
+- **Margen del mes** = ganancia / ingresos × 100 (%)
 - Historial mensual de los últimos 6 meses con barras y ratio de aceptación
 - Alerta de stock bajo en filamento
 - Cotizaciones recientes con estado
@@ -78,8 +99,8 @@ Los módulos siguen separación de responsabilidades:
 | `quotes.js` | CRUD cotizaciones, estados, WhatsApp, PDF, Notion |
 | `clients.js` | CRUD clientes, autocompletado, tabs de cotizaciones |
 | `native.js` | Drag bottom sheets, transiciones, haptic feedback |
-| `config.js` | Configuración general, export/import JSON |
-| `dashboard.js` | Métricas, historial mensual |
+| `config.js` | Configuración general, desglose costos fijos, export/import JSON |
+| `dashboard.js` | Métricas, historial mensual, ganancia/margen del mes |
 | `theme.js` | Tema claro/oscuro/auto |
 
 ---
@@ -122,7 +143,7 @@ Los módulos siguen separación de responsabilidades:
 ```
 ├── index.html
 ├── manifest.json
-├── sw.js                  — Service Worker (v28)
+├── sw.js                  — Service Worker (v30)
 ├── deploy.sh              — git add + commit + push en un paso
 ├── api/
 │   └── notion.js          — Vercel Function: POST /api/notion

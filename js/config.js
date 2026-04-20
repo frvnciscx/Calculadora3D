@@ -1,25 +1,67 @@
 /* ===== CONFIG ===== */
+
+/* ── Moneda: actualiza el seg y el select oculto ─── */
+function setCurrencyUI(cur, btnId) {
+  /* Actualizar select oculto (leído por saveConfig) */
+  var sel = document.getElementById('cfg-currency');
+  if (sel) sel.value = cur;
+  /* Actualizar estado activo de los botones del seg */
+  ['cur-mxn','cur-usd','cur-eur'].forEach(function(id) {
+    var btn = document.getElementById(id);
+    if (btn) btn.classList.toggle('active', id === btnId);
+  });
+}
+
 function loadConfig() {
   document.getElementById('cfg-kwh').value = config.kwhCost;
   document.getElementById('cfg-labor').value = config.laborCostPerHour;
   document.getElementById('cfg-currency').value = config.currency;
   document.getElementById('cfg-fixed-monthly').value = config.fixedMonthlyCost || 0;
   document.getElementById('cfg-monthly-hours').value = config.monthlyPrintHours || 0;
-  document.getElementById('cfg-waste').value = config.wastePercent || 0;
+  var wasteEl = document.getElementById('cfg-waste');
+  if (wasteEl) wasteEl.value = config.wastePercent || 0;
+  var wasteDisplayEl = document.getElementById('cfg-waste-display');
+  if (wasteDisplayEl) wasteDisplayEl.textContent = (config.wastePercent || 0) + '%';
   renderFixedCostItems();
+  /* Costo fijo por hora display */
+  _updateFixedPerHourDisplay();
   document.getElementById('cfg-biz-name').value = config.bizName || '';
   document.getElementById('cfg-biz-phone').value = config.bizPhone || '';
   document.getElementById('cfg-biz-email').value = config.bizEmail || '';
   document.getElementById('cfg-biz-social').value = config.bizSocial || '';
   document.getElementById('cfg-biz-qr').value = config.bizQrUrl || '';
   /* Resina */
-  var cfgIpaLiter = document.getElementById('cfg-ipa-liter-cost');
-  var cfgIpaMl    = document.getElementById('cfg-ipa-ml');
+  var cfgIpaLiter   = document.getElementById('cfg-ipa-liter-cost');
+  var cfgIpaMl      = document.getElementById('cfg-ipa-ml');
   var cfgSupportPct = document.getElementById('cfg-resin-support-pct');
   if (cfgIpaLiter)   cfgIpaLiter.value   = config.ipaLiterCost   || 80;
   if (cfgIpaMl)      cfgIpaMl.value      = config.ipaMlPerPrint  || 150;
   if (cfgSupportPct) cfgSupportPct.value = config.resinSupportPct || 20;
+  /* Sincronizar seg de moneda */
+  var curMap = { '$': 'cur-mxn', 'US$': 'cur-usd', '€': 'cur-eur' };
+  var activeCurBtn = curMap[config.currency] || 'cur-mxn';
+  ['cur-mxn','cur-usd','cur-eur'].forEach(function(id) {
+    var btn = document.getElementById(id);
+    if (btn) btn.classList.toggle('active', id === activeCurBtn);
+  });
   applyTheme();
+}
+
+function _updateFixedPerHourDisplay() {
+  /* Lee del input en vivo para feedback inmediato */
+  var hoursEl = document.getElementById('cfg-monthly-hours');
+  var fixedEl = document.getElementById('cfg-fixed-monthly');
+  var hours   = hoursEl  ? (parseFloat(hoursEl.value)  || 0) : (config.monthlyPrintHours  || 0);
+  var fixed   = fixedEl  ? (parseFloat(fixedEl.value)  || 0) : (config.fixedMonthlyCost   || 0);
+  var cur     = (config && config.currency) ? config.currency : '$';
+  var dispEl  = document.getElementById('cfg-fixed-per-hour-display');
+  if (!dispEl) return;
+  if (hours > 0 && fixed > 0) {
+    var perH = (fixed / hours).toFixed(2);
+    dispEl.innerHTML = 'Costos fijos por hora de impresión: <span class="num" style="color:var(--ink)">' + cur + perH + '</span>';
+  } else {
+    dispEl.innerHTML = 'Costos fijos por hora de impresión: <span class="num" style="color:var(--ink)">—</span>';
+  }
 }
 
 function saveConfig() {
@@ -96,22 +138,25 @@ function renderFixedCostItems() {
   updateFixedCostTotal();
 }
 
-/* Genera el HTML de una fila */
+/* Genera el HTML de una fila — estilo Dark Luxe row */
 function _fciRow(name, amount) {
   var id = ++_fciCounter;
-  return '<div class="fci-row" data-fci="' + id + '">' +
-    '<div class="m3-field" style="flex:2;margin:0">' +
-      '<input type="text" placeholder=" " class="fci-name" value="' + esc(name || '') + '">' +
-      '<label>Categoría</label>' +
+  return '<div class="fci-row" data-fci="' + id + '" style="display:flex;align-items:center;padding:12px 0;border-bottom:0.5px solid var(--line);gap:10px">' +
+    '<input type="text" placeholder="Categoría" class="fci-name" value="' + esc(name || '') + '"' +
+      ' style="flex:1;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans)">' +
+    '<div style="display:flex;align-items:baseline;gap:4px;flex-shrink:0">' +
+      '<span style="font-family:var(--font-mono);font-size:12px;color:var(--ink-3)">$</span>' +
+      '<input type="number" placeholder="0" min="0" step="1" inputmode="decimal"' +
+        ' class="fci-amount" value="' + (amount || '') + '"' +
+        ' oninput="updateFixedCostTotal()"' +
+        ' style="background:transparent;border:none;outline:none;font-family:var(--font-mono);' +
+          'font-size:14px;font-weight:500;color:var(--ink);text-align:right;width:80px">' +
+      '<span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3)">/mes</span>' +
     '</div>' +
-    '<div class="m3-field" style="flex:1.5;margin:0">' +
-      '<input type="number" placeholder=" " min="0" step="1" inputmode="decimal" ' +
-        'class="fci-amount" value="' + (amount || '') + '" oninput="updateFixedCostTotal()">' +
-      '<label>Monto</label>' +
-      '<span class="suffix">$</span>' +
-    '</div>' +
-    '<button class="paint-remove-btn" onclick="removeFCIRow(this)" title="Eliminar">' +
-      '<span class="material-symbols-rounded">close</span>' +
+    '<button onclick="removeFCIRow(this)" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;' +
+      'border-radius:6px;background:transparent;color:var(--ink-4);flex-shrink:0;transition:color 0.15s"' +
+      ' onmouseover="this.style.color=\'var(--danger)\'" onmouseout="this.style.color=\'var(--ink-4)\'">' +
+      '<span class="material-symbols-rounded" style="font-size:16px">close</span>' +
     '</button>' +
   '</div>';
 }

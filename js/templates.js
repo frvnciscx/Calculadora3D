@@ -249,31 +249,183 @@ function tplClientQuoteRow(q, qi, cur) {
 }
 
 function tplClientModal(c, editIndex) {
-  var title = c ? 'Editar cliente' : 'Nuevo cliente';
-  var saveFn = 'saveClient(' + (editIndex != null ? editIndex : 'null') + ')';
-  return '<div class="m3-scrim" onclick="closeModal()"></div>' +
-    '<div class="m3-bottom-sheet">' +
-      tplSheetHeader(title) +
-      '<div class="m3-field">' +
-        '<input type="text" id="cli-name" placeholder=" " value="' + esc(c ? c.name : '') + '">' +
-        '<label for="cli-name">Nombre del cliente</label>' +
+  var isEdit   = (c != null);
+  var saveFn   = 'saveClient(' + (editIndex != null ? editIndex : 'null') + ')';
+  var eyebrow  = isEdit ? 'Editar' : 'Nuevo';
+  var heading  = isEdit ? 'Editar cliente' : 'Agregar cliente';
+  var name     = esc(c ? c.name    || '' : '');
+  var phone    = esc(c ? c.phone   || '' : '');
+  var email    = esc(c ? c.email   || '' : '');
+  var social   = esc(c ? c.social  || '' : '');
+  var notes    = esc(c ? c.notes   || '' : '');
+  var source   = c ? (c.source || 'instagram') : 'instagram';
+  var tag      = c ? (c.tag    || 'nuevo')     : 'nuevo';
+
+  var sourceOpts = [
+    { id: 'instagram',   label: 'Instagram' },
+    { id: 'facebook',    label: 'Facebook' },
+    { id: 'recomendado', label: 'Recomendado' },
+    { id: 'feria',       label: 'Feria / Bazar' },
+    { id: 'web',         label: 'Web' },
+    { id: 'otro',        label: 'Otro' },
+  ];
+  var tagOpts = [
+    { id: 'nuevo',      label: 'Nuevo' },
+    { id: 'frecuente',  label: 'Frecuente' },
+    { id: 'mayorista',  label: 'Mayorista' },
+    { id: 'vip',        label: 'VIP' },
+  ];
+
+  function chipSrc(o) {
+    var active = source === o.id;
+    return '<button type="button" id="cli-src-' + o.id + '" onclick="_cliSetSource(\'' + o.id + '\')" style="' +
+      'padding:7px 13px;border-radius:999px;font-size:12px;white-space:nowrap;' +
+      'border:0.5px solid ' + (active ? 'var(--ink)' : 'var(--line)') + ';' +
+      'background:' + (active ? 'var(--ink)' : 'transparent') + ';' +
+      'color:' + (active ? 'var(--bg)' : 'var(--ink-2)') + ';' +
+      'transition:background 0.15s,color 0.15s">' + o.label + '</button>';
+  }
+  function chipTag(o) {
+    var active = tag === o.id;
+    return '<button type="button" id="cli-tag-' + o.id + '" class="' + (active ? 'active' : '') + '" onclick="_cliSetTag(\'' + o.id + '\')" style="flex:1">' + o.label + '</button>';
+  }
+
+  return (
+    /* Overlay full-screen */
+    '<div style="' +
+      'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+      'width:min(440px,100%);height:100dvh;' +
+      'background:var(--bg);z-index:200;' +
+      'overflow-y:auto;-webkit-overflow-scrolling:touch;' +
+      'animation:pageIn 0.25s cubic-bezier(0.2,0.8,0.2,1)">' +
+
+      /* Mini header */
+      '<div style="padding:calc(env(safe-area-inset-top,0px) + 16px) 20px 8px;display:flex;justify-content:space-between;align-items:center">' +
+        '<button type="button" onclick="closeModal()" style="display:flex;align-items:center;gap:6px;color:var(--ink-3);font-size:13px">' +
+          '<span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Clientes' +
+        '</button>' +
+        '<button type="button" onclick="' + saveFn + '" style="font-size:13px;font-weight:500;color:var(--ink)">Guardar</button>' +
       '</div>' +
-      '<div class="flex-row">' +
-        '<div class="m3-field" style="flex:1">' +
-          '<input type="tel" id="cli-phone" placeholder=" " inputmode="tel" value="' + esc(c ? c.phone || '' : '') + '">' +
-          '<label for="cli-phone">Teléfono / WhatsApp</label>' +
+
+      /* PageHeader */
+      '<div style="padding:4px 20px 20px">' +
+        '<div class="micro" style="margin-bottom:8px">' + eyebrow + '</div>' +
+        '<h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">' + heading + '</h1>' +
+      '</div>' +
+
+      /* Avatar + nombre hero */
+      '<div style="padding:0 20px 24px;display:flex;flex-direction:column;align-items:center;gap:16px">' +
+        '<div id="cli-avatar" style="' +
+          'width:84px;height:84px;border-radius:50%;' +
+          'background:' + (name ? 'var(--ink)' : 'var(--bg-sunk)') + ';' +
+          'color:' + (name ? 'var(--bg)' : 'var(--ink-4)') + ';' +
+          'border:0.5px solid var(--line);' +
+          'display:flex;align-items:center;justify-content:center;' +
+          'font-size:28px;font-weight:600;letter-spacing:-0.02em;' +
+          'transition:background 0.2s,color 0.2s">' +
+          (name ? _cliInitials(name) : '—') +
         '</div>' +
-        '<div class="m3-field optional" style="flex:1">' +
-          '<input type="email" id="cli-email" placeholder=" " inputmode="email" value="' + esc(c ? c.email || '' : '') + '">' +
-          '<label for="cli-email">Email</label>' +
+        '<div style="width:100%;text-align:center">' +
+          '<input type="text" id="cli-name" value="' + name + '" placeholder="Nombre y apellido"' +
+            ' oninput="_cliUpdatePreview()"' +
+            ' style="width:100%;text-align:center;font-family:var(--font-sans);' +
+              'font-size:26px;font-weight:600;letter-spacing:-0.02em;' +
+              'background:transparent;border:none;outline:none;color:var(--ink);padding:4px 0">' +
+          '<div style="height:1px;background:var(--line);margin:4px auto 0;max-width:220px"></div>' +
+          '<div class="micro" style="margin-top:8px">Nombre del cliente</div>' +
         '</div>' +
       '</div>' +
-      '<div class="m3-field optional">' +
-        '<textarea id="cli-notes" placeholder=" ">' + esc(c ? c.notes || '' : '') + '</textarea>' +
-        '<label for="cli-notes">Notas</label>' +
+
+      /* Contacto */
+      '<div style="padding:0 20px 20px">' +
+        '<div class="micro" style="margin-bottom:10px">Contacto</div>' +
+        '<div class="card" style="padding:0 16px">' +
+          /* Teléfono */
+          '<div style="padding:14px 0;border-bottom:0.5px solid var(--line)">' +
+            '<div style="font-size:10px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">WhatsApp / Teléfono</div>' +
+            '<input type="tel" id="cli-phone" value="' + phone + '" placeholder="+52 55 0000 0000" inputmode="tel"' +
+              ' style="width:100%;background:transparent;border:none;outline:none;font-size:15px;color:var(--ink);font-family:var(--font-sans)">' +
+          '</div>' +
+          /* Email */
+          '<div style="padding:14px 0;border-bottom:0.5px solid var(--line)">' +
+            '<div style="font-size:10px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Correo electrónico</div>' +
+            '<input type="email" id="cli-email" value="' + email + '" placeholder="ejemplo@correo.com" inputmode="email"' +
+              ' style="width:100%;background:transparent;border:none;outline:none;font-size:15px;color:var(--ink);font-family:var(--font-sans)">' +
+          '</div>' +
+          /* Red social */
+          '<div style="padding:14px 0">' +
+            '<div style="font-size:10px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Red social / @usuario</div>' +
+            '<input type="text" id="cli-social" value="' + social + '" placeholder="@cliente"' +
+              ' style="width:100%;background:transparent;border:none;outline:none;font-size:15px;color:var(--ink);font-family:var(--font-sans)">' +
+          '</div>' +
+        '</div>' +
       '</div>' +
-      tplSheetActions('closeModal()', saveFn) +
-    '</div>';
+
+      /* Origen */
+      '<div style="padding:0 20px 20px">' +
+        '<div class="micro" style="margin-bottom:10px">¿Cómo te conoció?</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap" id="cli-source-group">' +
+          sourceOpts.map(chipSrc).join('') +
+        '</div>' +
+      '</div>' +
+
+      /* Tipo de cliente */
+      '<div style="padding:0 20px 20px">' +
+        '<div class="micro" style="margin-bottom:10px">Tipo de cliente</div>' +
+        '<div class="seg" style="width:100%;display:flex" id="cli-tag-group">' +
+          tagOpts.map(chipTag).join('') +
+        '</div>' +
+      '</div>' +
+
+      /* Notas */
+      '<div style="padding:0 20px 20px">' +
+        '<div class="micro" style="margin-bottom:10px">Notas internas</div>' +
+        '<div class="card" style="padding:16px">' +
+          '<textarea id="cli-notes" rows="4" placeholder="Preferencias, direcciones de entrega, alergias a materiales, historial…"' +
+            ' style="width:100%;resize:none;background:transparent;border:none;outline:none;' +
+              'font-family:var(--font-sans);font-size:13px;color:var(--ink);line-height:1.5">' + notes + '</textarea>' +
+        '</div>' +
+      '</div>' +
+
+      /* Vista previa */
+      '<div style="padding:0 20px 120px">' +
+        '<div class="micro" style="margin-bottom:10px">Vista previa en tu lista</div>' +
+        '<div class="card" style="padding:0 16px">' +
+          '<div id="cli-preview-row" style="display:flex;align-items:center;gap:12px;padding:14px 0;' +
+            'opacity:' + (name ? '1' : '0.45') + ';transition:opacity 0.2s">' +
+            '<div id="cli-preview-avatar" style="width:38px;height:38px;border-radius:50%;background:var(--bg-sunk);border:0.5px solid var(--line);' +
+              'display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0;color:var(--ink-2)">' +
+              (name ? _cliInitials(name) : '—') +
+            '</div>' +
+            '<div style="flex:1;min-width:0">' +
+              '<div id="cli-preview-name" style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+                (name || 'Nombre del cliente') +
+              '</div>' +
+              '<div style="font-size:11px;color:var(--ink-3);margin-top:2px;display:flex;align-items:center;gap:6px">' +
+                '<span class="num">0</span> cotizaciones' +
+                '<span style="color:var(--ink-4)">·</span>' +
+                '<span id="cli-preview-tag" style="text-transform:capitalize">' + tag + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="num" style="font-size:13px;color:var(--ink-3)">' + (config ? config.currency : '$') + '0</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      /* CTA sticky */
+      '<div style="' +
+        'position:sticky;bottom:0;left:0;right:0;padding:14px 20px;' +
+        'background:color-mix(in oklab,var(--bg) 90%,transparent);' +
+        'backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);' +
+        'border-top:0.5px solid var(--line);display:flex;gap:10px;z-index:10">' +
+        '<button type="button" class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cancelar</button>' +
+        '<button type="button" class="btn btn-primary" style="flex:2" onclick="' + saveFn + '">' +
+          '<span class="material-symbols-rounded" style="font-size:16px">check</span> Guardar cliente' +
+        '</button>' +
+      '</div>' +
+
+    '</div>'
+  );
 }
 
 /* ── INVENTORY ──────────────────────────────────────────────────── */

@@ -25,15 +25,28 @@ function clearDraftQuote() {
   try { sessionStorage.removeItem('c3d_draftQuote'); } catch {}
 }
 
-/* Actualiza el label del botón Cotizar en la calculadora */
+/* Actualiza el botón Cotizar según contexto:
+   - Sin draft ni cálculo: "Agregar a orden" (addItemToDraft)
+   - Draft con ítems y sin cálculo activo: "Generar cotización" (generateQuote)
+   - Cálculo activo (con o sin draft): "Agregar a orden" + badge */
 function refreshDraftIndicator() {
   var btn = document.getElementById('btn-cotizar');
   if (!btn) return;
-  if (draftQuote && draftQuote.items && draftQuote.items.length > 0) {
+  var hasDraft = draftQuote && draftQuote.items && draftQuote.items.length > 0;
+  var hasCalc  = !!lastCalc;
+
+  if (hasDraft && !hasCalc) {
+    /* Modo: hay productos en borrador pero nada nuevo que agregar → ir a cotizar */
     var n = draftQuote.items.length;
-    btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">receipt_long</span> Cotizar <span class="draft-badge">' + n + '</span>';
+    btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px">receipt_long</span> Generar cotización <span class="draft-badge">' + n + '</span>';
+    btn.onclick = generateQuote;
+    btn.className = 'btn btn-primary';
   } else {
-    btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">receipt_long</span> Cotizar';
+    /* Modo normal: agregar cálculo actual al borrador */
+    btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px">add_shopping_cart</span>'
+      + (hasDraft ? ' Agregar a orden <span class="draft-badge">' + draftQuote.items.length + '</span>' : ' Agregar a orden');
+    btn.onclick = addItemToDraft;
+    btn.className = 'btn btn-primary';
   }
 }
 
@@ -78,8 +91,6 @@ function addItemToDraft() {
   });
   _setFieldState('field-weight', 'helper-weight', 'neutral', 'Ej: 15g para un topper');
   _setFieldState('field-time', 'helper-time', 'neutral', 'Ej: 1.5 hrs');
-  var resEl = document.getElementById('calc-result');
-  if (resEl) resEl.classList.add('hidden');
   clearLastCalc();
 
   /* Limpiar post-procesado si estaba activo */
@@ -225,7 +236,7 @@ function saveQuote() {
   sv('quotes', quotes);
   clearDraftQuote();
   clearLastCalc();
-  document.getElementById('calc-result').classList.add('hidden');
+  /* No ocultamos calc-result — hero siempre visible en nuevo layout */
   closeModal();
   refreshDraftIndicator();
   snack('Cotizaci\u00f3n ' + q.quoteNum + ' generada');
@@ -234,18 +245,61 @@ function saveQuote() {
 
 /* ── Listado de cotizaciones ──────────────────────────────────── */
 var quoteSearchTerm = '';
+var _quoteFilter    = 'all'; /* all | aceptada | enviada | pendiente | rechazada */
 
 function renderQuotes() {
   var el = document.getElementById('quotes-list');
+  if (!el) return;
+
+  /* Eyebrow dinámico */
+  var now        = new Date();
+  var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  var thisMonth  = quotes.filter(function(q) { return new Date(q.quoteDate) >= monthStart; }).length;
+  var eyebrowEl  = document.getElementById('quotes-eyebrow');
+  if (eyebrowEl) eyebrowEl.textContent = quotes.length + ' cotizaciones · ' + thisMonth + ' este mes';
+
+  /* Filter chips */
+  var chipsEl = document.getElementById('quotes-filter-chips');
+  if (chipsEl) {
+    var chipDefs = [
+      { id: 'all',       label: 'Todas',      count: quotes.length },
+      { id: 'aceptada',  label: 'Aceptadas',  count: quotes.filter(function(q) { return q.status === 'aceptada'; }).length },
+      { id: 'enviada',   label: 'Enviadas',   count: quotes.filter(function(q) { return q.status === 'enviada'; }).length },
+      { id: 'pendiente', label: 'Borradores', count: quotes.filter(function(q) { return !q.status || q.status === 'pendiente'; }).length },
+      { id: 'rechazada', label: 'Rechazadas', count: quotes.filter(function(q) { return q.status === 'rechazada'; }).length },
+    ];
+    chipsEl.innerHTML = chipDefs.map(function(c) {
+      var isActive = _quoteFilter === c.id;
+      return '<button onclick="_setQuoteFilter(\'' + c.id + '\')" style="' +
+        'display:inline-flex;align-items:center;gap:6px;' +
+        'padding:6px 14px;border-radius:100px;font-size:13px;white-space:nowrap;flex-shrink:0;' +
+        'background:' + (isActive ? 'var(--ink)' : 'var(--bg-elev)') + ';' +
+        'color:' + (isActive ? 'var(--bg)' : 'var(--ink-2)') + ';' +
+        'border:0.5px solid ' + (isActive ? 'transparent' : 'var(--line)') + ';' +
+        'transition:background 0.15s,color 0.15s">' +
+        c.label +
+        (c.count > 0 ? '<span style="font-family:var(--font-mono);font-size:10px;opacity:0.7">' + c.count + '</span>' : '') +
+      '</button>';
+    }).join('');
+  }
+
   if (!quotes.length) {
     el.innerHTML = '<div class="empty-state"><span class="material-symbols-rounded">receipt_long</span><p>No hay cotizaciones. Calcula un costo y presiona \u00abCotizar\u00bb.</p></div>';
     return;
   }
 
   var filtered = quotes;
+  /* Filtro por estado */
+  if (_quoteFilter !== 'all') {
+    filtered = filtered.filter(function(q) {
+      if (_quoteFilter === 'pendiente') return !q.status || q.status === 'pendiente';
+      return q.status === _quoteFilter;
+    });
+  }
+  /* Filtro de búsqueda */
   if (quoteSearchTerm) {
     var term = quoteSearchTerm.toLowerCase();
-    filtered = quotes.filter(function(q) {
+    filtered = filtered.filter(function(q) {
       var matchClient = q.client && q.client.toLowerCase().indexOf(term) !== -1;
       var matchNum    = q.quoteNum && q.quoteNum.toLowerCase().indexOf(term) !== -1;
       var matchItems  = q.items && q.items.some(function(it) {
@@ -258,13 +312,18 @@ function renderQuotes() {
 
   var cur = config.currency;
   if (!filtered.length) {
-    el.innerHTML = '<div class="empty-state"><span class="material-symbols-rounded">search_off</span><p>Sin resultados para \u00ab' + esc(quoteSearchTerm) + '\u00bb</p></div>';
+    el.innerHTML = '<div class="empty-state"><span class="material-symbols-rounded">search_off</span><p>Sin resultados</p></div>';
     return;
   }
 
   el.innerHTML = filtered.map(function(q) {
     return tplQuoteCard(q, quotes.indexOf(q), cur);
   }).join('');
+}
+
+function _setQuoteFilter(f) {
+  _quoteFilter = f;
+  renderQuotes();
 }
 
 function onQuoteSearch(input) {

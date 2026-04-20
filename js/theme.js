@@ -15,11 +15,22 @@ function applyTheme() {
   if (effective === 'auto') {
     effective = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
-  document.body.setAttribute('data-theme', effective);
-  document.getElementById('theme-icon').textContent = effective === 'dark' ? 'light_mode' : 'dark_mode';
-  document.getElementById('meta-theme').content = effective === 'dark' ? '#0a0a0a' : '#fafafa';
+  document.documentElement.setAttribute('data-theme', effective);
+  document.body.setAttribute('data-theme', effective); /* compat legacy selectors */
+
+  /* Actualizar todos los iconos de toggle de tema */
+  const iconLabel = effective === 'dark' ? 'light_mode' : 'dark_mode';
+  ['theme-icon-topbar'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = iconLabel;
+  });
+
+  const metaEl = document.getElementById('meta-theme');
+  if (metaEl) metaEl.content = effective === 'dark' ? '#0a0a0a' : '#fafafa';
+
+  /* Sincronizar seg de apariencia */
   document.querySelectorAll('.theme-segment button').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('theme-' + config.theme + '-btn');
+  const btn = document.getElementById('theme-' + (config.theme || 'dark') + '-btn');
   if (btn) btn.classList.add('active');
 }
 
