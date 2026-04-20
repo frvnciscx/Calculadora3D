@@ -1,10 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-  <!-- Chimney -->
-  <rect x="28" y="22" width="10" height="18" rx="2" stroke="#C4196A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Roof -->
-  <polyline points="14,50 50,18 86,50" stroke="#C4196A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Walls -->
-  <rect x="20" y="50" width="60" height="36" rx="3" stroke="#C4196A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Door -->
-  <path d="M41,86 L41,66 Q41,62 45,62 L55,62 Q59,62 59,66 L59,86" stroke="#C4196A" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Fondo -->
+  <rect width="100" height="100" rx="22" fill="#0a0a0a"/>
+
+  <!-- Cuerpo de la calculadora — outline -->
+  <rect x="18" y="10" width="64" height="80" rx="8" stroke="#c6ff3d" stroke-width="3"/>
+
+  <!-- Pantalla: líneas horizontales de distintos anchos (capas de impresión) -->
+  <line x1="27" y1="23" x2="73" y2="23" stroke="#c6ff3d" stroke-width="2.5"/>
+  <line x1="27" y1="29" x2="73" y2="29" stroke="#c6ff3d" stroke-width="2.5"/>
+  <line x1="38" y1="35" x2="73" y2="35" stroke="#c6ff3d" stroke-width="2"/>
+  <line x1="52" y1="41" x2="73" y2="41" stroke="#c6ff3d" stroke-width="1.5" stroke-opacity="0.5"/>
+
+  <!-- Separador pantalla / teclas -->
+  <line x1="18" y1="50" x2="82" y2="50" stroke="#c6ff3d" stroke-width="0.8" stroke-opacity="0.35"/>
+
+  <!-- Teclas: 3 columnas × 4 filas — cada tecla = línea horizontal (capa) -->
+  <!-- Fila 1 -->
+  <line x1="24" y1="59" x2="36" y2="59" stroke="#c6ff3d" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="44" y1="59" x2="56" y2="59" stroke="#c6ff3d" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="64" y1="59" x2="76" y2="59" stroke="#c6ff3d" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Fila 2 -->
+  <line x1="24" y1="67" x2="36" y2="67" stroke="#c6ff3d" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="44" y1="67" x2="56" y2="67" stroke="#c6ff3d" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="64" y1="67" x2="76" y2="67" stroke="#c6ff3d" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Fila 3 -->
+  <line x1="24" y1="75" x2="36" y2="75" stroke="#c6ff3d" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="44" y1="75" x2="56" y2="75" stroke="#c6ff3d" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="64" y1="75" x2="76" y2="75" stroke="#c6ff3d" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Fila 4: tecla ancha (=) -->
+  <line x1="24" y1="83" x2="36" y2="83" stroke="#c6ff3d" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="44" y1="83" x2="76" y2="83" stroke="#c6ff3d" stroke-width="3" stroke-linecap="round"/>
 </svg>

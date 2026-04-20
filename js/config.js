@@ -153,10 +153,10 @@ function _fciRow(name, amount) {
           'font-size:14px;font-weight:500;color:var(--ink);text-align:right;width:80px">' +
       '<span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3)">/mes</span>' +
     '</div>' +
-    '<button onclick="removeFCIRow(this)" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;' +
-      'border-radius:6px;background:transparent;color:var(--ink-4);flex-shrink:0;transition:color 0.15s"' +
-      ' onmouseover="this.style.color=\'var(--danger)\'" onmouseout="this.style.color=\'var(--ink-4)\'">' +
-      '<span class="material-symbols-rounded" style="font-size:16px">close</span>' +
+    '<button onclick="removeFCIRow(this)" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;' +
+      'border-radius:8px;background:var(--bg-sunk);color:var(--ink-3);flex-shrink:0;transition:background 0.15s,color 0.15s"' +
+      ' onmouseover="this.style.background=\'var(--danger)\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'var(--bg-sunk)\';this.style.color=\'var(--ink-3)\'">' +
+      '<span class="material-symbols-rounded" style="font-size:15px">delete</span>' +
     '</button>' +
   '</div>';
 }
