@@ -1,4 +1,4 @@
-const CACHE_NAME = 'calc3d-v56';
+const CACHE_NAME = 'calc3d-v57';
 const ASSETS = [
   './index.html',
   './manifest.json',

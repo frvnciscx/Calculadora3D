@@ -510,14 +510,16 @@ function tplInventoryCard(item, i, cur) {
       '<span>' + used.toFixed(0) + 'g usado</span>' +
       (item.costPerKg ? '<span>' + cur + ((remain / 1000) * item.costPerKg).toFixed(2) + ' en stock</span>' : '') +
     '</div>' +
-    '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
-      '<button class="m3-btn-text m3-btn-sm" onclick="showDeductModal(' + i + ')">' +
-        tplIcon('remove', 16) + ' Descontar' +
-      '</button>' +
-      '<button class="m3-btn-text m3-btn-sm" onclick="showInventoryModal(' + i + ')">' +
-        tplIcon('edit', 16) + ' Editar' +
-      '</button>' +
-      '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteInventory(' + i + ')">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">' +
+      '<div style="display:flex;gap:8px">' +
+        '<button class="m3-btn-text m3-btn-sm" onclick="showDeductModal(' + i + ')">' +
+          tplIcon('remove', 16) + ' Descontar' +
+        '</button>' +
+        '<button class="m3-btn-text m3-btn-sm" onclick="showInventoryModal(' + i + ')">' +
+          tplIcon('edit', 16) + ' Editar' +
+        '</button>' +
+      '</div>' +
+      '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error);padding:4px 8px" onclick="deleteInventory(' + i + ')">' +
         tplIcon('delete', 16) +
       '</button>' +
     '</div>' +

@@ -97,6 +97,20 @@ function renderDashboard() {
   var piecesCount = quotes.filter(function(q) { return q.status === 'aceptada'; })
     .reduce(function(s, q) { return s + (q.items ? q.items.length : 1); }, 0);
 
+  /* ── Horas de impresión del mes (cotizaciones aceptadas) ─── */
+  var monthPrintHours = monthAccepted.reduce(function(s, q) {
+    if (q.items && q.items.length > 0) {
+      var qHours = q.items.reduce(function(si, it) {
+        return si + (it.timeH || 0) * (it.qty || 1);
+      }, 0);
+      return s + qHours;
+    }
+    return s + (q.timeH || 0); /* fallback: cotizaciones legacy (pre-multi-producto) */
+  }, 0);
+  var hoursCapacity = config.monthlyPrintHours || 0;
+  var hoursUsePct   = (hoursCapacity > 0 && monthPrintHours > 0)
+    ? Math.round((monthPrintHours / hoursCapacity) * 100) : null;
+
   /* ── Cotizaciones recientes ─── */
   var recent      = quotes.slice(0, 4);
   var recentRows  = recent.length === 0
@@ -192,9 +206,18 @@ function renderDashboard() {
             (acceptRate > 60 ? ' <span style="color:var(--ok);font-size:11px">↑</span>' : '') +
           '</div>' +
         '</div>' +
-        '<div class="row" style="padding:14px 0;border-bottom:none">' +
+        '<div class="row" style="padding:14px 0">' +
           '<div class="row-label">Piezas impresas</div>' +
           '<div class="row-value">' + piecesCount + '</div>' +
+        '</div>' +
+        '<div class="row" style="padding:14px 0;border-bottom:none">' +
+          '<div class="row-label">Horas de impresión</div>' +
+          '<div class="row-value">' +
+            (monthPrintHours > 0 ? monthPrintHours.toFixed(1) + ' h' : '—') +
+            (hoursUsePct !== null
+              ? ' <span style="font-size:11px;color:' + (hoursUsePct >= 90 ? 'var(--danger)' : hoursUsePct >= 70 ? 'var(--accent)' : 'var(--ink-3)') + '">· ' + hoursUsePct + '% cap.</span>'
+              : '') +
+          '</div>' +
         '</div>' +
       '</div>' +
     '</div>';
