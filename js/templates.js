@@ -349,11 +349,10 @@ function tplClientModal(c, editIndex) {
       'animation:pageIn 0.25s cubic-bezier(0.2,0.8,0.2,1)">' +
 
       /* Mini header */
-      '<div style="padding:calc(env(safe-area-inset-top,0px) + 16px) 20px 8px;display:flex;justify-content:space-between;align-items:center">' +
+      '<div style="padding:calc(env(safe-area-inset-top,0px) + 16px) 20px 8px;display:flex;align-items:center">' +
         '<button type="button" onclick="closeModal()" style="display:flex;align-items:center;gap:6px;color:var(--ink-3);font-size:13px">' +
           '<span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Clientes' +
         '</button>' +
-        '<button type="button" onclick="' + saveFn + '" style="font-size:13px;font-weight:500;color:var(--ink)">Guardar</button>' +
       '</div>' +
 
       /* PageHeader */
@@ -467,8 +466,7 @@ function tplClientModal(c, editIndex) {
         'background:color-mix(in oklab,var(--bg) 90%,transparent);' +
         'backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);' +
         'border-top:0.5px solid var(--line);display:flex;gap:10px;z-index:10">' +
-        '<button type="button" class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cancelar</button>' +
-        '<button type="button" class="btn btn-primary" style="flex:2" onclick="' + saveFn + '">' +
+        '<button type="button" class="btn btn-primary" style="flex:1" onclick="' + saveFn + '">' +
           '<span class="material-symbols-rounded" style="font-size:16px">check</span> Guardar cliente' +
         '</button>' +
       '</div>' +
