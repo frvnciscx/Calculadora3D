@@ -125,6 +125,7 @@ function saveConfig() {
   if (!isNaN(ipaMl)      && ipaMl      >= 0) config.ipaMlPerPrint   = ipaMl;
   if (!isNaN(supportPct) && supportPct >= 0 && supportPct <= 100) config.resinSupportPct = supportPct;
   sv('config', config);
+  updateTopBar();
   snack('Configuración guardada ✓');
 }
 

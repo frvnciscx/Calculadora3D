@@ -193,3 +193,23 @@ function _filterMaterials(keepMaterialId) {
 function showConfigPage(name) {
   showPage('config-' + name);
 }
+
+/* ── Top-bar: nombre e imagen del negocio ───────────────────────── */
+function updateTopBar() {
+  var nameEl = document.getElementById('top-bar-biz-name');
+  if (nameEl && config && config.bizName) nameEl.textContent = config.bizName;
+
+  var img = document.getElementById('top-bar-logo-img');
+  var svg = document.getElementById('top-bar-logo-svg');
+  var logoUrl = (typeof quoteStyle !== 'undefined' && quoteStyle && quoteStyle.logoDataUrl) ? quoteStyle.logoDataUrl : '';
+  if (img && svg) {
+    if (logoUrl) {
+      img.src = logoUrl;
+      img.style.display = '';
+      svg.style.display = 'none';
+    } else {
+      img.style.display = 'none';
+      svg.style.display = '';
+    }
+  }
+}

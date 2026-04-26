@@ -66,16 +66,17 @@ function tplHistoryItem(h, i, cur) {
 
 function tplPrinterItem(p, cur) {
   var multiTag = p.multicolor
-    ? '<span style="font-size:10px;font-family:var(--font-mono);color:var(--accent);' +
+    ? '<span style="display:inline-flex;align-items:center;font-size:10px;font-family:var(--font-mono);color:var(--accent);' +
         'background:color-mix(in oklab,var(--accent) 12%,transparent);' +
         'border:0.5px solid color-mix(in oklab,var(--accent) 30%,transparent);' +
-        'padding:2px 6px;border-radius:4px;margin-left:6px">' +
+        'padding:2px 6px;border-radius:4px;margin-top:4px;width:fit-content">' +
         'Multicolor &middot; ' + (p.heads || 4) + ' cabezales</span>'
     : '';
   return '<div class="m3-list-item">' +
     '<div class="leading">' + tplIcon('print') + '</div>' +
-    '<div class="content">' +
-      '<h3>' + esc(p.name) + multiTag + '</h3>' +
+    '<div class="content" style="min-width:0">' +
+      '<h3 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(p.name) + '</h3>' +
+      (multiTag ? '<div>' + multiTag + '</div>' : '') +
       '<p>' + p.power + 'W &middot; ' + esc(p.type) + ' &middot; ' +
         cur + (p.cost || 0).toLocaleString() + ' &middot; ' + (p.lifeHours || 0) + 'hrs vida' +
       '</p>' +

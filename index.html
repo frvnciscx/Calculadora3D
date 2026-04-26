@@ -28,15 +28,18 @@
 
 <!-- TOP BAR -->
 <div class="top-bar">
-  <svg class="brand-mark" width="28" height="28" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-    <rect x="0.5" y="0.5" width="39" height="39" rx="8" stroke="currentColor" stroke-width="1"/>
-    <path d="M9 26V14l11-4 11 4v12" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
-    <path d="M14 26v-6h12v6" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
-    <path d="M9 14l11 4 11-4" stroke="currentColor" stroke-width="1" stroke-linejoin="round" opacity="0.5"/>
-    <line x1="20" y1="18" x2="20" y2="26" stroke="currentColor" stroke-width="1" opacity="0.5"/>
-  </svg>
-  <div style="flex:1;line-height:1.1;">
-    <div style="font-size:15px;font-weight:500;letter-spacing:-0.01em;">La Casita del Molde</div>
+  <span id="top-bar-logo-wrap" style="display:flex;align-items:center;flex-shrink:0">
+    <img id="top-bar-logo-img" style="display:none;width:28px;height:28px;border-radius:6px;object-fit:cover" alt="Logo">
+    <svg id="top-bar-logo-svg" class="brand-mark" width="28" height="28" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <rect x="0.5" y="0.5" width="39" height="39" rx="8" stroke="currentColor" stroke-width="1"/>
+      <path d="M9 26V14l11-4 11 4v12" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+      <path d="M14 26v-6h12v6" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+      <path d="M9 14l11 4 11-4" stroke="currentColor" stroke-width="1" stroke-linejoin="round" opacity="0.5"/>
+      <line x1="20" y1="18" x2="20" y2="26" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+    </svg>
+  </span>
+  <div style="flex:1;line-height:1.1;min-width:0">
+    <div id="top-bar-biz-name" style="font-size:15px;font-weight:500;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">La Casita del Molde</div>
     <div class="micro" style="margin-top:1px;" id="top-bar-subtitle">Estudio</div>
   </div>
   <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
@@ -964,6 +967,7 @@ document.addEventListener('DOMContentLoaded', function() {
   try {
     document.querySelectorAll('.m3-fab').forEach(function(f) { f.style.display = 'none'; });
     populateSelects();
+    updateTopBar();
     showPage('dashboard'); /* Siempre inicia en dashboard */
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(function(){});
   } catch(e) {

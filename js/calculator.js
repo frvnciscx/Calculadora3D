@@ -306,6 +306,7 @@ function _updateAMSBlock() {
   } else {
     block.classList.add('hidden');
     /* Restaurar selector de color según inventario */
+    if (spoolWrap) spoolWrap.style.display = '';
     _updateSpoolSelector();
   }
 }
