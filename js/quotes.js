@@ -70,6 +70,7 @@ function addItemToDraft() {
     wasteCost:  lastCalc.wasteCost,
     baseCost:   lastCalc.baseCost,
     totalCost:  lastCalc.totalCost,
+    spoolId:    lastCalc.spoolId || '',
     qty:        1
   };
 
@@ -339,12 +340,36 @@ function statusLabel(s) {
 /* ── Cambiar estado de cotización ────────────────────────────────── */
 function setQuoteStatus(i, status) {
   var q = quotes[i]; if (!q) return;
+  var prevStatus = q.status;
   q.status = status;
   sv('quotes', quotes);
+  if (status === 'aceptada' && prevStatus !== 'aceptada') {
+    _deductQuoteInventory(q);
+  }
   renderQuotes();
   renderDashboard();
-  var labels = { aceptada: 'Cotización aceptada \u2713', rechazada: 'Cotización rechazada', pendiente: 'Marcada como pendiente' };
+  var labels = { aceptada: 'Cotizaci\u00f3n aceptada \u2713', rechazada: 'Cotizaci\u00f3n rechazada', pendiente: 'Marcada como pendiente' };
   snack(labels[status] || 'Estado actualizado');
+}
+
+function _deductQuoteInventory(q) {
+  var changed = false;
+  (q.items || []).forEach(function(it) {
+    if (!it.spoolId) return;
+    var idx = -1;
+    for (var k = 0; k < inventory.length; k++) {
+      if (inventory[k].id === it.spoolId) { idx = k; break; }
+    }
+    if (idx === -1) return;
+    var grams = (parseFloat(it.weight) || 0) * (it.qty || 1);
+    if (grams <= 0) return;
+    inventory[idx].remainingG = Math.max(0, (parseFloat(inventory[idx].remainingG) || 0) - grams);
+    changed = true;
+  });
+  if (changed) {
+    sv('inventory', inventory);
+    if (typeof renderInventory === 'function') renderInventory();
+  }
 }
 
 /* ── WhatsApp ─────────────────────────────────────────────────────── */
@@ -487,6 +512,18 @@ function buildQuoteHTML(q, qrDataURL) {
     '</div>' +
 
     notesHTML + termsHTML +
+
+    /* Bloque de datos bancarios */
+    (config.bizAccountNumber
+      ? '<div class="qf-bank-block">' +
+          '<div class="qf-bank-label">Datos de pago</div>' +
+          '<div class="qf-bank-row">' +
+            (config.bizBank ? '<span>' + esc(config.bizBank) + '</span>' : '') +
+            (config.bizAccountHolder ? '<span>' + esc(config.bizAccountHolder) + '</span>' : '') +
+            '<span class="qf-bank-num">' + esc(config.bizAccountNumber) + '</span>' +
+          '</div>' +
+        '</div>'
+      : '') +
 
     '<div class="qf-biz-footer' + (qrDataURL ? ' qf-biz-footer--qr' : '') + '">' +
       '<div class="qf-biz-contact">' +
@@ -856,6 +893,16 @@ function exportQuotePDF(i) {
           y -= 14;
           page.drawText(safeStr(s.termsText), {x:M, y, size:8, font:font, color:muted, maxWidth:CW, lineHeight:11});
           y -= 20;
+        }
+
+        /* ── Datos bancarios (antes del footer) ── */
+        if (config.bizAccountNumber) {
+          y -= 8;
+          page.drawRectangle({x:M, y:y-28, width:CW, height:34, color:rgb(0.97,0.97,0.98)});
+          page.drawText('DATOS DE PAGO', {x:M+8, y:y-10, size:7, font:bold, color:muted});
+          var bankLine = [config.bizBank, config.bizAccountHolder, config.bizAccountNumber].filter(Boolean).map(safeStr).join('  ·  ');
+          page.drawText(bankLine, {x:M+8, y:y-22, size:9, font:font, color:textCol});
+          y -= 40;
         }
 
         /* ── Footer bar ── */

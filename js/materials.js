@@ -6,7 +6,14 @@ function renderMaterials() {
     return;
   }
   const cur = config.currency;
-  el.innerHTML = materials.map(m => tplMaterialItem(m, cur)).join('');
+  const inv = (typeof inventory !== 'undefined') ? inventory : [];
+  el.innerHTML = materials.map(function(m) {
+    /* Rollos del inventario que coinciden con este material */
+    var invItems = inv.filter(function(it) {
+      return it.material && m.name && it.material.toLowerCase() === m.name.toLowerCase();
+    });
+    return tplMaterialItem(m, cur, invItems);
+  }).join('');
 }
 
 function showMaterialModal(editId) {

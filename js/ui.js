@@ -49,9 +49,14 @@ function showPage(name) {
 
   // Map sub-pages to their parent nav item
   const navMap = {
-    'quote-editor': 'quotes',
-    'clients':      'quotes',
-    'catalog':      'catalog',
+    'quote-editor':    'quotes',
+    'clients':         'quotes',
+    'catalog':         'catalog',
+    'config-negocio':  'config',
+    'config-banco':    'config',
+    'config-electrico':'config',
+    'config-gastos':   'config',
+    'config-otros':    'config',
   };
   const navPage = navMap[name] || name;
   const navBtn = document.querySelector(`[data-page="${navPage}"]`);
@@ -69,8 +74,8 @@ function showPage(name) {
   if (name === 'catalog')      { showCatalogTab(_activeCatalogTab || 'printers'); }
   if (name === 'quotes')       { renderQuotes(); showQuotesTab(_activeQuotesTab || 'quotes'); }
   if (name === 'clients')      { showQuotesTab('clients'); showPage('quotes'); return; }
-  if (name === 'config')       loadConfig();
-  if (name === 'calc')         { populateSelects(); restoreCalcResult(); refreshDraftIndicator(); initCalcLive(); renderPresets(); _updateResinParamsBlock(); }
+  if (name === 'config' || name.indexOf('config-') === 0) loadConfig();
+  if (name === 'calc')         { populateSelects(); restoreCalcResult(); refreshDraftIndicator(); initCalcLive(); renderPresets(); _updateResinParamsBlock(); _updateAMSBlock(); _updateSpoolSelector(); }
   if (name === 'history')      renderHistory();
   if (name === 'quote-editor') loadQuoteEditor();
 }
@@ -182,4 +187,9 @@ function _filterMaterials(keepMaterialId) {
   if (keepMaterialId && filtered.some(m => m.id === keepMaterialId)) {
     ms.value = keepMaterialId;
   }
+}
+
+/* ── Config sub-pages navigation ────────────────────────────────── */
+function showConfigPage(name) {
+  showPage('config-' + name);
 }
