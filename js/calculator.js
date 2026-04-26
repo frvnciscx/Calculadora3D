@@ -31,11 +31,17 @@ function calculate(silent) {
   /* ── ¿Impresora de resina? ── */
   var isResin = (printer.type === 'Resina');
 
+  /* ── ¿Modo AMS multicolor? ── */
+  var amsData = _getAMSData();
+
   /* Peso efectivo: si es resina se agrega % de soportes */
   var supportPct = isResin ? (config.resinSupportPct || 20) : 0;
   var effectiveWeight = weight * (1 + supportPct / 100);
 
-  var matCost    = (effectiveWeight / 1000) * material.costPerKg;
+  /* Costo de material: AMS override o cálculo normal */
+  var matCost = amsData
+    ? (amsData.amsMatCost + amsData.purgeCost)
+    : (effectiveWeight / 1000) * material.costPerKg;
   var energyCost = (printer.power / 1000) * timeH * config.kwhCost;
   var laborCost  = designH * config.laborCostPerHour;
   var deprecCost = (printer.lifeHours > 0) ? (printer.cost / printer.lifeHours) * timeH : 0;
@@ -141,6 +147,9 @@ function calculate(silent) {
   config.lastMaterialId = material.id;
   sv('config', config);
 
+  var spoolSel = document.getElementById('calc-spool');
+  var spoolId  = spoolSel ? spoolSel.value : '';
+
   saveLastCalc({
     desc:           document.getElementById('calc-desc').value || 'Sin descripción',
     weight, timeH, designH, margin,
@@ -148,6 +157,7 @@ function calculate(silent) {
     material:       material.name,
     printerId:      printer.id,
     materialId:     material.id,
+    spoolId:        spoolId,
     isResin:        isResin,
     effectiveWeight: isResin ? effectiveWeight : weight,
     supportPct:     supportPct,
@@ -182,6 +192,10 @@ function initCalcLive() {
         if (id === 'calc-printer') {
           _filterMaterials();
           _updateResinParamsBlock();
+          _updateAMSBlock();
+        }
+        if (id === 'calc-material') {
+          _updateSpoolSelector();
         }
         calculate(true);
       });
@@ -211,6 +225,190 @@ function initCalcLive() {
     });
     rangeEl._marginSync = true;
   }
+}
+
+/* ── Poblar y mostrar selector de spool del inventario ────────── */
+function _updateSpoolSelector() {
+  var matEl   = document.getElementById('calc-material');
+  var chipsEl = document.getElementById('calc-color-chips');
+  var hiddenEl= document.getElementById('calc-spool');
+  if (!chipsEl || !hiddenEl || !matEl) return;
+
+  /* Nombre del material seleccionado (sin precio, solo texto hasta el paréntesis) */
+  var matText = matEl.options[matEl.selectedIndex] ? matEl.options[matEl.selectedIndex].text : '';
+  var matName = matText.split(' (')[0].trim();
+
+  /* Filtrar rollos del inventario por material activo */
+  var matching = (typeof inventory !== 'undefined' ? inventory : []).filter(function(it) {
+    return it.material && matName && it.material.toLowerCase() === matName.toLowerCase();
+  });
+
+  var prevId = hiddenEl.value;
+
+  /* Chip "Cualquier color" siempre presente */
+  var anyActive = !prevId || !matching.some(function(it) { return it.id === prevId; });
+  var html = '<button type="button" class="color-chip' + (anyActive ? ' active' : '') +
+    '" id="color-chip-any" onclick="_selectColorChip(this,\'\')">' +
+    '<span style="width:12px;height:12px;border-radius:50%;background:var(--bg-sunk);border:1px solid var(--line);flex-shrink:0;display:inline-block"></span>' +
+    '<span>Cualquier color</span>' +
+    '</button>';
+
+  matching.forEach(function(it) {
+    var dot   = it.colorHex
+      ? 'background:' + it.colorHex + ';border:none'
+      : 'background:var(--bg-sunk);border:1px solid var(--line)';
+    var label = (it.color || it.material);
+    var remain= (it.remainingG || 0);
+    var isActive = it.id === prevId;
+    html += '<button type="button" class="color-chip' + (isActive ? ' active' : '') +
+      '" onclick="_selectColorChip(this,\'' + it.id + '\')">' +
+      '<span style="width:12px;height:12px;border-radius:50%;flex-shrink:0;display:inline-block;' + dot + '"></span>' +
+      '<span>' + esc(label) + '</span>' +
+      (remain > 0 ? '<span style="font-size:10px;opacity:0.55">' + remain.toFixed(0) + 'g</span>' : '') +
+      '</button>';
+  });
+
+  chipsEl.innerHTML = html;
+
+  /* Si la selección previa ya no existe, resetear */
+  if (prevId && !matching.some(function(it) { return it.id === prevId; })) {
+    hiddenEl.value = '';
+  }
+}
+
+/* Selecciona un chip y actualiza el input oculto */
+function _selectColorChip(btn, spoolId) {
+  var chipsEl = document.getElementById('calc-color-chips');
+  if (chipsEl) {
+    chipsEl.querySelectorAll('.color-chip').forEach(function(c) { c.classList.remove('active'); });
+  }
+  btn.classList.add('active');
+  var hiddenEl = document.getElementById('calc-spool');
+  if (hiddenEl) hiddenEl.value = spoolId;
+}
+
+/* ── Mostrar/ocultar y renderizar bloque AMS multicolor ─────────── */
+function _updateAMSBlock() {
+  var printerEl = document.getElementById('calc-printer');
+  var block     = document.getElementById('calc-ams-block');
+  if (!block || !printerEl) return;
+
+  var printer    = printers.find(function(p) { return p.id === printerEl.value; });
+  var isMulti    = printer && (printer.multicolor === true ||
+                   (printer.name && printer.name.toLowerCase().indexOf('ams') !== -1));
+  var spoolWrap  = document.getElementById('field-spool-wrap');
+
+  if (isMulti) {
+    block.classList.remove('hidden');
+    /* Ocultar selector de rollo individual — AMS gestiona sus propios colores */
+    if (spoolWrap) spoolWrap.style.display = 'none';
+    _renderAMSSlots();
+  } else {
+    block.classList.add('hidden');
+    /* Restaurar selector de color según inventario */
+    _updateSpoolSelector();
+  }
+}
+
+function _renderAMSSlots() {
+  var container = document.getElementById('ams-color-slots');
+  if (!container) return;
+
+  /* Obtener número de cabezales de la impresora activa */
+  var printerEl  = document.getElementById('calc-printer');
+  var printer    = printerEl ? printers.find(function(p) { return p.id === printerEl.value; }) : null;
+  var numHeads   = printer ? (printer.heads || 4) : 4;
+
+  /* Solo re-renderizar si cambió el número de slots */
+  if (container.children.length === numHeads) { _populateAMSSpools(); return; }
+
+  container.innerHTML = '';
+  for (var i = 0; i < numHeads; i++) {
+    var slot = document.createElement('div');
+    slot.className = 'ams-slot';
+    slot.dataset.slot = i;
+    slot.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px';
+    slot.innerHTML =
+      '<div style="width:22px;height:22px;border-radius:50%;background:var(--bg-sunk);display:flex;align-items:center;justify-content:center;' +
+        'font-family:var(--font-mono);font-size:9px;font-weight:700;color:var(--ink-3);flex-shrink:0">' + (i+1) + '</div>' +
+      '<div class="m3-field" style="flex:2;margin:0">' +
+        '<select class="ams-spool-sel" onchange="calculate(true)">' +
+          '<option value="">Sin especificar</option>' +
+        '</select>' +
+        '<label>Cabezal / color ' + (i+1) + '</label>' +
+      '</div>' +
+      '<div class="m3-field" style="flex:1;margin:0;max-width:80px">' +
+        '<input type="number" class="ams-weight-inp" min="0" step="1" placeholder=" " inputmode="decimal" oninput="calculate(true)">' +
+        '<label>Gramos</label>' +
+      '</div>';
+    container.appendChild(slot);
+  }
+  _populateAMSSpools();
+}
+
+function _populateAMSSpools() {
+  var slots = document.querySelectorAll('#ams-color-slots .ams-slot');
+  slots.forEach(function(slot) {
+    var sel = slot.querySelector('.ams-spool-sel');
+    if (!sel) return;
+    var prev = sel.value;
+    var fdmSpools = inventory.filter(function(it) { return (it.remainingG || 0) > 0; });
+    sel.innerHTML = '<option value="">Sin especificar</option>' +
+      fdmSpools.map(function(it) {
+        var label = (it.brand ? it.brand + ' ' : '') + it.material + (it.color ? ' · ' + it.color : '') +
+                    ' (' + (it.remainingG||0).toFixed(0) + 'g)';
+        return '<option value="' + it.id + '" data-cost="' + (it.costPerKg || 0) + '">' + label + '</option>';
+      }).join('');
+    if (prev) sel.value = prev;
+  });
+}
+
+/* Lee los datos AMS del DOM → devuelve null si modo inactivo */
+function _getAMSData() {
+  var block = document.getElementById('calc-ams-block');
+  if (!block || block.classList.contains('hidden')) return null;
+
+  var slots = document.querySelectorAll('#ams-color-slots .ams-slot');
+  var colors = [];
+  slots.forEach(function(slot) {
+    var sel    = slot.querySelector('.ams-spool-sel');
+    var wInp   = slot.querySelector('.ams-weight-inp');
+    var weight = parseFloat((wInp && wInp.value) || 0) || 0;
+    if (weight <= 0 && !(sel && sel.value)) return; /* slot vacío */
+    var spoolId   = sel ? sel.value : '';
+    var costPerKg = 0;
+    if (sel && sel.value) {
+      var opt = sel.querySelector('option[value="' + sel.value + '"]');
+      if (opt) costPerKg = parseFloat(opt.dataset.cost) || 0;
+    }
+    if (!costPerKg) {
+      /* Fallback: costPerKg del material seleccionado globalmente */
+      var matEl = document.getElementById('calc-material');
+      var mat   = matEl && materials.find(function(m) { return m.id === matEl.value; });
+      costPerKg = mat ? mat.costPerKg : 0;
+    }
+    colors.push({ spoolId: spoolId, weight: weight, costPerKg: costPerKg });
+  });
+
+  if (!colors.length) return null;
+
+  var purgeEl   = document.getElementById('ams-purge-grams');
+  var purgeGrams = parseFloat((purgeEl && purgeEl.value) || 40) || 40;
+  var numPurges  = Math.max(0, colors.length - 1);
+
+  /* Costo total de material AMS */
+  var amsMatCost = colors.reduce(function(s, c) {
+    return s + (c.weight / 1000) * c.costPerKg;
+  }, 0);
+
+  /* Costo de purga: usa el promedio de costPerKg de los colores activos */
+  var avgCostPerKg = colors.reduce(function(s, c) { return s + c.costPerKg; }, 0) / colors.length;
+  var purgeCost    = (purgeGrams / 1000) * avgCostPerKg * numPurges;
+  var totalWeight  = colors.reduce(function(s, c) { return s + c.weight; }, 0) +
+                     purgeGrams * numPurges;
+
+  return { colors: colors, purgeGrams: purgeGrams, numPurges: numPurges,
+           amsMatCost: amsMatCost, purgeCost: purgeCost, totalWeight: totalWeight };
 }
 
 /* ── Mostrar/ocultar bloque resina según impresora seleccionada ── */

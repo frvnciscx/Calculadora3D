@@ -65,10 +65,17 @@ function tplHistoryItem(h, i, cur) {
 /* ── PRINTERS ───────────────────────────────────────────────────── */
 
 function tplPrinterItem(p, cur) {
+  var multiTag = p.multicolor
+    ? '<span style="font-size:10px;font-family:var(--font-mono);color:var(--accent);' +
+        'background:color-mix(in oklab,var(--accent) 12%,transparent);' +
+        'border:0.5px solid color-mix(in oklab,var(--accent) 30%,transparent);' +
+        'padding:2px 6px;border-radius:4px;margin-left:6px">' +
+        'Multicolor &middot; ' + (p.heads || 4) + ' cabezales</span>'
+    : '';
   return '<div class="m3-list-item">' +
     '<div class="leading">' + tplIcon('print') + '</div>' +
     '<div class="content">' +
-      '<h3>' + esc(p.name) + '</h3>' +
+      '<h3>' + esc(p.name) + multiTag + '</h3>' +
       '<p>' + p.power + 'W &middot; ' + esc(p.type) + ' &middot; ' +
         cur + (p.cost || 0).toLocaleString() + ' &middot; ' + (p.lifeHours || 0) + 'hrs vida' +
       '</p>' +
@@ -85,8 +92,10 @@ function tplPrinterItem(p, cur) {
 }
 
 function tplPrinterModal(e, editId) {
-  var title = (e ? 'Editar' : 'Nueva') + ' impresora';
-  var sel = function(type) { return e && e.type === type ? ' selected' : ''; };
+  var title    = (e ? 'Editar' : 'Nueva') + ' impresora';
+  var sel      = function(type) { return e && e.type === type ? ' selected' : ''; };
+  var isMulti  = e ? !!e.multicolor : false;
+  var heads    = e ? (e.heads || 4) : 4;
   return '<div class="m3-scrim" onclick="closeModal()"></div>' +
     '<div class="m3-bottom-sheet">' +
       tplSheetHeader(title) +
@@ -101,9 +110,9 @@ function tplPrinterModal(e, editId) {
         '</div>' +
         '<div class="m3-field">' +
           '<select id="mod-p-type">' +
-            '<option value="FDM"' + sel('FDM') + '>FDM</option>' +
+            '<option value="FDM"'    + sel('FDM')    + '>FDM</option>' +
             '<option value="Resina"' + sel('Resina') + '>Resina</option>' +
-            '<option value="SLA"' + sel('SLA') + '>SLA</option>' +
+            '<option value="SLA"'    + sel('SLA')    + '>SLA</option>' +
           '</select>' +
           '<label>Tipo</label>' +
         '</div>' +
@@ -118,27 +127,66 @@ function tplPrinterModal(e, editId) {
           '<label>Vida útil (hrs)</label>' +
         '</div>' +
       '</div>' +
+      /* ── Toggle multicolor ─────────────────────────── */
+      '<div style="margin-top:4px">' +
+        '<div style="font-size:12px;color:var(--ink-3);margin-bottom:8px;letter-spacing:0.04em;text-transform:uppercase;font-family:var(--font-mono)">Impresión multicolor</div>' +
+        '<div class="seg" style="display:flex;width:100%">' +
+          '<button type="button" id="mod-p-multi-no"  onclick="_printerMultiToggle(false)" style="flex:1"' + (!isMulti ? ' class="active"' : '') + '>Un color</button>' +
+          '<button type="button" id="mod-p-multi-yes" onclick="_printerMultiToggle(true)"  style="flex:1"' + (isMulti  ? ' class="active"' : '') + '>Multicolor</button>' +
+        '</div>' +
+      '</div>' +
+      /* ── Cabezales (visible solo si multicolor) ────── */
+      '<div id="mod-p-heads-wrap" style="margin-top:10px;' + (isMulti ? '' : 'display:none') + '">' +
+        '<div class="m3-field">' +
+          '<input type="number" id="mod-p-heads" value="' + heads + '" placeholder=" " min="1" max="16" step="1">' +
+          '<label>Cabezales / ranuras de color</label>' +
+        '</div>' +
+      '</div>' +
       tplSheetActions('closeModal()', 'savePrinter(\'' + (editId || '') + '\')') +
     '</div>';
 }
 
 /* ── MATERIALS ──────────────────────────────────────────────────── */
 
-function tplMaterialItem(m, cur) {
-  return '<div class="m3-list-item">' +
-    '<div class="leading">' + tplIcon('category') + '</div>' +
-    '<div class="content">' +
-      '<h3>' + esc(m.name) + '</h3>' +
-      '<p>' + cur + m.costPerKg + '/kg &middot; ' + esc(m.type) + ' &middot; ' + m.density + ' g/cm³</p>' +
+function tplMaterialItem(m, cur, invItems) {
+  /* Color chips from inventory */
+  var colorChips = '';
+  if (invItems && invItems.length) {
+    colorChips = '<div class="mat-color-chips">' +
+      invItems.map(function(it) {
+        var dot = it.colorHex
+          ? 'background:' + it.colorHex + ';border:none'
+          : 'background:var(--bg-sunk);border:0.5px solid var(--line)';
+        var label = it.color || 'Sin color';
+        var remain = (it.remainingG || 0);
+        var low    = remain > 0 && remain < 150;
+        var out    = remain <= 0;
+        return '<span class="mat-color-chip"' + (out ? ' style="opacity:0.35"' : '') + '>' +
+          '<span style="width:10px;height:10px;border-radius:50%;flex-shrink:0;display:inline-block;' + dot + '"></span>' +
+          esc(label) +
+          (low ? '<span style="color:var(--md-error);font-size:9px"> ↓</span>' : '') +
+          '</span>';
+      }).join('') +
+    '</div>';
+  }
+
+  return '<div class="m3-list-item" style="flex-direction:column;align-items:stretch;padding-bottom:' + (colorChips ? '10px' : '') + '">' +
+    '<div style="display:flex;align-items:center">' +
+      '<div class="leading">' + tplIcon('category') + '</div>' +
+      '<div class="content">' +
+        '<h3>' + esc(m.name) + '</h3>' +
+        '<p>' + cur + m.costPerKg + '/kg &middot; ' + esc(m.type) + ' &middot; ' + m.density + ' g/cm³</p>' +
+      '</div>' +
+      '<div class="actions">' +
+        '<button class="m3-btn-text m3-btn-sm" onclick="showMaterialModal(\'' + m.id + '\')">' +
+          tplIcon('edit') +
+        '</button>' +
+        '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteMaterial(\'' + m.id + '\')">' +
+          tplIcon('delete') +
+        '</button>' +
+      '</div>' +
     '</div>' +
-    '<div class="actions">' +
-      '<button class="m3-btn-text m3-btn-sm" onclick="showMaterialModal(\'' + m.id + '\')">' +
-        tplIcon('edit') +
-      '</button>' +
-      '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteMaterial(\'' + m.id + '\')">' +
-        tplIcon('delete') +
-      '</button>' +
-    '</div>' +
+    (colorChips ? '<div style="padding-left:48px">' + colorChips + '</div>' : '') +
   '</div>';
 }
 

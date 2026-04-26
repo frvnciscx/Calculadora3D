@@ -11,6 +11,10 @@ const DEF_CONFIG = {
   bizEmail: '',
   bizSocial: '',
   bizQrUrl: '',
+  bizBank: '',
+  bizAccountHolder: '',
+  bizAccountNumber: '',
+  amsPurgeGrams: 40,       /* gramos de purga por cambio de color en AMS */
   theme: 'dark',
   lastPrinterId: '',
   lastMaterialId: '',
@@ -39,10 +43,10 @@ const DEF_QUOTE_STYLE = {
 };
 
 const DEF_PRINTERS = [
-  { id:'1', name:'Ender 3 V2', power:350, type:'FDM', cost:4500, lifeHours:3000 },
-  { id:'2', name:'Ender 3 S1 Pro', power:400, type:'FDM', cost:7000, lifeHours:3000 },
-  { id:'3', name:'Bambu Lab A1 + AMS', power:150, type:'FDM', cost:12000, lifeHours:5000 },
-  { id:'4', name:'Elegoo Mars 3', power:55, type:'Resina', cost:5500, lifeHours:2000 }
+  { id:'1', name:'Ender 3 V2',        power:350, type:'FDM',    cost:4500,  lifeHours:3000, multicolor:false, heads:1 },
+  { id:'2', name:'Ender 3 S1 Pro',    power:400, type:'FDM',    cost:7000,  lifeHours:3000, multicolor:false, heads:1 },
+  { id:'3', name:'Bambu Lab A1 + AMS',power:150, type:'FDM',    cost:12000, lifeHours:5000, multicolor:true,  heads:4 },
+  { id:'4', name:'Elegoo Mars 3',     power:55,  type:'Resina', cost:5500,  lifeHours:2000, multicolor:false, heads:1 }
 ];
 
 const DEF_MATERIALS = [
@@ -71,6 +75,12 @@ function esc(str) {
 }
 
 let printers    = ld('printers', DEF_PRINTERS);
+/* Migración: agregar multicolor/heads a impresoras existentes sin estos campos */
+printers = printers.map(function(p) {
+  if (p.multicolor === undefined) p.multicolor = (p.name && p.name.toLowerCase().indexOf('ams') !== -1);
+  if (p.heads === undefined)      p.heads = p.multicolor ? 4 : 1;
+  return p;
+});
 let materials   = ld('materials', DEF_MATERIALS);
 let config      = { ...DEF_CONFIG, ...ld('config', DEF_CONFIG) };
 let quoteStyle  = { ...DEF_QUOTE_STYLE, ...ld('quoteStyle', DEF_QUOTE_STYLE) };

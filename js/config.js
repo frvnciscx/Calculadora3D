@@ -30,6 +30,11 @@ function loadConfig() {
   document.getElementById('cfg-biz-email').value = config.bizEmail || '';
   document.getElementById('cfg-biz-social').value = config.bizSocial || '';
   document.getElementById('cfg-biz-qr').value = config.bizQrUrl || '';
+  var amsPurgeEl = document.getElementById('cfg-ams-purge');
+  if (amsPurgeEl) amsPurgeEl.value = config.amsPurgeGrams || 40;
+  var cfgBank   = document.getElementById('cfg-biz-bank');   if (cfgBank)   cfgBank.value   = config.bizBank   || '';
+  var cfgHolder = document.getElementById('cfg-biz-holder'); if (cfgHolder) cfgHolder.value = config.bizAccountHolder || '';
+  var cfgAccNum = document.getElementById('cfg-biz-account');if (cfgAccNum) cfgAccNum.value = config.bizAccountNumber  || '';
   /* Resina */
   var cfgIpaLiter   = document.getElementById('cfg-ipa-liter-cost');
   var cfgIpaMl      = document.getElementById('cfg-ipa-ml');
@@ -58,9 +63,9 @@ function _updateFixedPerHourDisplay() {
   if (!dispEl) return;
   if (hours > 0 && fixed > 0) {
     var perH = (fixed / hours).toFixed(2);
-    dispEl.innerHTML = 'Costos fijos por hora de impresión: <span class="num" style="color:var(--ink)">' + cur + perH + '</span>';
+    dispEl.innerHTML = cur + perH + ' / hr';
   } else {
-    dispEl.innerHTML = 'Costos fijos por hora de impresión: <span class="num" style="color:var(--ink)">—</span>';
+    dispEl.innerHTML = '—';
   }
 }
 
@@ -106,6 +111,12 @@ function saveConfig() {
   config.bizEmail = document.getElementById('cfg-biz-email').value.trim();
   config.bizSocial = document.getElementById('cfg-biz-social').value.trim();
   config.bizQrUrl  = document.getElementById('cfg-biz-qr').value.trim();
+  config.bizBank            = ((document.getElementById('cfg-biz-bank')    || {}).value || '').trim();
+  config.bizAccountHolder   = ((document.getElementById('cfg-biz-holder')  || {}).value || '').trim();
+  config.bizAccountNumber   = ((document.getElementById('cfg-biz-account') || {}).value || '').trim();
+  /* AMS */
+  var amsPurgeEl = document.getElementById('cfg-ams-purge');
+  if (amsPurgeEl && parseFloat(amsPurgeEl.value) >= 0) config.amsPurgeGrams = parseFloat(amsPurgeEl.value) || 40;
   /* Resina */
   var ipaLiter    = parseFloat((document.getElementById('cfg-ipa-liter-cost') || {}).value);
   var ipaMl       = parseFloat((document.getElementById('cfg-ipa-ml') || {}).value);
@@ -138,26 +149,30 @@ function renderFixedCostItems() {
   updateFixedCostTotal();
 }
 
-/* Genera el HTML de una fila — estilo Dark Luxe row */
+/* Genera el HTML de una fila — 2 líneas para evitar overflow en pantallas pequeñas */
 function _fciRow(name, amount) {
   var id = ++_fciCounter;
-  return '<div class="fci-row" data-fci="' + id + '" style="display:flex;align-items:center;padding:12px 0;border-bottom:0.5px solid var(--line);gap:10px">' +
-    '<input type="text" placeholder="Categoría" class="fci-name" value="' + esc(name || '') + '"' +
-      ' style="flex:1;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans)">' +
-    '<div style="display:flex;align-items:baseline;gap:4px;flex-shrink:0">' +
-      '<span style="font-family:var(--font-mono);font-size:12px;color:var(--ink-3)">$</span>' +
-      '<input type="number" placeholder="0" min="0" step="1" inputmode="decimal"' +
-        ' class="fci-amount" value="' + (amount || '') + '"' +
-        ' oninput="updateFixedCostTotal()"' +
-        ' style="background:transparent;border:none;outline:none;font-family:var(--font-mono);' +
-          'font-size:14px;font-weight:500;color:var(--ink);text-align:right;width:80px">' +
-      '<span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3)">/mes</span>' +
+  return '<div class="fci-row" data-fci="' + id + '" style="padding:12px 0;border-bottom:0.5px solid var(--line)">' +
+    /* Línea 1: nombre de categoría */
+    '<input type="text" placeholder="Nombre de la categoría" class="fci-name" value="' + esc(name || '') + '"' +
+      ' style="width:100%;box-sizing:border-box;background:transparent;border:none;outline:none;' +
+             'font-size:14px;color:var(--ink);font-family:var(--font-sans);margin-bottom:8px">' +
+    /* Línea 2: monto + botón eliminar */
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+      '<div style="display:flex;align-items:baseline;gap:4px">' +
+        '<span style="font-family:var(--font-mono);font-size:12px;color:var(--ink-3)">$</span>' +
+        '<input type="number" placeholder="0" min="0" step="1" inputmode="decimal"' +
+          ' class="fci-amount" value="' + (amount || '') + '"' +
+          ' oninput="updateFixedCostTotal()"' +
+          ' style="background:transparent;border:none;outline:none;font-family:var(--font-mono);' +
+            'font-size:16px;font-weight:600;color:var(--ink);text-align:left;width:100px">' +
+        '<span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3)">/mes</span>' +
+      '</div>' +
+      '<button onclick="removeFCIRow(this)"' +
+        ' style="display:flex;align-items:center;background:none;border:none;cursor:pointer;padding:4px;flex-shrink:0">' +
+        '<span class="material-symbols-rounded" style="font-size:18px;color:var(--md-error)">delete</span>' +
+      '</button>' +
     '</div>' +
-    '<button onclick="removeFCIRow(this)" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;' +
-      'border-radius:8px;background:var(--bg-sunk);color:var(--ink-3);flex-shrink:0;transition:background 0.15s,color 0.15s"' +
-      ' onmouseover="this.style.background=\'var(--danger)\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'var(--bg-sunk)\';this.style.color=\'var(--ink-3)\'">' +
-      '<span class="material-symbols-rounded" style="font-size:15px">delete</span>' +
-    '</button>' +
   '</div>';
 }
 

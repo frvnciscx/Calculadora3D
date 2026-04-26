@@ -214,6 +214,17 @@
         <select id="calc-material"></select>
         <label for="calc-material">Material</label>
       </div>
+      <!-- Selector visual de color / rollo -->
+      <div id="field-spool-wrap" style="padding:4px 0 8px">
+        <div style="font-size:10px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px">Color · Rollo</div>
+        <div id="calc-color-chips" style="display:flex;flex-wrap:wrap;gap:8px">
+          <button type="button" class="color-chip active" id="color-chip-any" onclick="_selectColorChip(this,'')">
+            <span style="width:12px;height:12px;border-radius:50%;background:var(--bg-sunk);border:1px solid var(--line);flex-shrink:0;display:inline-block"></span>
+            <span>Cualquier color</span>
+          </button>
+        </div>
+        <input type="hidden" id="calc-spool" value="">
+      </div>
     </div>
 
     <!-- Params resina — visible solo con impresora Resina -->
@@ -239,6 +250,29 @@
         <input type="number" id="cfg-ipa-liter-cost" step="1" min="0" placeholder=" " inputmode="decimal" oninput="saveResinParams()">
         <label for="cfg-ipa-liter-cost">Costo del litro de IPA</label>
         <span class="suffix">$/L</span>
+      </div>
+    </div>
+
+    <!-- Modo Multicolor AMS — visible solo con impresora AMS -->
+    <div id="calc-ams-block" class="hidden" style="margin-top:10px">
+      <div class="card" style="padding:16px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span class="material-symbols-rounded" style="font-size:18px;color:var(--accent)">palette</span>
+          <span style="font-size:13px;font-weight:600;letter-spacing:-0.01em">Multicolor AMS</span>
+          <span class="micro" style="color:var(--ink-3);margin-left:auto">hasta 4 colores</span>
+        </div>
+        <div id="ams-color-slots">
+          <!-- Los slots se renderizan dinámicamente -->
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:0.5px solid var(--line)">
+          <div class="micro" style="color:var(--ink-3)">Purga por cambio de color</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="number" id="ams-purge-grams" min="0" max="200" step="5" value="40"
+                   style="width:52px;text-align:right;background:transparent;border:none;outline:none;font-size:13px;color:var(--ink);font-family:var(--font-mono)"
+                   oninput="calculate(true)">
+            <span style="font-size:12px;color:var(--ink-3)">g</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -500,17 +534,115 @@
 <div id="page-config" class="page" style="padding-top:0">
 
   <!-- PageHeader -->
-  <div style="padding:28px 20px 18px">
+  <div style="padding:28px 20px 20px">
     <div class="micro" style="margin-bottom:8px;letter-spacing:0.16em">Configuración del estudio</div>
     <h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Ajustes</h1>
   </div>
 
-  <!-- Datos del negocio -->
-  <div style="padding:0 20px 20px">
-    <div class="micro" style="margin-bottom:10px">Datos del negocio</div>
+  <!-- Nav list -->
+  <div style="padding:0 20px 8px">
+    <div class="card" style="padding:0 18px">
+
+      <button class="cfg-nav-row" onclick="showConfigPage('negocio')">
+        <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">storefront</span>
+        <div class="cfg-nav-text">
+          <div class="cfg-nav-label">Datos del negocio</div>
+          <div class="cfg-nav-sub">Nombre, contacto, redes sociales</div>
+        </div>
+        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+      </button>
+
+      <button class="cfg-nav-row" onclick="showConfigPage('banco')">
+        <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">account_balance</span>
+        <div class="cfg-nav-text">
+          <div class="cfg-nav-label">Cuenta bancaria</div>
+          <div class="cfg-nav-sub">Banco, titular, CLABE</div>
+        </div>
+        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+      </button>
+
+      <button class="cfg-nav-row" onclick="showConfigPage('electrico')">
+        <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">bolt</span>
+        <div class="cfg-nav-text">
+          <div class="cfg-nav-label">Electricidad y trabajo</div>
+          <div class="cfg-nav-sub">Costo kWh, hora de diseño</div>
+        </div>
+        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+      </button>
+
+      <button class="cfg-nav-row" onclick="showConfigPage('gastos')">
+        <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">receipt</span>
+        <div class="cfg-nav-text">
+          <div class="cfg-nav-label">Gastos fijos mensuales</div>
+          <div class="cfg-nav-sub">Renta, servicios, materiales fijos</div>
+        </div>
+        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+      </button>
+
+      <button class="cfg-nav-row" onclick="showConfigPage('otros')">
+        <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">tune</span>
+        <div class="cfg-nav-text">
+          <div class="cfg-nav-label">Otros parámetros</div>
+          <div class="cfg-nav-sub">Moneda, desperdicio, AMS, apariencia</div>
+        </div>
+        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+      </button>
+
+      <button class="cfg-nav-row" onclick="showPage('quote-editor')">
+        <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">palette</span>
+        <div class="cfg-nav-text">
+          <div class="cfg-nav-label">Diseño de cotización</div>
+          <div class="cfg-nav-sub">Logo, colores, campos visibles, textos</div>
+        </div>
+        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- Respaldo -->
+  <div style="padding:20px 20px 0">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-3)">cloud_sync</span>
+      <div class="micro">Respaldo de datos</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="btn btn-ghost" onclick="exportData()">
+        <span class="material-symbols-rounded" style="font-size:16px">download</span> Exportar
+      </button>
+      <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">
+        <span class="material-symbols-rounded" style="font-size:16px">upload</span> Importar
+      </button>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+    <div style="font-size:11px;color:var(--ink-4);margin-top:8px;padding:0 4px">
+      Exporta un archivo JSON con todos tus datos: impresoras, materiales, clientes y cotizaciones.
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="padding:24px 20px 0;text-align:center">
+    <div class="micro" style="color:var(--ink-4)">v2.2.0 · La Casita del Molde</div>
+  </div>
+
+</div>
+
+<!-- ══ SUB-PÁGINA: Datos del negocio ══════════════════════════════ -->
+<div id="page-config-negocio" class="page" style="padding-top:0">
+  <div class="cfg-sub-header">
+    <button class="back-btn" onclick="showPage('config')">
+      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+    </button>
+    
+  </div>
+  <div style="padding:20px 20px 8px">
+    <div class="micro" style="margin-bottom:6px">Negocio</div>
+    <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Datos del negocio</h1>
+  </div>
+  <div style="padding:12px 20px 24px">
     <div class="card" style="padding:0 18px">
       <div class="row">
-        <div class="row-label">Nombre</div>
+        <div class="row-label">Nombre del estudio</div>
         <input type="text" id="cfg-biz-name" placeholder="Mi Negocio 3D"
                style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
       </div>
@@ -525,164 +657,238 @@
                style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
       </div>
       <div class="row">
-        <div class="row-label">Instagram</div>
+        <div class="row-label">Instagram / Red social</div>
         <input type="text" id="cfg-biz-social" placeholder="@estudio"
                style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
       </div>
       <div class="row" style="border-bottom:none">
-        <div class="row-label">URL para QR</div>
-        <input type="url" id="cfg-biz-qr" placeholder="https://..." inputmode="url"
+        <div class="row-label">URL para código QR</div>
+        <input type="url" id="cfg-biz-qr" placeholder="https://wa.me/..." inputmode="url"
                style="text-align:right;background:transparent;border:none;outline:none;font-size:13px;color:var(--ink-2);font-family:var(--font-sans);flex:1;min-width:0">
       </div>
     </div>
   </div>
+  <div style="padding:0 20px 32px">
+    <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">
+      <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
+    </button>
+  </div>
+</div>
 
-  <!-- Electricidad y trabajo -->
-  <div style="padding:0 20px 20px">
-    <div class="micro" style="margin-bottom:10px">Electricidad y trabajo</div>
-    <div class="card" style="padding:18px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;min-width:0">
-        <div class="field" style="min-width:0;overflow:hidden">
-          <label>Costo kWh</label>
-          <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid var(--line);padding-bottom:8px;min-width:0">
-            <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono);flex-shrink:0">$</span>
-            <input type="number" id="cfg-kwh" step="0.01" min="0" inputmode="decimal"
-                   style="border:none;flex:1;min-width:0;padding:0;font-size:19px;background:transparent;color:var(--ink);font-family:var(--font-mono);outline:none">
-          </div>
+<!-- ══ SUB-PÁGINA: Cuenta bancaria ══════════════════════════════════ -->
+<div id="page-config-banco" class="page" style="padding-top:0">
+  <div class="cfg-sub-header">
+    <button class="back-btn" onclick="showPage('config')">
+      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+    </button>
+    
+  </div>
+  <div style="padding:20px 20px 8px">
+    <div class="micro" style="margin-bottom:6px">Pagos</div>
+    <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Cuenta bancaria</h1>
+  </div>
+  <div style="padding:12px 20px 12px">
+    <div class="card" style="padding:0 18px">
+      <div class="row">
+        <div class="row-label">Banco</div>
+        <input type="text" id="cfg-biz-bank" placeholder="Ej: BBVA, Banorte…" maxlength="40"
+               style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
+      </div>
+      <div class="row">
+        <div class="row-label">Titular de la cuenta</div>
+        <input type="text" id="cfg-biz-holder" placeholder="Nombre completo" maxlength="60"
+               style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
+      </div>
+      <div class="row" style="border-bottom:none">
+        <div class="row-label" style="flex-shrink:0">Número de cuenta</div>
+        <input type="text" id="cfg-biz-account" placeholder="18 dígitos (CLABE)" maxlength="22" inputmode="numeric"
+               style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-mono);flex:1;min-width:0;letter-spacing:0.06em">
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--ink-4);margin-top:8px;padding:0 4px">
+      Aparece en el PDF y en la vista de la cotización para facilitar el pago.
+    </div>
+  </div>
+  <div style="padding:0 20px 32px">
+    <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">
+      <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
+    </button>
+  </div>
+</div>
+
+<!-- ══ SUB-PÁGINA: Electricidad y trabajo ═══════════════════════════ -->
+<div id="page-config-electrico" class="page" style="padding-top:0">
+  <div class="cfg-sub-header">
+    <button class="back-btn" onclick="showPage('config')">
+      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+    </button>
+    
+  </div>
+  <div style="padding:20px 20px 8px">
+    <div class="micro" style="margin-bottom:6px">Costos operativos</div>
+    <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Electricidad y trabajo</h1>
+  </div>
+  <div style="padding:12px 20px 24px">
+    <div class="card" style="padding:0 18px">
+      <div class="row">
+        <div class="row-label">Costo del kWh</div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">$</span>
+          <input type="number" id="cfg-kwh" step="0.01" min="0" inputmode="decimal"
+                 style="text-align:right;background:transparent;border:none;outline:none;font-size:15px;color:var(--ink);font-family:var(--font-mono);width:70px">
         </div>
-        <div class="field" style="min-width:0;overflow:hidden">
-          <label>Hora de diseño</label>
-          <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid var(--line);padding-bottom:8px;min-width:0">
-            <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono);flex-shrink:0">$</span>
-            <input type="number" id="cfg-labor" step="1" min="0" inputmode="decimal"
-                   style="border:none;flex:1;min-width:0;padding:0;font-size:19px;background:transparent;color:var(--ink);font-family:var(--font-mono);outline:none">
-            <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono);flex-shrink:0">/hr</span>
-          </div>
+      </div>
+      <div class="row" style="border-bottom:none">
+        <div class="row-label">Hora de diseño / labor</div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">$</span>
+          <input type="number" id="cfg-labor" step="1" min="0" inputmode="decimal"
+                 style="text-align:right;background:transparent;border:none;outline:none;font-size:15px;color:var(--ink);font-family:var(--font-mono);width:70px">
+          <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">/hr</span>
         </div>
       </div>
     </div>
   </div>
+  <div style="padding:0 20px 32px">
+    <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">
+      <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
+    </button>
+  </div>
+</div>
 
-  <!-- Costos fijos -->
-  <div style="padding:0 20px 20px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px">
-      <div class="micro">Costos fijos mensuales</div>
-      <button onclick="addFixedCostItem()" style="font-size:12px;color:var(--ink-2);display:inline-flex;align-items:center;gap:4px">
+<!-- ══ SUB-PÁGINA: Gastos fijos mensuales ═══════════════════════════ -->
+<div id="page-config-gastos" class="page" style="padding-top:0">
+  <div class="cfg-sub-header">
+    <button class="back-btn" onclick="showPage('config')">
+      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+    </button>
+    
+  </div>
+  <div style="padding:20px 20px 8px">
+    <div class="micro" style="margin-bottom:6px">Finanzas</div>
+    <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Gastos fijos</h1>
+  </div>
+  <div style="padding:12px 20px 12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--ink-3)">Categorías de gasto mensual</div>
+      <button onclick="addFixedCostItem()" style="font-size:12px;color:var(--accent);display:inline-flex;align-items:center;gap:4px">
         <span class="material-symbols-rounded" style="font-size:14px">add</span> Categoría
       </button>
     </div>
-    <div class="card" style="padding:0 18px">
+    <div class="card" style="padding:0 18px;margin-bottom:12px">
       <div id="fixed-cost-items-list"></div>
-      <div class="row" style="border-top:1px solid var(--ink-4);margin-top:4px;border-bottom:none">
-        <div style="font-size:13px;font-weight:500">Total/mes</div>
+      <div class="row" style="border-top:0.5px solid var(--line);margin-top:4px;border-bottom:none">
+        <div style="font-size:13px;font-weight:600">Total mensual</div>
         <div style="display:flex;align-items:center;gap:6px">
           <input type="number" id="cfg-fixed-monthly" step="1" min="0" placeholder="0" inputmode="decimal"
-                 style="text-align:right;background:transparent;border:none;outline:none;font-size:18px;font-weight:500;color:var(--ink);font-family:var(--font-mono);width:90px"
+                 style="text-align:right;background:transparent;border:none;outline:none;font-size:18px;font-weight:600;color:var(--accent);font-family:var(--font-mono);width:90px"
                  oninput="updateFixedCostTotal(true)">
           <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">/mes</span>
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- Horas de impresión / mes — standalone con número grande -->
-  <div style="padding:0 20px 20px">
-    <div class="micro" style="margin-bottom:12px">Horas de impresión / mes</div>
-    <div style="display:flex;align-items:baseline;gap:10px">
-      <input type="number" id="cfg-monthly-hours" step="1" min="0" inputmode="decimal"
-             style="border:none;padding:0;font-size:52px;font-weight:600;letter-spacing:-0.04em;
-                    background:transparent;color:var(--ink);font-family:var(--font-sans);
-                    outline:none;width:160px;max-width:55vw;min-width:0;line-height:1"
-             oninput="_updateFixedPerHourDisplay()">
-      <span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-3)">hrs/mes</span>
-    </div>
-    <div style="font-size:11px;color:var(--ink-3);margin-top:8px" id="cfg-fixed-per-hour-display">
-      Costos fijos por hora de impresión: <span class="num" style="color:var(--ink)">—</span>
-    </div>
-  </div>
-
-  <!-- Desperdicio -->
-  <div style="padding:0 20px 20px">
-    <div class="micro" style="margin-bottom:10px">Desperdicio y fallas</div>
-    <div class="card" style="padding:18px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
-        <div style="font-size:13px;color:var(--ink-2)">Factor de desperdicio</div>
-        <div class="display" style="font-size:28px">
-          <span id="cfg-waste-display">7</span><span style="font-size:14px;color:var(--ink-3)">%</span>
+    <!-- Horas de capacidad -->
+    <div class="card" style="padding:16px 18px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:13px;color:var(--ink-2);margin-bottom:4px">Horas de impresión / mes</div>
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <input type="number" id="cfg-monthly-hours" step="1" min="0" inputmode="decimal"
+                   style="border:none;padding:0;font-size:40px;font-weight:600;letter-spacing:-0.03em;
+                          background:transparent;color:var(--ink);font-family:var(--font-sans);
+                          outline:none;width:120px;max-width:40vw;min-width:0;line-height:1"
+                   oninput="_updateFixedPerHourDisplay()">
+            <span style="font-family:var(--font-mono);font-size:12px;color:var(--ink-3)">hrs/mes</span>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">Costo fijo / hora</div>
+          <div style="font-size:11px;color:var(--ink-3)" id="cfg-fixed-per-hour-display">—</div>
         </div>
       </div>
-      <input class="slider" type="range" id="cfg-waste" min="0" max="25" step="1" value="7"
-             oninput="document.getElementById('cfg-waste-display').textContent=this.value">
     </div>
   </div>
-
-  <!-- Moneda -->
-  <div style="padding:0 20px 20px">
-    <div class="micro" style="margin-bottom:10px">Moneda</div>
-    <div class="seg" style="width:100%;display:flex">
-      <button id="cur-mxn" class="active" onclick="setCurrencyUI('$','mxn')" style="flex:1">$ MXN</button>
-      <button id="cur-usd" onclick="setCurrencyUI('US$','usd')" style="flex:1">US$ USD</button>
-      <button id="cur-eur" onclick="setCurrencyUI('€','eur')" style="flex:1">€ EUR</button>
-    </div>
-    <!-- Hidden select mantiene compatibilidad con saveConfig() -->
-    <select id="cfg-currency" style="display:none">
-      <option value="$">$ MXN</option>
-      <option value="US$">US$ USD</option>
-      <option value="€">€ EUR</option>
-    </select>
-  </div>
-
-  <!-- Apariencia -->
-  <div style="padding:0 20px 20px">
-    <div class="micro" style="margin-bottom:10px">Apariencia</div>
-    <div class="seg theme-segment" style="width:100%;display:flex">
-      <button id="theme-light-btn" onclick="setTheme('light')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">
-        <span class="material-symbols-rounded" style="font-size:14px">light_mode</span> Claro
-      </button>
-      <button id="theme-dark-btn" onclick="setTheme('dark')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">
-        <span class="material-symbols-rounded" style="font-size:14px">dark_mode</span> Oscuro
-      </button>
-      <button id="theme-auto-btn" onclick="setTheme('auto')" style="flex:1">Auto</button>
-    </div>
-  </div>
-
-  <!-- Plantilla cotización -->
-  <div style="padding:0 20px 20px">
-    <div class="micro" style="margin-bottom:10px">Plantilla de cotización</div>
-    <button onclick="showPage('quote-editor')" class="card" style="width:100%;padding:18px;display:flex;align-items:center;gap:14px;text-align:left">
-      <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-2)">palette</span>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:500">Diseño de cotización</div>
-        <div style="font-size:11px;color:var(--ink-3);margin-top:2px">Logo, colores, campos visibles, textos</div>
-      </div>
-      <span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-4)">chevron_right</span>
-    </button>
-  </div>
-
-  <!-- Guardar -->
-  <div style="padding:0 20px 20px">
+  <div style="padding:0 20px 32px">
     <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">
-      <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar configuración
+      <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
     </button>
   </div>
+</div>
 
-  <!-- Respaldo -->
-  <div style="padding:0 20px 20px">
-    <div class="micro" style="margin-bottom:10px">Respaldo</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button class="btn btn-ghost" onclick="exportData()">
-        <span class="material-symbols-rounded" style="font-size:16px">download</span> Exportar
-      </button>
-      <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">
-        <span class="material-symbols-rounded" style="font-size:16px">upload</span> Importar
-      </button>
-    </div>
-    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+<!-- ══ SUB-PÁGINA: Otros parámetros ═════════════════════════════════ -->
+<div id="page-config-otros" class="page" style="padding-top:0">
+  <div class="cfg-sub-header">
+    <button class="back-btn" onclick="showPage('config')">
+      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+    </button>
+    
   </div>
+  <div style="padding:20px 20px 8px">
+    <div class="micro" style="margin-bottom:6px">Preferencias</div>
+    <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Otros parámetros</h1>
+  </div>
+  <div style="padding:12px 20px 24px">
+    <div class="card" style="padding:0 18px">
 
-  <!-- Footer -->
-  <div style="padding:12px 20px 0;text-align:center">
-    <div class="micro" style="color:var(--ink-4)">v2.1.0 · La Casita del Molde</div>
+      <!-- Moneda -->
+      <div style="padding:14px 0;border-bottom:0.5px solid var(--line)">
+        <div style="font-size:13px;color:var(--ink-2);margin-bottom:10px">Moneda</div>
+        <div class="seg" style="width:100%;display:flex">
+          <button id="cur-mxn" class="active" onclick="setCurrencyUI('$','cur-mxn')" style="flex:1">$ MXN</button>
+          <button id="cur-usd" onclick="setCurrencyUI('US$','cur-usd')" style="flex:1">US$ USD</button>
+          <button id="cur-eur" onclick="setCurrencyUI('€','cur-eur')" style="flex:1">€ EUR</button>
+        </div>
+        <select id="cfg-currency" style="display:none">
+          <option value="$">$ MXN</option>
+          <option value="US$">US$ USD</option>
+          <option value="€">€ EUR</option>
+        </select>
+      </div>
+
+      <!-- Desperdicio -->
+      <div style="padding:14px 0;border-bottom:0.5px solid var(--line)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-size:13px;color:var(--ink-2)">Factor de desperdicio y fallas</div>
+          <div class="num" style="font-size:20px;font-weight:600">
+            <span id="cfg-waste-display">7</span><span style="font-size:12px;color:var(--ink-3)"> %</span>
+          </div>
+        </div>
+        <input class="slider" type="range" id="cfg-waste" min="0" max="25" step="1" value="7"
+               oninput="document.getElementById('cfg-waste-display').textContent=this.value">
+      </div>
+
+      <!-- AMS Purga -->
+      <div style="padding:14px 0;border-bottom:0.5px solid var(--line)">
+        <div style="font-size:13px;color:var(--ink-2);margin-bottom:4px">Purga AMS por cambio de color</div>
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:10px">Bambu Lab A1 · gramos desperdiciados al limpiar el nozzle</div>
+        <div class="row" style="padding:0;border:none">
+          <input type="number" id="cfg-ams-purge" min="0" max="200" step="5" inputmode="decimal"
+                 style="background:transparent;border:none;outline:none;font-size:28px;font-weight:600;
+                        color:var(--ink);font-family:var(--font-mono);width:80px;padding:0">
+          <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">g por purga</span>
+        </div>
+      </div>
+
+      <!-- Apariencia -->
+      <div style="padding:14px 0;border-bottom:none">
+        <div style="font-size:13px;color:var(--ink-2);margin-bottom:10px">Apariencia</div>
+        <div class="seg theme-segment" style="width:100%;display:flex">
+          <button id="theme-light-btn" onclick="setTheme('light')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">
+            <span class="material-symbols-rounded" style="font-size:14px">light_mode</span> Claro
+          </button>
+          <button id="theme-dark-btn" onclick="setTheme('dark')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">
+            <span class="material-symbols-rounded" style="font-size:14px">dark_mode</span> Oscuro
+          </button>
+          <button id="theme-auto-btn" onclick="setTheme('auto')" style="flex:1">Auto</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div style="padding:0 20px 32px">
+    <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">
+      <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
+    </button>
   </div>
 </div>
 
