@@ -334,7 +334,10 @@ function onQuoteSearch(input) {
 
 /* ── Etiqueta de estado ───────────────────────────────────────────── */
 function statusLabel(s) {
-  return s === 'aceptada' ? '\u2713 Aceptada' : s === 'rechazada' ? '\u2715 Rechazada' : '\u23F3 Pendiente';
+  if (s === 'aceptada')  return '✓ Aceptada';
+  if (s === 'rechazada') return '✕ Rechazada';
+  if (s === 'enviada')   return '↗ Enviada';
+  return '⏳ Pendiente';
 }
 
 /* ── Cambiar estado de cotización ────────────────────────────────── */

@@ -93,8 +93,8 @@ function renderDashboard() {
     '</div>';
   }).join('');
 
-  /* ── Piezas impresas (total ítems aceptados) ─── */
-  var piecesCount = quotes.filter(function(q) { return q.status === 'aceptada'; })
+  /* ── Piezas impresas del mes (cotizaciones aceptadas este mes) ─── */
+  var piecesCount = monthAccepted
     .reduce(function(s, q) { return s + (q.items ? q.items.length : 1); }, 0);
 
   /* ── Horas de impresión del mes (cotizaciones aceptadas) ─── */
@@ -207,7 +207,7 @@ function renderDashboard() {
           '</div>' +
         '</div>' +
         '<div class="row" style="padding:14px 0">' +
-          '<div class="row-label">Piezas impresas</div>' +
+          '<div class="row-label">Piezas impresas (mes)</div>' +
           '<div class="row-value">' + piecesCount + '</div>' +
         '</div>' +
         '<div class="row" style="padding:14px 0;border-bottom:none">' +
@@ -220,7 +220,10 @@ function renderDashboard() {
           '</div>' +
         '</div>' +
       '</div>' +
-    '</div>';
+    '</div>' +
+
+    /* Espaciado final para no quedar tapado por la nav bar */
+    '<div style="height:100px"></div>';
 }
 
 function formatNum(n) {
