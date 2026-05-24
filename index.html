@@ -427,13 +427,21 @@
 <div id="page-catalog" class="page" style="padding-top:0">
 
   <!-- PageHeader -->
-  <div style="padding:28px 20px 18px">
-    <div class="micro" style="margin-bottom:8px;letter-spacing:0.16em">Recursos del estudio</div>
-    <h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Catálogo</h1>
+  <div class="page-header-row" style="padding:28px 20px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
+    <div>
+      <div class="micro" style="margin-bottom:8px;letter-spacing:0.16em">Recursos del estudio</div>
+      <h1 class="display" id="catalog-heading" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Catálogo</h1>
+    </div>
+    <div class="page-header-actions" style="display:none;align-items:center;flex-shrink:0">
+      <button class="page-header-btn" onclick="catalogAdd()">
+        <span class="material-symbols-rounded" style="font-size:16px">add</span>
+        <span id="catalog-header-label">Agregar</span>
+      </button>
+    </div>
   </div>
 
   <!-- Seg tabs -->
-  <div style="padding:0 20px 16px">
+  <div id="catalog-seg-tabs" style="padding:0 20px 16px">
     <div class="seg" style="width:100%;display:flex">
       <button class="active" id="cat-tab-printers"  onclick="showCatalogTab('printers')"  style="flex:1">Impresoras</button>
       <button id="cat-tab-materials" onclick="showCatalogTab('materials')" style="flex:1">Materiales</button>
@@ -468,15 +476,23 @@
 <div id="page-quotes" class="page" style="padding-top:0">
 
   <!-- PageHeader -->
-  <div style="padding:28px 20px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
+  <div class="page-header-row" style="padding:28px 20px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
     <div>
       <div class="micro" style="margin-bottom:8px;letter-spacing:0.16em" id="quotes-eyebrow">Cotizaciones</div>
-      <h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Cotizaciones</h1>
+      <h1 class="display" id="quotes-heading" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Cotizaciones</h1>
+    </div>
+    <div class="page-header-actions" style="display:none;align-items:center;flex-shrink:0;gap:8px">
+      <button class="page-header-btn" id="phdr-btn-quotes" onclick="showPage('calc')">
+        <span class="material-symbols-rounded" style="font-size:16px">add</span> Nueva cotización
+      </button>
+      <button class="page-header-btn" id="phdr-btn-clients" onclick="showClientModal()" style="display:none">
+        <span class="material-symbols-rounded" style="font-size:16px">person_add</span> Nuevo cliente
+      </button>
     </div>
   </div>
 
   <!-- Seg tabs: Cotizaciones / Clientes -->
-  <div style="padding:0 20px 16px">
+  <div id="quotes-seg-tabs" style="padding:0 20px 16px">
     <div class="seg" style="width:100%;display:flex">
       <button class="active" id="qt-tab-quotes" onclick="showQuotesTab('quotes')" style="flex:1">Cotizaciones</button>
       <button id="qt-tab-clients" onclick="showQuotesTab('clients')" style="flex:1">Clientes</button>

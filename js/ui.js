@@ -100,7 +100,8 @@ function showCalcTab(tab) {
 
 /* ── Catálogo — tab entre Impresoras / Materiales / Inventario ─── */
 var _activeCatalogTab = 'printers';
-var _catalogAddLabels = { printers: 'Impresora', materials: 'Material', inventory: 'Filamento' };
+var _catalogAddLabels  = { printers: 'Impresora',  materials: 'Material',   inventory: 'Filamento'  };
+var _catalogHeadings   = { printers: 'Impresoras', materials: 'Materiales', inventory: 'Inventario' };
 function showCatalogTab(tab) {
   _activeCatalogTab = tab;
   var panels = { printers: 'printer-list', materials: 'material-list', inventory: 'inventory-list' };
@@ -111,8 +112,15 @@ function showCatalogTab(tab) {
     if (panelEl) panelEl.style.display = key === tab ? '' : 'none';
     if (tabEl)   tabEl.classList.toggle('active', key === tab);
   });
-  var labelEl = document.getElementById('catalog-add-label');
-  if (labelEl) labelEl.textContent = _catalogAddLabels[tab] || 'Agregar';
+  /* Etiqueta del botón agregar (móvil bottom-bar + desktop header) */
+  var addLabel = _catalogAddLabels[tab] || 'Agregar';
+  var mobileEl = document.getElementById('catalog-add-label');
+  if (mobileEl) mobileEl.textContent = addLabel;
+  var desktopEl = document.getElementById('catalog-header-label');
+  if (desktopEl) desktopEl.textContent = addLabel;
+  /* h1 en desktop: muestra la sección activa */
+  var headingEl = document.getElementById('catalog-heading');
+  if (headingEl) headingEl.textContent = _catalogHeadings[tab] || 'Catálogo';
   _showActionBtn('catalog');
   if (tab === 'printers')  renderPrinters();
   if (tab === 'materials') renderMaterials();
@@ -136,10 +144,6 @@ function showQuotesTab(tab) {
   var searchWrap     = document.getElementById('quotes-search-wrap');
   var qtQuotes       = document.getElementById('qt-tab-quotes');
   var qtClients      = document.getElementById('qt-tab-clients');
-  /* Barra de acción fija */
-  var qaBar          = document.getElementById('quotes-action-bar');
-  var qaBtnQuotes    = document.getElementById('qa-btn-quotes');
-  var qaBtnClients   = document.getElementById('qa-btn-clients');
 
   var isQuotes = tab === 'quotes';
   if (quotesPanel)    quotesPanel.style.display    = isQuotes ? '' : 'none';
@@ -148,6 +152,18 @@ function showQuotesTab(tab) {
   if (clientsContent) clientsContent.style.display = isQuotes ? 'none' : '';
   if (qtQuotes)       qtQuotes.classList.toggle('active',  isQuotes);
   if (qtClients)      qtClients.classList.toggle('active', !isQuotes);
+
+  /* Actualizar título y botón de acción del header */
+  var headingEl  = document.getElementById('quotes-heading');
+  var eyebrowEl  = document.getElementById('quotes-eyebrow');
+  var btnQuotes  = document.getElementById('phdr-btn-quotes');
+  var btnClients = document.getElementById('phdr-btn-clients');
+  if (headingEl)  headingEl.textContent  = isQuotes ? 'Cotizaciones' : 'Clientes';
+  if (eyebrowEl)  eyebrowEl.textContent  = isQuotes ? 'Cotizaciones' : 'Directorio';
+  if (btnQuotes)  btnQuotes.style.display  = isQuotes ? '' : 'none';
+  if (btnClients) btnClients.style.display = isQuotes ? 'none' : '';
+
+  /* Barra móvil */
   _showActionBtn(isQuotes ? 'quotes' : 'clients');
 
   if (tab === 'clients') renderClients();

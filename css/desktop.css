@@ -149,6 +149,49 @@
     left: 240px;
   }
 
+  /* ── Seg-tabs: ocultar en desktop (sidebar maneja la nav) ────── */
+  #quotes-seg-tabs,
+  #catalog-seg-tabs {
+    display: none !important;
+  }
+
+  /* ── Barra de acción flotante: ocultar en desktop ─────────────── */
+  #page-action-bar {
+    display: none !important;
+  }
+
+  /* ── Botones de acción en el header de página ─────────────────── */
+  .page-header-actions {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    padding-bottom: 4px; /* alinear visualmente con la base del h1 */
+  }
+
+  .page-header-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    height: 34px;
+    font-size: 12.5px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    white-space: nowrap;
+    border: 0.5px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .page-header-btn:hover {
+    background: var(--bg-sunk);
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+
   /* ── Quote cards ──────────────────────────────────────────────── */
   .quote-card .hist-header {
     align-items: center;
