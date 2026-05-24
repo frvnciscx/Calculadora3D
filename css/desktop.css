@@ -294,20 +294,13 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     CONFIG: header fijo + contenido con padding-top compensado
-     #page-config se fija en la parte superior del área de contenido
-     (a la derecha del sidebar). La sub-página activa hace scroll
-     por debajo con padding-top = altura real del header (var JS).
+     CONFIG: JS gestiona display. CSS solo posiciona el header fijo
+     y oculta elementos mobile que no aplican en desktop.
   ══════════════════════════════════════════════════════════════════ */
 
-  /* Body: flex normal — sidebar ya ocupa 240px, resto es contenido */
-  body[data-page^="config-"] {
-    /* sin cambios al layout flex del body */
-  }
-
-  /* #page-config: header fijo sobre el área de contenido */
+  /* #page-config: header fijo sobre el área de contenido.
+     JS setea style.display='flex'. CSS solo define posición/tamaño. */
   body[data-page^="config-"] #page-config {
-    display: flex !important;
     flex-direction: column;
     position: fixed !important;
     top: 0;
@@ -320,15 +313,16 @@
     padding-top: 0 !important;
   }
 
-  /* Sub-página activa: ocupa toda el área de contenido con scroll */
-  body[data-page^="config-"] .page.active {
-    display: block !important;
-    position: relative;
-    flex: 1;
+  /* Sub-páginas: JS setea display y padding-top. CSS solo scroll. */
+  body[data-page^="config-"] #page-config-negocio,
+  body[data-page^="config-"] #page-config-banco,
+  body[data-page^="config-"] #page-config-electrico,
+  body[data-page^="config-"] #page-config-gastos,
+  body[data-page^="config-"] #page-config-otros {
     overflow-y: auto;
     height: 100vh;
-    padding-top: var(--cfg-header-h) !important;
     padding-bottom: 40px !important;
+    box-sizing: border-box;
   }
 
   /* Back button y sub-header ocultos: nav es el tab bar */

@@ -28,7 +28,23 @@ function m3Confirm(message, onConfirm) {
   document.getElementById('m3-confirm-btn').onclick = function() { closeModal(); onConfirm(); };
 }
 
+/* IDs de las sub-páginas de config */
+var _CFG_SUBPAGES = ['negocio','banco','electrico','gastos','otros'];
+
+/* Limpia los inline styles que showConfigPage establece en desktop */
+function _cleanConfigDesktop() {
+  var cfgEl = document.getElementById('page-config');
+  if (cfgEl) cfgEl.style.display = '';
+  _CFG_SUBPAGES.forEach(function(n) {
+    var sp = document.getElementById('page-config-' + n);
+    if (sp) { sp.style.display = ''; sp.style.paddingTop = ''; sp.classList.remove('active'); }
+  });
+}
+
 function showPage(name) {
+  /* ── Al salir de config en desktop: resetear inline styles ─────── */
+  if (window.innerWidth >= 900) _cleanConfigDesktop();
+
   /* ── Catálogo: sub-páginas antiguas → catálogo unificado ───────── */
   if (name === 'printers' || name === 'materials' || name === 'inventory') {
     var catTab = name === 'printers' ? 'printers' : name === 'materials' ? 'materials' : 'inventory';
@@ -231,15 +247,56 @@ function _filterMaterials(keepMaterialId) {
 
 /* ── Config sub-pages navigation ────────────────────────────────── */
 function showConfigPage(name) {
-  showPage('config-' + name);
   if (window.innerWidth >= 900) {
-    /* Medir el header fijo y actualizar la variable CSS para compensar el padding-top */
-    requestAnimationFrame(function() {
-      var cfgHeader = document.getElementById('page-config');
-      if (cfgHeader) {
-        document.documentElement.style.setProperty('--cfg-header-h', cfgHeader.offsetHeight + 'px');
+    /* ── Desktop: JS gestiona display directamente (evita batallas de cascada) ── */
+
+    /* 1. Ocultar todas las .page */
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+
+    /* 2. Mostrar el header fijo (#page-config) */
+    var cfgHeader = document.getElementById('page-config');
+    if (cfgHeader) cfgHeader.style.display = 'flex';
+
+    /* 3. Actualizar body.dataset para que el CSS resalte el tab correcto */
+    document.body.dataset.page = 'config-' + name;
+
+    /* 4. Ocultar sub-páginas anteriores; mostrar la seleccionada */
+    _CFG_SUBPAGES.forEach(function(n) {
+      var sp = document.getElementById('page-config-' + n);
+      if (!sp) return;
+      if (n === name) {
+        sp.style.display = 'block';
+        sp.classList.add('active');
+      } else {
+        sp.style.display = 'none';
+        sp.classList.remove('active');
       }
     });
+
+    /* 5. Resaltar el ítem de sidebar "Ajustes" */
+    document.querySelectorAll('.nav-item,.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('[data-page="config"]').forEach(function(b) { b.classList.add('active'); });
+
+    /* 6. Ocultar FAB y barra de acción */
+    document.querySelectorAll('.m3-fab').forEach(function(f) { f.style.display = 'none'; });
+    var qaBar = document.getElementById('page-action-bar');
+    if (qaBar) qaBar.style.display = 'none';
+
+    /* 7. Medir header y compensar padding-top en la sub-página */
+    requestAnimationFrame(function() {
+      var h = document.getElementById('page-config');
+      var sp = document.getElementById('page-config-' + name);
+      if (h && sp) {
+        var hh = h.offsetHeight;
+        document.documentElement.style.setProperty('--cfg-header-h', hh + 'px');
+        sp.style.paddingTop = hh + 'px';
+      }
+    });
+
+    loadConfig();
+  } else {
+    /* ── Mobile: flujo genérico ── */
+    showPage('config-' + name);
   }
 }
 
