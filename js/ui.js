@@ -90,7 +90,7 @@ function showPage(name) {
 
   if (name === 'dashboard')    renderDashboard();
   if (name === 'catalog')      { showCatalogTab(_activeCatalogTab || 'printers'); }
-  if (name === 'quotes')       { renderQuotes(); showQuotesTab(_activeQuotesTab || 'quotes'); }
+  if (name === 'quotes')       { renderQuotes(); showQuotesTab('quotes'); }
   if (name === 'config' || name.indexOf('config-') === 0) loadConfig();
   if (name === 'calc')         { populateSelects(); restoreCalcResult(); refreshDraftIndicator(); initCalcLive(); renderPresets(); _updateResinParamsBlock(); _updateAMSBlock(); _updateSpoolSelector(); }
   if (name === 'history')      renderHistory();

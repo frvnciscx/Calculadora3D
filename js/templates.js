@@ -19,8 +19,15 @@ function tplIcon(name, size) {
   return '<span class="material-symbols-rounded" style="font-size:' + size + 'px">' + name + '</span>';
 }
 
-function tplSheetHeader(title) {
-  return '<div class="m3-drag-handle"></div><h2>' + title + '</h2>';
+function tplSheetHeader(title, closeFn) {
+  closeFn = closeFn || 'closeModal()';
+  return '<div class="m3-drag-handle"></div>' +
+    '<div class="sheet-header-row">' +
+      '<h2>' + title + '</h2>' +
+      '<button class="sheet-close-btn" onclick="' + closeFn + '" aria-label="Cerrar">' +
+        '<span class="material-symbols-rounded" style="font-size:20px">close</span>' +
+      '</button>' +
+    '</div>';
 }
 
 function tplSheetActions(cancelFn, saveFn, saveLabel) {
@@ -693,7 +700,7 @@ function tplDraftModal(draft, cur) {
   var itemsHTML  = draft.items.map(function(item, i) { return tplDraftItem(item, i, cur); }).join('');
 
   return '<div class="m3-scrim" onclick="closeModal()"></div>' +
-    '<div class="m3-bottom-sheet">' +
+    '<div class="m3-bottom-sheet draft-drawer">' +
       tplSheetHeader('Nueva cotización') +
       /* Campo cliente con autocompletado */
       '<div class="client-autocomplete-wrap">' +

@@ -228,6 +228,46 @@
     display: none !important;
   }
 
+  /* ── Drawer header: padding top + fila con botón cerrar ─────────── */
+  .m3-bottom-sheet .sheet-header-row,
+  .client-modal-wrap .sheet-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 24px 0;
+    margin-bottom: 20px;
+  }
+  .m3-bottom-sheet .sheet-header-row h2,
+  .client-modal-wrap .sheet-header-row h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .sheet-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    border-radius: 50%;
+    color: var(--ink-3);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .sheet-close-btn:hover {
+    background: var(--bg-sunk);
+    color: var(--ink);
+  }
+
+  /* ── Draft modal: más ancho en desktop ──────────────────────────── */
+  .m3-bottom-sheet.draft-drawer {
+    width: 520px !important;
+  }
+
   /* ── Drawer de cliente: full-screen → panel lateral derecho ────── */
   .client-modal-wrap {
     top: 0 !important;
