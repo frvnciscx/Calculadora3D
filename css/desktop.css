@@ -192,55 +192,59 @@
     border-color: var(--ink-3);
   }
 
-  /* ── Modales: bottom-sheets → dialog centrado ────────────────── */
+  /* ── Drawer: bottom-sheets se convierten en panel lateral derecho ─ */
+  @keyframes drawerIn {
+    from { transform: translateX(100%); opacity: 0.6; }
+    to   { transform: translateX(0);    opacity: 1;   }
+  }
+
   .m3-bottom-sheet {
     position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    bottom: auto !important;
-    right: auto !important;
-    transform: translate(-50%, -50%) !important;
-    width: min(540px, 90vw) !important;
-    max-height: 85vh !important;
-    border-radius: 16px !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: auto !important;
+    transform: translateX(0) !important;
+    width: 440px !important;
+    max-width: calc(100vw - 240px) !important; /* no solapar sidebar */
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 16px 0 0 16px !important;
+    border-left: 0.5px solid var(--line) !important;
+    box-shadow: -12px 0 48px rgba(0,0,0,0.18) !important;
     overflow-y: auto !important;
-    animation: dialogIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    animation: drawerIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
   }
-  @keyframes dialogIn {
-    from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }
-    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  }
+
+  /* Scrim: solo cubre el área de contenido, no el sidebar */
   .m3-scrim {
-    background: rgba(0,0,0,0.45) !important;
-    backdrop-filter: blur(2px) !important;
+    left: 240px !important;
+    background: rgba(0,0,0,0.28) !important;
+    backdrop-filter: none !important;
   }
-  /* Ocultar drag handle en desktop (no hay bottom-sheet que arrastrar) */
+
+  /* Ocultar drag handle (no se arrastra en desktop) */
   .m3-drag-handle {
     display: none !important;
   }
 
-  /* ── Modal de cliente: full-screen → dialog centrado ─────────── */
+  /* ── Drawer de cliente: full-screen → panel lateral derecho ────── */
   .client-modal-wrap {
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    height: auto !important;
-    max-height: 85vh !important;
-    border-radius: 16px !important;
-    border: 0.5px solid var(--line) !important;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.5) !important;
-    animation: dialogIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: auto !important;
+    transform: translateX(0) !important;
+    width: 440px !important;
+    max-width: calc(100vw - 240px) !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 16px 0 0 16px !important;
+    border-left: 0.5px solid var(--line) !important;
+    box-shadow: -12px 0 48px rgba(0,0,0,0.18) !important;
+    animation: drawerIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    overflow-y: auto !important;
   }
-  /* Hacer scroll la parte interna, no el wrapper */
-  .client-modal-wrap > *:not(:last-child):not(:first-child) {
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-  }
-  /* Back button → X en desktop (no hay "atrás" en un dialog) */
-  .client-modal-wrap .m3-scrim { display: none !important; }
 
   /* ═══════════════════════════════════════════════════════════════
      CONFIG: Layout dos paneles (nav izquierda + contenido derecha)
