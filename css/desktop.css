@@ -129,28 +129,8 @@
     height: 100vh;
   }
 
-  /* ── Top bar: header de página en desktop ────────────────────── */
+  /* ── Top bar: oculta en desktop (sidebar tiene logo, sync y tema) ── */
   .top-bar {
-    border-radius: 0;
-    border-bottom: 1px solid var(--line);
-    padding: 0 28px;
-    height: 56px;
-    position: sticky;
-    top: 0;
-    z-index: 9;
-    background: var(--bg);
-  }
-
-  /* Logo y nombre del negocio: ocultos en top-bar (ya están en sidebar) */
-  #top-bar-logo-wrap,
-  #top-bar-biz-name,
-  #top-bar-subtitle {
-    display: none !important;
-  }
-
-  /* Sync indicator y theme toggle del top-bar: ocultos (están en sidebar footer) */
-  #sync-indicator,
-  .theme-toggle {
     display: none !important;
   }
 

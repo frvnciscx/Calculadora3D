@@ -20,7 +20,7 @@ function applyTheme() {
 
   /* Actualizar todos los iconos de toggle de tema */
   const iconLabel = effective === 'dark' ? 'light_mode' : 'dark_mode';
-  ['theme-icon-topbar'].forEach(function(id) {
+  ['theme-icon-topbar', 'theme-icon-sidebar'].forEach(function(id) {
     const el = document.getElementById(id);
     if (el) el.textContent = iconLabel;
   });
