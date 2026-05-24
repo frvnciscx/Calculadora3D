@@ -340,8 +340,10 @@ function tplClientModal(c, editIndex) {
   }
 
   return (
-    /* Overlay full-screen */
-    '<div style="' +
+    /* Scrim (desktop: visible blur; mobile: hidden behind full-screen modal) */
+    '<div class="m3-scrim" onclick="closeModal()"></div>' +
+    /* Overlay full-screen (mobile) / centered dialog (desktop via CSS) */
+    '<div class="client-modal-wrap" style="' +
       'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
       'width:min(440px,100%);height:100dvh;' +
       'background:var(--bg);z-index:200;' +
@@ -471,7 +473,7 @@ function tplClientModal(c, editIndex) {
         '</button>' +
       '</div>' +
 
-    '</div>'
+    '</div>' /* .client-modal-wrap */
   );
 }
 

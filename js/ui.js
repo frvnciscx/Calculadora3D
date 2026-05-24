@@ -29,7 +29,7 @@ function m3Confirm(message, onConfirm) {
 }
 
 function showPage(name) {
-  // Catálogo: sub-páginas antiguas se redirigen al catálogo unificado
+  /* ── Catálogo: sub-páginas antiguas → catálogo unificado ───────── */
   if (name === 'printers' || name === 'materials' || name === 'inventory') {
     var catTab = name === 'printers' ? 'printers' : name === 'materials' ? 'materials' : 'inventory';
     showPage('catalog');
@@ -37,6 +37,29 @@ function showPage(name) {
     return;
   }
 
+  /* ── Clientes: muestra page-quotes con tab clientes ────────────── */
+  if (name === 'clients') {
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.nav-item,.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
+    var qPage = document.getElementById('page-quotes');
+    if (qPage) qPage.classList.add('active');
+    document.body.dataset.page = 'clients';
+    document.querySelectorAll('[data-page="clients"]').forEach(function(b) { b.classList.add('active'); });
+    document.querySelectorAll('.m3-fab').forEach(function(f) { f.style.display = 'none'; });
+    var qaBar0 = document.getElementById('page-action-bar');
+    if (qaBar0) qaBar0.style.display = '';
+    _showActionBtn('clients');
+    showQuotesTab('clients');
+    return;
+  }
+
+  /* ── Config en desktop: ir directo a primer sub-página ─────────── */
+  if (name === 'config' && window.innerWidth >= 900) {
+    showConfigPage('negocio');
+    return;
+  }
+
+  /* ── Flujo genérico ────────────────────────────────────────────── */
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
@@ -45,13 +68,10 @@ function showPage(name) {
   if (!pageEl) { console.warn('Page not found:', name); return; }
   pageEl.classList.add('active');
 
-  // Exponer página actual en body para CSS
   document.body.dataset.page = name;
 
-  // Map sub-pages to their parent nav item
   const navMap = {
     'quote-editor':    'quotes',
-    'clients':         'quotes',
     'catalog':         'catalog',
     'config-negocio':  'config',
     'config-banco':    'config',
@@ -64,16 +84,13 @@ function showPage(name) {
 
   document.querySelectorAll('.m3-fab').forEach(f => f.style.display = 'none');
 
-  /* Barra de acción fija — visible en cotizaciones y catálogo */
   var qaBar = document.getElementById('page-action-bar');
   if (qaBar) qaBar.style.display = (name === 'quotes' || name === 'catalog') ? '' : 'none';
-  /* Mostrar el botón correcto según página */
   _showActionBtn(name === 'quotes' ? (_activeQuotesTab || 'quotes') : name === 'catalog' ? 'catalog' : null);
 
   if (name === 'dashboard')    renderDashboard();
   if (name === 'catalog')      { showCatalogTab(_activeCatalogTab || 'printers'); }
   if (name === 'quotes')       { renderQuotes(); showQuotesTab(_activeQuotesTab || 'quotes'); }
-  if (name === 'clients')      { showQuotesTab('clients'); showPage('quotes'); return; }
   if (name === 'config' || name.indexOf('config-') === 0) loadConfig();
   if (name === 'calc')         { populateSelects(); restoreCalcResult(); refreshDraftIndicator(); initCalcLive(); renderPresets(); _updateResinParamsBlock(); _updateAMSBlock(); _updateSpoolSelector(); }
   if (name === 'history')      renderHistory();

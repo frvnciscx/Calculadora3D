@@ -192,6 +192,131 @@
     border-color: var(--ink-3);
   }
 
+  /* ── Modales: bottom-sheets → dialog centrado ────────────────── */
+  .m3-bottom-sheet {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    bottom: auto !important;
+    right: auto !important;
+    transform: translate(-50%, -50%) !important;
+    width: min(540px, 90vw) !important;
+    max-height: 85vh !important;
+    border-radius: 16px !important;
+    overflow-y: auto !important;
+    animation: dialogIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  }
+  @keyframes dialogIn {
+    from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+  .m3-scrim {
+    background: rgba(0,0,0,0.45) !important;
+    backdrop-filter: blur(2px) !important;
+  }
+  /* Ocultar drag handle en desktop (no hay bottom-sheet que arrastrar) */
+  .m3-drag-handle {
+    display: none !important;
+  }
+
+  /* ── Modal de cliente: full-screen → dialog centrado ─────────── */
+  .client-modal-wrap {
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    height: auto !important;
+    max-height: 85vh !important;
+    border-radius: 16px !important;
+    border: 0.5px solid var(--line) !important;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5) !important;
+    animation: dialogIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  /* Hacer scroll la parte interna, no el wrapper */
+  .client-modal-wrap > *:not(:last-child):not(:first-child) {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+  /* Back button → X en desktop (no hay "atrás" en un dialog) */
+  .client-modal-wrap .m3-scrim { display: none !important; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     CONFIG: Layout dos paneles (nav izquierda + contenido derecha)
+     Activo solo cuando una sub-página de config está visible
+  ══════════════════════════════════════════════════════════════════ */
+
+  /* Cuando se ve una sub-página de config: body = 3 columnas */
+  body[data-page^="config-"] #page-config,
+  body[data-page="quote-editor"] #page-config {
+    display: flex !important;
+    flex-direction: column;
+    width: 280px;
+    min-width: 280px;
+    flex-shrink: 0;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid var(--line);
+    padding-bottom: 0 !important;
+    /* Reset padding del header (más compacto como panel nav) */
+    padding-top: 0;
+  }
+
+  /* Compactar el pageheader del panel config */
+  body[data-page^="config-"] #page-config > div:first-child,
+  body[data-page="quote-editor"] #page-config > div:first-child {
+    padding: 20px 20px 14px !important;
+  }
+  body[data-page^="config-"] #page-config .display,
+  body[data-page="quote-editor"] #page-config .display {
+    font-size: 22px !important;
+  }
+
+  /* Ocultar el header de versión (ya se ve en la sub-página) */
+  body[data-page^="config-"] #cfg-footer-version,
+  body[data-page="quote-editor"] #cfg-footer-version {
+    display: none;
+  }
+
+  /* Sub-página activa: fill remaining space */
+  body[data-page^="config-"] .page.active,
+  body[data-page="quote-editor"] .page.active {
+    flex: 1;
+    min-width: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding-bottom: 40px !important;
+  }
+
+  /* Ocultar back button y sub-header (innecesario en two-panel) */
+  body[data-page^="config-"] .cfg-sub-header,
+  body[data-page="quote-editor"] .cfg-sub-header {
+    display: none !important;
+  }
+
+  /* Resaltar nav item activo en el panel izquierdo */
+  body[data-page="config-negocio"]   #cfg-nav-negocio,
+  body[data-page="config-banco"]     #cfg-nav-banco,
+  body[data-page="config-electrico"] #cfg-nav-electrico,
+  body[data-page="config-gastos"]    #cfg-nav-gastos,
+  body[data-page="config-otros"]     #cfg-nav-otros,
+  body[data-page="quote-editor"]     #cfg-nav-quote-editor {
+    color: var(--accent) !important;
+    background: color-mix(in oklab, var(--accent) 9%, transparent) !important;
+    border-radius: 0;
+  }
+  /* Ocultar flecha chevron en desktop (no navega a otro pantalla) */
+  .cfg-nav-chevron {
+    display: none !important;
+  }
+  /* Alinear ítems de nav para el panel */
+  body[data-page^="config-"] .cfg-nav-row,
+  body[data-page="quote-editor"] .cfg-nav-row {
+    padding: 13px 18px !important;
+    border-radius: 0 !important;
+  }
+
   /* ── Quote cards ──────────────────────────────────────────────── */
   .quote-card .hist-header {
     align-items: center;

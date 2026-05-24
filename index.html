@@ -629,58 +629,58 @@
   <div style="padding:0 20px 8px">
     <div class="card" style="padding:0 18px">
 
-      <button class="cfg-nav-row" onclick="showConfigPage('negocio')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
+      <button id="cfg-nav-negocio" class="cfg-nav-row" onclick="showConfigPage('negocio')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
         <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">storefront</span>
         <div class="cfg-nav-text">
           <div class="cfg-nav-label">Datos del negocio</div>
           <div class="cfg-nav-sub">Nombre, contacto, redes sociales</div>
         </div>
-        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
       </button>
 
-      <button class="cfg-nav-row" onclick="showConfigPage('banco')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
+      <button id="cfg-nav-banco" class="cfg-nav-row" onclick="showConfigPage('banco')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
         <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">account_balance</span>
         <div class="cfg-nav-text">
           <div class="cfg-nav-label">Cuenta bancaria</div>
           <div class="cfg-nav-sub">Banco, titular, CLABE</div>
         </div>
-        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
       </button>
 
-      <button class="cfg-nav-row" onclick="showConfigPage('electrico')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
+      <button id="cfg-nav-electrico" class="cfg-nav-row" onclick="showConfigPage('electrico')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
         <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">bolt</span>
         <div class="cfg-nav-text">
           <div class="cfg-nav-label">Electricidad y trabajo</div>
           <div class="cfg-nav-sub">Costo kWh, hora de diseño</div>
         </div>
-        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
       </button>
 
-      <button class="cfg-nav-row" onclick="showConfigPage('gastos')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
+      <button id="cfg-nav-gastos" class="cfg-nav-row" onclick="showConfigPage('gastos')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
         <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">receipt</span>
         <div class="cfg-nav-text">
           <div class="cfg-nav-label">Gastos fijos mensuales</div>
           <div class="cfg-nav-sub">Renta, servicios, materiales fijos</div>
         </div>
-        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
       </button>
 
-      <button class="cfg-nav-row" onclick="showConfigPage('otros')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
+      <button id="cfg-nav-otros" class="cfg-nav-row" onclick="showConfigPage('otros')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
         <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">tune</span>
         <div class="cfg-nav-text">
           <div class="cfg-nav-label">Otros parámetros</div>
           <div class="cfg-nav-sub">Moneda, desperdicio, AMS, apariencia</div>
         </div>
-        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
       </button>
 
-      <button class="cfg-nav-row" onclick="showPage('quote-editor')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;background:none;cursor:pointer">
+      <button id="cfg-nav-quote-editor" class="cfg-nav-row" onclick="showPage('quote-editor')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;background:none;cursor:pointer">
         <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">palette</span>
         <div class="cfg-nav-text">
           <div class="cfg-nav-label">Diseño de cotización</div>
           <div class="cfg-nav-sub">Logo, colores, campos visibles, textos</div>
         </div>
-        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
       </button>
 
     </div>
@@ -707,7 +707,7 @@
   </div>
 
   <!-- Footer -->
-  <div style="padding:24px 20px 0;text-align:center">
+  <div id="cfg-footer-version" style="padding:24px 20px 0;text-align:center">
     <div class="micro" style="color:var(--ink-4)">v2.2.0 · La Casita del Molde</div>
   </div>
 
