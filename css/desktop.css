@@ -294,51 +294,40 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     CONFIG: Layout grid — header+tabs (fila 1) + contenido (fila 2)
+     CONFIG: header fijo + contenido con padding-top compensado
+     #page-config se fija en la parte superior del área de contenido
+     (a la derecha del sidebar). La sub-página activa hace scroll
+     por debajo con padding-top = altura real del header (var JS).
   ══════════════════════════════════════════════════════════════════ */
 
-  /* Body como grid 2 col × 2 row cuando config está activo */
+  /* Body: flex normal — sidebar ya ocupa 240px, resto es contenido */
   body[data-page^="config-"] {
-    display: grid !important;
-    grid-template-columns: 240px 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
-    height: 100vh;
-    overflow: hidden;
+    /* sin cambios al layout flex del body */
   }
 
-  /* Sidebar: columna 1, span todas las filas */
-  body[data-page^="config-"] #sidebar {
-    grid-column: 1;
-    grid-row: 1 / -1;
-    height: 100vh;
-    overflow-y: auto;
-  }
-
-  /* #page-config: encabezado + tab bar (col 2, fila 1) */
+  /* #page-config: header fijo sobre el área de contenido */
   body[data-page^="config-"] #page-config {
-    grid-column: 2;
-    grid-row: 1;
     display: flex !important;
     flex-direction: column;
-    width: 100% !important;
-    min-width: 0 !important;
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-    border-right: none !important;
+    position: fixed !important;
+    top: 0;
+    left: 240px;
+    right: 0;
+    z-index: 15;
+    background: var(--bg);
     border-bottom: 0.5px solid var(--line);
     padding-bottom: 0 !important;
-    padding-top: 0;
-    align-self: start;
+    padding-top: 0 !important;
   }
 
-  /* Sub-página activa: col 2, fila 2 */
+  /* Sub-página activa: ocupa toda el área de contenido con scroll */
   body[data-page^="config-"] .page.active {
     display: block !important;
-    grid-column: 2;
-    grid-row: 2;
-    min-height: 0;
+    position: relative;
+    flex: 1;
     overflow-y: auto;
+    height: 100vh;
+    padding-top: var(--cfg-header-h) !important;
     padding-bottom: 40px !important;
   }
 

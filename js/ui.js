@@ -232,6 +232,15 @@ function _filterMaterials(keepMaterialId) {
 /* ── Config sub-pages navigation ────────────────────────────────── */
 function showConfigPage(name) {
   showPage('config-' + name);
+  if (window.innerWidth >= 900) {
+    /* Medir el header fijo y actualizar la variable CSS para compensar el padding-top */
+    requestAnimationFrame(function() {
+      var cfgHeader = document.getElementById('page-config');
+      if (cfgHeader) {
+        document.documentElement.style.setProperty('--cfg-header-h', cfgHeader.offsetHeight + 'px');
+      }
+    });
+  }
 }
 
 /* ── Top-bar: nombre e imagen del negocio ───────────────────────── */

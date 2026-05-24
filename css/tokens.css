@@ -5,6 +5,9 @@
 
 /* ── DARK (default) ──────────────────────────────────────────────── */
 :root {
+  /* Config header height (desktop) — JS lo sobreescribe con el valor real */
+  --cfg-header-h: 140px;
+
   /* Tipografía */
   --font-sans:    'Geist', -apple-system, system-ui, sans-serif;
   --font-mono:    'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
