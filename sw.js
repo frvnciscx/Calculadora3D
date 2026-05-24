@@ -1,14 +1,18 @@
-const CACHE_NAME = 'calc3d-v66';
+const CACHE_NAME = 'calc3d-v67';
 const ASSETS = [
   './index.html',
+  './quote.html',
   './manifest.json',
   './css/tokens.css',
   './css/base.css',
   './css/components.css',
   './css/quote.css',
+  './css/desktop.css',
   './js/store.js',
   './js/theme.js',
   './js/ui.js',
+  './js/sync.js',
+  './js/templates.js',
   './js/calculator.js',
   './js/history.js',
   './js/printers.js',

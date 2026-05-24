@@ -409,6 +409,57 @@ function whatsappQuote(i) {
   window.open(url, '_blank');
 }
 
+/* ── Link público de cotización ───────────────────────────────── */
+function sharePublicLink(i) {
+  var q = quotes[i]; if (!q) return;
+  var total = q.grandTotal != null ? q.grandTotal
+            : (q.totalWithQty != null ? q.totalWithQty : (q.totalCost || 0));
+  var data = {
+    quoteNum:   q.quoteNum,
+    client:     q.client   || '',
+    quoteDate:  q.quoteDate,
+    items:      q.items    || [{ desc: q.desc || '', material: q.material || '', qty: 1, totalCost: q.totalCost || 0 }],
+    grandTotal: total,
+    discount:   q.discount || 0,
+    notes:      q.notes    || '',
+    bizName:    config.bizName    || '',
+    bizPhone:   config.bizPhone   || '',
+    bizEmail:   config.bizEmail   || '',
+    bizQrUrl:   config.bizQrUrl   || '',
+    currency:   config.currency   || '$',
+    logoDataUrl: (typeof quoteStyle !== 'undefined' && quoteStyle && quoteStyle.logoDataUrl)
+                  ? quoteStyle.logoDataUrl : ''
+  };
+  var encoded;
+  try {
+    encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  } catch (e) {
+    snack('Error al generar link'); return;
+  }
+  var base = location.href.split('?')[0].split('#')[0];
+  base = base.substring(0, base.lastIndexOf('/') + 1) + 'quote.html';
+  var url = base + '#' + encoded;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      snack('🔗 Link copiado al portapapeles');
+    }).catch(function() { _copyFallback(url); });
+  } else {
+    _copyFallback(url);
+  }
+}
+
+function _copyFallback(text) {
+  var el = document.createElement('textarea');
+  el.value = text;
+  el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+  document.body.appendChild(el);
+  el.select();
+  try { document.execCommand('copy'); snack('🔗 Link copiado'); }
+  catch (e) { snack('Link: ' + text); }
+  document.body.removeChild(el);
+}
+
 /* ── Duplicar cotización ──────────────────────────────────────── */
 function duplicateQuote(i) {
   var orig = quotes[i]; if (!orig) return;

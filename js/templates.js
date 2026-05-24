@@ -632,9 +632,12 @@ function tplQuoteCard(q, i, cur) {
       tplIcon('schedule', 16) + ' Pendiente</button>';
   }
 
-  return '<div class="hist-item">' +
+  var linkBtn = '<button class="m3-btn-text m3-btn-sm" onclick="sharePublicLink(' + i + ')" title="Link público">' +
+    tplIcon('link', 16) + ' Link</button>';
+
+  return '<div class="hist-item quote-card">' +
     '<div class="hist-header">' +
-      '<div>' +
+      '<div class="quote-card-meta">' +
         '<div style="display:flex;align-items:center;gap:8px;">' +
           '<div style="font-size:12px;color:var(--md-primary);font-weight:500">' + esc(q.quoteNum) + '</div>' +
           statusHTML +
@@ -647,15 +650,16 @@ function tplQuoteCard(q, i, cur) {
       '<div class="hist-total">' + cur + total.toFixed(2) + '</div>' +
     '</div>' +
     '<div class="hist-chips">' + chipsHTML + '</div>' +
-    '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
-      '<button class="m3-btn-text m3-btn-sm" onclick="viewQuote(' + i + ')">'     + tplIcon('visibility', 16) + ' Ver</button>' +
-      '<button class="m3-btn-text m3-btn-sm" onclick="shareQuote(' + i + ')">'    + tplIcon('share', 16)      + ' Compartir</button>' +
+    '<div class="quote-actions-bar" style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">' +
+      '<button class="m3-btn-text m3-btn-sm" onclick="viewQuote(' + i + ')">' + tplIcon('visibility', 16) + ' Ver</button>' +
+      linkBtn +
+      '<button class="m3-btn-text m3-btn-sm" onclick="shareQuote(' + i + ')">' + tplIcon('share', 16) + ' Compartir</button>' +
       waBtn +
-      '<button class="m3-btn-text m3-btn-sm" onclick="duplicateQuote(' + i + ')">'+ tplIcon('content_copy', 16) + ' Duplicar</button>' +
+      '<button class="m3-btn-text m3-btn-sm" onclick="duplicateQuote(' + i + ')">' + tplIcon('content_copy', 16) + ' Duplicar</button>' +
       '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteQuote(' + i + ')">' + tplIcon('delete', 16) + '</button>' +
       notionBtn +
     '</div>' +
-    '<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;border-top:1px solid var(--md-outline);padding-top:8px">' +
+    '<div class="quote-status-row" style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;border-top:1px solid var(--md-outline);padding-top:8px">' +
       statusBtns +
     '</div>' +
   '</div>';
