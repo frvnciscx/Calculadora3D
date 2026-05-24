@@ -287,55 +287,55 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     CONFIG: Layout grid — header+tabs arriba, contenido abajo
-     body → grid(sidebar span-2 | tab-header / sidebar span-2 | content)
+     CONFIG: Layout grid — header+tabs (fila 1) + contenido (fila 2)
   ══════════════════════════════════════════════════════════════════ */
 
-  /* Body como grid cuando una sub-página de config está activa */
+  /* Body como grid 2 col × 2 row cuando config está activo */
   body[data-page^="config-"] {
     display: grid !important;
     grid-template-columns: 240px 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
     height: 100vh;
     overflow: hidden;
   }
 
-  /* Sidebar ocupa las 2 filas en la columna izquierda */
+  /* Sidebar: columna 1, span todas las filas */
   body[data-page^="config-"] #sidebar {
     grid-column: 1;
-    grid-row: 1 / 3;
+    grid-row: 1 / -1;
     height: 100vh;
-    position: sticky;
-    top: 0;
+    overflow-y: auto;
   }
 
-  /* #page-config: encabezado + tab bar (fila 1, columna 2) */
+  /* #page-config: encabezado + tab bar (col 2, fila 1) */
   body[data-page^="config-"] #page-config {
     grid-column: 2;
     grid-row: 1;
     display: flex !important;
     flex-direction: column;
-    width: auto !important;
+    width: 100% !important;
     min-width: 0 !important;
     height: auto !important;
+    max-height: none !important;
     overflow: visible !important;
     border-right: none !important;
     border-bottom: 0.5px solid var(--line);
     padding-bottom: 0 !important;
     padding-top: 0;
+    align-self: start;
   }
 
-  /* Sub-página activa: ocupa fila 2, columna 2 */
+  /* Sub-página activa: col 2, fila 2 */
   body[data-page^="config-"] .page.active {
+    display: block !important;
     grid-column: 2;
     grid-row: 2;
-    height: 100%;
     min-height: 0;
     overflow-y: auto;
     padding-bottom: 40px !important;
   }
 
-  /* Ocultar back button en sub-páginas (nav es el tab bar) */
+  /* Back button y sub-header ocultos: nav es el tab bar */
   body[data-page^="config-"] .cfg-sub-header {
     display: none !important;
   }
@@ -347,7 +347,7 @@
 
   /* Footer versión: oculto en desktop */
   body[data-page^="config-"] #cfg-footer-version {
-    display: none;
+    display: none !important;
   }
 
   /* ── Encabezado de config (título + acciones) ────────────────────── */
@@ -359,12 +359,15 @@
   }
 
   .cfg-header-actions {
-    display: none; /* mobile: oculto */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 8px;
   }
 
   /* ── Tab bar horizontal ──────────────────────────────────────────── */
   .cfg-tab-bar {
-    display: none; /* mobile: oculto */
+    display: flex;
     padding: 0 16px;
     gap: 0;
     overflow-x: auto;
@@ -390,18 +393,6 @@
 
   .cfg-tab:hover {
     color: var(--ink);
-  }
-
-  /* Mostrar tab bar y acciones solo en desktop */
-  .cfg-header-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-top: 6px;
-  }
-
-  .cfg-tab-bar {
-    display: flex;
   }
 
   /* Tab activo: acento + underline */
@@ -458,4 +449,45 @@
 /* ── Sidebar oculta por defecto en mobile ─────────────────────── */
 #sidebar {
   display: none;
+}
+
+/* ── Config: tab bar y acciones ocultos en mobile ──────────────── */
+.cfg-tab-bar,
+.cfg-header-actions {
+  display: none;
+}
+
+/* ── Draft modal: mejoras de layout para desktop ───────────────── */
+@media (min-width: 900px) {
+  /* Campos cliente + teléfono en fila en el drawer de cotización */
+  .draft-drawer .client-autocomplete-wrap {
+    padding: 0 28px;
+    margin-bottom: 0;
+  }
+  .draft-drawer .m3-field.optional {
+    padding: 0 28px;
+  }
+  .draft-drawer .draft-items-section {
+    padding: 0 28px;
+    margin-top: 16px;
+  }
+  .draft-drawer .draft-subtotal-row,
+  .draft-drawer .draft-discount-row,
+  .draft-drawer .draft-total-row {
+    margin: 0 28px;
+  }
+  .draft-drawer .m3-sheet-actions {
+    padding: 16px 28px 28px;
+    margin-top: 8px;
+  }
+  /* Padding lateral consistente para los campos del drawer */
+  .draft-drawer .m3-field {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .draft-drawer > .m3-field,
+  .draft-drawer > .client-autocomplete-wrap {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
 }

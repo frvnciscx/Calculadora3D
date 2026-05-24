@@ -1,4 +1,4 @@
-const CACHE_NAME = 'calc3d-v72';
+const CACHE_NAME = 'calc3d-v73';
 const ASSETS = [
   './index.html',
   './quote.html',
