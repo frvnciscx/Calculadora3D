@@ -16,9 +16,73 @@
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/quote.css">
+<link rel="stylesheet" href="css/desktop.css">
 <title>Calculadora de Costos 3D</title>
 </head>
 <body>
+
+<!-- SIDEBAR (visible solo en desktop ≥900px via CSS) -->
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <span id="sidebar-logo-wrap" style="display:flex;align-items:center;flex-shrink:0">
+      <img id="sidebar-logo-img" style="display:none;width:30px;height:30px;border-radius:7px;object-fit:cover" alt="Logo">
+      <svg id="sidebar-logo-svg" width="30" height="30" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect x="0.5" y="0.5" width="39" height="39" rx="8" stroke="currentColor" stroke-width="1"/>
+        <path d="M9 26V14l11-4 11 4v12" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M15 26v-7l5-2 5 2v7" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+        <line x1="20" y1="10" x2="20" y2="18" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+      </svg>
+    </span>
+    <div>
+      <div class="sidebar-brand-name" id="sidebar-biz-name">La Casita del Molde</div>
+      <div class="sidebar-brand-sub">Estudio 3D</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="sidebar-section">Negocio</div>
+    <button class="sidebar-item active" data-page="dashboard" onclick="showPage('dashboard')">
+      <span class="material-symbols-rounded sidebar-icon">home</span> Dashboard
+    </button>
+    <button class="sidebar-item" data-page="calc" onclick="showPage('calc')">
+      <span class="material-symbols-rounded sidebar-icon">calculate</span> Calculadora
+    </button>
+    <button class="sidebar-item" data-page="quotes" onclick="showPage('quotes')">
+      <span class="material-symbols-rounded sidebar-icon">receipt_long</span> Cotizaciones
+    </button>
+    <button class="sidebar-item" data-page="history" onclick="showPage('history')">
+      <span class="material-symbols-rounded sidebar-icon">history</span> Historial
+    </button>
+
+    <div class="sidebar-section">Catálogo</div>
+    <button class="sidebar-item" data-page="catalog" data-tab="printers" onclick="showPage('catalog');showCatalogTab('printers')">
+      <span class="material-symbols-rounded sidebar-icon">print</span> Impresoras
+    </button>
+    <button class="sidebar-item" data-page="catalog" data-tab="materials" onclick="showPage('catalog');showCatalogTab('materials')">
+      <span class="material-symbols-rounded sidebar-icon">category</span> Materiales
+    </button>
+    <button class="sidebar-item" data-page="inventory" onclick="showPage('inventory')">
+      <span class="material-symbols-rounded sidebar-icon">inventory_2</span> Inventario
+    </button>
+
+    <div class="sidebar-section">Cuenta</div>
+    <button class="sidebar-item" data-page="config" onclick="showPage('config')">
+      <span class="material-symbols-rounded sidebar-icon">settings</span> Configuración
+    </button>
+    <button class="sidebar-item" data-page="clients" onclick="showPage('clients')">
+      <span class="material-symbols-rounded sidebar-icon">people</span> Clientes
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <span id="sync-indicator-sidebar" class="material-symbols-rounded"
+      style="font-size:18px;color:var(--ink-4);cursor:pointer" title="Sincronizar"
+      onclick="manualSync()">cloud_off</span>
+    <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;color:var(--ink-3)">
+      <span class="material-symbols-rounded" id="theme-icon-sidebar" style="font-size:18px">light_mode</span>
+    </button>
+  </div>
+</aside>
 
 <!-- OFFLINE BANNER -->
 <div id="offline-banner" class="offline-banner hidden" role="alert" aria-live="polite">

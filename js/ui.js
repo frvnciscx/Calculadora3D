@@ -39,6 +39,7 @@ function showPage(name) {
 
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
 
   const pageEl = document.getElementById('page-' + name);
   if (!pageEl) { console.warn('Page not found:', name); return; }
@@ -59,8 +60,7 @@ function showPage(name) {
     'config-otros':    'config',
   };
   const navPage = navMap[name] || name;
-  const navBtn = document.querySelector(`[data-page="${navPage}"]`);
-  if (navBtn) navBtn.classList.add('active');
+  document.querySelectorAll(`[data-page="${navPage}"]`).forEach(b => b.classList.add('active'));
 
   document.querySelectorAll('.m3-fab').forEach(f => f.style.display = 'none');
 
@@ -196,20 +196,26 @@ function showConfigPage(name) {
 
 /* ── Top-bar: nombre e imagen del negocio ───────────────────────── */
 function updateTopBar() {
-  var nameEl = document.getElementById('top-bar-biz-name');
-  if (nameEl && config && config.bizName) nameEl.textContent = config.bizName;
+  var logoUrl = (typeof quoteStyle !== 'undefined' && quoteStyle && quoteStyle.logoDataUrl) ? quoteStyle.logoDataUrl : '';
+  var bizName = (config && config.bizName) ? config.bizName : '';
 
+  /* Top bar (móvil) */
+  var nameEl = document.getElementById('top-bar-biz-name');
+  if (nameEl && bizName) nameEl.textContent = bizName;
   var img = document.getElementById('top-bar-logo-img');
   var svg = document.getElementById('top-bar-logo-svg');
-  var logoUrl = (typeof quoteStyle !== 'undefined' && quoteStyle && quoteStyle.logoDataUrl) ? quoteStyle.logoDataUrl : '';
   if (img && svg) {
-    if (logoUrl) {
-      img.src = logoUrl;
-      img.style.display = '';
-      svg.style.display = 'none';
-    } else {
-      img.style.display = 'none';
-      svg.style.display = '';
-    }
+    if (logoUrl) { img.src = logoUrl; img.style.display = ''; svg.style.display = 'none'; }
+    else         { img.style.display = 'none'; svg.style.display = ''; }
+  }
+
+  /* Sidebar (desktop) */
+  var sNameEl = document.getElementById('sidebar-biz-name');
+  if (sNameEl && bizName) sNameEl.textContent = bizName;
+  var sImg = document.getElementById('sidebar-logo-img');
+  var sSvg = document.getElementById('sidebar-logo-svg');
+  if (sImg && sSvg) {
+    if (logoUrl) { sImg.src = logoUrl; sImg.style.display = ''; sSvg.style.display = 'none'; }
+    else         { sImg.style.display = 'none'; sSvg.style.display = ''; }
   }
 }
