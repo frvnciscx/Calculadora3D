@@ -139,6 +139,13 @@ function showCatalogTab(tab) {
   var headingEl = document.getElementById('catalog-heading');
   if (headingEl) headingEl.textContent = _catalogHeadings[tab] || 'Catálogo';
   _showActionBtn('catalog');
+  /* ── Sidebar: resaltar solo el ítem del tab activo ─── */
+  document.querySelectorAll('.sidebar-item[data-tab],.sidebar-item[data-page="inventory"]')
+    .forEach(function(b) { b.classList.remove('active'); });
+  var sidebarTabMap = { printers: '[data-tab="printers"]', materials: '[data-tab="materials"]', inventory: '[data-page="inventory"]' };
+  var activeBtn = document.querySelector('.sidebar-item' + (sidebarTabMap[tab] || ''));
+  if (activeBtn) activeBtn.classList.add('active');
+  /* ── Render ─── */
   if (tab === 'printers')  renderPrinters();
   if (tab === 'materials') renderMaterials();
   if (tab === 'inventory') renderInventory();

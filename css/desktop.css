@@ -3,6 +3,13 @@
    Mobile layout queda intacto.
    ============================================= */
 
+/* ── Elementos solo-desktop: ocultos en mobile (ANTES del @media) ── */
+/* ORDEN CRÍTICO: estas reglas deben ir ANTES del @media para que
+   el @media las anule en desktop. Si van después, ganan siempre.  */
+#sidebar          { display: none; }
+.cfg-tab-bar      { display: none; }
+.cfg-header-actions { display: none; }
+
 @media (min-width: 900px) {
 
   /* ── Fondo exterior ──────────────────────────────────────────── */
@@ -446,16 +453,7 @@
 
 }
 
-/* ── Sidebar oculta por defecto en mobile ─────────────────────── */
-#sidebar {
-  display: none;
-}
-
-/* ── Config: tab bar y acciones ocultos en mobile ──────────────── */
-.cfg-tab-bar,
-.cfg-header-actions {
-  display: none;
-}
+/* (reglas de mobile-hide movidas al inicio del archivo, antes del @media) */
 
 /* ── Draft modal: mejoras de layout para desktop ───────────────── */
 @media (min-width: 900px) {
