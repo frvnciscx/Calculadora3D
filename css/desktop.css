@@ -234,8 +234,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 24px 24px 0;
-    margin-bottom: 20px;
+    padding: 36px 28px 0;
+    margin-bottom: 24px;
   }
   .m3-bottom-sheet .sheet-header-row h2,
   .client-modal-wrap .sheet-header-row h2 {
@@ -287,59 +287,124 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     CONFIG: Layout dos paneles (nav izquierda + contenido derecha)
-     Activo solo cuando una sub-página de config está visible
+     CONFIG: Layout grid — header+tabs arriba, contenido abajo
+     body → grid(sidebar span-2 | tab-header / sidebar span-2 | content)
   ══════════════════════════════════════════════════════════════════ */
 
-  /* Cuando se ve una sub-página de config: body = 3 columnas */
-  body[data-page^="config-"] #page-config,
-  body[data-page="quote-editor"] #page-config {
+  /* Body como grid cuando una sub-página de config está activa */
+  body[data-page^="config-"] {
+    display: grid !important;
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Sidebar ocupa las 2 filas en la columna izquierda */
+  body[data-page^="config-"] #sidebar {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+
+  /* #page-config: encabezado + tab bar (fila 1, columna 2) */
+  body[data-page^="config-"] #page-config {
+    grid-column: 2;
+    grid-row: 1;
     display: flex !important;
     flex-direction: column;
-    width: 280px;
-    min-width: 280px;
-    flex-shrink: 0;
-    height: 100vh;
-    overflow-y: auto;
-    border-right: 1px solid var(--line);
+    width: auto !important;
+    min-width: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    border-right: none !important;
+    border-bottom: 0.5px solid var(--line);
     padding-bottom: 0 !important;
-    /* Reset padding del header (más compacto como panel nav) */
     padding-top: 0;
   }
 
-  /* Compactar el pageheader del panel config */
-  body[data-page^="config-"] #page-config > div:first-child,
-  body[data-page="quote-editor"] #page-config > div:first-child {
-    padding: 20px 20px 14px !important;
-  }
-  body[data-page^="config-"] #page-config .display,
-  body[data-page="quote-editor"] #page-config .display {
-    font-size: 22px !important;
-  }
-
-  /* Ocultar el header de versión (ya se ve en la sub-página) */
-  body[data-page^="config-"] #cfg-footer-version,
-  body[data-page="quote-editor"] #cfg-footer-version {
-    display: none;
-  }
-
-  /* Sub-página activa: fill remaining space */
-  body[data-page^="config-"] .page.active,
-  body[data-page="quote-editor"] .page.active {
-    flex: 1;
-    min-width: 0;
-    height: 100vh;
+  /* Sub-página activa: ocupa fila 2, columna 2 */
+  body[data-page^="config-"] .page.active {
+    grid-column: 2;
+    grid-row: 2;
+    height: 100%;
+    min-height: 0;
     overflow-y: auto;
     padding-bottom: 40px !important;
   }
 
-  /* Ocultar back button y sub-header (innecesario en two-panel) */
-  body[data-page^="config-"] .cfg-sub-header,
-  body[data-page="quote-editor"] .cfg-sub-header {
+  /* Ocultar back button en sub-páginas (nav es el tab bar) */
+  body[data-page^="config-"] .cfg-sub-header {
     display: none !important;
   }
 
-  /* Resaltar nav item activo en el panel izquierdo */
+  /* Nav lista mobile: oculta en desktop */
+  body[data-page^="config-"] .cfg-mobile-nav {
+    display: none !important;
+  }
+
+  /* Footer versión: oculto en desktop */
+  body[data-page^="config-"] #cfg-footer-version {
+    display: none;
+  }
+
+  /* ── Encabezado de config (título + acciones) ────────────────────── */
+  .cfg-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 28px 28px 16px;
+  }
+
+  .cfg-header-actions {
+    display: none; /* mobile: oculto */
+  }
+
+  /* ── Tab bar horizontal ──────────────────────────────────────────── */
+  .cfg-tab-bar {
+    display: none; /* mobile: oculto */
+    padding: 0 16px;
+    gap: 0;
+    overflow-x: auto;
+  }
+
+  .cfg-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    color: var(--ink-3);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    margin-bottom: -0.5px;
+  }
+
+  .cfg-tab:hover {
+    color: var(--ink);
+  }
+
+  /* Mostrar tab bar y acciones solo en desktop */
+  .cfg-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 6px;
+  }
+
+  .cfg-tab-bar {
+    display: flex;
+  }
+
+  /* Tab activo: acento + underline */
   body[data-page="config-negocio"]   #cfg-nav-negocio,
   body[data-page="config-banco"]     #cfg-nav-banco,
   body[data-page="config-electrico"] #cfg-nav-electrico,
@@ -347,18 +412,13 @@
   body[data-page="config-otros"]     #cfg-nav-otros,
   body[data-page="quote-editor"]     #cfg-nav-quote-editor {
     color: var(--accent) !important;
-    background: color-mix(in oklab, var(--accent) 9%, transparent) !important;
-    border-radius: 0;
+    border-bottom-color: var(--accent) !important;
+    background: none !important;
   }
-  /* Ocultar flecha chevron en desktop (no navega a otro pantalla) */
+
+  /* Flecha chevron: oculta en desktop */
   .cfg-nav-chevron {
     display: none !important;
-  }
-  /* Alinear ítems de nav para el panel */
-  body[data-page^="config-"] .cfg-nav-row,
-  body[data-page="quote-editor"] .cfg-nav-row {
-    padding: 13px 18px !important;
-    border-radius: 0 !important;
   }
 
   /* ── Quote cards ──────────────────────────────────────────────── */

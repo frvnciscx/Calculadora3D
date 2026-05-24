@@ -619,90 +619,125 @@
 <!-- ===== PAGE: CONFIG ===== -->
 <div id="page-config" class="page" style="padding-top:0">
 
-  <!-- PageHeader -->
-  <div style="padding:28px 20px 20px">
-    <div class="micro" style="margin-bottom:8px;letter-spacing:0.16em">Configuración del estudio</div>
-    <h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Ajustes</h1>
-  </div>
-
-  <!-- Nav list -->
-  <div style="padding:0 20px 8px">
-    <div class="card" style="padding:0 18px">
-
-      <button id="cfg-nav-negocio" class="cfg-nav-row" onclick="showConfigPage('negocio')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
-        <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">storefront</span>
-        <div class="cfg-nav-text">
-          <div class="cfg-nav-label">Datos del negocio</div>
-          <div class="cfg-nav-sub">Nombre, contacto, redes sociales</div>
-        </div>
-        <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
-      </button>
-
-      <button id="cfg-nav-banco" class="cfg-nav-row" onclick="showConfigPage('banco')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
-        <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">account_balance</span>
-        <div class="cfg-nav-text">
-          <div class="cfg-nav-label">Cuenta bancaria</div>
-          <div class="cfg-nav-sub">Banco, titular, CLABE</div>
-        </div>
-        <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
-      </button>
-
-      <button id="cfg-nav-electrico" class="cfg-nav-row" onclick="showConfigPage('electrico')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
-        <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">bolt</span>
-        <div class="cfg-nav-text">
-          <div class="cfg-nav-label">Electricidad y trabajo</div>
-          <div class="cfg-nav-sub">Costo kWh, hora de diseño</div>
-        </div>
-        <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
-      </button>
-
-      <button id="cfg-nav-gastos" class="cfg-nav-row" onclick="showConfigPage('gastos')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
-        <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">receipt</span>
-        <div class="cfg-nav-text">
-          <div class="cfg-nav-label">Gastos fijos mensuales</div>
-          <div class="cfg-nav-sub">Renta, servicios, materiales fijos</div>
-        </div>
-        <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
-      </button>
-
-      <button id="cfg-nav-otros" class="cfg-nav-row" onclick="showConfigPage('otros')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
-        <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">tune</span>
-        <div class="cfg-nav-text">
-          <div class="cfg-nav-label">Otros parámetros</div>
-          <div class="cfg-nav-sub">Moneda, desperdicio, AMS, apariencia</div>
-        </div>
-        <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
-      </button>
-
-      <button id="cfg-nav-quote-editor" class="cfg-nav-row" onclick="showPage('quote-editor')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;background:none;cursor:pointer">
-        <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">palette</span>
-        <div class="cfg-nav-text">
-          <div class="cfg-nav-label">Diseño de cotización</div>
-          <div class="cfg-nav-sub">Logo, colores, campos visibles, textos</div>
-        </div>
-        <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
-      </button>
-
+  <!-- ── Encabezado de página: título + acciones (desktop) ─── -->
+  <div class="cfg-page-header">
+    <div>
+      <div class="micro" style="margin-bottom:8px;letter-spacing:0.16em">Configuración del estudio</div>
+      <h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Ajustes</h1>
     </div>
-  </div>
-
-  <!-- Respaldo -->
-  <div style="padding:20px 20px 0">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-      <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-3)">cloud_sync</span>
-      <div class="micro">Respaldo de datos</div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button class="btn btn-ghost" onclick="exportData()">
+    <!-- Exportar / Importar solo visible en desktop vía CSS -->
+    <div class="cfg-header-actions">
+      <button class="page-header-btn" onclick="exportData()">
         <span class="material-symbols-rounded" style="font-size:16px">download</span> Exportar
       </button>
-      <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">
+      <button class="page-header-btn" onclick="document.getElementById('import-file').click()">
         <span class="material-symbols-rounded" style="font-size:16px">upload</span> Importar
       </button>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
-    <div style="font-size:11px;color:var(--ink-4);margin-top:8px;padding:0 4px">
-      Exporta un archivo JSON con todos tus datos: impresoras, materiales, clientes y cotizaciones.
+  </div>
+
+  <!-- ── Tab bar horizontal (solo desktop) ─── -->
+  <div class="cfg-tab-bar">
+    <button id="cfg-nav-negocio" class="cfg-tab" onclick="showConfigPage('negocio')">
+      <span class="material-symbols-rounded" style="font-size:17px">storefront</span> Negocio
+    </button>
+    <button id="cfg-nav-banco" class="cfg-tab" onclick="showConfigPage('banco')">
+      <span class="material-symbols-rounded" style="font-size:17px">account_balance</span> Banco
+    </button>
+    <button id="cfg-nav-electrico" class="cfg-tab" onclick="showConfigPage('electrico')">
+      <span class="material-symbols-rounded" style="font-size:17px">bolt</span> Electricidad
+    </button>
+    <button id="cfg-nav-gastos" class="cfg-tab" onclick="showConfigPage('gastos')">
+      <span class="material-symbols-rounded" style="font-size:17px">receipt</span> Gastos fijos
+    </button>
+    <button id="cfg-nav-otros" class="cfg-tab" onclick="showConfigPage('otros')">
+      <span class="material-symbols-rounded" style="font-size:17px">tune</span> Otros
+    </button>
+    <button id="cfg-nav-quote-editor" class="cfg-tab" onclick="showPage('quote-editor')">
+      <span class="material-symbols-rounded" style="font-size:17px">palette</span> Diseño
+    </button>
+  </div>
+
+  <!-- ── Nav lista (solo mobile) ─── -->
+  <div class="cfg-mobile-nav">
+    <div style="padding:8px 20px 8px">
+      <div class="card" style="padding:0 18px">
+
+        <button class="cfg-nav-row" onclick="showConfigPage('negocio')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
+          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">storefront</span>
+          <div class="cfg-nav-text">
+            <div class="cfg-nav-label">Datos del negocio</div>
+            <div class="cfg-nav-sub">Nombre, contacto, redes sociales</div>
+          </div>
+          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        </button>
+
+        <button class="cfg-nav-row" onclick="showConfigPage('banco')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
+          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">account_balance</span>
+          <div class="cfg-nav-text">
+            <div class="cfg-nav-label">Cuenta bancaria</div>
+            <div class="cfg-nav-sub">Banco, titular, CLABE</div>
+          </div>
+          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        </button>
+
+        <button class="cfg-nav-row" onclick="showConfigPage('electrico')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
+          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">bolt</span>
+          <div class="cfg-nav-text">
+            <div class="cfg-nav-label">Electricidad y trabajo</div>
+            <div class="cfg-nav-sub">Costo kWh, hora de diseño</div>
+          </div>
+          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        </button>
+
+        <button class="cfg-nav-row" onclick="showConfigPage('gastos')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
+          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">receipt</span>
+          <div class="cfg-nav-text">
+            <div class="cfg-nav-label">Gastos fijos mensuales</div>
+            <div class="cfg-nav-sub">Renta, servicios, materiales fijos</div>
+          </div>
+          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        </button>
+
+        <button class="cfg-nav-row" onclick="showConfigPage('otros')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
+          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">tune</span>
+          <div class="cfg-nav-text">
+            <div class="cfg-nav-label">Otros parámetros</div>
+            <div class="cfg-nav-sub">Moneda, desperdicio, AMS, apariencia</div>
+          </div>
+          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        </button>
+
+        <button class="cfg-nav-row" onclick="showPage('quote-editor')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;background:none;cursor:pointer">
+          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">palette</span>
+          <div class="cfg-nav-text">
+            <div class="cfg-nav-label">Diseño de cotización</div>
+            <div class="cfg-nav-sub">Logo, colores, campos visibles, textos</div>
+          </div>
+          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Respaldo (mobile) -->
+    <div style="padding:20px 20px 0">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-3)">cloud_sync</span>
+        <div class="micro">Respaldo de datos</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn btn-ghost" onclick="exportData()">
+          <span class="material-symbols-rounded" style="font-size:16px">download</span> Exportar
+        </button>
+        <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">
+          <span class="material-symbols-rounded" style="font-size:16px">upload</span> Importar
+        </button>
+      </div>
+      <div style="font-size:11px;color:var(--ink-4);margin-top:8px;padding:0 4px">
+        Exporta un archivo JSON con todos tus datos: impresoras, materiales, clientes y cotizaciones.
+      </div>
     </div>
   </div>
 
