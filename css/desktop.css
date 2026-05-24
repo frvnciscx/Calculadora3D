@@ -9,7 +9,7 @@
   body {
     display: flex;
     flex-direction: row;
-    background: #050505;
+    background: var(--bg-sunk);
     overflow: hidden;
     height: 100vh;
   }
@@ -92,7 +92,7 @@
     color: var(--ink);
   }
   .sidebar-item.active {
-    background: rgba(198,255,61,0.08);
+    background: var(--bg-sunk);
     color: var(--accent);
   }
   .sidebar-item.active .sidebar-icon {
@@ -124,12 +124,12 @@
     min-height: 100vh;
     border-radius: 0 !important;
     box-shadow: none !important;
-    background: #0d0d0d;
+    background: var(--bg);
     overflow-y: auto;
     height: 100vh;
   }
 
-  /* ── Top bar: se convierte en page header ────────────────────── */
+  /* ── Top bar: header de página en desktop ────────────────────── */
   .top-bar {
     border-radius: 0;
     border-bottom: 1px solid var(--line);
@@ -138,7 +138,20 @@
     position: sticky;
     top: 0;
     z-index: 9;
-    background: #0d0d0d;
+    background: var(--bg);
+  }
+
+  /* Logo y nombre del negocio: ocultos en top-bar (ya están en sidebar) */
+  #top-bar-logo-wrap,
+  #top-bar-biz-name,
+  #top-bar-subtitle {
+    display: none !important;
+  }
+
+  /* Sync indicator y theme toggle del top-bar: ocultos (están en sidebar footer) */
+  #sync-indicator,
+  .theme-toggle {
+    display: none !important;
   }
 
   /* ── Nav inferior: oculta en desktop ─────────────────────────── */
