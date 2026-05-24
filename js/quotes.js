@@ -348,6 +348,7 @@ function setQuoteStatus(i, status) {
   sv('quotes', quotes);
   if (status === 'aceptada' && prevStatus !== 'aceptada') {
     _deductQuoteInventory(q);
+    if (!q.notionPageId) sendToNotion(i, { silent: true });
   }
   renderQuotes();
   renderDashboard();
@@ -956,15 +957,23 @@ function deleteQuote(i) {
 }
 
 /* ── Enviar cotización a Notion ──────────────────────────────── */
-function sendToNotion(i) {
+function sendToNotion(i, opts) {
+  opts = opts || {};
   var q = quotes[i]; if (!q) return;
+
+  /* Ya sincronizada \u2014 no duplicar */
+  if (q.notionPageId) {
+    if (!opts.silent) snack('Esta cotizaci\u00f3n ya est\u00e1 en Notion');
+    return;
+  }
+
   var btn = document.getElementById('notion-btn-' + i);
   if (btn) { btn.disabled = true; btn.textContent = 'Enviando\u2026'; }
 
   fetch('/api/notion', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ quote: q })
+    body: JSON.stringify({ quote: q, currency: config.currency || '$' })
   })
   .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
   .then(function(r) {
