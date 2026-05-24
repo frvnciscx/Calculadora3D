@@ -42,6 +42,9 @@
     <div id="top-bar-biz-name" style="font-size:15px;font-weight:500;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">La Casita del Molde</div>
     <div class="micro" style="margin-top:1px;" id="top-bar-subtitle">Estudio</div>
   </div>
+  <span id="sync-indicator" class="material-symbols-rounded" title="Estado de sincronización"
+    style="font-size:18px;color:var(--ink-4);cursor:pointer;flex-shrink:0;margin-right:4px"
+    onclick="manualSync()">cloud_off</span>
   <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
     <span class="material-symbols-rounded" id="theme-icon-topbar" style="font-size:20px">light_mode</span>
   </button>
@@ -960,6 +963,7 @@
 <script src="js/config.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/native.js"></script>
+<script src="js/sync.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   /* applyTheme SIEMPRE corre — fuera del try para que un error posterior no lo omita */
@@ -970,6 +974,14 @@ document.addEventListener('DOMContentLoaded', function() {
     updateTopBar();
     showPage('dashboard'); /* Siempre inicia en dashboard */
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(function(){});
+    /* Sync: pull al arrancar, re-renderizar si hay datos nuevos */
+    pullSync(function(applied) {
+      if (applied) {
+        renderDashboard();
+        if (typeof renderQuotes    === 'function') renderQuotes();
+        if (typeof renderInventory === 'function') renderInventory();
+      }
+    });
   } catch(e) {
     console.error('Init error:', e);
     showPage('dashboard'); /* Fallback */

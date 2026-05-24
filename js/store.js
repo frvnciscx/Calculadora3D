@@ -61,7 +61,13 @@ function ld(k, d) {
   try { const v = localStorage.getItem('c3d_' + k); return v ? JSON.parse(v) : d; }
   catch { return d; }
 }
-function sv(k, v) { localStorage.setItem('c3d_' + k, JSON.stringify(v)); }
+function sv(k, v) {
+  localStorage.setItem('c3d_' + k, JSON.stringify(v));
+  /* Trigger sync en escrituras de datos importantes */
+  var SYNC_KEYS = ['quotes','clients','inventory','materials','config','quoteStyle','quoteCounter'];
+  if (SYNC_KEYS.indexOf(k) !== -1 && typeof schedulePush === 'function') schedulePush();
+}
+function lv(k) { return localStorage.getItem('c3d_' + k); }
 
 /* Redondea al múltiplo de 5 más cercano hacia arriba (terminación 5 o 10) */
 function roundToFive(n) {
