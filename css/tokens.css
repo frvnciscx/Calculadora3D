@@ -1,7 +1,58 @@
 /* ===================================================================
-   DESIGN TOKENS — Dark Luxe · La Casita del Molde
+   DESIGN TOKENS — Quotia Identity System
+   Paleta: Jade (dark surfaces) · Mint (accent) · Platinum (text)
    Sistema: dark-first. Light override via [data-theme="light"]
    =================================================================== */
+
+/* ── ESCALA DE COLOR QUOTIA ──────────────────────────────────────── */
+:root {
+  /* Jade — dark surfaces */
+  --jade-950: #0D1210;
+  --jade-900: #111714;
+  --jade-850: #151C18;
+  --jade-800: #1A221D;
+  --jade-700: #232D27;
+  --jade-600: #2E3A33;
+
+  /* Mint — brand accent */
+  --mint-600:  #00C281;
+  --mint-500:  #00E699;
+  --mint-400:  #3DEDB0;
+  --mint-300:  #7DF3C8;
+  --mint-a16:  rgba(0, 230, 153, 0.16);
+  --mint-a10:  rgba(0, 230, 153, 0.10);
+  --mint-a06:  rgba(0, 230, 153, 0.06);
+
+  /* Emerald — dark brand identity */
+  --emerald-950: #002A1C;
+  --emerald-900: #003B28;
+  --emerald-800: #004D34;
+  --emerald-700: #006245;
+  --emerald-600: #0A7A58;
+
+  /* Platinum — text on dark */
+  --platinum-100: #E4E8E5;
+  --platinum-300: #B9C2BC;
+  --platinum-500: #8B968F;
+  --platinum-700: #5C6660;
+
+  /* Paper — light surfaces */
+  --paper-0:   #FFFFFF;
+  --paper-50:  #F8F9F8;
+  --paper-100: #EFF1EF;
+  --paper-200: #E2E6E3;
+
+  /* Ink — text on light */
+  --ink-900: #111814;
+  --ink-600: #3E4A43;
+  --ink-400: #69756E;
+  --ink-200: #98A29C;
+
+  /* Status */
+  --status-positive: #00E699;
+  --status-warning:  #E3B53E;
+  --status-danger:   #E0564E;
+}
 
 /* ── DARK (default) ──────────────────────────────────────────────── */
 :root {
@@ -9,35 +60,35 @@
   --cfg-header-h: 140px;
 
   /* Tipografía */
-  --font-sans:    'Geist', -apple-system, system-ui, sans-serif;
-  --font-mono:    'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
-  --font-display: 'Geist', -apple-system, system-ui, sans-serif;
-  --font-data:    'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+  --font-sans:    'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+  --font-display: 'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
+  --font-data:    'JetBrains Mono', ui-monospace, monospace;
 
-  /* Fondos */
-  --bg:       #0a0a0a;
-  --bg-elev:  #141414;
-  --bg-sunk:  #050505;
+  /* Fondos — escala Jade */
+  --bg:       var(--jade-950);    /* #0D1210 — superficie base */
+  --bg-elev:  var(--jade-850);    /* #151C18 — tarjetas y paneles */
+  --bg-sunk:  #090d0a;            /* más profundo que jade-950 */
 
-  /* Texto */
-  --ink:   #f5f5f5;
-  --ink-2: #a8a8a8;
-  --ink-3: #707070;
-  --ink-4: #3a3a3a;
+  /* Texto — escala Platinum */
+  --ink:   var(--platinum-100);   /* #E4E8E5 — texto primario */
+  --ink-2: var(--platinum-300);   /* #B9C2BC — texto secundario */
+  --ink-3: var(--platinum-500);   /* #8B968F — texto muted */
+  --ink-4: var(--platinum-700);   /* #5C6660 — texto muy sutil */
 
-  /* Bordes */
-  --line:   #1f1f1f;
-  --line-2: #161616;
+  /* Bordes — escala Jade */
+  --line:   var(--jade-700);      /* #232D27 — borde sutil */
+  --line-2: var(--jade-800);      /* #1A221D — borde más sutil */
 
-  /* Acento — neon lime */
-  --accent:      #c6ff3d;
-  --accent-tint: #1a2407;
+  /* Acento — Mint 500 */
+  --accent:      var(--mint-500);  /* #00E699 */
+  --accent-tint: var(--mint-a10);  /* rgba(0,230,153,0.10) */
 
   /* Semánticos */
-  --ok:      #c6ff3d;
-  --ok-tint: #1a2407;
-  --warn:    #ffb84d;
-  --danger:  #ff5a5a;
+  --ok:      var(--status-positive); /* #00E699 */
+  --ok-tint: var(--mint-a10);
+  --warn:    var(--status-warning);  /* #E3B53E */
+  --danger:  var(--status-danger);   /* #E0564E */
 
   /* Radios */
   --r-s: 10px;
@@ -47,82 +98,82 @@
   /* Nav */
   --nav-h: 72px;
 
-  /* ── Aliases MD3 → Dark Luxe ────────────────────────────────────
+  /* ── Aliases MD3 → Quotia DS ────────────────────────────────────
      Mantienen compatibilidad con todas las clases .m3-* existentes
      sin tocar el HTML ni el JS.
      ────────────────────────────────────────────────────────────── */
 
   /* Primario */
-  --md-primary:                  var(--accent);
-  --md-on-primary:               #000000;
-  --md-primary-container:        var(--accent-tint);
-  --md-on-primary-container:     var(--accent);
+  --md-primary:                  var(--mint-500);
+  --md-on-primary:               var(--jade-950);
+  --md-primary-container:        var(--mint-a16);
+  --md-on-primary-container:     var(--mint-400);
 
   /* Secundario */
-  --md-secondary:                var(--ink-2);
-  --md-on-secondary:             var(--bg);
-  --md-secondary-container:      var(--bg-elev);
-  --md-on-secondary-container:   var(--ink);
+  --md-secondary:                var(--platinum-300);
+  --md-on-secondary:             var(--jade-950);
+  --md-secondary-container:      var(--jade-800);
+  --md-on-secondary-container:   var(--platinum-100);
 
   /* Terciario */
   --md-tertiary:                 var(--warn);
-  --md-on-tertiary:              #000;
-  --md-tertiary-container:       #2a1f00;
+  --md-on-tertiary:              var(--jade-950);
+  --md-tertiary-container:       rgba(227, 181, 62, 0.12);
   --md-on-tertiary-container:    var(--warn);
 
   /* Error */
   --md-error:                    var(--danger);
   --md-on-error:                 #ffffff;
-  --md-error-container:          #2a0a0a;
+  --md-error-container:          rgba(224, 86, 78, 0.12);
   --md-on-error-container:       var(--danger);
 
-  /* Superficies */
-  --md-surface:                  var(--bg-elev);
+  /* Superficies — escala Jade */
+  --md-surface:                  var(--jade-850);
   --md-surface-dim:              var(--bg-sunk);
-  --md-surface-bright:           #1e1e1e;
-  --md-surface-container-lowest: var(--bg-sunk);
-  --md-surface-container-low:    var(--bg);
-  --md-surface-container:        var(--bg-elev);
-  --md-surface-container-high:   #1c1c1c;
-  --md-surface-container-highest:#222222;
+  --md-surface-bright:           var(--jade-700);
+  --md-surface-container-lowest: #090d0a;
+  --md-surface-container-low:    var(--jade-950);
+  --md-surface-container:        var(--jade-900);
+  --md-surface-container-high:   var(--jade-850);
+  --md-surface-container-highest:var(--jade-800);
 
   /* Texto */
-  --md-on-surface:               var(--ink);
-  --md-on-surface-variant:       var(--ink-3);
+  --md-on-surface:               var(--platinum-100);
+  --md-on-surface-variant:       var(--platinum-500);
 
   /* Bordes */
-  --md-outline:                  var(--line);
-  --md-outline-variant:          var(--line-2);
+  --md-outline:                  var(--jade-700);
+  --md-outline-variant:          var(--jade-800);
 
   /* Surface variant (switch track, etc.) */
-  --md-surface-variant:          var(--bg-sunk);
+  --md-surface-variant:          var(--jade-800);
 
-  /* Nav activo — lime sobre oscuro */
-  --nav-active-bg:               var(--accent-tint);
-  --nav-active-icon:             var(--accent);
-  --nav-active-label:            var(--ink);
+  /* Nav activo — mint sobre jade */
+  --nav-active-bg:               var(--mint-a10);
+  --nav-active-icon:             var(--mint-500);
+  --nav-active-label:            var(--platinum-100);
 
   /* Inverso (snackbar) */
-  --md-inverse-surface:          var(--ink);
-  --md-inverse-on-surface:       var(--bg);
+  --md-inverse-surface:          var(--platinum-100);
+  --md-inverse-on-surface:       var(--jade-950);
 
   /* Accents bento */
   --accent-warm:           var(--warn);
-  --accent-warm-tint:      #2a1800;
-  --accent-warm-border:    rgba(255, 184, 77, 0.18);
+  --accent-warm-tint:      rgba(227, 181, 62, 0.08);
+  --accent-warm-border:    rgba(227, 181, 62, 0.18);
 
-  --accent-lavanda:        #b09cff;
-  --accent-lavanda-tint:   #1a1428;
-  --accent-lavanda-border: rgba(176, 156, 255, 0.18);
+  --accent-lavanda:        #a78bfa;
+  --accent-lavanda-tint:   rgba(167, 139, 250, 0.08);
+  --accent-lavanda-border: rgba(167, 139, 250, 0.18);
 
-  --accent-mint:           #3fdba0;
-  --accent-mint-tint:      #0e2820;
-  --accent-mint-border:    rgba(63, 219, 160, 0.18);
+  --accent-mint:           var(--mint-400);        /* #3DEDB0 */
+  --accent-mint-tint:      var(--mint-a10);
+  --accent-mint-border:    var(--mint-a16);
 
-  /* Sombras */
-  --shadow-card:   0 1px 4px rgba(0,0,0,0.40), 0 2px 8px rgba(0,0,0,0.30);
-  --shadow-float:  0 2px 8px rgba(0,0,0,0.50), 0 4px 16px rgba(0,0,0,0.40);
-  --shadow-modal:  0 8px 24px rgba(0,0,0,0.60), 0 16px 40px rgba(0,0,0,0.50);
+  /* Sombras — muy sutiles sobre jade */
+  --shadow-card:   0 1px 3px rgba(0,0,0,0.50), 0 2px 6px rgba(0,0,0,0.40);
+  --shadow-float:  0 2px 8px rgba(0,0,0,0.60), 0 4px 16px rgba(0,0,0,0.50);
+  --shadow-modal:  0 8px 24px rgba(0,0,0,0.70), 0 16px 40px rgba(0,0,0,0.60);
 
   /* Radios (aliases) */
   --radius-sm:   var(--r-s);
@@ -147,11 +198,11 @@
 
   /* Escala tipográfica */
   --type-display-size:    34px;
-  --type-display-weight:  600;
+  --type-display-weight:  700;
   --type-display-ls:      -0.04em;
 
   --type-heading-lg-size:   28px;
-  --type-heading-lg-weight: 600;
+  --type-heading-lg-weight: 700;
   --type-heading-lg-ls:     -0.03em;
 
   --type-heading-md-size:   22px;
@@ -159,7 +210,7 @@
   --type-heading-md-ls:     -0.025em;
 
   --type-title-size:    15px;
-  --type-title-weight:  500;
+  --type-title-weight:  600;
   --type-title-ls:      -0.01em;
 
   --type-label-lg-size:   13px;
@@ -167,62 +218,88 @@
   --type-label-lg-ls:     -0.01em;
 
   --type-overline-size:   10px;
-  --type-overline-weight: 500;
-  --type-overline-ls:     0.14em;
+  --type-overline-weight: 600;
+  --type-overline-ls:     0.12em;
 }
 
 /* ── LIGHT override ───────────────────────────────────────────────── */
 :root[data-theme="light"] {
-  --bg:       #fafafa;
-  --bg-elev:  #ffffff;
-  --bg-sunk:  #f0f0f0;
-  --ink:      #0a0a0a;
-  --ink-2:    #555555;
-  --ink-3:    #888888;
-  --ink-4:    #c0c0c0;
-  --line:     #e8e8e8;
-  --line-2:   #f0f0f0;
-  --accent:      #5cb800;
-  --accent-tint: #eaffcf;
-  --ok:      #5cb800;
-  --ok-tint: #eaffcf;
+  /* Fondos — escala Paper */
+  --bg:       var(--paper-50);   /* #F8F9F8 */
+  --bg-elev:  var(--paper-0);    /* #FFFFFF */
+  --bg-sunk:  var(--paper-100);  /* #EFF1EF */
 
-  /* MD3 aliases para light — recalculados sobre fondo claro */
-  --md-surface:                  #ffffff;
-  --md-surface-dim:              #f0f0f0;
-  --md-surface-bright:           #ffffff;
-  --md-surface-container-lowest: #ffffff;
-  --md-surface-container-low:    #fafafa;
-  --md-surface-container:        #f5f5f5;
-  --md-surface-container-high:   #eeeeee;
-  --md-surface-container-highest:#e8e8e8;
+  /* Texto — escala Ink */
+  --ink:   var(--ink-900);       /* #111814 */
+  --ink-2: var(--ink-600);       /* #3E4A43 */
+  --ink-3: var(--ink-400);       /* #69756E */
+  --ink-4: var(--ink-200);       /* #98A29C */
 
-  --md-on-surface:               #0a0a0a;
-  --md-on-surface-variant:       #555555;
-  --md-outline:                  #e8e8e8;
-  --md-outline-variant:          #f0f0f0;
-  --md-surface-variant:          #f0f0f0;
+  /* Bordes — paper scale */
+  --line:   var(--paper-200);    /* #E2E6E3 */
+  --line-2: var(--paper-100);    /* #EFF1EF */
 
-  --nav-active-bg:               var(--accent-tint);
-  --nav-active-icon:             var(--accent);
-  --nav-active-label:            #0a0a0a;
+  /* Acento — Emerald para mejor contraste en claro */
+  --accent:      var(--emerald-800); /* #004D34 */
+  --accent-tint: rgba(0, 77, 52, 0.08);
 
-  --md-inverse-surface:          #0a0a0a;
-  --md-inverse-on-surface:       #f5f5f5;
+  /* Semánticos light */
+  --ok:      var(--emerald-700); /* #006245 */
+  --ok-tint: rgba(0, 98, 69, 0.08);
+  --warn:    #c27f00;
+  --danger:  #c0392b;
 
-  --shadow-card:   0 1px 4px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+  /* MD3 aliases — light */
+  --md-primary:                  var(--emerald-800);
+  --md-on-primary:               #ffffff;
+  --md-primary-container:        rgba(0, 77, 52, 0.10);
+  --md-on-primary-container:     var(--emerald-800);
+
+  --md-secondary:                var(--ink-600);
+  --md-on-secondary:             var(--paper-0);
+  --md-secondary-container:      var(--paper-200);
+  --md-on-secondary-container:   var(--ink-900);
+
+  --md-error:                    #c0392b;
+  --md-on-error:                 #ffffff;
+  --md-error-container:          rgba(192, 57, 43, 0.08);
+  --md-on-error-container:       #c0392b;
+
+  --md-surface:                  var(--paper-0);
+  --md-surface-dim:              var(--paper-100);
+  --md-surface-bright:           var(--paper-0);
+  --md-surface-container-lowest: var(--paper-0);
+  --md-surface-container-low:    var(--paper-50);
+  --md-surface-container:        var(--paper-100);
+  --md-surface-container-high:   var(--paper-200);
+  --md-surface-container-highest:#D5DBD6;
+
+  --md-on-surface:               var(--ink-900);
+  --md-on-surface-variant:       var(--ink-400);
+  --md-outline:                  var(--paper-200);
+  --md-outline-variant:          var(--paper-100);
+  --md-surface-variant:          var(--paper-100);
+
+  --nav-active-bg:               rgba(0, 77, 52, 0.08);
+  --nav-active-icon:             var(--emerald-800);
+  --nav-active-label:            var(--ink-900);
+
+  --md-inverse-surface:          var(--ink-900);
+  --md-inverse-on-surface:       var(--paper-50);
+
+  --shadow-card:   0 1px 3px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04);
   --shadow-float:  0 2px 8px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
-  --shadow-modal:  0 8px 24px rgba(0,0,0,0.12), 0 16px 40px rgba(0,0,0,0.08);
+  --shadow-modal:  0 8px 24px rgba(0,0,0,0.10), 0 16px 40px rgba(0,0,0,0.08);
 
-  --accent-warm:           #f59e0b;
-  --accent-warm-tint:      #fffbeb;
-  --accent-warm-border:    rgba(245, 158, 11, 0.18);
+  --accent-warm:           #c27f00;
+  --accent-warm-tint:      rgba(194, 127, 0, 0.08);
+  --accent-warm-border:    rgba(194, 127, 0, 0.18);
 
   --accent-lavanda:        #7c3aed;
-  --accent-lavanda-tint:   #f5f3ff;
+  --accent-lavanda-tint:   rgba(124, 58, 237, 0.08);
   --accent-lavanda-border: rgba(124, 58, 237, 0.18);
 
-  --accent-mint:           #059669;
-  --accent-mint-tint:      #ecfdf5;
-  --accent-mint-border:    rgba(5, 150, 105, 0.18);
+  --accent-mint:           var(--emerald-600);     /* #0A7A58 */
+  --accent-mint-tint:      rgba(10, 122, 88, 0.08);
+  --accent-mint-border:    rgba(10, 122, 88, 0.18);
 }

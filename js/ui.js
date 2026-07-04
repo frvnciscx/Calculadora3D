@@ -28,17 +28,43 @@ function m3Confirm(message, onConfirm) {
   document.getElementById('m3-confirm-btn').onclick = function() { closeModal(); onConfirm(); };
 }
 
-/* IDs de las sub-páginas de config */
+/* Sub-páginas de config + quote-editor como sub-página virtual */
 var _CFG_SUBPAGES = ['negocio','banco','electrico','gastos','otros'];
 
-/* Limpia los inline styles que showConfigPage establece en desktop */
+/* Resuelve el ID del elemento en el DOM para cada sub-página */
+function _cfgSubPageId(name) {
+  return name === 'quote-editor' ? 'page-quote-editor' : 'page-config-' + name;
+}
+
+/* Devuelve al <body> cualquier sub-página movida al container */
 function _cleanConfigDesktop() {
+  var container = document.getElementById('cfg-subpage-container');
+  if (container) {
+    Array.from(container.children).forEach(function(child) {
+      if (child.id && (child.id.indexOf('page-config-') === 0 || child.id === 'page-quote-editor')) {
+        child.style.display = '';
+        document.body.appendChild(child);
+      }
+    });
+    container.style.display = 'none';
+  }
   var cfgEl = document.getElementById('page-config');
-  if (cfgEl) cfgEl.style.display = '';
-  _CFG_SUBPAGES.forEach(function(n) {
-    var sp = document.getElementById('page-config-' + n);
-    if (sp) { sp.style.display = ''; sp.style.paddingTop = ''; sp.classList.remove('active'); }
-  });
+  if (cfgEl) {
+    /* Limpiar TODOS los inline styles de posicionamiento */
+    cfgEl.style.display       = '';
+    cfgEl.style.position      = '';
+    cfgEl.style.top           = '';
+    cfgEl.style.left          = '';
+    cfgEl.style.right         = '';
+    cfgEl.style.bottom        = '';
+    cfgEl.style.flexDirection = '';
+    cfgEl.style.background    = '';
+    cfgEl.style.zIndex        = '';
+    cfgEl.style.overflow      = '';
+    cfgEl.style.padding       = '';
+    cfgEl.style.margin        = '';
+    cfgEl.classList.remove('active');
+  }
 }
 
 function showPage(name) {
@@ -72,6 +98,12 @@ function showPage(name) {
   /* ── Config en desktop: ir directo a primer sub-página ─────────── */
   if (name === 'config' && window.innerWidth >= 900) {
     showConfigPage('negocio');
+    return;
+  }
+
+  /* ── Quote editor en desktop: integrar en panel de config ───────── */
+  if (name === 'quote-editor' && window.innerWidth >= 900) {
+    showConfigPage('quote-editor');
     return;
   }
 
@@ -248,55 +280,67 @@ function _filterMaterials(keepMaterialId) {
 /* ── Config sub-pages navigation ────────────────────────────────── */
 function showConfigPage(name) {
   if (window.innerWidth >= 900) {
-    /* ── Desktop: JS gestiona display directamente (evita batallas de cascada) ── */
+    /* ── Desktop: #page-config es el panel completo (top:0→bottom:0).
+       La sub-página seleccionada se MUEVE físicamente al container interno.
+       Sin CSS battles — todo via DOM + inline styles. ── */
 
     /* 1. Ocultar todas las .page */
     document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
 
-    /* 2. Mostrar el header fijo (#page-config) */
-    var cfgHeader = document.getElementById('page-config');
-    if (cfgHeader) cfgHeader.style.display = 'flex';
+    /* 2. Posicionar #page-config como panel full-width via inline styles
+          (no depende del CSS cacheado — 100% JS-driven) */
+    var cfgPanel = document.getElementById('page-config');
+    if (cfgPanel) {
+      cfgPanel.style.display       = 'flex';
+      cfgPanel.style.position      = 'fixed';
+      cfgPanel.style.top           = '0';
+      cfgPanel.style.left          = '240px';
+      cfgPanel.style.right         = '0';
+      cfgPanel.style.bottom        = '0';
+      cfgPanel.style.flexDirection = 'column';
+      cfgPanel.style.background    = 'var(--bg)';
+      cfgPanel.style.zIndex        = '15';
+      cfgPanel.style.overflow      = 'hidden';
+      cfgPanel.style.padding       = '0';
+      cfgPanel.style.margin        = '0';
+      cfgPanel.classList.add('active');
+    }
 
-    /* 3. Actualizar body.dataset para que el CSS resalte el tab correcto */
-    document.body.dataset.page = 'config-' + name;
+    /* 3. Actualizar body.dataset para CSS (highlight de tab activo) */
+    document.body.dataset.page = (name === 'quote-editor') ? 'quote-editor' : 'config-' + name;
 
-    /* 4. Ocultar sub-páginas anteriores; mostrar la seleccionada */
-    _CFG_SUBPAGES.forEach(function(n) {
-      var sp = document.getElementById('page-config-' + n);
-      if (!sp) return;
-      if (n === name) {
-        sp.style.display = 'block';
-        sp.classList.add('active');
-      } else {
-        sp.style.display = 'none';
-        sp.classList.remove('active');
+    /* 4. Mover sub-páginas previas de vuelta al body */
+    var container = document.getElementById('cfg-subpage-container');
+    if (container) {
+      Array.from(container.children).forEach(function(child) {
+        if (child.id && (child.id.indexOf('page-config-') === 0 || child.id === 'page-quote-editor')) {
+          child.style.display = '';   /* limpiar inline al devolver */
+          document.body.appendChild(child);
+        }
+      });
+
+      /* 5. Mover la sub-página seleccionada al container */
+      var subPage = document.getElementById(_cfgSubPageId(name));
+      if (subPage) {
+        subPage.style.display = 'block';  /* forzar visible con inline */
+        container.appendChild(subPage);
       }
-    });
+      container.style.display = 'block';
+    }
 
-    /* 5. Resaltar el ítem de sidebar "Ajustes" */
+    /* 6. Sidebar: resaltar "Ajustes" */
     document.querySelectorAll('.nav-item,.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
     document.querySelectorAll('[data-page="config"]').forEach(function(b) { b.classList.add('active'); });
 
-    /* 6. Ocultar FAB y barra de acción */
+    /* 7. FAB y barra de acción */
     document.querySelectorAll('.m3-fab').forEach(function(f) { f.style.display = 'none'; });
     var qaBar = document.getElementById('page-action-bar');
     if (qaBar) qaBar.style.display = 'none';
 
-    /* 7. Medir header y compensar padding-top en la sub-página */
-    requestAnimationFrame(function() {
-      var h = document.getElementById('page-config');
-      var sp = document.getElementById('page-config-' + name);
-      if (h && sp) {
-        var hh = h.offsetHeight;
-        document.documentElement.style.setProperty('--cfg-header-h', hh + 'px');
-        sp.style.paddingTop = hh + 'px';
-      }
-    });
-
-    loadConfig();
+    if (name === 'quote-editor') loadQuoteEditor(); else loadConfig();
   } else {
     /* ── Mobile: flujo genérico ── */
-    showPage('config-' + name);
+    if (name === 'quote-editor') showPage('quote-editor'); else showPage('config-' + name);
   }
 }
 

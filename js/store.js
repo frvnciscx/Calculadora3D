@@ -23,7 +23,9 @@ const DEF_CONFIG = {
   ipaMlPerPrint: 150,    /* ml de IPA usados por impresión */
   resinSupportPct: 20,   /* % de soporte sobre el peso base */
   /* Costos fijos — desglose por categoría */
-  fixedCostItems: []     /* [{name:'Luz', amount:500}, ...] */
+  fixedCostItems: [],    /* [{name:'Luz', amount:500}, ...] */
+  /* Visibilidad de datos bancarios en cotizaciones */
+  showBankInfo: true
 };
 
 const DEF_QUOTE_STYLE = {

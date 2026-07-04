@@ -7,6 +7,9 @@ function nextQuoteNum() {
   return 'COT-' + String(quoteCounter).padStart(4, '0');
 }
 
+/* ── Índice de cotización en edición (null = nueva) ───────────── */
+var _editQuoteIndex = null;
+
 /* ── Draft quote (multi-producto en borrador) ─────────────────── */
 var draftQuote = (function() {
   try {
@@ -116,6 +119,23 @@ function addItemToDraft() {
   }
 }
 
+/* ── Editar cotización existente (no aceptada) ────────────────── */
+function editQuote(i) {
+  var q = quotes[i]; if (!q) return;
+  if (q.status === 'aceptada') { snack('Las cotizaciones aceptadas no se pueden editar'); return; }
+  _editQuoteIndex = i;
+  saveDraftQuote({
+    client:            q.client   || '',
+    phone:             q.phone    || '',
+    notes:             q.notes    || '',
+    discount:          q.discount || 0,
+    commission:        q.commission    || 0,
+    commissionEnabled: (q.commission && q.commission > 0) || false,
+    items:             JSON.parse(JSON.stringify(q.items || []))
+  });
+  renderDraftModal();
+}
+
 /* ── Abrir modal de cotización ────────────────────────────────── */
 function generateQuote() {
   if (!draftQuote || !draftQuote.items.length) {
@@ -131,23 +151,50 @@ function renderDraftModal() {
   document.getElementById('modal-container').innerHTML = tplDraftModal(draft, config.currency);
 }
 
-/* ── Cambio de descuento en el modal ──────────────────────────── */
-function onDiscountChange() {
-  if (!draftQuote) return;
-  var discountEl = document.getElementById('q-discount');
-  var discount   = Math.min(100, Math.max(0, parseFloat((discountEl && discountEl.value) || 0) || 0));
-  var cur        = config.currency;
-  var subtotal   = draftQuote.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
-  var discountAmt = subtotal * (discount / 100);
-  var grandTotal  = subtotal - discountAmt;
+/* ── Cambio de descuento — delega a onCommissionChange ───────── */
+function onDiscountChange() { onCommissionChange(); }
 
-  draftQuote.discount = discount;
+/* ── Toggle de comisión ───────────────────────────────────────── */
+function onCommissionToggle() {
+  var toggle = document.getElementById('q-commission-toggle');
+  var input  = document.getElementById('q-commission');
+  if (input) {
+    input.disabled      = !toggle.checked;
+    input.style.opacity = toggle.checked ? '' : '0.4';
+  }
+  if (draftQuote) { draftQuote.commissionEnabled = toggle.checked; saveDraftQuote(draftQuote); }
+  onCommissionChange();
+}
+
+/* ── Recalcula descuento + comisión y actualiza DOM ───────────── */
+function onCommissionChange() {
+  if (!draftQuote) return;
+  var discountEl   = document.getElementById('q-discount');
+  var commissionEl = document.getElementById('q-commission');
+  var commToggle   = document.getElementById('q-commission-toggle');
+  var discount     = Math.min(100, Math.max(0, parseFloat((discountEl   && discountEl.value)   || 0) || 0));
+  var commEnabled  = commToggle && commToggle.checked;
+  var commission   = commEnabled
+    ? Math.min(100, Math.max(0, parseFloat((commissionEl && commissionEl.value) || 0) || 0))
+    : 0;
+  var cur          = config.currency;
+  var subtotal     = draftQuote.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+  var discountAmt  = subtotal    * (discount   / 100);
+  var discounted   = subtotal    - discountAmt;
+  var commAmt      = discounted  * (commission / 100);
+  var finalTotal   = discounted  + commAmt;
+
+  draftQuote.discount          = discount;
+  draftQuote.commission        = commission;
+  draftQuote.commissionEnabled = commEnabled;
   saveDraftQuote(draftQuote);
 
-  var amtEl   = document.getElementById('draft-discount-amt');
-  var totalEl = document.getElementById('draft-grand-total');
-  if (amtEl)   amtEl.textContent   = discountAmt > 0 ? '−' + cur + discountAmt.toFixed(2) : '—';
-  if (totalEl) totalEl.textContent = cur + grandTotal.toFixed(2);
+  var amtEl     = document.getElementById('draft-discount-amt');
+  var commAmtEl = document.getElementById('draft-commission-amt');
+  var totalEl   = document.getElementById('draft-grand-total');
+  if (amtEl)     amtEl.textContent     = discountAmt > 0 ? '−' + cur + discountAmt.toFixed(2) : '—';
+  if (commAmtEl) commAmtEl.textContent = commAmt     > 0 ? '+' + cur + commAmt.toFixed(2)     : '—';
+  if (totalEl)   totalEl.textContent   = cur + finalTotal.toFixed(2);
 }
 
 /* Ajustar cantidad de un ítem en el borrador */
@@ -158,21 +205,27 @@ function draftItemQty(i, delta) {
   item.qty = Math.max(1, (item.qty || 1) + delta);
   saveDraftQuote(draftQuote);
 
-  var cur      = config.currency;
-  var discount = draftQuote.discount || 0;
-  var subtotal = draftQuote.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
-  var discAmt  = subtotal * (discount / 100);
-  var grandTotal = subtotal - discAmt;
-  var qtyEl    = document.getElementById('dqi-' + i);
-  var priceEl  = document.getElementById('dqp-' + i);
-  var subEl    = document.getElementById('draft-subtotal');
-  var amtEl    = document.getElementById('draft-discount-amt');
-  var totalEl  = document.getElementById('draft-grand-total');
-  if (qtyEl)    qtyEl.textContent    = item.qty;
-  if (priceEl)  priceEl.textContent  = cur + (item.totalCost * item.qty).toFixed(2);
-  if (subEl)    subEl.textContent    = cur + subtotal.toFixed(2);
-  if (amtEl)    amtEl.textContent    = discAmt > 0 ? '−' + cur + discAmt.toFixed(2) : '—';
-  if (totalEl)  totalEl.textContent  = cur + grandTotal.toFixed(2);
+  var cur         = config.currency;
+  var discount    = draftQuote.discount || 0;
+  var commEnabled = draftQuote.commissionEnabled || false;
+  var commission  = commEnabled ? (draftQuote.commission || 0) : 0;
+  var subtotal    = draftQuote.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+  var discAmt     = subtotal   * (discount   / 100);
+  var discounted  = subtotal   - discAmt;
+  var commAmt     = discounted * (commission / 100);
+  var grandTotal  = discounted + commAmt;
+  var qtyEl       = document.getElementById('dqi-' + i);
+  var priceEl     = document.getElementById('dqp-' + i);
+  var subEl       = document.getElementById('draft-subtotal');
+  var amtEl       = document.getElementById('draft-discount-amt');
+  var commAmtEl   = document.getElementById('draft-commission-amt');
+  var totalEl     = document.getElementById('draft-grand-total');
+  if (qtyEl)      qtyEl.textContent      = item.qty;
+  if (priceEl)    priceEl.textContent    = cur + (item.totalCost * item.qty).toFixed(2);
+  if (subEl)      subEl.textContent      = cur + subtotal.toFixed(2);
+  if (amtEl)      amtEl.textContent      = discAmt  > 0 ? '−' + cur + discAmt.toFixed(2)  : '—';
+  if (commAmtEl)  commAmtEl.textContent  = commAmt  > 0 ? '+' + cur + commAmt.toFixed(2)  : '—';
+  if (totalEl)    totalEl.textContent    = cur + grandTotal.toFixed(2);
 }
 
 /* Quitar un ítem del borrador */
@@ -207,30 +260,78 @@ function saveQuote() {
   var client = clientEl ? clientEl.value.trim() : '';
   if (!client) { snack('Ingresa el nombre del cliente'); return; }
 
-  var phone    = ((document.getElementById('q-phone')    || {}).value || '').trim();
-  var notes    = ((document.getElementById('q-notes')    || {}).value || '').trim();
-  var discount = Math.min(100, Math.max(0, parseFloat(((document.getElementById('q-discount') || {}).value) || 0) || 0));
-  var items    = draftQuote ? draftQuote.items : [];
-  var subtotal = items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
-  var discountAmt = subtotal * (discount / 100);
-  var grandTotal  = subtotal - discountAmt;
+  var phone       = ((document.getElementById('q-phone')    || {}).value || '').trim();
+  var notes       = ((document.getElementById('q-notes')    || {}).value || '').trim();
+  var discount    = Math.min(100, Math.max(0, parseFloat(((document.getElementById('q-discount') || {}).value) || 0) || 0));
+  var commToggle  = document.getElementById('q-commission-toggle');
+  var commEnabled = commToggle && commToggle.checked;
+  var commission  = commEnabled
+    ? Math.min(100, Math.max(0, parseFloat(((document.getElementById('q-commission') || {}).value) || 0) || 0))
+    : 0;
+  var items         = draftQuote ? draftQuote.items : [];
+  var subtotal      = items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+  var discountAmt   = subtotal   * (discount   / 100);
+  var discounted    = subtotal   - discountAmt;
+  var commissionAmt = discounted * (commission / 100);
+  var grandTotal    = discounted + commissionAmt;
   /* Base cost total para calcular ganancia en dashboard */
   var totalBaseCost = items.reduce(function(s, it) { return s + (it.baseCost || 0) * (it.qty || 1); }, 0);
 
+  /* ── Guardar cliente si se eligió ── */
+  var _saveClientCheck = document.getElementById('q-save-client');
+  if (_saveClientCheck && _saveClientCheck.checked && client) {
+    var _clientExists = (typeof clients !== 'undefined') && clients.some(function(c) {
+      return c.name && c.name.toLowerCase() === client.toLowerCase();
+    });
+    if (!_clientExists && typeof clients !== 'undefined') {
+      clients.unshift({ id: Date.now().toString(), name: client, phone: phone,
+                        email: '', social: '', notes: '', source: 'cotización', tag: 'nuevo' });
+      sv('clients', clients);
+      if (typeof renderClients === 'function') renderClients();
+    }
+  }
+
+  /* ── Modo edición: actualizar cotización existente ── */
+  if (_editQuoteIndex !== null) {
+    var existing = quotes[_editQuoteIndex];
+    existing.client        = client;
+    existing.phone         = phone;
+    existing.notes         = notes;
+    existing.items         = items;
+    existing.subtotal      = subtotal;
+    existing.discount      = discount;
+    existing.discountAmt   = discountAmt;
+    existing.commission    = commission;
+    existing.commissionAmt = commissionAmt;
+    existing.grandTotal    = grandTotal;
+    existing.totalBaseCost = totalBaseCost;
+    sv('quotes', quotes);
+    _editQuoteIndex = null;
+    clearDraftQuote();
+    clearLastCalc();
+    closeModal();
+    refreshDraftIndicator();
+    snack('Cotización actualizada ✓');
+    showPage('quotes');
+    return;
+  }
+
   var q = {
-    id:           Date.now().toString(),
-    quoteNum:     nextQuoteNum(),
-    quoteDate:    new Date().toISOString(),
-    client:       client,
-    phone:        phone,
-    notes:        notes,
-    items:        items,
-    subtotal:     subtotal,
-    discount:     discount,
-    discountAmt:  discountAmt,
-    grandTotal:   grandTotal,
+    id:            Date.now().toString(),
+    quoteNum:      nextQuoteNum(),
+    quoteDate:     new Date().toISOString(),
+    client:        client,
+    phone:         phone,
+    notes:         notes,
+    items:         items,
+    subtotal:      subtotal,
+    discount:      discount,
+    discountAmt:   discountAmt,
+    commission:    commission,
+    commissionAmt: commissionAmt,
+    grandTotal:    grandTotal,
     totalBaseCost: totalBaseCost,
-    status:       'pendiente'
+    status:        'pendiente'
   };
 
   quotes.unshift(q);
@@ -569,7 +670,7 @@ function buildQuoteHTML(q, qrDataURL) {
     notesHTML + termsHTML +
 
     /* Bloque de datos bancarios */
-    (config.bizAccountNumber
+    (config.showBankInfo !== false && config.bizAccountNumber
       ? '<div class="qf-bank-block">' +
           '<div class="qf-bank-label">Datos de pago</div>' +
           '<div class="qf-bank-row">' +
@@ -951,7 +1052,7 @@ function exportQuotePDF(i) {
         }
 
         /* ── Datos bancarios (antes del footer) ── */
-        if (config.bizAccountNumber) {
+        if (config.showBankInfo !== false && config.bizAccountNumber) {
           y -= 8;
           page.drawRectangle({x:M, y:y-28, width:CW, height:34, color:rgb(0.97,0.97,0.98)});
           page.drawText('DATOS DE PAGO', {x:M+8, y:y-10, size:7, font:bold, color:muted});

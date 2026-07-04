@@ -315,7 +315,6 @@ function tplClientModal(c, editIndex) {
   var social   = esc(c ? c.social  || '' : '');
   var notes    = esc(c ? c.notes   || '' : '');
   var source   = c ? (c.source || 'instagram') : 'instagram';
-  var tag      = c ? (c.tag    || 'nuevo')     : 'nuevo';
 
   var sourceOpts = [
     { id: 'instagram',   label: 'Instagram' },
@@ -324,12 +323,6 @@ function tplClientModal(c, editIndex) {
     { id: 'feria',       label: 'Feria / Bazar' },
     { id: 'web',         label: 'Web' },
     { id: 'otro',        label: 'Otro' },
-  ];
-  var tagOpts = [
-    { id: 'nuevo',      label: 'Nuevo' },
-    { id: 'frecuente',  label: 'Frecuente' },
-    { id: 'mayorista',  label: 'Mayorista' },
-    { id: 'vip',        label: 'VIP' },
   ];
 
   function chipSrc(o) {
@@ -340,10 +333,6 @@ function tplClientModal(c, editIndex) {
       'background:' + (active ? 'var(--ink)' : 'transparent') + ';' +
       'color:' + (active ? 'var(--bg)' : 'var(--ink-2)') + ';' +
       'transition:background 0.15s,color 0.15s">' + o.label + '</button>';
-  }
-  function chipTag(o) {
-    var active = tag === o.id;
-    return '<button type="button" id="cli-tag-' + o.id + '" class="' + (active ? 'active' : '') + '" onclick="_cliSetTag(\'' + o.id + '\')" style="flex:1">' + o.label + '</button>';
   }
 
   return (
@@ -426,14 +415,6 @@ function tplClientModal(c, editIndex) {
         '</div>' +
       '</div>' +
 
-      /* Tipo de cliente */
-      '<div style="padding:0 20px 20px">' +
-        '<div class="micro" style="margin-bottom:10px">Tipo de cliente</div>' +
-        '<div class="seg" style="width:100%;display:flex" id="cli-tag-group">' +
-          tagOpts.map(chipTag).join('') +
-        '</div>' +
-      '</div>' +
-
       /* Notas */
       '<div style="padding:0 20px 20px">' +
         '<div class="micro" style="margin-bottom:10px">Notas internas</div>' +
@@ -458,10 +439,8 @@ function tplClientModal(c, editIndex) {
               '<div id="cli-preview-name" style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
                 (name || 'Nombre del cliente') +
               '</div>' +
-              '<div style="font-size:11px;color:var(--ink-3);margin-top:2px;display:flex;align-items:center;gap:6px">' +
+              '<div style="font-size:11px;color:var(--ink-3);margin-top:2px">' +
                 '<span class="num">0</span> cotizaciones' +
-                '<span style="color:var(--ink-4)">·</span>' +
-                '<span id="cli-preview-tag" style="text-transform:capitalize">' + tag + '</span>' +
               '</div>' +
             '</div>' +
             '<div class="num" style="font-size:13px;color:var(--ink-3)">' + (config ? config.currency : '$') + '0</div>' +
@@ -661,6 +640,9 @@ function tplQuoteCard(q, i, cur) {
     '<div class="hist-chips">' + chipsHTML + '</div>' +
     '<div class="quote-actions-bar" style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">' +
       '<button class="m3-btn-text m3-btn-sm" onclick="viewQuote(' + i + ')">' + tplIcon('visibility', 16) + ' Ver</button>' +
+      (status !== 'aceptada'
+        ? '<button class="m3-btn-text m3-btn-sm" onclick="editQuote(' + i + ')">' + tplIcon('edit', 16) + ' Editar</button>'
+        : '') +
       linkBtn +
       '<button class="m3-btn-text m3-btn-sm" onclick="shareQuote(' + i + ')">' + tplIcon('share', 16) + ' Compartir</button>' +
       waBtn +
@@ -693,15 +675,24 @@ function tplDraftItem(item, i, cur) {
 }
 
 function tplDraftModal(draft, cur) {
-  var subtotal   = draft.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
-  var discount   = draft.discount || 0;
-  var discountAmt = subtotal * (discount / 100);
-  var grandTotal = subtotal - discountAmt;
-  var itemsHTML  = draft.items.map(function(item, i) { return tplDraftItem(item, i, cur); }).join('');
+  var subtotal      = draft.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+  var discount      = draft.discount || 0;
+  var discountAmt   = subtotal * (discount / 100);
+  var discounted    = subtotal - discountAmt;
+  var commEnabled   = draft.commissionEnabled || false;
+  var commission    = commEnabled ? (draft.commission || 0) : 0;
+  var commissionAmt = discounted * (commission / 100);
+  var grandTotal    = discounted + commissionAmt;
+  var itemsHTML     = draft.items.map(function(item, i) { return tplDraftItem(item, i, cur); }).join('');
+  var isEdit        = (typeof _editQuoteIndex !== 'undefined' && _editQuoteIndex !== null);
+  var modalTitle    = isEdit && typeof quotes !== 'undefined' && quotes[_editQuoteIndex]
+                      ? 'Editar ' + quotes[_editQuoteIndex].quoteNum
+                      : 'Nueva cotización';
+  var saveLabel     = isEdit ? 'Actualizar' : 'Generar cotización';
 
   return '<div class="m3-scrim" onclick="closeModal()"></div>' +
     '<div class="m3-bottom-sheet draft-drawer">' +
-      tplSheetHeader('Nueva cotización') +
+      tplSheetHeader(modalTitle) +
       /* Campo cliente con autocompletado */
       '<div class="client-autocomplete-wrap">' +
         '<div class="m3-field">' +
@@ -715,6 +706,10 @@ function tplDraftModal(draft, cur) {
         '<input type="tel" id="q-phone" inputmode="tel" placeholder=" " value="' + esc(draft.phone || '') + '">' +
         '<label for="q-phone">Teléfono</label>' +
       '</div>' +
+      '<label style="display:flex;align-items:center;gap:10px;padding:2px 0 12px;cursor:pointer">' +
+        '<input type="checkbox" id="q-save-client" style="width:17px;height:17px;flex-shrink:0;accent-color:var(--accent);cursor:pointer">' +
+        '<span style="font-size:13px;color:var(--ink-2)">Guardar cliente en mi lista</span>' +
+      '</label>' +
       '<div class="m3-field optional">' +
         '<input type="text" id="q-notes" placeholder=" " value="' + esc(draft.notes || '') + '">' +
         '<label for="q-notes">Notas adicionales</label>' +
@@ -746,13 +741,31 @@ function tplDraftModal(draft, cur) {
           '</span>' +
         '</div>' +
       '</div>' +
+      '<div class="draft-discount-row">' +
+        '<label style="display:flex;align-items:center;gap:8px;cursor:pointer">' +
+          '<label class="m3-switch" style="margin:0" onclick="event.stopPropagation()">' +
+            '<input type="checkbox" id="q-commission-toggle" ' + (commEnabled ? 'checked' : '') + ' onchange="onCommissionToggle()">' +
+            '<div class="m3-switch-track"></div>' +
+          '</label>' +
+          '<span class="material-symbols-rounded" style="font-size:16px">payments</span> Comisión' +
+        '</label>' +
+        '<div style="display:flex;align-items:center;gap:6px">' +
+          '<input type="number" id="q-commission" class="discount-input" min="0" max="100" step="0.5" ' +
+            'value="' + commission + '" inputmode="decimal" oninput="onCommissionChange()"' +
+            (!commEnabled ? ' disabled style="opacity:0.4"' : '') + '>' +
+          '<span style="font-size:13px;color:var(--md-on-surface-variant)">%</span>' +
+          '<span id="draft-commission-amt" class="discount-amount">' +
+            (commissionAmt > 0 ? '+' + cur + commissionAmt.toFixed(2) : '—') +
+          '</span>' +
+        '</div>' +
+      '</div>' +
       '<div class="draft-total-row">' +
         '<span>TOTAL</span>' +
         '<span id="draft-grand-total">' + cur + grandTotal.toFixed(2) + '</span>' +
       '</div>' +
       '<div class="m3-sheet-actions">' +
         '<button class="m3-btn-outlined" onclick="closeModal()">Cancelar</button>' +
-        '<button class="m3-btn-filled" onclick="saveQuote()">Generar cotización</button>' +
+        '<button class="m3-btn-filled" onclick="saveQuote()">' + saveLabel + '</button>' +
       '</div>' +
     '</div>';
 }

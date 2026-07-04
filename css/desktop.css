@@ -294,49 +294,89 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     CONFIG: JS gestiona display. CSS solo posiciona el header fijo
-     y oculta elementos mobile que no aplican en desktop.
+     CONFIG DESKTOP: #page-config es el panel completo (sin sub-páginas
+     hermanas). JS mueve el sub-page seleccionado al #cfg-subpage-container
+     que está DENTRO de #page-config. Sin batallas de cascada CSS.
   ══════════════════════════════════════════════════════════════════ */
 
-  /* #page-config: header fijo sobre el área de contenido.
-     JS setea style.display='flex'. CSS solo define posición/tamaño. */
-  body[data-page^="config-"] #page-config {
-    flex-direction: column;
+  /* Panel principal: ocupa todo el área de contenido */
+  body[data-page^="config-"] #page-config,
+  body[data-page="quote-editor"] #page-config {
+    display: flex !important;
     position: fixed !important;
-    top: 0;
-    left: 240px;
-    right: 0;
+    top: 0 !important;
+    left: 240px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    flex-direction: column !important;
+    background: var(--bg) !important;
+    padding: 0 !important;
+    margin: 0 !important;
     z-index: 15;
-    background: var(--bg);
-    border-bottom: 0.5px solid var(--line);
-    padding-bottom: 0 !important;
-    padding-top: 0 !important;
+    overflow: hidden !important;
   }
 
-  /* Sub-páginas: JS setea display y padding-top. CSS solo scroll. */
-  body[data-page^="config-"] #page-config-negocio,
-  body[data-page^="config-"] #page-config-banco,
-  body[data-page^="config-"] #page-config-electrico,
-  body[data-page^="config-"] #page-config-gastos,
-  body[data-page^="config-"] #page-config-otros {
+  /* Container interno: scroll del contenido de la sub-página */
+  #cfg-subpage-container {
+    flex: 1;
     overflow-y: auto;
-    height: 100vh;
-    padding-bottom: 40px !important;
-    box-sizing: border-box;
+    min-height: 0;
+    border-top: 0.5px solid var(--line);
+    padding: 0 28px;
   }
 
-  /* Back button y sub-header ocultos: nav es el tab bar */
-  body[data-page^="config-"] .cfg-sub-header {
-    display: none !important;
+  /* Sub-página dentro del container: mostrar siempre */
+  #cfg-subpage-container > .page {
+    display: block !important;
+    padding-top: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    max-width: 720px;           /* ancho máximo del formulario */
+    padding-bottom: 48px !important;
   }
 
-  /* Nav lista mobile: oculta en desktop */
-  body[data-page^="config-"] .cfg-mobile-nav {
-    display: none !important;
+  /* Heading interno de cada sub-página */
+  #cfg-subpage-container > .page > div:first-child {
+    padding: 28px 0 16px !important;
+  }
+  #cfg-subpage-container > .page > div:first-child h1 {
+    font-size: 26px !important;
   }
 
-  /* Footer versión: oculto en desktop */
-  body[data-page^="config-"] #cfg-footer-version {
+  /* Cards del formulario: padding lateral consistente */
+  #cfg-subpage-container > .page > div {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  #cfg-subpage-container .card {
+    margin: 0;
+  }
+
+  /* Botón Guardar: compacto y alineado a la derecha */
+  #cfg-subpage-container .btn.btn-primary {
+    width: auto !important;
+    padding: 0 32px !important;
+    margin-left: auto;
+    display: flex;
+  }
+  #cfg-subpage-container .page > div:last-child {
+    display: flex !important;
+    justify-content: flex-end;
+    padding-top: 16px !important;
+  }
+
+  /* Quote editor dentro del config panel: ancho más generoso para la previa */
+  #cfg-subpage-container > #page-quote-editor {
+    max-width: 820px;
+  }
+
+  /* Ocultar elementos que no aplican en desktop */
+  body[data-page^="config-"] .cfg-sub-header,
+  body[data-page="quote-editor"] .cfg-sub-header,
+  body[data-page^="config-"] .cfg-mobile-nav,
+  body[data-page="quote-editor"] .cfg-mobile-nav,
+  body[data-page^="config-"] #cfg-footer-version,
+  body[data-page="quote-editor"] #cfg-footer-version {
     display: none !important;
   }
 

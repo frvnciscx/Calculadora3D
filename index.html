@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0a" id="meta-theme">
+<meta name="theme-color" content="#0D1210" id="meta-theme">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Calc 3D">
@@ -11,7 +11,7 @@
 <link rel="icon" href="assets/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0,0&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0,0&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
@@ -542,78 +542,117 @@
 </div>
 
 <!-- ===== PAGE: QUOTE EDITOR ===== -->
-<div id="page-quote-editor" class="page">
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-    <button class="m3-btn-text" onclick="showPage('quotes')" style="width:auto;padding:0 8px">
-      <span class="material-symbols-rounded">arrow_back</span>
+<div id="page-quote-editor" class="page" style="padding-top:0">
+
+  <!-- Cabecera mobile (oculta en desktop) -->
+  <div class="cfg-sub-header">
+    <button class="back-btn" onclick="showPage('config')">
+      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
     </button>
-    <h2 class="page-heading">Diseño de cotización</h2>
-    <button class="m3-btn-text m3-btn-sm" onclick="resetQuoteStyle()" style="color:var(--md-error)">Reset</button>
+  </div>
+
+  <!-- Heading — mismo patrón que otras sub-páginas -->
+  <div style="padding:20px 20px 8px">
+    <div class="micro" style="margin-bottom:6px">Cotizaciones</div>
+    <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Diseño de cotización</h1>
   </div>
 
   <!-- Logo -->
-  <div class="m3-card">
-    <div class="m3-card-title">Logo</div>
-    <div class="logo-upload-area" onclick="document.getElementById('logo-input').click()" id="logo-preview-area">
-      <span class="material-symbols-rounded" style="font-size:32px;opacity:0.4">add_photo_alternate</span>
-      <p>Subir logo (PNG/JPG, max 500KB)</p>
+  <div style="padding:12px 20px 0">
+    <div class="card" style="padding:16px 18px">
+      <div style="font-size:11px;font-family:var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px">Logo del negocio</div>
+      <div class="logo-upload-area" onclick="document.getElementById('logo-input').click()" id="logo-preview-area">
+        <span class="material-symbols-rounded" style="font-size:28px;color:var(--ink-3)">add_photo_alternate</span>
+        <p style="font-size:12px;color:var(--ink-3);margin:6px 0 0">PNG / JPG · máx 500 KB</p>
+      </div>
+      <input type="file" id="logo-input" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="handleLogoUpload(event)">
+      <div style="margin-top:10px;display:flex;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="removeLogo()" style="color:var(--danger);width:auto;padding:0 14px;font-size:13px;height:32px">
+          <span class="material-symbols-rounded" style="font-size:14px">delete</span> Quitar
+        </button>
+      </div>
     </div>
-    <input type="file" id="logo-input" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="handleLogoUpload(event)">
-    <button class="m3-btn-text m3-btn-sm" onclick="removeLogo()" style="color:var(--md-error)">
-      <span class="material-symbols-rounded" style="font-size:16px">delete</span> Quitar logo
+  </div>
+
+  <!-- Colores de marca -->
+  <div style="padding:12px 20px 0">
+    <div class="card" style="padding:0 18px">
+      <div class="row">
+        <div class="row-label">Color primario</div>
+        <div class="color-swatch" id="sw-primary"><input type="color" id="qe-primary" value="#6750A4" oninput="onColorChange('primaryColor',this)"></div>
+      </div>
+      <div class="row">
+        <div class="row-label">Color acento</div>
+        <div class="color-swatch" id="sw-accent"><input type="color" id="qe-accent" value="#D0BCFF" oninput="onColorChange('accentColor',this)"></div>
+      </div>
+      <div class="row">
+        <div class="row-label">Color de texto</div>
+        <div class="color-swatch" id="sw-text"><input type="color" id="qe-text" value="#1C1B1F" oninput="onColorChange('textColor',this)"></div>
+      </div>
+      <div class="row" style="border-bottom:none">
+        <div class="row-label">Color de fondo</div>
+        <div class="color-swatch" id="sw-bg"><input type="color" id="qe-bg" value="#FFFFFF" oninput="onColorChange('bgColor',this)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campos visibles -->
+  <div style="padding:12px 20px 0">
+    <div class="card" style="padding:0 18px">
+      <div class="row">
+        <div class="row-label">Mostrar desglose de costos</div>
+        <label class="m3-switch"><input type="checkbox" id="qe-showDesglose" onchange="onToggleChange('showDesglose',this)"><div class="m3-switch-track"></div></label>
+      </div>
+      <div class="row">
+        <div class="row-label">Mostrar depreciación</div>
+        <label class="m3-switch"><input type="checkbox" id="qe-showDepreciacion" onchange="onToggleChange('showDepreciacion',this)"><div class="m3-switch-track"></div></label>
+      </div>
+      <div class="row">
+        <div class="row-label">Mostrar costos fijos</div>
+        <label class="m3-switch"><input type="checkbox" id="qe-showCostosFijos" onchange="onToggleChange('showCostosFijos',this)"><div class="m3-switch-track"></div></label>
+      </div>
+      <div class="row">
+        <div class="row-label">Mostrar desperdicio</div>
+        <label class="m3-switch"><input type="checkbox" id="qe-showDesperdicio" onchange="onToggleChange('showDesperdicio',this)"><div class="m3-switch-track"></div></label>
+      </div>
+      <div class="row">
+        <div class="row-label">Mostrar tiempo de diseño</div>
+        <label class="m3-switch"><input type="checkbox" id="qe-showDiseno" onchange="onToggleChange('showDiseno',this)"><div class="m3-switch-track"></div></label>
+      </div>
+      <div class="row" style="border-bottom:none">
+        <div class="row-label">Mostrar notas</div>
+        <label class="m3-switch"><input type="checkbox" id="qe-showNotas" onchange="onToggleChange('showNotas',this)"><div class="m3-switch-track"></div></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Textos personalizados -->
+  <div style="padding:12px 20px 0">
+    <div class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+      <div class="m3-field optional" style="margin-bottom:0">
+        <textarea id="qe-terms" placeholder=" " oninput="onTextChange('termsText',this)"></textarea>
+        <label>Términos y condiciones</label>
+      </div>
+      <div class="m3-field optional" style="margin-bottom:0">
+        <textarea id="qe-footer" placeholder=" " oninput="onTextChange('footerText',this)"></textarea>
+        <label>Pie de página</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista previa -->
+  <div style="padding:12px 20px 0">
+    <div style="font-size:11px;font-family:var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px">Vista previa</div>
+    <div id="qe-live-preview" style="overflow-x:auto;border-radius:var(--r-m);border:0.5px solid var(--line)"></div>
+  </div>
+
+  <!-- Botón Restablecer (alineado igual que Guardar en otras sub-páginas) -->
+  <div style="padding:16px 20px 32px">
+    <button class="btn btn-ghost" onclick="resetQuoteStyle()" style="color:var(--danger);width:100%">
+      <span class="material-symbols-rounded" style="font-size:15px">restart_alt</span> Restablecer diseño
     </button>
   </div>
 
-  <!-- Colors -->
-  <div class="m3-card">
-    <div class="m3-card-title">Colores de marca</div>
-    <div class="color-row">
-      <label>Color primario</label>
-      <div class="color-swatch" id="sw-primary"><input type="color" id="qe-primary" value="#6750A4" oninput="onColorChange('primaryColor',this)"></div>
-    </div>
-    <div class="color-row">
-      <label>Color acento</label>
-      <div class="color-swatch" id="sw-accent"><input type="color" id="qe-accent" value="#D0BCFF" oninput="onColorChange('accentColor',this)"></div>
-    </div>
-    <div class="color-row">
-      <label>Color de texto</label>
-      <div class="color-swatch" id="sw-text"><input type="color" id="qe-text" value="#1C1B1F" oninput="onColorChange('textColor',this)"></div>
-    </div>
-    <div class="color-row">
-      <label>Color de fondo</label>
-      <div class="color-swatch" id="sw-bg"><input type="color" id="qe-bg" value="#FFFFFF" oninput="onColorChange('bgColor',this)"></div>
-    </div>
-  </div>
-
-  <!-- Fields -->
-  <div class="m3-card">
-    <div class="m3-card-title">Campos visibles</div>
-    <div class="m3-switch"><label>Mostrar desglose de costos</label><input type="checkbox" id="qe-showDesglose" onchange="onToggleChange('showDesglose',this)"></div>
-    <div class="m3-switch"><label>Mostrar depreciación</label><input type="checkbox" id="qe-showDepreciacion" onchange="onToggleChange('showDepreciacion',this)"></div>
-    <div class="m3-switch"><label>Mostrar costos fijos</label><input type="checkbox" id="qe-showCostosFijos" onchange="onToggleChange('showCostosFijos',this)"></div>
-    <div class="m3-switch"><label>Mostrar desperdicio</label><input type="checkbox" id="qe-showDesperdicio" onchange="onToggleChange('showDesperdicio',this)"></div>
-    <div class="m3-switch"><label>Mostrar tiempo de diseño</label><input type="checkbox" id="qe-showDiseno" onchange="onToggleChange('showDiseno',this)"></div>
-    <div class="m3-switch"><label>Mostrar notas</label><input type="checkbox" id="qe-showNotas" onchange="onToggleChange('showNotas',this)"></div>
-  </div>
-
-  <!-- Texts -->
-  <div class="m3-card">
-    <div class="m3-card-title">Textos personalizados</div>
-    <div class="m3-field optional">
-      <textarea id="qe-terms" placeholder=" " oninput="onTextChange('termsText',this)"></textarea>
-      <label>Términos y condiciones</label>
-    </div>
-    <div class="m3-field optional">
-      <textarea id="qe-footer" placeholder=" " oninput="onTextChange('footerText',this)"></textarea>
-      <label>Pie de página</label>
-    </div>
-  </div>
-
-  <!-- Preview -->
-  <div class="m3-card">
-    <div class="m3-card-title">Vista previa</div>
-    <div id="qe-live-preview" style="overflow-x:auto;"></div>
-  </div>
 </div>
 
 <!-- ===== PAGE: CONFIG ===== -->
@@ -654,10 +693,13 @@
     <button id="cfg-nav-otros" class="cfg-tab" onclick="showConfigPage('otros')">
       <span class="material-symbols-rounded" style="font-size:17px">tune</span> Otros
     </button>
-    <button id="cfg-nav-quote-editor" class="cfg-tab" onclick="showPage('quote-editor')">
+    <button id="cfg-nav-quote-editor" class="cfg-tab" onclick="showConfigPage('quote-editor')">
       <span class="material-symbols-rounded" style="font-size:17px">palette</span> Diseño
     </button>
   </div>
+
+  <!-- ── Panel de contenido desktop (sub-páginas se mueven aquí via JS) ─── -->
+  <div id="cfg-subpage-container" style="display:none"></div>
 
   <!-- ── Nav lista (solo mobile) ─── -->
   <div class="cfg-mobile-nav">
@@ -820,10 +862,14 @@
         <input type="text" id="cfg-biz-holder" placeholder="Nombre completo" maxlength="60"
                style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
       </div>
-      <div class="row" style="border-bottom:none">
+      <div class="row">
         <div class="row-label" style="flex-shrink:0">Número de cuenta</div>
         <input type="text" id="cfg-biz-account" placeholder="18 dígitos (CLABE)" maxlength="22" inputmode="numeric"
                style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-mono);flex:1;min-width:0;letter-spacing:0.06em">
+      </div>
+      <div class="row" style="border-bottom:none">
+        <div class="row-label">Mostrar en cotizaciones</div>
+        <label class="m3-switch"><input type="checkbox" id="cfg-show-bank-info"><div class="m3-switch-track"></div></label>
       </div>
     </div>
     <div style="font-size:11px;color:var(--ink-4);margin-top:8px;padding:0 4px">

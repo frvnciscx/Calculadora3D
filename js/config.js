@@ -35,6 +35,8 @@ function loadConfig() {
   var cfgBank   = document.getElementById('cfg-biz-bank');   if (cfgBank)   cfgBank.value   = config.bizBank   || '';
   var cfgHolder = document.getElementById('cfg-biz-holder'); if (cfgHolder) cfgHolder.value = config.bizAccountHolder || '';
   var cfgAccNum = document.getElementById('cfg-biz-account');if (cfgAccNum) cfgAccNum.value = config.bizAccountNumber  || '';
+  var showBankEl = document.getElementById('cfg-show-bank-info');
+  if (showBankEl) showBankEl.checked = config.showBankInfo !== false;
   /* Resina */
   var cfgIpaLiter   = document.getElementById('cfg-ipa-liter-cost');
   var cfgIpaMl      = document.getElementById('cfg-ipa-ml');
@@ -114,6 +116,8 @@ function saveConfig() {
   config.bizBank            = ((document.getElementById('cfg-biz-bank')    || {}).value || '').trim();
   config.bizAccountHolder   = ((document.getElementById('cfg-biz-holder')  || {}).value || '').trim();
   config.bizAccountNumber   = ((document.getElementById('cfg-biz-account') || {}).value || '').trim();
+  var showBankSave = document.getElementById('cfg-show-bank-info');
+  if (showBankSave) config.showBankInfo = showBankSave.checked;
   /* AMS */
   var amsPurgeEl = document.getElementById('cfg-ams-purge');
   if (amsPurgeEl && parseFloat(amsPurgeEl.value) >= 0) config.amsPurgeGrams = parseFloat(amsPurgeEl.value) || 40;

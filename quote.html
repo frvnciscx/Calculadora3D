@@ -6,31 +6,32 @@
   <meta name="robots" content="noindex,nofollow">
   <title>Cotización</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    /* ── Design Tokens ────────────────────────────────────────────── */
+    /* ── Design Tokens — Quotia Identity ─────────────────────────── */
     :root {
-      --bg:       #0a0a0a;
-      --bg-card:  #111;
-      --bg-sunk:  #0f0f0f;
-      --accent:   #c6ff3d;
-      --ink:      #f5f5f5;
-      --ink-2:    #aaa;
-      --ink-3:    #666;
-      --line:     #1e1e1e;
-      --ok:       #4ade80;
-      --font-sans: 'Geist', system-ui, sans-serif;
-      --font-mono: 'Geist Mono', monospace;
+      --bg:       #0D1210;
+      --bg-card:  #151C18;
+      --bg-sunk:  #090d0a;
+      --accent:   #00E699;
+      --ink:      #E4E8E5;
+      --ink-2:    #B9C2BC;
+      --ink-3:    #8B968F;
+      --line:     #232D27;
+      --ok:       #00E699;
+      --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
     @media (prefers-color-scheme: light) {
       :root {
-        --bg:      #fafafa;
-        --bg-card: #fff;
-        --bg-sunk: #f4f4f4;
-        --ink:     #0a0a0a;
-        --ink-2:   #555;
-        --ink-3:   #999;
-        --line:    #e5e5e5;
+        --bg:      #F8F9F8;
+        --bg-card: #FFFFFF;
+        --bg-sunk: #EFF1EF;
+        --ink:     #111814;
+        --ink-2:   #3E4A43;
+        --ink-3:   #69756E;
+        --line:    #E2E6E3;
       }
     }
 
@@ -237,7 +238,7 @@
       gap: 6px;
       padding: 10px 18px;
       background: var(--accent);
-      color: #0a0a0a;
+      color: #0D1210;
       border: none;
       border-radius: 10px;
       font-size: 13px;
@@ -263,7 +264,7 @@
     @media print {
       body { background: #fff; color: #000; }
       .q-print-btn { display: none; }
-      :root { --accent: #5a9e00; --bg-card: #fff; --bg-sunk: #f5f5f5; --line: #ddd; --ink: #000; --ink-2: #444; --ink-3: #888; }
+      :root { --accent: #004D34; --bg-card: #FFFFFF; --bg-sunk: #EFF1EF; --line: #E2E6E3; --ink: #111814; --ink-2: #3E4A43; --ink-3: #69756E; }
     }
   </style>
 </head>
