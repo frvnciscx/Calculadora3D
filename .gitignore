@@ -1,3 +1,12 @@
 node_modules/
 calculadora 3d/
 *.zip
+
+# Permisos y rutas absolutas de ESTA máquina. launch.json sí se versiona:
+# es la configuración del servidor de desarrollo y sirve igual en cualquier lado.
+.claude/settings.local.json
+.claude/worktrees/
+
+# Exportaciones de la app (botón Exportar en Ajustes). Son datos, no código:
+# se regeneran cuando haga falta y en el repo solo acumulan diferencias.
+backups/

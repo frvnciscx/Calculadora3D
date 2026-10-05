@@ -62,12 +62,22 @@ function renderClients() {
     });
   }
 
+  /* Era la única lista con el estado vacío a mano: un renglón de texto gris,
+     sin icono y sin salida. Ahora usa la misma plantilla que las demás y el
+     botón del encabezado se retira mientras ese estado está en pantalla. */
+  marcarListaVacia('clients', !clients.length);
+
   if (!clients.length) {
-    el.innerHTML = '<div style="padding:24px 0;text-align:center;font-size:13px;color:var(--ink-3)">Sin clientes. Agrega el primero.</div>';
+    el.innerHTML = tplEmptyState('group',
+      'Sin clientes',
+      'Guarda a quién le cotizas para no volver a teclear su nombre y su teléfono en cada orden.',
+      { label: 'Agregar cliente', onclick: 'showClientModal()', icon: 'person_add' });
     return;
   }
   if (!filtered.length) {
-    el.innerHTML = '<div style="padding:24px 0;text-align:center;font-size:13px;color:var(--ink-3)">Sin resultados para «' + esc(_clientSearchTerm) + '»</div>';
+    el.innerHTML = tplEmptyState('search_off',
+      'Sin resultados',
+      'Ningún cliente coincide con «' + esc(_clientSearchTerm) + '».');
     return;
   }
 
@@ -95,7 +105,7 @@ function renderClients() {
         '</div>' +
         '<div style="flex:1;min-width:0">' +
           '<div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(c.name) + '</div>' +
-          '<div style="font-size:11px;color:var(--ink-3);margin-top:2px">' +
+          '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">' +
             '<span class="num">' + cQuotes.length + '</span> cot.' +
             (lastDate ? ' · última ' + lastDate : '') +
           '</div>' +
@@ -159,11 +169,19 @@ function saveClient(editIndex) {
 /* ── Eliminar cliente ────────────────────────────────────────────── */
 function deleteClient(i) {
   var c = clients[i]; if (!c) return;
-  if (!confirm('¿Eliminar a ' + c.name + '?')) return;
-  clients.splice(i, 1);
-  sv('clients', clients);
-  renderClients();
-  snack('Cliente eliminado');
+  /* Las cotizaciones guardan el nombre por copia, así que NO se pierden
+     al borrar al cliente — pero conviene decírselo al usuario. */
+  var nCot = (typeof quotes !== 'undefined' ? quotes : []).filter(function(q) {
+    return q.client && c.name && q.client.toLowerCase() === c.name.toLowerCase();
+  }).length;
+  m3Confirm('¿Eliminar a ' + esc(c.name) + '?', function() {
+    clients.splice(i, 1);
+    sv('clients', clients);
+    renderClients();
+    snack('Cliente eliminado');
+  }, { detail: nCot > 0
+        ? 'Sus ' + nCot + ' cotizaciones se conservan — guardan el nombre por copia.'
+        : 'No tiene cotizaciones registradas.' });
 }
 
 /* ── Filtrar lista de clientes en el buscador del tab ────────────── */
@@ -326,9 +344,9 @@ function showClientDetail(i) {
       '<div style="flex:1;min-width:0">' +
         '<div style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px">' +
           '<span class="num">' + esc(q.quoteNum || '—') + '</span>' +
-          '<span style="font-size:10px;font-family:var(--font-mono);color:' + statusColor + ';text-transform:uppercase;letter-spacing:0.06em">' + status + '</span>' +
+          '<span style="font-size:12px;font-family:var(--font-mono);color:' + statusColor + ';text-transform:uppercase;letter-spacing:0.06em">' + status + '</span>' +
         '</div>' +
-        '<div style="font-size:11px;color:var(--ink-3);margin-top:2px">' +
+        '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">' +
           qDate + ' · ' + nItems + ' producto' + (nItems !== 1 ? 's' : '') +
         '</div>' +
       '</div>' +
@@ -360,7 +378,7 @@ function showClientDetail(i) {
           initials +
         '</div>' +
         '<div style="font-size:22px;font-weight:600;letter-spacing:-0.02em">' + esc(c.name) + '</div>' +
-        (c.tag ? '<div style="display:inline-block;margin-top:8px;padding:3px 10px;border-radius:20px;border:0.5px solid ' + tagColor + ';font-size:11px;color:' + tagColor + ';letter-spacing:0.06em;text-transform:uppercase">' + esc(c.tag) + '</div>' : '') +
+        (c.tag ? '<div style="display:inline-block;margin-top:8px;padding:3px 10px;border-radius:20px;border:0.5px solid ' + tagColor + ';font-size:12px;color:' + tagColor + ';letter-spacing:0.06em;text-transform:uppercase">' + esc(c.tag) + '</div>' : '') +
       '</div>' +
 
       /* Stats row */
@@ -386,7 +404,7 @@ function showClientDetail(i) {
       '<div style="margin:0 20px;padding-bottom:40px">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">' +
           '<div class="micro">Cotizaciones</div>' +
-          '<div style="font-size:11px;color:var(--ink-3)">Última: ' + lastDate + '</div>' +
+          '<div style="font-size:12px;color:var(--ink-3)">Última: ' + lastDate + '</div>' +
         '</div>' +
         '<div class="card" style="padding:0 16px">' + quotesHTML + '</div>' +
       '</div>' +
@@ -397,6 +415,6 @@ function showClientDetail(i) {
 function _statCell(value, label) {
   return '<div style="background:var(--bg-elev);padding:14px 8px;text-align:center">' +
     '<div class="num" style="font-size:18px;font-weight:600;letter-spacing:-0.02em">' + value + '</div>' +
-    '<div style="font-size:10px;color:var(--ink-3);margin-top:3px;letter-spacing:0.04em;text-transform:uppercase">' + label + '</div>' +
+    '<div style="font-size:12px;color:var(--ink-3);margin-top:3px;letter-spacing:0.04em;text-transform:uppercase">' + label + '</div>' +
   '</div>';
 }

@@ -1,4 +1,10 @@
 {
+  "name": "calculadora-3d",
+  "description": "La Casita del Molde — calculadora de costos e impresión 3D",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/costing.test.js"
+  },
   "devDependencies": {
     "sharp": "^0.34.5"
   }

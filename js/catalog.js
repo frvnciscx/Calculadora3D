@@ -133,6 +133,21 @@ function showTableProductModal(i) {
     return '<option value="' + di + '">' + d.label + (d.cost > 0 ? '  +' + cur + d.cost : '') + '</option>';
   }).join('');
 
+  /* Se calcula aparte a propósito.
+     Antes esto iba en línea dentro de la concatenación del HTML:
+
+       '<div ... id="tp-total">' + cur + sizes[0] && p.priceTable[sizes[0]]
+         ? cur + p.priceTable[sizes[0]].toFixed(2) : cur + '0.00' + '</div>'
+
+     El + se evalúa antes que && y que ?:, así que la etiqueta de apertura
+     entera se consumía dentro de la condición y NUNCA llegaba al HTML. Sin
+     id="tp-total", updateTableTotal() no encontraba el elemento y el precio
+     se quedaba congelado en el tamaño más chico sin avisar. Y si el producto
+     no tenía precio, salía un </div> suelto que desbarataba la hoja y dejaba
+     el botón "Agregar a orden" fuera de la pantalla. */
+  var precioBase    = p.priceTable[sizes[0]];
+  var precioInicial = precioBase ? cur + precioBase.toFixed(2) : cur + '0.00';
+
   document.getElementById('modal-container').innerHTML =
     '<div class="m3-scrim" onclick="closeModal()"></div>' +
     '<div class="m3-bottom-sheet">' +
@@ -149,16 +164,21 @@ function showTableProductModal(i) {
         '<label for="tp-design">Costo de diseño</label>' +
       '</div>' +
 
-      '<div class="m3-switch" style="margin:12px 0">' +
-        '<label>Incluir refuerzo</label>' +
+      /* El interruptor necesita el .m3-switch-track hermano: components.css
+         esconde el checkbox (display:none) y dibuja el control en el track.
+         Sin él, el control existía pero era invisible — no se podía saber si
+         el refuerzo estaba incluido o no. */
+      '<label class="m3-switch" style="margin:12px 0">' +
+        '<span>Incluir refuerzo</span>' +
         '<input type="checkbox" id="tp-refuerzo" onchange="updateTableTotal(' + i + ')">' +
-      '</div>' +
+        '<div class="m3-switch-track"></div>' +
+      '</label>' +
 
       '<div class="result-card" style="margin:12px 0" id="tp-result">' +
         '<div class="result-header">' +
           '<div>' +
             '<div class="result-subtitle">TOTAL</div>' +
-            '<div class="result-total" id="tp-total">' + cur + sizes[0] && p.priceTable[sizes[0]] ? cur + p.priceTable[sizes[0]].toFixed(2) : cur + '0.00' + '</div>' +
+            '<div class="result-total" id="tp-total">' + precioInicial + '</div>' +
           '</div>' +
           '<div class="result-base-col" id="tp-breakdown">' +
             '<div class="result-subtitle">DESGLOSE</div>' +
@@ -186,6 +206,11 @@ function showTableProductModal(i) {
 function updateTableTotal(i) {
   var p = catalogItems[i]; if (!p) return;
   var cur = config.currency || '$';
+  /* Si el elemento del total no existe, algo se rompió al armar el HTML.
+     Antes esto fallaba en silencio y el usuario veía un precio congelado. */
+  if (!document.getElementById('tp-total')) {
+    console.error('[catalog] falta #tp-total: el precio no se va a actualizar');
+  }
   var sizeEl    = document.getElementById('tp-size');
   var designEl  = document.getElementById('tp-design');
   var refuerzoEl = document.getElementById('tp-refuerzo');
@@ -233,12 +258,20 @@ function addTableItemToDraft(i) {
     matCost:   basePrice,
     energyCost: 0, laborCost: designCost, deprecCost: 0,
     fixedCost: 0, wasteCost: refuerzo,
-    baseCost:  total, totalCost: total,
+    /* baseCost null = "no se conoce el costo real de este producto".
+       Antes se guardaba baseCost = total, lo que hacía que el dashboard
+       calculara ganancia CERO para todo lo vendido por tabla de precios.
+       Con null, el dashboard lo excluye del cálculo de margen (ver
+       monthWithCost en dashboard.js) en vez de contarlo como margen cero. */
+    baseCost:  null, totalCost: total,
+    /* Precio de tabla. Se puede sobrescribir a mano en el borrador; éste
+       queda como referencia para poder volver. */
+    autoPrice: total, priceManual: false,
     qty: 1
   };
 
   if (!draftQuote) {
-    saveDraftQuote({ client: '', phone: '', notes: '', items: [item] });
+    saveDraftQuote({ editIndex: null, client: '', phone: '', notes: '', items: [item] });
   } else {
     draftQuote.items.push(item);
     saveDraftQuote(draftQuote);
@@ -407,7 +440,13 @@ function saveCatalogProduct(editIndex) {
 
 /* ── Eliminar ─────────────────────────────────────────────────── */
 function deleteCatalogProduct(i) {
-  if (!confirm('¿Eliminar "' + catalogItems[i].name + '" del catálogo?')) return;
+  var p = catalogItems[i]; if (!p) return;
+  m3Confirm('¿Eliminar "' + esc(p.name) + '" del catálogo?', function() {
+    _deleteCatalogProductConfirmed(i);
+  }, { detail: 'Las cotizaciones que ya lo usan no se modifican.' });
+}
+
+function _deleteCatalogProductConfirmed(i) {
   catalogItems.splice(i, 1);
   saveCatalog();
   showCatalogModal();

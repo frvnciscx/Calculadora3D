@@ -3,7 +3,10 @@
 function renderHistory() {
   var el = document.getElementById('history-list');
   if (!history.length) {
-    el.innerHTML = '<div class="empty-state"><span class="material-symbols-rounded">history</span><p>Sin cálculos guardados. Usa la calculadora y presiona «Guardar».</p></div>';
+    el.innerHTML = tplEmptyState('history',
+      'Sin cálculos guardados',
+      'Guarda un cálculo desde la calculadora para reutilizarlo después sin volver a capturarlo.',
+      { label: 'Ir a la calculadora', onclick: "showPage('calc')", icon: 'calculate' });
     return;
   }
   var cur = config.currency;
@@ -16,9 +19,13 @@ function reuseCalc(i) {
   var h = history[i]; if (!h) return;
   /* Prefill calculator fields with saved values */
   document.getElementById('calc-desc').value = h.desc || '';
-  document.getElementById('calc-weight').value = h.weight || '';
-  document.getElementById('calc-time').value = h.timeH || '';
-  document.getElementById('calc-design-time').value = h.designH || 0;
+  /* Se repone la placa capturada. Los cálculos guardados antes de que
+     existiera el campo no traen datos de placa: ahí la placa era una pieza. */
+  document.getElementById('calc-weight').value      = (h.plateWeight  != null ? h.plateWeight  : h.weight)  || '';
+  document.getElementById('calc-time').value        = (h.plateTimeH   != null ? h.plateTimeH   : h.timeH)   || '';
+  document.getElementById('calc-design-time').value = (h.plateDesignH != null ? h.plateDesignH : h.designH) || 0;
+  var piezasEl = document.getElementById('calc-pieces');
+  if (piezasEl) piezasEl.value = h.pieces || 1;
   var savedMargin = h.margin || 50;
   document.getElementById('calc-margin').value = savedMargin;
   var md2r = document.getElementById('calc-margin-display2');

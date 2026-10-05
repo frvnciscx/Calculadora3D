@@ -9,15 +9,44 @@ var _syncPushTimer  = null;
 var _syncInProgress = false;
 var _syncVersion    = parseInt(lv('syncVersion') || '0', 10);
 
-/* ── Trigger con debounce ────────────────────────────────────── */
+/* ── Trigger automático — DESACTIVADO ─────────────────────────────
+   Antes esto subía el estado local completo 3 s después de CUALQUIER
+   escritura (sv() lo llamaba en quotes, clients, inventory, config…).
+
+   Por qué era peligroso: al abrir la app en un dispositivo o navegador
+   nuevo, localStorage está vacío. Cualquier interacción disparaba un push
+   que reemplazaba el snapshot remoto por uno sin cotizaciones, sin clientes
+   y sin inventario, con fecha de ahora. El siguiente dispositivo que
+   sincronizara aplicaría ese estado vacío y borraría los datos reales.
+
+   Se desactiva hasta reemplazar la sincronización por snapshot con
+   sincronización por registro (ver docs/BASE-DE-DATOS.md). La sincronización
+   manual desde Ajustes sigue disponible y ahora está protegida.
+   ──────────────────────────────────────────────────────────────── */
 function schedulePush() {
-  clearTimeout(_syncPushTimer);
-  _syncPushTimer = setTimeout(pushSync, 3000);
+  /* No-op intencional. No borrar esta función: sv() en store.js la llama. */
+}
+
+/* ── ¿El estado local está vacío? ─────────────────────────────────
+   Un estado sin cotizaciones, clientes ni inventario casi siempre significa
+   "este dispositivo todavía no ha sincronizado", no "el usuario borró todo". */
+function _estadoLocalVacio() {
+  return (!quotes    || quotes.length    === 0) &&
+         (!clients   || clients.length   === 0) &&
+         (!inventory || inventory.length === 0);
 }
 
 /* ── Push completo ───────────────────────────────────────────── */
 function pushSync() {
   if (_syncInProgress) return;
+
+  /* Guarda de seguridad: nunca sobrescribir el remoto con un estado vacío. */
+  if (_estadoLocalVacio()) {
+    _setSyncIcon('error');
+    snack('Sin datos locales que subir — sincroniza primero para bajarlos');
+    return;
+  }
+
   _syncInProgress = true;
   _syncVersion++;
   sv('syncVersion', _syncVersion);

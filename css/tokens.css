@@ -70,15 +70,21 @@
   --bg-elev:  var(--jade-850);    /* #151C18 — tarjetas y paneles */
   --bg-sunk:  #090d0a;            /* más profundo que jade-950 */
 
-  /* Texto — escala Platinum */
-  --ink:   var(--platinum-100);   /* #E4E8E5 — texto primario */
-  --ink-2: var(--platinum-300);   /* #B9C2BC — texto secundario */
-  --ink-3: var(--platinum-500);   /* #8B968F — texto muted */
-  --ink-4: var(--platinum-700);   /* #5C6660 — texto muy sutil */
+  /* Texto — escala Platinum
+     Ratios de contraste WCAG medidos contra --bg / --bg-elev / --bg-sunk.
+     AA pide 4.5:1 para texto normal. Ver docs/AUDITORIA-UX.md */
+  --ink:   var(--platinum-100);   /* #E4E8E5 · 15.3 / 14.0 / 16.0 */
+  --ink-2: var(--platinum-300);   /* #B9C2BC · 10.4 /  9.5 / 10.8 */
+  --ink-3: var(--platinum-500);   /* #8B968F ·  6.2 /  5.7 /  6.4 */
+  --ink-4: #7C8680;               /* antes #5C6660 (2.9:1, no cumplía) · 5.0 / 4.6 / 5.2 */
 
   /* Bordes — escala Jade */
-  --line:   var(--jade-700);      /* #232D27 — borde sutil */
+  --line:   var(--jade-700);      /* #232D27 — separadores decorativos */
   --line-2: var(--jade-800);      /* #1A221D — borde más sutil */
+  /* Borde de componentes interactivos (campos de texto). WCAG 1.4.11 pide 3:1
+     para los límites de un control; un separador decorativo está exento, pero
+     el contorno de un campo es lo único que indica dónde se puede escribir. */
+  --line-strong: #5F6963;         /* 3.3 / 3.0 / 3.4 */
 
   /* Acento — Mint 500 */
   --accent:      var(--mint-500);  /* #00E699 */
@@ -217,9 +223,12 @@
   --type-label-lg-weight: 500;
   --type-label-lg-ls:     -0.01em;
 
-  --type-overline-size:   10px;
+  /* Overline: etiquetas en versalitas. Era 10px con 0.12em de espaciado —
+     el mismo problema que .micro. A 12px el espaciado grande estorba más de
+     lo que ayuda, así que se reduce junto con el tamaño. */
+  --type-overline-size:   12px;
   --type-overline-weight: 600;
-  --type-overline-ls:     0.12em;
+  --type-overline-ls:     0.08em;
 }
 
 /* ── LIGHT override ───────────────────────────────────────────────── */
@@ -229,15 +238,17 @@
   --bg-elev:  var(--paper-0);    /* #FFFFFF */
   --bg-sunk:  var(--paper-100);  /* #EFF1EF */
 
-  /* Texto — escala Ink */
-  --ink:   var(--ink-900);       /* #111814 */
-  --ink-2: var(--ink-600);       /* #3E4A43 */
-  --ink-3: var(--ink-400);       /* #69756E */
-  --ink-4: var(--ink-200);       /* #98A29C */
+  /* Texto — escala Ink
+     Ratios contra --bg / --bg-elev / --bg-sunk. Ver docs/AUDITORIA-UX.md */
+  --ink:   var(--ink-900);       /* #111814 · 17.1 / 18.0 / 15.9 */
+  --ink-2: var(--ink-600);       /* #3E4A43 ·  8.8 /  9.3 /  8.2 */
+  --ink-3: #636F68;              /* antes #69756E (4.2:1 sobre bg-sunk) · 5.0 / 5.2 / 4.6 */
+  --ink-4: #656F69;              /* antes #98A29C (2.3:1, no cumplía)   · 4.9 / 5.2 / 4.6 */
 
   /* Bordes — paper scale */
-  --line:   var(--paper-200);    /* #E2E6E3 */
+  --line:   var(--paper-200);    /* #E2E6E3 — separadores decorativos */
   --line-2: var(--paper-100);    /* #EFF1EF */
+  --line-strong: #888C89;        /* contorno de campos de texto · 3.2 / 3.4 / 3.0 */
 
   /* Acento — Emerald para mejor contraste en claro */
   --accent:      var(--emerald-800); /* #004D34 */
@@ -246,7 +257,7 @@
   /* Semánticos light */
   --ok:      var(--emerald-700); /* #006245 */
   --ok-tint: rgba(0, 98, 69, 0.08);
-  --warn:    #c27f00;
+  --warn:    #A05D00;            /* antes #c27f00 (3.3:1, no cumplía) · 4.9 / 5.2 / 4.6 */
   --danger:  #c0392b;
 
   /* MD3 aliases — light */

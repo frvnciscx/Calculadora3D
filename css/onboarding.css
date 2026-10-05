@@ -1,0 +1,151 @@
+/* ===== ACCESO Y ONBOARDING =================================================
+   Capa que cubre la app completa hasta que hay sesión y el usuario ya vio
+   la introducción. Usa los mismos tokens que el resto para no inventar
+   colores ni tipografías nuevas.
+   ========================================================================= */
+
+#auth-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 300;                 /* por encima de modales (201) y nav */
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 24px) 24px
+           calc(env(safe-area-inset-bottom, 0px) + 24px);
+}
+#auth-gate.hidden { display: none; }
+
+/* Contenedor centrado — en escritorio no se estira a todo lo ancho */
+.gate-inner {
+  width: 100%;
+  max-width: 400px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Marca ───────────────────────────────────────────────────────── */
+.gate-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 36px;
+}
+.gate-logo {
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  background: var(--accent-tint);
+  border: 0.5px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+}
+.gate-logo .material-symbols-rounded { font-size: 28px; color: var(--accent); }
+.gate-title {
+  font-size: 22px; font-weight: 700; letter-spacing: -0.03em;
+  color: var(--ink); text-align: center;
+}
+.gate-sub {
+  font-size: 13px; color: var(--ink-3); text-align: center; margin-top: -8px;
+}
+
+/* ── Separador "o" ───────────────────────────────────────────────── */
+.gate-or {
+  display: flex; align-items: center; gap: 12px;
+  margin: 20px 0;
+  font-size: 12px; color: var(--ink-4);
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.gate-or::before, .gate-or::after {
+  content: ''; flex: 1; height: 0.5px; background: var(--line);
+}
+
+/* ── Aviso de simulación ─────────────────────────────────────────── */
+.gate-note {
+  margin-top: 24px; padding: 12px 14px;
+  background: var(--bg-sunk);
+  border: 0.5px dashed var(--line);
+  border-radius: 10px;
+  font-size: 12px; color: var(--ink-3); line-height: 1.6;
+}
+.gate-note strong { color: var(--ink-2); }
+
+.gate-error {
+  margin-top: 12px;
+  font-size: 12px; color: var(--md-error);
+  min-height: 18px;
+}
+
+/* ── Onboarding ──────────────────────────────────────────────────── */
+.ob-skip {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 20px);
+  right: 24px;
+  font-size: 13px; color: var(--ink-3);
+  background: none; border: none; cursor: pointer;
+  padding: 6px 10px;
+}
+.ob-skip:hover { color: var(--ink); }
+
+.ob-art {
+  height: 180px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 32px;
+}
+.ob-art svg { max-width: 100%; max-height: 180px; }
+
+.ob-title {
+  font-size: 24px; font-weight: 700; letter-spacing: -0.03em;
+  color: var(--ink); margin-bottom: 12px; text-align: center;
+}
+.ob-body {
+  font-size: 14px; line-height: 1.65; color: var(--ink-2);
+  text-align: center; margin-bottom: 8px;
+}
+.ob-body strong { color: var(--ink); font-weight: 600; }
+
+.ob-tip {
+  margin-top: 20px; padding: 12px 14px;
+  background: var(--accent-tint);
+  border-radius: 10px;
+  font-size: 12px; line-height: 1.6; color: var(--ink-2);
+  text-align: left;
+}
+.ob-tip b { color: var(--accent); font-weight: 700; }
+
+/* Puntos de progreso */
+.ob-dots {
+  display: flex; justify-content: center; gap: 7px;
+  margin: 32px 0 20px;
+}
+.ob-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--line);
+  transition: width 0.25s var(--ease-out), background 0.25s var(--ease-out);
+}
+.ob-dot.active { width: 22px; border-radius: 4px; background: var(--accent); }
+
+.ob-actions { display: flex; gap: 10px; }
+.ob-actions .btn { flex: 1; }
+
+/* Animación de entrada de cada paso */
+.ob-step { animation: obIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes obIn {
+  from { opacity: 0; transform: translateX(14px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* En escritorio el panel no ocupa toda la pantalla */
+@media (min-width: 900px) {
+  #auth-gate { background: var(--bg-sunk); }
+  .gate-inner {
+    max-width: 440px;
+    background: var(--bg);
+    border: 0.5px solid var(--line);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: var(--shadow-modal);
+  }
+  .ob-skip { top: 28px; right: 32px; }
+}

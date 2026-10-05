@@ -89,13 +89,19 @@ function renderDashboard() {
       '<div style="width:100%;height:' + Math.max(h, 3) + 'px;' +
         'background:' + (isCurrent ? 'var(--ink)' : 'var(--line)') + ';' +
         'border-radius:2px 2px 0 0;transition:height 0.5s cubic-bezier(0.2,0.8,0.2,1)"></div>' +
-      '<div class="micro" style="font-size:9px">' + b.label + '</div>' +
+      '<div class="micro" style="font-size:12px">' + b.label + '</div>' +
     '</div>';
   }).join('');
 
-  /* ── Piezas impresas del mes (cotizaciones aceptadas este mes) ─── */
-  var piecesCount = monthAccepted
-    .reduce(function(s, q) { return s + (q.items ? q.items.length : 1); }, 0);
+  /* ── Piezas impresas del mes (cotizaciones aceptadas este mes) ───
+     Suma las CANTIDADES, no los renglones: una cotización con una partida
+     de 15 piezas son 15 piezas, no 1. Mismo criterio que las horas de abajo. */
+  var piecesCount = monthAccepted.reduce(function(s, q) {
+    if (q.items && q.items.length > 0) {
+      return s + q.items.reduce(function(si, it) { return si + (it.qty || 1); }, 0);
+    }
+    return s + 1; /* cotizaciones legacy sin items */
+  }, 0);
 
   /* ── Horas de impresión del mes (cotizaciones aceptadas) ─── */
   var monthPrintHours = monthAccepted.reduce(function(s, q) {
@@ -123,10 +129,10 @@ function renderDashboard() {
         var num = q.quoteNum ? q.quoteNum.replace('COT-','') : '?';
         return '<div class="row" style="padding:14px 0;cursor:pointer" onclick="showPage(\'quotes\')">' +
           '<div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">' +
-            '<div style="width:32px;height:32px;border-radius:6px;background:var(--bg-sunk);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;color:var(--ink-2);flex-shrink:0">' + num + '</div>' +
+            '<div style="width:32px;height:32px;border-radius:6px;background:var(--bg-sunk);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;color:var(--ink-2);flex-shrink:0">' + num + '</div>' +
             '<div style="flex:1;min-width:0">' +
               '<div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(q.items && q.items[0] ? q.items[0].desc : (q.desc || q.client)) + '</div>' +
-              '<div style="font-size:11px;color:var(--ink-3);margin-top:2px">' +
+              '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">' +
                 esc(q.client) + ' · ' +
                 '<span style="color:' + statusColor + '">' + statusDot + '</span>' +
               '</div>' +
@@ -166,14 +172,14 @@ function renderDashboard() {
           '<span class="material-symbols-rounded" style="font-size:22px;color:var(--accent)">calculate</span>' +
           '<div>' +
             '<div style="font-size:14px;font-weight:500;letter-spacing:-0.01em">Nueva cotización</div>' +
-            '<div style="font-size:11px;color:var(--ink-3);margin-top:2px">Calcular costo de pieza</div>' +
+            '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">Calcular costo de pieza</div>' +
           '</div>' +
         '</button>' +
         '<button onclick="showPage(\'quotes\')" class="card" style="padding:16px;text-align:left;display:flex;flex-direction:column;gap:10px;min-height:96px">' +
           '<span class="material-symbols-rounded" style="font-size:22px;color:var(--ink-2)">receipt_long</span>' +
           '<div>' +
             '<div style="font-size:14px;font-weight:500;letter-spacing:-0.01em">Ver cotizaciones</div>' +
-            '<div style="font-size:11px;color:var(--ink-3);margin-top:2px">' + monthQuotes.length + ' este mes</div>' +
+            '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">' + monthQuotes.length + ' este mes</div>' +
           '</div>' +
         '</button>' +
       '</div>' +
@@ -183,7 +189,7 @@ function renderDashboard() {
     '<div style="padding:24px 20px 0">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
         '<div class="micro">Cotizaciones recientes</div>' +
-        '<button onclick="showPage(\'quotes\')" style="font-size:12px;color:var(--ink-2)">Ver todo →</button>' +
+        '<button class="link-btn" onclick="showPage(\'quotes\')" style="font-size:12px;color:var(--ink-2)">Ver todo →</button>' +
       '</div>' +
       '<div class="card" style="padding:0 16px">' + recentRows + '</div>' +
     '</div>' +
@@ -203,7 +209,7 @@ function renderDashboard() {
         '<div class="row" style="padding:14px 0">' +
           '<div class="row-label">Tasa de aceptación</div>' +
           '<div class="row-value">' + (monthQuotes.length > 0 ? acceptRate + '%' : '—') +
-            (acceptRate > 60 ? ' <span style="color:var(--ok);font-size:11px">↑</span>' : '') +
+            (acceptRate > 60 ? ' <span style="color:var(--ok);font-size:12px">↑</span>' : '') +
           '</div>' +
         '</div>' +
         '<div class="row" style="padding:14px 0">' +
@@ -215,7 +221,7 @@ function renderDashboard() {
           '<div class="row-value">' +
             (monthPrintHours > 0 ? monthPrintHours.toFixed(1) + ' h' : '—') +
             (hoursUsePct !== null
-              ? ' <span style="font-size:11px;color:' + (hoursUsePct >= 90 ? 'var(--danger)' : hoursUsePct >= 70 ? 'var(--accent)' : 'var(--ink-3)') + '">· ' + hoursUsePct + '% cap.</span>'
+              ? ' <span style="font-size:12px;color:' + (hoursUsePct >= 90 ? 'var(--danger)' : hoursUsePct >= 70 ? 'var(--accent)' : 'var(--ink-3)') + '">· ' + hoursUsePct + '% cap.</span>'
               : '') +
           '</div>' +
         '</div>' +

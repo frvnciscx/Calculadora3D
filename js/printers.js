@@ -1,8 +1,12 @@
 /* ===== PRINTERS CRUD ===== */
 function renderPrinters() {
   const el = document.getElementById('printer-list');
+  marcarListaVacia('printers', !printers.length);
   if (!printers.length) {
-    el.innerHTML = '<div class="empty-state"><span class="material-symbols-rounded">print</span><p>No hay impresoras. Agrega una.</p></div>';
+    el.innerHTML = tplEmptyState('print',
+      'Sin impresoras',
+      'Agrega tus impresoras con su consumo y vida útil para que el costo por hora salga bien.',
+      { label: 'Agregar impresora', onclick: 'showPrinterModal()', icon: 'add' });
     return;
   }
   const cur = config.currency;

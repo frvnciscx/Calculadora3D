@@ -6,6 +6,9 @@ function calculate(silent) {
   var timeH    = parseFloat(document.getElementById('calc-time').value) || 0;
   var designH  = parseFloat(document.getElementById('calc-design-time').value) || 0;
   var margin   = parseFloat(document.getElementById('calc-margin').value) || 0;
+  /* Piezas de la placa. Lo capturado arriba es de la corrida completa. */
+  var piecesEl = document.getElementById('calc-pieces');
+  var pieces   = Math.max(1, Math.round(parseFloat(piecesEl && piecesEl.value) || 1));
   var printer  = printers.find(function(p) { return p.id === document.getElementById('calc-printer').value; });
   var material = materials.find(function(m) { return m.id === document.getElementById('calc-material').value; });
 
@@ -28,54 +31,45 @@ function calculate(silent) {
 
   var cur = config.currency;
 
-  /* ── ¿Impresora de resina? ── */
-  var isResin = (printer.type === 'Resina');
-
   /* ── ¿Modo AMS multicolor? ── */
   var amsData = _getAMSData();
 
-  /* Peso efectivo: si es resina se agrega % de soportes */
-  var supportPct = isResin ? (config.resinSupportPct || 20) : 0;
-  var effectiveWeight = weight * (1 + supportPct / 100);
-
-  /* Costo de material: AMS override o cálculo normal */
-  var matCost = amsData
-    ? (amsData.amsMatCost + amsData.purgeCost)
-    : (effectiveWeight / 1000) * material.costPerKg;
-  var energyCost = (printer.power / 1000) * timeH * config.kwhCost;
-  var laborCost  = designH * config.laborCostPerHour;
-  var deprecCost = (printer.lifeHours > 0) ? (printer.cost / printer.lifeHours) * timeH : 0;
-  var fixedCost  = (config.monthlyPrintHours > 0) ? (config.fixedMonthlyCost / config.monthlyPrintHours) * timeH : 0;
-
-  /* ── Post-proceso resina (IPA + UV) ── */
-  var ipaCost  = 0;
-  var uvCost   = 0;
-  if (isResin) {
-    /* IPA: ml × ($/L ÷ 1000) */
-    var mlPerPrint   = config.ipaMlPerPrint  || 150;
-    var ipaLiterCost = config.ipaLiterCost   || 80;
-    ipaCost = mlPerPrint * (ipaLiterCost / 1000);
-
-    /* Elegoo Mercury Plus: ~24W×5min lavado + ~36W×3min curado = 0.0038 kWh */
-    var washKwh  = (24 / 1000) * (5 / 60);   /* ≈ 0.002 kWh */
-    var cureKwh  = (36 / 1000) * (3 / 60);   /* ≈ 0.0018 kWh */
-    uvCost = (washKwh + cureKwh) * config.kwhCost;
-  }
-
   /* ── Post-procesado (pintura, primer, barniz, tiempo pintado) ── */
   var pp = _getPostProcData();
-  var postProcCost = pp ? pp.totalPostCost : 0;
 
-  var subtotal   = matCost + energyCost + laborCost + deprecCost + fixedCost + ipaCost + uvCost + postProcCost;
-  var wasteCost  = subtotal * (config.wastePercent / 100);
-  var baseCost   = subtotal + wasteCost;
-  var totalCost  = roundToFive(baseCost * (1 + margin / 100));
+  /* ── El cálculo vive en js/costing.js ──────────────────────────
+     Esta función solo lee la pantalla, delega la fórmula y pinta el
+     resultado. Así el cálculo se puede probar sin navegador y se puede
+     portar a Android sin arrastrar la interfaz. */
+  var r = computeCost({
+    weight:       weight,
+    timeH:        timeH,
+    designH:      designH,
+    pieces:       pieces,
+    margin:       margin,
+    postProcCost: pp ? pp.totalPostCost : 0,
+    amsMatCost:   amsData ? amsData.amsMatCost : null,
+    amsPurgeCost: amsData ? amsData.purgeCost  : 0
+  }, config, printer, material);
+
+  var isResin         = r.isResin;
+  var supportPct      = r.supportPct;
+  var effectiveWeight = r.effectiveWeight;
+  var matCost      = r.matCost,      energyCost   = r.energyCost;
+  var laborCost    = r.laborCost,    deprecCost   = r.deprecCost;
+  var fixedCost    = r.fixedCost,    indirectCost = r.indirectCost;
+  var ipaCost      = r.ipaCost,      uvCost       = r.uvCost;
+  var postProcCost = r.postProcCost, maintCost    = r.maintCost;
+  var wasteCost    = r.wasteCost;
+  var baseCost     = r.baseCost,     totalCost    = r.totalCost;
 
   document.getElementById('r-mat').textContent     = cur + matCost.toFixed(2);
   document.getElementById('r-energy').textContent   = cur + energyCost.toFixed(2);
   document.getElementById('r-labor').textContent    = cur + laborCost.toFixed(2);
   document.getElementById('r-deprec').textContent   = cur + deprecCost.toFixed(2);
   document.getElementById('r-fixed').textContent    = cur + fixedCost.toFixed(2);
+  _setRubroRow('row-maint',    'r-maint',    maintCost,    cur);
+  _setRubroRow('row-indirect', 'r-indirect', indirectCost, cur);
   document.getElementById('r-waste').textContent    = cur + wasteCost.toFixed(2);
   document.getElementById('result-base').textContent  = cur + baseCost.toFixed(2);
   document.getElementById('result-total').textContent = cur + totalCost.toFixed(0);
@@ -101,6 +95,8 @@ function calculate(silent) {
     { id: 'ccb-design', val: laborCost },
     { id: 'ccb-deprec', val: deprecCost },
     { id: 'ccb-fixed',  val: fixedCost },
+    { id: 'ccb-maint',    val: maintCost },
+    { id: 'ccb-indirect', val: indirectCost },
     { id: 'ccb-waste',  val: wasteCost },
     { id: 'ccb-post',   val: postProcCost + ipaCost + uvCost },
   ];
@@ -112,13 +108,42 @@ function calculate(silent) {
 
   /* ── Etiqueta de desglose ── */
   var rubroCount = 6; /* mat, energy, labor, deprec, fixed, waste */
+  if (maintCost > 0)             rubroCount++;
+  if (indirectCost > 0)          rubroCount++;
   if (postProcCost > 0)          rubroCount++;
   if (isResin && (ipaCost + uvCost) > 0) rubroCount++;
   var lblEl = document.getElementById('breakdown-label');
   if (lblEl) lblEl.textContent = 'Ver desglose · ' + rubroCount + ' rubros';
 
+  /* ── Línea "por pieza" ────────────────────────────────────────────
+     Con una placa de 30 el número grande baja mucho de golpe. Sin ver de
+     dónde salió, el usuario no sabe si la app dividió o si se equivocó al
+     capturar. Solo aparece cuando hay más de una pieza. */
+  var perPieceEl  = document.getElementById('calc-per-piece');
+  var perPieceTxt = document.getElementById('per-piece-detail');
+  if (perPieceEl && perPieceTxt) {
+    if (pieces > 1) {
+      perPieceTxt.textContent =
+        (weight / pieces).toFixed(1) + ' g · ' +
+        (timeH  / pieces).toFixed(2) + ' h · ' +
+        cur + baseCost.toFixed(2) + ' de costo · placa de ' + pieces;
+      perPieceEl.classList.remove('hidden');
+    } else {
+      perPieceEl.classList.add('hidden');
+    }
+  }
+
   /* ── Bloque de post-procesado (pintura) ── */
   _renderPostProcBlock(pp, cur);
+
+  /* ── Resumen de purga AMS — para comparar contra el dato del slicer ── */
+  var amsSummaryEl = document.getElementById('ams-purge-summary');
+  if (amsSummaryEl) {
+    amsSummaryEl.textContent = amsData
+      ? amsData.numPurges + ' × ' + amsData.purgeGrams.toFixed(2) + ' g = ' +
+        (amsData.numPurges * amsData.purgeGrams).toFixed(2) + ' g · ' + cur + amsData.purgeCost.toFixed(2)
+      : '—';
+  }
 
   /* ── Bloque de post-proceso resina ── */
   var resinBlock = document.getElementById('r-resin-block');
@@ -142,30 +167,57 @@ function calculate(silent) {
     btnAdd.disabled = false;
   }
 
-  /* Recordar última impresora y material usados */
-  config.lastPrinterId  = printer.id;
-  config.lastMaterialId = material.id;
-  sv('config', config);
+  /* Recordar última impresora y material usados.
+     calculate() corre en CADA pulsación del teclado, así que antes esto
+     reescribía la configuración completa letra por letra. Ahora solo se
+     guarda cuando el valor cambió de verdad — que es una o dos veces por
+     sesión, no cien. */
+  if (config.lastPrinterId !== printer.id || config.lastMaterialId !== material.id) {
+    config.lastPrinterId  = printer.id;
+    config.lastMaterialId = material.id;
+    sv('config', config);
+  }
 
   var spoolSel = document.getElementById('calc-spool');
   var spoolId  = spoolSel ? spoolSel.value : '';
 
   saveLastCalc({
     desc:           document.getElementById('calc-desc').value || 'Sin descripción',
-    weight, timeH, designH, margin,
+    /* Todo lo que sale de aquí es POR PIEZA: es lo que descuenta el inventario
+       y lo que se multiplica por la cantidad en la cotización. Si guardáramos
+       los gramos de la placa, un pedido de 30 descontaría 30 placas.
+       Los datos tal como se capturaron se guardan aparte, para poder volver a
+       llenar el formulario igual que estaba. */
+    weight:         weight  / pieces,
+    timeH:          timeH   / pieces,
+    designH:        designH / pieces,
+    margin:         margin,
+    pieces:         pieces,
+    plateWeight:    weight,
+    plateTimeH:     timeH,
+    plateDesignH:   designH,
     printer:        printer.name,
     material:       material.name,
     printerId:      printer.id,
     materialId:     material.id,
     spoolId:        spoolId,
+    /* Rollos por color en modo AMS. Sin esto el descuento de inventario
+       ignoraba los trabajos multicolor — justo los que más filamento gastan —
+       porque el selector de rollo único está oculto en ese modo. */
+    amsColors:      amsData ? amsData.colors.map(function(c) {
+                      return { spoolId: c.spoolId, weight: c.weight / pieces };
+                    }) : null,
+    amsPurgeGrams:  amsData ? (amsData.purgeGrams * amsData.numPurges) / pieces : 0,
     isResin:        isResin,
-    effectiveWeight: isResin ? effectiveWeight : weight,
+    effectiveWeight: isResin ? effectiveWeight : weight / pieces,
     supportPct:     supportPct,
     matCost, energyCost, laborCost, deprecCost, fixedCost,
     ipaCost:        ipaCost,
     uvCost:         uvCost,
     postProc:       pp,
     postProcCost:   postProcCost,
+    maintCost:      maintCost,
+    indirectCost:   indirectCost,
     wasteCost,
     baseCost, totalCost,
     date: new Date().toISOString()
@@ -174,7 +226,7 @@ function calculate(silent) {
 
 /* ── Listeners de cálculo en vivo ─────────────────────────────── */
 function initCalcLive() {
-  var liveInputs   = ['calc-weight', 'calc-time', 'calc-design-time'];
+  var liveInputs   = ['calc-weight', 'calc-time', 'calc-design-time', 'calc-pieces'];
   var liveSelects  = ['calc-printer', 'calc-material'];
   var liveRange    = ['calc-margin'];
 
@@ -234,13 +286,17 @@ function _updateSpoolSelector() {
   var hiddenEl= document.getElementById('calc-spool');
   if (!chipsEl || !hiddenEl || !matEl) return;
 
-  /* Nombre del material seleccionado (sin precio, solo texto hasta el paréntesis) */
-  var matText = matEl.options[matEl.selectedIndex] ? matEl.options[matEl.selectedIndex].text : '';
-  var matName = matText.split(' (')[0].trim();
-
-  /* Filtrar rollos del inventario por material activo */
+  /* Filtrar rollos del inventario por material activo.
+     Se compara por materialId, no por nombre: antes bastaba renombrar un
+     material para que todos sus rollos desaparecieran de aquí. */
+  var matId = matEl.value;
+  var matSel = materials.find(function(m) { return m.id === matId; });
   var matching = (typeof inventory !== 'undefined' ? inventory : []).filter(function(it) {
-    return it.material && matName && it.material.toLowerCase() === matName.toLowerCase();
+    if (it.materialId) return it.materialId === matId;
+    /* Respaldo para rollos que la migración no pudo resolver porque su
+       material ya no existe en el catálogo. */
+    return matSel && it.material &&
+           it.material.toLowerCase() === matSel.name.toLowerCase();
   });
 
   var prevId = hiddenEl.value;
@@ -257,14 +313,14 @@ function _updateSpoolSelector() {
     var dot   = it.colorHex
       ? 'background:' + it.colorHex + ';border:none'
       : 'background:var(--bg-sunk);border:1px solid var(--line)';
-    var label = (it.color || it.material);
+    var label = (it.color || nombreMaterialDeRollo(it));
     var remain= (it.remainingG || 0);
     var isActive = it.id === prevId;
     html += '<button type="button" class="color-chip' + (isActive ? ' active' : '') +
       '" onclick="_selectColorChip(this,\'' + it.id + '\')">' +
       '<span style="width:12px;height:12px;border-radius:50%;flex-shrink:0;display:inline-block;' + dot + '"></span>' +
       '<span>' + esc(label) + '</span>' +
-      (remain > 0 ? '<span style="font-size:10px;opacity:0.55">' + remain.toFixed(0) + 'g</span>' : '') +
+      (remain > 0 ? '<span style="font-size:12px;opacity:0.55">' + remain.toFixed(0) + 'g</span>' : '') +
       '</button>';
   });
 
@@ -302,6 +358,9 @@ function _updateAMSBlock() {
     block.classList.remove('hidden');
     /* Ocultar selector de rollo individual — AMS gestiona sus propios colores */
     if (spoolWrap) spoolWrap.style.display = 'none';
+    /* Prefill de la purga con el valor de Ajustes, sin pisar lo que el usuario escribió */
+    var purgeInp = document.getElementById('ams-purge-grams');
+    if (purgeInp && purgeInp.value === '') purgeInp.value = (config.amsPurgeGrams || 0.7);
     _renderAMSSlots();
   } else {
     block.classList.add('hidden');
@@ -331,7 +390,7 @@ function _renderAMSSlots() {
     slot.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px';
     slot.innerHTML =
       '<div style="width:22px;height:22px;border-radius:50%;background:var(--bg-sunk);display:flex;align-items:center;justify-content:center;' +
-        'font-family:var(--font-mono);font-size:9px;font-weight:700;color:var(--ink-3);flex-shrink:0">' + (i+1) + '</div>' +
+        'font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--ink-3);flex-shrink:0">' + (i+1) + '</div>' +
       '<div class="m3-field" style="flex:2;margin:0">' +
         '<select class="ams-spool-sel" onchange="calculate(true)">' +
           '<option value="">Sin especificar</option>' +
@@ -356,12 +415,88 @@ function _populateAMSSpools() {
     var fdmSpools = inventory.filter(function(it) { return (it.remainingG || 0) > 0; });
     sel.innerHTML = '<option value="">Sin especificar</option>' +
       fdmSpools.map(function(it) {
-        var label = (it.brand ? it.brand + ' ' : '') + it.material + (it.color ? ' · ' + it.color : '') +
+        var label = (it.brand ? it.brand + ' ' : '') + nombreMaterialDeRollo(it) + (it.color ? ' · ' + it.color : '') +
                     ' (' + (it.remainingG||0).toFixed(0) + 'g)';
         return '<option value="' + it.id + '" data-cost="' + (it.costPerKg || 0) + '">' + label + '</option>';
       }).join('');
     if (prev) sel.value = prev;
   });
+}
+
+/* ── Ayuda: cómo obtener purga y cambios de color del slicer ───────
+   Bottom sheet en móvil, modal centrado en escritorio — ver .help-sheet
+   en desktop.css. El drag to dismiss lo engancha native.js al detectar
+   .m3-bottom-sheet dentro de #modal-container. */
+function showPurgeHelp() {
+  var container = document.getElementById('modal-container');
+  if (!container) return;
+
+  function step(n, title, body) {
+    return '<div style="display:flex;gap:12px;margin-bottom:16px">' +
+      '<div style="width:22px;height:22px;border-radius:50%;background:var(--accent-tint);flex-shrink:0;' +
+        'display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);' +
+        'font-size:12px;font-weight:700;color:var(--accent)">' + n + '</div>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px">' + title + '</div>' +
+        '<div style="font-size:12px;color:var(--ink-3);line-height:1.6">' + body + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  container.innerHTML =
+    '<div class="m3-scrim" onclick="closeModal()"></div>' +
+    '<div class="m3-bottom-sheet help-sheet">' +
+      '<div class="m3-drag-handle"></div>' +
+      '<h2>Datos de purga</h2>' +
+      '<div style="font-size:12px;color:var(--ink-3);line-height:1.6;margin-bottom:20px">' +
+        'El slicer ya calcula los dos números. Rebana la pieza y abre ' +
+        '<strong style="color:var(--ink-2)">Resultado del corte</strong>.' +
+      '</div>' +
+
+      step(1, 'Cambios de color',
+        'Copia el valor de «Tiempos de cambio en el filamento». No es el número de colores: ' +
+        'una pieza multicolor alterna colores varias veces por capa.') +
+
+      step(2, 'Purga por cambio',
+        'En el renglón <strong style="color:var(--ink-2)">Total</strong>, suma ' +
+        '<em>Expulsado</em> + <em>Torre</em> y divide entre los cambios.') +
+
+      /* Ejemplo trabajado */
+      '<div style="background:var(--bg-sunk);border-radius:10px;padding:14px 16px;margin-bottom:16px">' +
+        '<div class="micro" style="color:var(--ink-4);margin-bottom:10px">Ejemplo · pieza de 4 colores</div>' +
+        '<div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-2);line-height:1.9">' +
+          '<div style="display:flex;justify-content:space-between"><span>Expulsado</span><span>4,90 g</span></div>' +
+          '<div style="display:flex;justify-content:space-between"><span>Torre</span><span>1,09 g</span></div>' +
+          '<div style="display:flex;justify-content:space-between;border-top:0.5px solid var(--line);margin-top:6px;padding-top:6px">' +
+            '<span>Desperdicio</span><span>5,99 g</span></div>' +
+          '<div style="display:flex;justify-content:space-between;color:var(--ink-4)"><span>÷ 9 cambios</span></div>' +
+          '<div style="display:flex;justify-content:space-between;color:var(--accent);font-weight:600">' +
+            '<span>Purga por cambio</span><span>0,67 g</span></div>' +
+        '</div>' +
+      '</div>' +
+
+      /* Tabla de referencia */
+      '<div class="micro" style="color:var(--ink-4);margin-bottom:8px">Referencia en PLA</div>' +
+      '<div style="border:0.5px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:18px">' +
+        [['Entre tonos parecidos', '0,25 g'],
+         ['Típico', '0,7 g'],
+         ['De oscuro a claro', '0,9 g']].map(function(r, i) {
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px' +
+            (i < 2 ? ';border-bottom:0.5px solid var(--line)' : '') + '">' +
+            '<span style="font-size:12px;color:var(--ink-2)">' + r[0] + '</span>' +
+            '<span class="num" style="font-size:12px;color:var(--ink)">' + r[1] + '</span>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+
+      '<div style="font-size:12px;color:var(--ink-4);line-height:1.6;margin-bottom:20px">' +
+        'Si dejas «cambios» vacío se asume uno por color — el mínimo teórico, casi siempre corto. ' +
+        'La línea de <strong>Purga total</strong> en la calculadora te sirve para comparar ' +
+        'contra el desperdicio que reporta el slicer.' +
+      '</div>' +
+
+      '<button class="btn btn-primary" style="width:100%" onclick="closeModal()">Entendido</button>' +
+    '</div>';
 }
 
 /* Lee los datos AMS del DOM → devuelve null si modo inactivo */
@@ -393,9 +528,20 @@ function _getAMSData() {
 
   if (!colors.length) return null;
 
+  /* Purga por cambio — el dato bueno sale del slicer: (Expulsado + Torre) ÷ cambios.
+     Referencia en PLA: 0.25 g entre tonos parecidos, 0.7 g típico, 0.9 g oscuro→claro. */
   var purgeEl   = document.getElementById('ams-purge-grams');
-  var purgeGrams = parseFloat((purgeEl && purgeEl.value) || 40) || 40;
-  var numPurges  = Math.max(0, colors.length - 1);
+  var purgeRaw  = purgeEl ? purgeEl.value : '';
+  var purgeGrams = (purgeRaw === '' || purgeRaw === null || purgeRaw === undefined)
+    ? (config.amsPurgeGrams || 0.7)
+    : (parseFloat(purgeRaw) || 0);
+
+  /* Cambios de color: el slicer los reporta ("Tiempos de cambio en el filamento").
+     Sin ese dato se asume uno por color — el mínimo teórico, casi siempre corto,
+     porque una pieza multicolor alterna colores varias veces por capa. */
+  var changesEl = document.getElementById('ams-color-changes');
+  var changes   = parseFloat((changesEl && changesEl.value) || 0) || 0;
+  var numPurges = changes > 0 ? changes : Math.max(0, colors.length - 1);
 
   /* Costo total de material AMS */
   var amsMatCost = colors.reduce(function(s, c) {
@@ -443,13 +589,17 @@ function saveResinParams() {
   if (!isNaN(fldSupport) && fldSupport >= 0 && fldSupport <= 100) config.resinSupportPct = fldSupport;
   if (!isNaN(fldMl)      && fldMl >= 0)                           config.ipaMlPerPrint   = fldMl;
   if (!isNaN(fldLiter)   && fldLiter >= 0)                        config.ipaLiterCost    = fldLiter;
-  sv('config', config);
+  /* Guardado diferido: estos campos están en oninput, así que escribir "150"
+     disparaba tres guardados. El cálculo sí es inmediato — el usuario ve el
+     número actualizarse — pero persistir puede esperar a que deje de teclear. */
+  svDebounced('config', config);
   calculate(true);  /* recalcular en tiempo real */
 }
 
 /* ── Guardar en historial ─────────────────────────────────────── */
 function saveToHistory() {
-  if (!lastCalc) return;
+  /* Antes salía en silencio si no había cálculo, así que el botón parecía roto. */
+  if (!lastCalc) { snack('Calcula un costo antes de guardarlo'); return; }
   history.unshift(lastCalc);
   if (history.length > 100) history.pop();
   sv('history', history);
@@ -463,9 +613,15 @@ function restoreCalcResult() {
   if (!lastCalc) return;
   var cur = config.currency;
   document.getElementById('calc-desc').value              = lastCalc.desc !== 'Sin descripción' ? lastCalc.desc : '';
-  document.getElementById('calc-weight').value            = lastCalc.weight || '';
-  document.getElementById('calc-time').value              = lastCalc.timeH || '';
-  document.getElementById('calc-design-time').value       = lastCalc.designH || 0;
+  /* Se repone lo que se capturó (la placa), no lo que se guardó (la pieza).
+     Los cálculos viejos no traen los datos de placa: ahí pieza y placa son
+     lo mismo. */
+  var piezas = lastCalc.pieces || 1;
+  document.getElementById('calc-weight').value            = (lastCalc.plateWeight  != null ? lastCalc.plateWeight  : lastCalc.weight)  || '';
+  document.getElementById('calc-time').value              = (lastCalc.plateTimeH   != null ? lastCalc.plateTimeH   : lastCalc.timeH)   || '';
+  document.getElementById('calc-design-time').value       = (lastCalc.plateDesignH != null ? lastCalc.plateDesignH : lastCalc.designH) || 0;
+  var piezasEl = document.getElementById('calc-pieces');
+  if (piezasEl) piezasEl.value = piezas;
   document.getElementById('calc-margin').value            = lastCalc.margin || 50;
   var mnEl = document.getElementById('calc-margin-num');
   if (mnEl) mnEl.value = lastCalc.margin || 50;
@@ -483,6 +639,8 @@ function restoreCalcResult() {
   document.getElementById('r-labor').textContent          = cur + lastCalc.laborCost.toFixed(2);
   document.getElementById('r-deprec').textContent         = cur + lastCalc.deprecCost.toFixed(2);
   document.getElementById('r-fixed').textContent          = cur + lastCalc.fixedCost.toFixed(2);
+  _setRubroRow('row-maint',    'r-maint',    lastCalc.maintCost    || 0, cur);
+  _setRubroRow('row-indirect', 'r-indirect', lastCalc.indirectCost || 0, cur);
   document.getElementById('r-waste').textContent          = cur + lastCalc.wasteCost.toFixed(2);
   document.getElementById('result-base').textContent      = cur + lastCalc.baseCost.toFixed(2);
   document.getElementById('result-total').textContent     = cur + lastCalc.totalCost.toFixed(0);
@@ -509,6 +667,20 @@ function restoreCalcResult() {
       resinBlock.classList.add('hidden');
     }
   }
+  /* Línea "por pieza" — lastCalc ya guarda los valores divididos */
+  var ppEl  = document.getElementById('calc-per-piece');
+  var ppTxt = document.getElementById('per-piece-detail');
+  if (ppEl && ppTxt) {
+    if (piezas > 1) {
+      ppTxt.textContent = (lastCalc.weight || 0).toFixed(1) + ' g · ' +
+        (lastCalc.timeH || 0).toFixed(2) + ' h · ' +
+        cur + (lastCalc.baseCost || 0).toFixed(2) + ' de costo · placa de ' + piezas;
+      ppEl.classList.remove('hidden');
+    } else {
+      ppEl.classList.add('hidden');
+    }
+  }
+
   /* Garantizar que el panel de resultado sea visible */
   var resEl = document.getElementById('calc-result');
   if (resEl) resEl.classList.remove('hidden');
@@ -572,9 +744,15 @@ function saveCurrentPreset() {
 }
 
 function deletePreset(i) {
-  presets.splice(i, 1);
-  sv('presets', presets);
-  renderPresets();
+  var p = presets[i]; if (!p) return;
+  /* La ✕ vive dentro del chip, así que tarde o temprano se falla el toque.
+     Antes borraba al instante, sin preguntar y sin deshacer. */
+  m3Confirm('¿Eliminar el preset «' + esc(p.name) + '»?', function() {
+    presets.splice(i, 1);
+    sv('presets', presets);
+    renderPresets();
+    snack('Preset eliminado');
+  }, { detail: 'Solo se borra el atajo. Tus cotizaciones no se tocan.' });
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -721,6 +899,14 @@ function toggleBreakdown() {
       lbl.textContent = lbl.textContent.replace('Ver', 'Ocultar');
     }
   }
+}
+
+/* ── Helper: fila de rubro opcional — se oculta cuando vale 0 ──── */
+function _setRubroRow(rowId, valId, val, cur) {
+  var row = document.getElementById(rowId);
+  var el  = document.getElementById(valId);
+  if (el)  el.textContent = cur + val.toFixed(2);
+  if (row) row.classList.toggle('hidden', !(val > 0));
 }
 
 /* ── Helper: estado visual de un campo ───────────────────────────

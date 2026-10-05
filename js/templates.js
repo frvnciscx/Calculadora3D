@@ -7,10 +7,32 @@
 
 /* ── Utilidades compartidas ─────────────────────────────────────── */
 
-function tplEmptyState(icon, text) {
+/* Estado vacío con jerarquía: icono → título → explicación → acción.
+   El botón va DEBAJO del texto, que es donde la gente lo busca después de
+   leer qué pasó. Antes el texto incluía la instrucción ("usa la calculadora
+   y presiona…") sin que hubiera nada que presionar ahí mismo.
+
+   accion (opcional): { label, onclick, icon } */
+function tplEmptyState(icon, titulo, descripcion, accion) {
+  /* Compatibilidad: las llamadas viejas pasaban (icono, textoUnico) */
+  if (descripcion === undefined && accion === undefined) {
+    descripcion = titulo;
+    titulo = '';
+  }
   return '<div class="empty-state">' +
-    '<span class="material-symbols-rounded">' + icon + '</span>' +
-    '<p>' + text + '</p>' +
+    '<div class="empty-state-icon">' +
+      '<span class="material-symbols-rounded">' + icon + '</span>' +
+    '</div>' +
+    (titulo ? '<h3 class="empty-state-title">' + titulo + '</h3>' : '') +
+    (descripcion ? '<p>' + descripcion + '</p>' : '') +
+    (accion
+      ? '<button class="btn btn-primary empty-state-action" onclick="' + accion.onclick + '">' +
+          (accion.icon
+            ? '<span class="material-symbols-rounded" style="font-size:18px">' + accion.icon + '</span> '
+            : '') +
+          accion.label +
+        '</button>'
+      : '') +
   '</div>';
 }
 
@@ -73,7 +95,7 @@ function tplHistoryItem(h, i, cur) {
 
 function tplPrinterItem(p, cur) {
   var multiTag = p.multicolor
-    ? '<span style="display:inline-flex;align-items:center;font-size:10px;font-family:var(--font-mono);color:var(--accent);' +
+    ? '<span style="display:inline-flex;align-items:center;font-size:12px;font-family:var(--font-mono);color:var(--accent);' +
         'background:color-mix(in oklab,var(--accent) 12%,transparent);' +
         'border:0.5px solid color-mix(in oklab,var(--accent) 30%,transparent);' +
         'padding:2px 6px;border-radius:4px;margin-top:4px;width:fit-content">' +
@@ -172,7 +194,7 @@ function tplMaterialItem(m, cur, invItems) {
         return '<span class="mat-color-chip"' + (out ? ' style="opacity:0.35"' : '') + '>' +
           '<span style="width:10px;height:10px;border-radius:50%;flex-shrink:0;display:inline-block;' + dot + '"></span>' +
           esc(label) +
-          (low ? '<span style="color:var(--md-error);font-size:9px"> ↓</span>' : '') +
+          (low ? '<span style="color:var(--md-error);font-size:12px"> ↓</span>' : '') +
           '</span>';
       }).join('') +
     '</div>';
@@ -388,19 +410,19 @@ function tplClientModal(c, editIndex) {
         '<div class="card" style="padding:0 16px">' +
           /* Teléfono */
           '<div style="padding:14px 0;border-bottom:0.5px solid var(--line)">' +
-            '<div style="font-size:10px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">WhatsApp / Teléfono</div>' +
+            '<div style="font-size:12px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">WhatsApp / Teléfono</div>' +
             '<input type="tel" id="cli-phone" value="' + phone + '" placeholder="+52 55 0000 0000" inputmode="tel"' +
               ' style="width:100%;background:transparent;border:none;outline:none;font-size:15px;color:var(--ink);font-family:var(--font-sans)">' +
           '</div>' +
           /* Email */
           '<div style="padding:14px 0;border-bottom:0.5px solid var(--line)">' +
-            '<div style="font-size:10px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Correo electrónico</div>' +
+            '<div style="font-size:12px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Correo electrónico</div>' +
             '<input type="email" id="cli-email" value="' + email + '" placeholder="ejemplo@correo.com" inputmode="email"' +
               ' style="width:100%;background:transparent;border:none;outline:none;font-size:15px;color:var(--ink);font-family:var(--font-sans)">' +
           '</div>' +
           /* Red social */
           '<div style="padding:14px 0">' +
-            '<div style="font-size:10px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Red social / @usuario</div>' +
+            '<div style="font-size:12px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Red social / @usuario</div>' +
             '<input type="text" id="cli-social" value="' + social + '" placeholder="@cliente"' +
               ' style="width:100%;background:transparent;border:none;outline:none;font-size:15px;color:var(--ink);font-family:var(--font-sans)">' +
           '</div>' +
@@ -439,7 +461,7 @@ function tplClientModal(c, editIndex) {
               '<div id="cli-preview-name" style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
                 (name || 'Nombre del cliente') +
               '</div>' +
-              '<div style="font-size:11px;color:var(--ink-3);margin-top:2px">' +
+              '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">' +
                 '<span class="num">0</span> cotizaciones' +
               '</div>' +
             '</div>' +
@@ -479,7 +501,7 @@ function tplInventoryCard(item, i, cur) {
   return '<div class="inv-card">' +
     '<div class="inv-header">' +
       '<div class="inv-info">' +
-        '<div class="inv-name">' + esc(item.material) + alertIcon + '</div>' +
+        '<div class="inv-name">' + esc(nombreMaterialDeRollo(item)) + alertIcon + '</div>' +
         '<div class="inv-sub">' + esc(item.brand || '') +
           (item.color ? ' &middot; ' + esc(item.color) : '') +
         '</div>' +
@@ -559,7 +581,7 @@ function tplDeductModal(item, i) {
     '<div class="m3-bottom-sheet">' +
       tplSheetHeader('Descontar filamento') +
       '<p style="font-size:14px;color:var(--md-on-surface-variant);margin-bottom:16px">' +
-        esc(item.material) + (item.color ? ' ' + esc(item.color) : '') +
+        esc(nombreMaterialDeRollo(item)) + (item.color ? ' ' + esc(item.color) : '') +
         ' &mdash; Restante: ' + (parseFloat(item.remainingG) || 0).toFixed(0) + 'g' +
       '</p>' +
       '<div class="m3-field">' +
@@ -658,17 +680,57 @@ function tplQuoteCard(q, i, cur) {
 
 /* ── QUOTES — modal de borrador ─────────────────────────────────── */
 
+/* Lo que resulta del precio escrito: total de la línea y margen implícito.
+   El margen es justo el dato que se pierde al fijar un precio a mano, así que
+   es el que hay que devolver a la vista — y en rojo cuando queda negativo,
+   porque vender bajo costo sin que nada lo diga es el peor final posible. */
+function tplDraftItemCalc(item, cur) {
+  var qty    = item.qty || 1;
+  var linea  = (item.totalCost || 0) * qty;
+  var partes = [];
+  var perdida = false;
+
+  if (qty > 1) partes.push('× ' + qty + ' = ' + cur + linea.toFixed(2));
+  /* baseCost null = producto de tabla de precios, sin costo real conocido.
+     Ahí no hay margen que calcular y se calla en vez de inventar un número. */
+  if (item.baseCost > 0) {
+    var m = ((item.totalCost / item.baseCost) - 1) * 100;
+    perdida = m < 0;
+    partes.push('margen ' + m.toFixed(0) + '%');
+  }
+  if (item.priceManual) partes.push('precio escrito');
+
+  var txt = partes.join(' · ');
+  if (!txt) return '';
+  return perdida
+    ? '<span class="draft-item-loss">' + txt + ' · bajo costo</span>'
+    : txt;
+}
+
 function tplDraftItem(item, i, cur) {
   return '<div class="draft-item">' +
     '<div class="draft-item-info">' +
       '<div class="draft-item-desc">'+ esc(item.desc) + '</div>' +
       '<div class="draft-item-sub">' + esc(item.printer) + ' &middot; ' + esc(item.material) + '</div>' +
+      '<div class="draft-item-calc" id="dqc-' + i + '">' + tplDraftItemCalc(item, cur) + '</div>' +
     '</div>' +
     '<div class="draft-item-controls">' +
-      '<button class="draft-qty-btn" onclick="draftItemQty(' + i + ',-1)">&#8722;</button>' +
-      '<span class="draft-qty-val" id="dqi-' + i + '">' + item.qty + '</span>' +
-      '<button class="draft-qty-btn" onclick="draftItemQty(' + i + ',1)">&#43;</button>' +
-      '<span class="draft-item-price" id="dqp-' + i + '">' + cur + (item.totalCost * item.qty).toFixed(2) + '</span>' +
+      '<button class="draft-qty-btn" onclick="draftItemQty(' + i + ',-1)" aria-label="Quitar uno">&#8722;</button>' +
+      /* Campo, no etiqueta: un pedido de 20 recuerdos exigía 19 toques en un
+         botón de 28 px, con el ✕ de borrar a 6 px de distancia. Ahora se
+         escribe la cantidad y los botones son para ajustes de uno en uno. */
+      '<input type="number" class="draft-qty-val" id="dqi-' + i + '" value="' + item.qty + '" ' +
+        'min="1" step="1" inputmode="numeric" aria-label="Cantidad" ' +
+        'onchange="draftItemQtySet(' + i + ', this.value)">' +
+      '<button class="draft-qty-btn" onclick="draftItemQty(' + i + ',1)" aria-label="Agregar uno">&#43;</button>' +
+      /* Precio por pieza, editable. Ver draftItemPriceSet(). */
+      '<label class="draft-price-wrap">' +
+        '<span class="draft-price-cur">' + cur + '</span>' +
+        '<input type="number" class="draft-item-price" id="dqp-' + i + '" ' +
+          'value="' + (item.totalCost || 0).toFixed(2) + '" min="0" step="0.01" ' +
+          'inputmode="decimal" aria-label="Precio por pieza" ' +
+          'onchange="draftItemPriceSet(' + i + ', this.value)">' +
+      '</label>' +
       '<button class="draft-remove-btn" onclick="removeDraftItem(' + i + ')" title="Quitar">&#10005;</button>' +
     '</div>' +
   '</div>';

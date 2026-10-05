@@ -8,6 +8,17 @@ function nextQuoteNum() {
 }
 
 /* ── Índice de cotización en edición (null = nueva) ───────────── */
+/* Índice de la cotización que se está editando.
+
+   Vivía solo en esta variable y únicamente se limpiaba al guardar con éxito.
+   Eso provocaba una pérdida de datos silenciosa: si abrías "Editar" en una
+   cotización, cerrabas sin guardar, y después armabas una orden nueva, al
+   generarla el código entraba por la rama de edición y SOBRESCRIBÍA la
+   cotización vieja en lugar de crear una nueva.
+
+   Ahora el índice vive dentro del borrador (draftQuote.editIndex) y se
+   sincroniza con esta variable al cargarlo. Así nace y muere con el borrador,
+   que es exactamente lo que dura una edición. */
 var _editQuoteIndex = null;
 
 /* ── Draft quote (multi-producto en borrador) ─────────────────── */
@@ -19,12 +30,17 @@ var draftQuote = (function() {
 })();
 
 function saveDraftQuote(draft) {
+  /* El borrador recuerda si es una edición. Si el borrador no lo dice,
+     no hay edición en curso: una orden nueva nunca debe pisar una vieja. */
+  if (draft && draft.editIndex === undefined) draft.editIndex = _editQuoteIndex;
+  _editQuoteIndex = draft ? (draft.editIndex != null ? draft.editIndex : null) : null;
   draftQuote = draft;
   try { sessionStorage.setItem('c3d_draftQuote', JSON.stringify(draft)); } catch {}
 }
 
 function clearDraftQuote() {
   draftQuote = null;
+  _editQuoteIndex = null;   /* se acabó el borrador, se acabó la edición */
   try { sessionStorage.removeItem('c3d_draftQuote'); } catch {}
 }
 
@@ -61,24 +77,44 @@ function addItemToDraft() {
     desc:       lastCalc.desc,
     printer:    lastCalc.printer,
     material:   lastCalc.material,
+    /* Por pieza — lastCalc ya dividió entre las piezas de la placa */
     weight:     lastCalc.weight,
     timeH:      lastCalc.timeH,
     designH:    lastCalc.designH || 0,
     margin:     lastCalc.margin,
+    /* De cuántas piezas era la placa. No entra en ninguna cuenta: queda como
+       registro de cómo se imprimió, para poder repetir la corrida. */
+    pieces:     lastCalc.pieces || 1,
     matCost:    lastCalc.matCost,
     energyCost: lastCalc.energyCost,
     laborCost:  lastCalc.laborCost || 0,
     deprecCost: lastCalc.deprecCost,
     fixedCost:  lastCalc.fixedCost,
+    maintCost:    lastCalc.maintCost    || 0,
+    indirectCost: lastCalc.indirectCost || 0,
     wasteCost:  lastCalc.wasteCost,
     baseCost:   lastCalc.baseCost,
     totalCost:  lastCalc.totalCost,
+    /* El precio que calculó la fórmula. totalCost se puede sobrescribir a mano
+       en el borrador; éste queda como referencia para poder volver. */
+    autoPrice:  lastCalc.totalCost,
+    priceManual: false,
     spoolId:    lastCalc.spoolId || '',
+    amsColors:  lastCalc.amsColors || null,
+    /* Sin esto, _deductQuoteInventory calcula la purga como 0 y el material
+       purgado nunca se descuenta del inventario. La lógica de reparto estaba,
+       pero el dato no llegaba hasta aquí. */
+    amsPurgeGrams: lastCalc.amsPurgeGrams || 0,
+    /* Detalle del post-procesado: el dinero ya va dentro de baseCost, pero sin
+       esto la cotización guardada pierde para siempre el desglose. */
+    postProcCost:  lastCalc.postProcCost  || 0,
+    ipaCost:       lastCalc.ipaCost       || 0,
+    uvCost:        lastCalc.uvCost        || 0,
     qty:        1
   };
 
   if (!draftQuote) {
-    saveDraftQuote({ client: '', phone: '', notes: '', items: [newItem] });
+    saveDraftQuote({ editIndex: null, client: '', phone: '', notes: '', items: [newItem] });
   } else {
     draftQuote.items.push(newItem);
     saveDraftQuote(draftQuote);
@@ -93,6 +129,12 @@ function addItemToDraft() {
   fields.forEach(function(id) {
     var el = document.getElementById(id); if (el) el.value = '';
   });
+  /* Las piezas vuelven a 1: dejarlas en 30 hacía que la siguiente pieza se
+     dividiera entre 30 sin que nada en pantalla lo advirtiera. */
+  var piezasEl = document.getElementById('calc-pieces');
+  if (piezasEl) piezasEl.value = 1;
+  var ppEl = document.getElementById('calc-per-piece');
+  if (ppEl) ppEl.classList.add('hidden');
   _setFieldState('field-weight', 'helper-weight', 'neutral', 'Ej: 15g para un topper');
   _setFieldState('field-time', 'helper-time', 'neutral', 'Ej: 1.5 hrs');
   clearLastCalc();
@@ -123,17 +165,27 @@ function addItemToDraft() {
 function editQuote(i) {
   var q = quotes[i]; if (!q) return;
   if (q.status === 'aceptada') { snack('Las cotizaciones aceptadas no se pueden editar'); return; }
-  _editQuoteIndex = i;
   saveDraftQuote({
+    editIndex:         i,          /* marca el borrador como edición de ésta */
     client:            q.client   || '',
     phone:             q.phone    || '',
     notes:             q.notes    || '',
     discount:          q.discount || 0,
     commission:        q.commission    || 0,
     commissionEnabled: (q.commission && q.commission > 0) || false,
-    items:             JSON.parse(JSON.stringify(q.items || []))
+    items:             _conPrecioAuto(JSON.parse(JSON.stringify(q.items || [])))
   });
   renderDraftModal();
+}
+
+/* Las cotizaciones guardadas antes de que se pudiera escribir el precio no
+   traen autoPrice. Sin esto, editar una de ésas y escribir un precio nuevo no
+   quedaba marcado como precio manual. */
+function _conPrecioAuto(items) {
+  items.forEach(function(it) {
+    if (it.autoPrice == null) it.autoPrice = it.totalCost;
+  });
+  return items;
 }
 
 /* ── Abrir modal de cotización ────────────────────────────────── */
@@ -198,13 +250,64 @@ function onCommissionChange() {
 }
 
 /* Ajustar cantidad de un ítem en el borrador */
+/* Escribir la cantidad directamente. Para 20 piezas, teclear "20" en vez de
+   dar 19 toques a un botón que mide menos que la yema del pulgar. */
+function draftItemQtySet(i, valor) {
+  if (!draftQuote) return;
+  var item = draftQuote.items[i]; if (!item) return;
+  var n = Math.max(1, Math.round(parseFloat(valor) || 1));
+  draftItemQty(i, n - (item.qty || 1));
+}
+
 function draftItemQty(i, delta) {
   if (!draftQuote) return;
   var item = draftQuote.items[i];
   if (!item) return;
   item.qty = Math.max(1, (item.qty || 1) + delta);
   saveDraftQuote(draftQuote);
+  _repintarDraftTotales(i);
+}
 
+/* ── Escribir el precio a mano ─────────────────────────────────────
+   Hay precios que no salen de una fórmula: los cerrados con el cliente, los
+   de lista, los que ya se dieron por WhatsApp. La única manera de llegar a
+   $850 exactos era empujar el deslizador de margen hasta que el redondeo
+   cooperara —38 % daba $845 y 39 % daba $855— y el precio buscado no existía
+   en ningún punto del deslizador.
+
+   Se escribe el precio POR PIEZA y la app recalcula el margen hacia atrás.
+   Ése es el dato que se pierde al fijar un precio, y el que hay que
+   devolver: si queda por debajo del costo, lo dice en la fila y lo avisa. */
+function draftItemPriceSet(i, valor) {
+  if (!draftQuote) return;
+  var item = draftQuote.items[i]; if (!item) return;
+
+  var p = parseFloat(valor);
+  /* Vacío o basura: vuelve al precio calculado en vez de dejar un cero. */
+  if (!isFinite(p) || p < 0) {
+    p = item.autoPrice != null ? item.autoPrice : item.totalCost;
+  }
+
+  item.totalCost   = p;
+  item.priceManual = item.autoPrice != null && Math.abs(p - item.autoPrice) > 0.005;
+  /* Margen implícito. Sin costo conocido (productos de tabla de precios) no
+     hay nada que recalcular y se deja como estaba. */
+  if (item.baseCost > 0) item.margin = ((p / item.baseCost) - 1) * 100;
+
+  saveDraftQuote(draftQuote);
+  _repintarDraftTotales(i);
+
+  if (item.baseCost > 0 && p < item.baseCost) {
+    snack('Ese precio queda por debajo del costo: ' +
+          (config.currency || '$') + item.baseCost.toFixed(2));
+  }
+}
+
+/* Repinta los totales del borrador y, si se indica, la fila que cambió.
+   Vivía dentro de draftItemQty, así que el precio escrito no tenía manera
+   de reusarlo. */
+function _repintarDraftTotales(i) {
+  if (!draftQuote) return;
   var cur         = config.currency;
   var discount    = draftQuote.discount || 0;
   var commEnabled = draftQuote.commissionEnabled || false;
@@ -214,18 +317,26 @@ function draftItemQty(i, delta) {
   var discounted  = subtotal   - discAmt;
   var commAmt     = discounted * (commission / 100);
   var grandTotal  = discounted + commAmt;
-  var qtyEl       = document.getElementById('dqi-' + i);
-  var priceEl     = document.getElementById('dqp-' + i);
-  var subEl       = document.getElementById('draft-subtotal');
-  var amtEl       = document.getElementById('draft-discount-amt');
-  var commAmtEl   = document.getElementById('draft-commission-amt');
-  var totalEl     = document.getElementById('draft-grand-total');
-  if (qtyEl)      qtyEl.textContent      = item.qty;
-  if (priceEl)    priceEl.textContent    = cur + (item.totalCost * item.qty).toFixed(2);
-  if (subEl)      subEl.textContent      = cur + subtotal.toFixed(2);
-  if (amtEl)      amtEl.textContent      = discAmt  > 0 ? '−' + cur + discAmt.toFixed(2)  : '—';
-  if (commAmtEl)  commAmtEl.textContent  = commAmt  > 0 ? '+' + cur + commAmt.toFixed(2)  : '—';
-  if (totalEl)    totalEl.textContent    = cur + grandTotal.toFixed(2);
+
+  var item = (i != null) ? draftQuote.items[i] : null;
+  if (item) {
+    var qtyEl   = document.getElementById('dqi-' + i);
+    var priceEl = document.getElementById('dqp-' + i);
+    var calcEl  = document.getElementById('dqc-' + i);
+    /* Son <input>, no <span>: textContent no los actualiza. */
+    if (qtyEl)   qtyEl.value      = item.qty;
+    if (priceEl) priceEl.value    = (item.totalCost || 0).toFixed(2);
+    if (calcEl)  calcEl.innerHTML = tplDraftItemCalc(item, cur);
+  }
+
+  var subEl      = document.getElementById('draft-subtotal');
+  var amtEl      = document.getElementById('draft-discount-amt');
+  var commAmtEl  = document.getElementById('draft-commission-amt');
+  var totalEl    = document.getElementById('draft-grand-total');
+  if (subEl)     subEl.textContent     = cur + subtotal.toFixed(2);
+  if (amtEl)     amtEl.textContent     = discAmt > 0 ? '−' + cur + discAmt.toFixed(2) : '—';
+  if (commAmtEl) commAmtEl.textContent = commAmt > 0 ? '+' + cur + commAmt.toFixed(2) : '—';
+  if (totalEl)   totalEl.textContent   = cur + grandTotal.toFixed(2);
 }
 
 /* Quitar un ítem del borrador */
@@ -274,8 +385,16 @@ function saveQuote() {
   var discounted    = subtotal   - discountAmt;
   var commissionAmt = discounted * (commission / 100);
   var grandTotal    = discounted + commissionAmt;
-  /* Base cost total para calcular ganancia en dashboard */
-  var totalBaseCost = items.reduce(function(s, it) { return s + (it.baseCost || 0) * (it.qty || 1); }, 0);
+  /* Base cost total para calcular ganancia en dashboard.
+     Si ALGUNA partida no tiene costo conocido (productos de tabla de precios,
+     que se venden a precio fijo sin costear), el total queda en null y el
+     dashboard excluye la cotización del cálculo de margen. Sumar esas partidas
+     como cero inflaría la ganancia al 100%; sumarlas como su precio de venta
+     la aplastaría a cero. Ninguna de las dos es verdad: el dato no existe. */
+  var _sinCosto     = items.some(function(it) { return it.baseCost == null; });
+  var totalBaseCost = _sinCosto
+    ? null
+    : items.reduce(function(s, it) { return s + (it.baseCost || 0) * (it.qty || 1); }, 0);
 
   /* ── Guardar cliente si se eligió ── */
   var _saveClientCheck = document.getElementById('q-save-client');
@@ -380,13 +499,21 @@ function renderQuotes() {
         'border:0.5px solid ' + (isActive ? 'transparent' : 'var(--line)') + ';' +
         'transition:background 0.15s,color 0.15s">' +
         c.label +
-        (c.count > 0 ? '<span style="font-family:var(--font-mono);font-size:10px;opacity:0.7">' + c.count + '</span>' : '') +
+        (c.count > 0 ? '<span style="font-family:var(--font-mono);font-size:12px;opacity:0.7">' + c.count + '</span>' : '') +
       '</button>';
     }).join('');
   }
 
+  /* Solo cuenta la lista real. Con el filtro puesto y cero resultados sí hay
+     registros, y ahí el botón del encabezado no duplica nada: el del estado
+     vacío dice "Ver todas", que es otra acción. */
+  marcarListaVacia('quotes', !quotes.length);
+
   if (!quotes.length) {
-    el.innerHTML = '<div class="empty-state"><span class="material-symbols-rounded">receipt_long</span><p>No hay cotizaciones. Calcula un costo y presiona \u00abCotizar\u00bb.</p></div>';
+    el.innerHTML = tplEmptyState('receipt_long',
+      'Sin cotizaciones',
+      'Calcula el costo de una pieza, agr\u00e9gala a la orden y gen\u00e9rala desde ah\u00ed.',
+      { label: 'Nueva cotizaci\u00f3n', onclick: "showPage('calc')", icon: 'add' });
     return;
   }
 
@@ -414,7 +541,10 @@ function renderQuotes() {
 
   var cur = config.currency;
   if (!filtered.length) {
-    el.innerHTML = '<div class="empty-state"><span class="material-symbols-rounded">search_off</span><p>Sin resultados</p></div>';
+    el.innerHTML = tplEmptyState('search_off',
+      'Sin resultados',
+      'Ninguna cotización coincide con el filtro o la búsqueda.',
+      { label: 'Ver todas', onclick: "_setQuoteFilter('all')", icon: 'filter_alt_off' });
     return;
   }
 
@@ -444,33 +574,116 @@ function statusLabel(s) {
 /* ── Cambiar estado de cotización ────────────────────────────────── */
 function setQuoteStatus(i, status) {
   var q = quotes[i]; if (!q) return;
+
+  /* Aceptar descuenta inventario y sube a Notion. Antes pasaba de un toque,
+     sin preguntar, y no hab\u00eda forma de deshacerlo: regresar el estado a
+     pendiente no devolv\u00eda el filamento. */
+  if (status === 'aceptada' && q.status !== 'aceptada') {
+    m3Confirm('\u00bfMarcar ' + esc(q.quoteNum) + ' como aceptada?', function() {
+      _aplicarEstado(i, status);
+    }, {
+      confirmLabel: 'Aceptar',
+      icon: 'check_circle',
+      detail: _resumenDescuentoInventario(q)
+    });
+    return;
+  }
+  _aplicarEstado(i, status);
+}
+
+/* Qu\u00e9 filamento se va a descontar \u2014 para que el di\u00e1logo lo diga antes. */
+function _resumenDescuentoInventario(q) {
+  var lineas = [];
+  (q.items || []).forEach(function(it) {
+    var qty = it.qty || 1;
+    function agregar(spoolId, gramos) {
+      var r = inventory.find(function(x) { return x.id === spoolId; });
+      if (!r || gramos <= 0) return;
+      lineas.push(gramos.toFixed(0) + ' g de ' + esc(nombreMaterialDeRollo(r)) +
+                  (r.color ? ' ' + esc(r.color) : ''));
+    }
+    if (it.amsColors && it.amsColors.length) {
+      var purga = (parseFloat(it.amsPurgeGrams) || 0) / it.amsColors.length;
+      it.amsColors.forEach(function(c) {
+        agregar(c.spoolId, ((parseFloat(c.weight) || 0) + purga) * qty);
+      });
+    } else {
+      agregar(it.spoolId, (parseFloat(it.weight) || 0) * qty);
+    }
+  });
+  if (!lineas.length) return 'No hay rollos asignados, as\u00ed que no se descuenta inventario.';
+  return 'Se va a descontar de tu inventario:<br>\u2022 ' + lineas.join('<br>\u2022 ');
+}
+
+function _aplicarEstado(i, status) {
+  var q = quotes[i]; if (!q) return;
   var prevStatus = q.status;
   q.status = status;
-  sv('quotes', quotes);
+
   if (status === 'aceptada' && prevStatus !== 'aceptada') {
+    /* Fecha de aceptaci\u00f3n: el panel reportaba el ingreso en el mes en que se
+       CRE\u00d3 la cotizaci\u00f3n. Cotizar en septiembre y cobrar en octubre pon\u00eda el
+       dinero en septiembre. */
+    q.acceptedAt = new Date().toISOString();
     _deductQuoteInventory(q);
+    q.inventarioDescontado = true;
     if (!q.notionPageId) sendToNotion(i, { silent: true });
   }
+
+  /* Salir de "aceptada" devuelve el filamento. Antes se iba y no volv\u00eda. */
+  if (prevStatus === 'aceptada' && status !== 'aceptada' && q.inventarioDescontado) {
+    _deductQuoteInventory(q, true);
+    q.inventarioDescontado = false;
+    q.acceptedAt = null;
+    snack('Inventario devuelto');
+  }
+
+  sv('quotes', quotes);
   renderQuotes();
   renderDashboard();
-  var labels = { aceptada: 'Cotizaci\u00f3n aceptada \u2713', rechazada: 'Cotizaci\u00f3n rechazada', pendiente: 'Marcada como pendiente' };
+  var labels = { aceptada: 'Cotizaci\u00f3n aceptada \u2713', rechazada: 'Cotizaci\u00f3n rechazada',
+                 enviada: 'Marcada como enviada', pendiente: 'Regresada a borrador' };
   snack(labels[status] || 'Estado actualizado');
 }
 
-function _deductQuoteInventory(q) {
+/* devolver = true suma en vez de restar, para cuando una cotización deja de
+   estar aceptada. Sin esto, equivocarse de botón dejaba el inventario mal
+   para siempre y había que corregirlo a mano. */
+function _deductQuoteInventory(q, devolver) {
   var changed = false;
-  (q.items || []).forEach(function(it) {
-    if (!it.spoolId) return;
+  var signo = devolver ? -1 : 1;
+
+  function _descontar(spoolId, grams) {
+    if (!spoolId || grams <= 0) return;
     var idx = -1;
     for (var k = 0; k < inventory.length; k++) {
-      if (inventory[k].id === it.spoolId) { idx = k; break; }
+      if (inventory[k].id === spoolId) { idx = k; break; }
     }
     if (idx === -1) return;
-    var grams = (parseFloat(it.weight) || 0) * (it.qty || 1);
-    if (grams <= 0) return;
-    inventory[idx].remainingG = Math.max(0, (parseFloat(inventory[idx].remainingG) || 0) - grams);
+    var rollo  = inventory[idx];
+    var nuevo  = (parseFloat(rollo.remainingG) || 0) - grams * signo;
+    /* Nunca negativo, y nunca más de lo que cabe en el rollo */
+    rollo.remainingG = Math.max(0, Math.min(nuevo, parseFloat(rollo.totalG) || nuevo));
     changed = true;
+  }
+
+  (q.items || []).forEach(function(it) {
+    var qty = it.qty || 1;
+
+    /* Modo AMS: un rollo por color. Se reparte además la purga entre los
+       colores activos, porque el material purgado sale de esos mismos rollos. */
+    if (it.amsColors && it.amsColors.length) {
+      var purgaPorColor = (parseFloat(it.amsPurgeGrams) || 0) / it.amsColors.length;
+      it.amsColors.forEach(function(c) {
+        _descontar(c.spoolId, ((parseFloat(c.weight) || 0) + purgaPorColor) * qty);
+      });
+      return;
+    }
+
+    /* Modo normal: un solo rollo */
+    _descontar(it.spoolId, (parseFloat(it.weight) || 0) * qty);
   });
+
   if (changed) {
     sv('inventory', inventory);
     if (typeof renderInventory === 'function') renderInventory();
@@ -568,6 +781,15 @@ function duplicateQuote(i) {
   dup.id = Date.now().toString();
   dup.quoteNum = nextQuoteNum();
   dup.quoteDate = new Date().toISOString();
+  /* Una copia nace en blanco. Antes se copiaba todo tal cual, así que duplicar
+     una cotización aceptada creaba otra ya "aceptada": el panel sumaba un
+     ingreso que nadie había pedido. Y al heredar notionPageId, el botón de
+     Notion la daba por sincronizada y nunca subía. */
+  dup.status         = 'pendiente';
+  dup.acceptedAt     = null;
+  delete dup.notionPageId;
+  delete dup.notionSyncedAt;
+  dup.inventarioDescontado = false;
   quotes.unshift(dup);
   sv('quotes', quotes);
   renderQuotes();
@@ -606,6 +828,12 @@ function buildQuoteHTML(q, qrDataURL) {
     : (q.totalWithQty != null ? q.totalWithQty
     : items.reduce(function(acc, it) { return acc + it.totalCost * (it.qty || 1); }, 0));
 
+  /* ¿Hay descuento o comisión que valga la pena desglosar? */
+  var _tieneAjustes = (q.discountAmt > 0) || (q.commissionAmt > 0);
+
+  /* ¿Se capturó algún dato bancario? Basta uno para mostrar el apartado. */
+  var _hayDatosBancarios = !!(config.bizBank || config.bizAccountHolder || config.bizAccountNumber);
+
   /* Filas de la tabla — sin desglose interno */
   var itemRows = items.map(function(item) {
     var qty = item.qty || 1;
@@ -619,6 +847,44 @@ function buildQuoteHTML(q, qrDataURL) {
       '<td class="qf-td-right qf-td-bold">' + cur + subtotal.toFixed(2) + '</td>' +
     '</tr>';
   }).join('');
+
+  /* ── Desglose de costos — los interruptores de Ajustes → Diseño ──────
+     Estos cinco interruptores se guardaban y se pintaban en la pantalla de
+     configuración, pero buildQuoteHTML nunca los consultaba: prender
+     "Mostrar desglose" no hacía absolutamente nada. Ahora sí mandan. */
+  function _sumaRubro(campo) {
+    return items.reduce(function(acc, it) {
+      return acc + (Number(it[campo]) || 0) * (it.qty || 1);
+    }, 0);
+  }
+
+  var desgloseHTML = '';
+  if (s.showDesglose) {
+    var rubros = [
+      { on: true,                 label: 'Material',      val: _sumaRubro('matCost') },
+      { on: true,                 label: 'Energía',       val: _sumaRubro('energyCost') },
+      { on: s.showDiseno,         label: 'Diseño',        val: _sumaRubro('laborCost') },
+      { on: s.showDepreciacion,   label: 'Depreciación',  val: _sumaRubro('deprecCost') },
+      { on: s.showCostosFijos,    label: 'Costos fijos',  val: _sumaRubro('fixedCost') },
+      { on: s.showCostosFijos,    label: 'Indirectos',    val: _sumaRubro('indirectCost') },
+      { on: s.showCostosFijos,    label: 'Mantenimiento', val: _sumaRubro('maintCost') },
+      { on: true,                 label: 'Post-procesado',val: _sumaRubro('postProcCost') },
+      { on: s.showDesperdicio,    label: 'Desperdicio',   val: _sumaRubro('wasteCost') }
+    ].filter(function(r) { return r.on && r.val > 0.005; });
+
+    if (rubros.length) {
+      desgloseHTML =
+        '<div class="qf-breakdown-block">' +
+          '<div class="qf-breakdown-label">Desglose de costos</div>' +
+          rubros.map(function(r) {
+            return '<div class="qf-breakdown-row">' +
+              '<span>' + r.label + '</span>' +
+              '<span>' + cur + r.val.toFixed(2) + '</span>' +
+            '</div>';
+          }).join('') +
+        '</div>';
+    }
+  }
 
   var notesHTML = (s.showNotas && q.notes)
     ? '<div class="qf-notes-block">' + esc(q.notes) + '</div>' : '';
@@ -661,22 +927,38 @@ function buildQuoteHTML(q, qrDataURL) {
       '<tbody>' + itemRows + '</tbody>' +
     '</table>' +
 
+    /* Totales: subtotal, descuento y comisión ahora SÍ se ven.
+       Antes el documento imprimía una sola línea TOTAL, así que si le dabas
+       12% de descuento a un cliente, el descuento se aplicaba al número pero
+       no aparecía en ningún lado — el cliente nunca se enteraba. */
     '<div class="qf-totals">' +
+      (_tieneAjustes
+        ? '<div class="qf-total-sub"><span>Subtotal</span><span>' + cur + (q.subtotal || 0).toFixed(2) + '</span></div>' +
+          (q.discountAmt > 0
+            ? '<div class="qf-total-sub"><span>Descuento (' + q.discount + '%)</span>' +
+              '<span>&minus;' + cur + q.discountAmt.toFixed(2) + '</span></div>' : '') +
+          (q.commissionAmt > 0
+            ? '<div class="qf-total-sub"><span>Comisión (' + q.commission + '%)</span>' +
+              '<span>' + cur + q.commissionAmt.toFixed(2) + '</span></div>' : '')
+        : '') +
       '<div class="qf-total-line" style="color:' + s.primaryColor + '">' +
         '<span>TOTAL</span><span>' + cur + grandTotal.toFixed(2) + '</span>' +
       '</div>' +
     '</div>' +
 
-    notesHTML + termsHTML +
+    desgloseHTML + notesHTML + termsHTML +
 
-    /* Bloque de datos bancarios */
-    (config.showBankInfo !== false && config.bizAccountNumber
+    /* Bloque de datos bancarios.
+       Antes exigía bizAccountNumber: si capturabas banco y titular pero no la
+       cuenta, el apartado no salía nunca. Ahora aparece si hay CUALQUIER dato
+       y muestra solo los que capturaste. Sin datos, no se dibuja nada. */
+    (config.showBankInfo !== false && _hayDatosBancarios
       ? '<div class="qf-bank-block">' +
           '<div class="qf-bank-label">Datos de pago</div>' +
           '<div class="qf-bank-row">' +
             (config.bizBank ? '<span>' + esc(config.bizBank) + '</span>' : '') +
             (config.bizAccountHolder ? '<span>' + esc(config.bizAccountHolder) + '</span>' : '') +
-            '<span class="qf-bank-num">' + esc(config.bizAccountNumber) + '</span>' +
+            (config.bizAccountNumber ? '<span class="qf-bank-num">' + esc(config.bizAccountNumber) + '</span>' : '') +
           '</div>' +
         '</div>'
       : '') +
@@ -893,6 +1175,24 @@ function btnImgLabel() {
     : '<span class="material-symbols-rounded" style="font-size:18px">download</span> Imagen';
 }
 
+/* Quita acentos y signos. Solo se usa para armar nombres de archivo:
+   el PDF ya no necesita esto porque ahora se renderiza como imagen y
+   conserva los acentos (antes la fuente Helvetica de pdf-lib los perdía). */
+function safeStr(s) {
+  return String(s == null ? '' : s)
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^\x20-\x7E]/g, '');
+}
+
+/* data:image/png;base64,… → Uint8Array, que es lo que espera pdf-lib */
+function dataUrlToUint8(dataUrl) {
+  var base64 = String(dataUrl).split(',')[1] || '';
+  var bin    = atob(base64);
+  var bytes  = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
 function downloadBlob(blob, filename) {
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
@@ -914,190 +1214,134 @@ function loadPdfLib() {
 }
 
 /* ── Exportar cotización como PDF ────────────────────────────── */
+/* ── Exportar a PDF ───────────────────────────────────────────────
+   Antes el PDF se dibujaba a mano con primitivas de pdf-lib: rectángulos,
+   líneas y texto colocados por coordenadas. Eso traía tres problemas:
+
+     1. No se parecía al diseño que el usuario ve en pantalla ni a la imagen
+        que exporta, porque era una segunda implementación del mismo layout.
+     2. La fuente Helvetica estándar de pdf-lib no tiene acentos, así que
+        "COTIZACIÓN" salía como "COTIZACION" y "Peña" como "Pena".
+     3. No había salto de página: pasando de ~22 renglones el texto se
+        encimaba con el pie y luego se dibujaba fuera de la hoja.
+
+   Ahora se renderiza el MISMO HTML de la cotización con html2canvas y se
+   incrusta en el PDF. El documento queda idéntico a la vista previa y a la
+   imagen, los acentos funcionan, y el contenido largo se reparte en varias
+   páginas automáticamente.
+
+   Se conservan pdf-lib y html2canvas: las dos ya estaban en el proyecto, son
+   gratuitas y se cargan solo al exportar. No hizo falta ninguna librería
+   nueva — la limitante no era pdf-lib, era dibujar el diseño dos veces.
+
+   Contrapartida honesta: el texto del PDF deja de ser seleccionable, porque
+   es una imagen. Para una cotización que se imprime o se manda por WhatsApp
+   eso no estorba; si algún día hace falta texto buscable, el camino es
+   generar el PDF desde el servidor con un motor de HTML. */
 function exportQuotePDF(i) {
   var q = quotes[i]; if (!q) return;
   var btn = document.getElementById('btn-export-pdf-' + i);
+  function restaurarBoton() {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">picture_as_pdf</span> PDF';
+    }
+  }
   if (btn) { btn.disabled = true; btn.textContent = 'Generando\u2026'; }
   snack('Generando PDF\u2026');
 
-  var s  = quoteStyle;
-  var cur = config.currency || '$';
-  var items = q.items || [{ desc: q.desc || '', material: q.material || '', qty: q.qty || 1, totalCost: q.totalCost }];
-  var grandTotal = q.grandTotal != null ? q.grandTotal : (q.totalWithQty != null ? q.totalWithQty : items[0].totalCost);
+  /* A4 en puntos (72 dpi) */
+  var A4_W = 595.28, A4_H = 841.89;
+  /* Ancho de render en px. 794 px ≈ A4 a 96 dpi; con scale 2 da 1588 px de
+     ancho real, suficiente para que el texto imprima nítido. */
+  var RENDER_W = 794;
 
-  function hexRgb(hex) {
-    hex = (hex || '#6750A4').replace('#','');
-    if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
-    return [parseInt(hex.slice(0,2),16)/255, parseInt(hex.slice(2,4),16)/255, parseInt(hex.slice(4,6),16)/255];
+  var wrapper = document.createElement('div');
+  wrapper.style.cssText = [
+    'position:fixed', 'left:-9999px', 'top:0',
+    'width:' + RENDER_W + 'px',
+    'background:#ffffff',
+    'padding:32px',
+    'box-sizing:border-box',
+    'font-family:Inter,sans-serif'
+  ].join(';');
+  document.body.appendChild(wrapper);
+
+  function limpiar() {
+    if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
   }
-  function safeStr(v) {
-    return String(v || '').replace(/[^\x20-\xFF]/g, function(c) {
-      var map = {'\u00e1':'a','\u00e9':'e','\u00ed':'i','\u00f3':'o','\u00fa':'u',
-                 '\u00c1':'A','\u00c9':'E','\u00cd':'I','\u00d3':'O','\u00da':'U',
-                 '\u00f1':'n','\u00d1':'N','\u00fc':'u','\u00dc':'U'};
-      return map[c] || '?';
+
+  getQRDataURL().then(function(qrDataURL) {
+    wrapper.innerHTML = buildQuoteHTML(q, qrDataURL);
+    return loadHtml2Canvas();
+  }).then(function(h2c) {
+    return h2c(wrapper, {
+      scale: 2, useCORS: true, allowTaint: true,
+      backgroundColor: '#ffffff', logging: false,
+      width: RENDER_W, windowWidth: RENDER_W
     });
-  }
-  function trunc(str, n) { str = safeStr(str); return str.length > n ? str.slice(0,n-1)+'\u2026' : str; }
-  function dataUrlToUint8(dataUrl) {
-    var b64 = dataUrl.split(',')[1];
-    var bin = atob(b64);
-    var arr = new Uint8Array(bin.length);
-    for (var k = 0; k < bin.length; k++) arr[k] = bin.charCodeAt(k);
-    return arr;
-  }
+  }).then(function(canvas) {
+    limpiar();
+    return loadPdfLib().then(function(PDFLib) {
+      return PDFLib.PDFDocument.create().then(function(doc) {
 
-  Promise.all([loadPdfLib(), getQRDataURL()]).then(function(res) {
-    var PDFLib = res[0], qrDataURL = res[1];
-    var PDFDocument = PDFLib.PDFDocument;
-    var rgb = PDFLib.rgb;
-    var SF  = PDFLib.StandardFonts;
+        /* Cuántos píxeles de la imagen caben en el alto de una página */
+        var pxPorPunto  = canvas.width / A4_W;
+        var altoPaginaPx = Math.floor(A4_H * pxPorPunto);
+        var paginas = Math.max(1, Math.ceil(canvas.height / altoPaginaPx));
 
-    var pc = hexRgb(s.primaryColor);
-    var tc = hexRgb(s.textColor);
-    var primary = rgb(pc[0],pc[1],pc[2]);
-    var textCol = rgb(tc[0],tc[1],tc[2]);
-    var white   = rgb(1,1,1);
-    var muted   = rgb(0.55,0.55,0.55);
-    var light   = rgb(0.96,0.96,0.97);
-    var divider = rgb(0.85,0.85,0.85);
+        var cadena = Promise.resolve();
+        for (var n = 0; n < paginas; n++) {
+          (function(pagina) {
+            cadena = cadena.then(function() {
+              var sy = pagina * altoPaginaPx;
+              var sh = Math.min(altoPaginaPx, canvas.height - sy);
 
-    var W=595, H=842, M=40, CW=515;
-    var colQ=M+CW*0.54, colU=M+CW*0.68, colS=M+CW*0.84;
+              /* Recorte de esta página */
+              var trozo = document.createElement('canvas');
+              trozo.width  = canvas.width;
+              trozo.height = sh;
+              var ctx = trozo.getContext('2d');
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0, 0, trozo.width, trozo.height);
+              ctx.drawImage(canvas, 0, sy, canvas.width, sh, 0, 0, canvas.width, sh);
 
-    return PDFDocument.create().then(function(doc) {
-      return doc.embedFont(SF.Helvetica).then(function(font) {
-      return doc.embedFont(SF.HelveticaBold).then(function(bold) {
-
-        var page = doc.addPage([W,H]);
-        var y = H;
-
-        /* ── Header bar ── */
-        page.drawRectangle({x:0, y:y-68, width:W, height:68, color:primary});
-        page.drawText('COTIZACION', {x:M, y:y-44, size:20, font:bold, color:white});
-        var qn = safeStr(q.quoteNum||'');
-        page.drawText(qn, {x:W-M-bold.widthOfTextAtSize(qn,12), y:y-34, size:12, font:bold, color:white});
-        var ds = safeStr(new Date(q.quoteDate).toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}));
-        page.drawText(ds, {x:W-M-font.widthOfTextAtSize(ds,8), y:y-50, size:8, font:font, color:rgb(0.85,0.85,0.85)});
-        y -= 80;
-
-        /* ── Biz name ── */
-        var biz = safeStr(config.bizName||'Mi Negocio 3D');
-        page.drawText(biz, {x:M, y, size:13, font:bold, color:primary});
-        y -= 14;
-        if (config.bizSocial) {
-          page.drawText(safeStr(config.bizSocial), {x:M, y, size:9, font:font, color:muted});
-          y -= 13;
+              var altoPt = sh / pxPorPunto;
+              var page = doc.addPage([A4_W, A4_H]);
+              return doc.embedPng(dataUrlToUint8(trozo.toDataURL('image/png')))
+                .then(function(img) {
+                  /* Pegado al borde superior: el HTML ya trae su propio margen */
+                  page.drawImage(img, { x: 0, y: A4_H - altoPt, width: A4_W, height: altoPt });
+                });
+            });
+          })(n);
         }
-        y -= 6;
-        page.drawLine({start:{x:M,y}, end:{x:W-M,y}, thickness:0.5, color:divider});
-        y -= 14;
-
-        /* ── Client info ── */
-        page.drawText('Cliente:', {x:M, y, size:9, font:bold, color:muted});
-        page.drawText(safeStr(q.client), {x:M+46, y, size:9, font:font, color:textCol});
-        y -= 13;
-        if (q.phone) {
-          page.drawText('Tel:', {x:M, y, size:9, font:bold, color:muted});
-          page.drawText(safeStr(q.phone), {x:M+46, y, size:9, font:font, color:textCol});
-          y -= 13;
-        }
-        y -= 10;
-
-        /* ── Table header ── */
-        var rH = 22;
-        page.drawRectangle({x:M, y:y-rH+5, width:CW, height:rH, color:primary});
-        page.drawText('Descripcion', {x:M+4, y:y-rH+11, size:9, font:bold, color:white});
-        page.drawText('Cant.', {x:colQ+4, y:y-rH+11, size:9, font:bold, color:white});
-        page.drawText('Precio unit.', {x:colU+4, y:y-rH+11, size:9, font:bold, color:white});
-        page.drawText('Subtotal', {x:colS+4, y:y-rH+11, size:9, font:bold, color:white});
-        y -= rH;
-
-        /* ── Rows ── */
-        items.forEach(function(it, idx) {
-          var rowBg = idx%2===1 ? light : white;
-          page.drawRectangle({x:M, y:y-rH+5, width:CW, height:rH, color:rowBg});
-          var qty = it.qty||1;
-          page.drawText(trunc(it.desc||'',44), {x:M+4, y:y-rH+11, size:9, font:font, color:textCol});
-          page.drawText(String(qty),            {x:colQ+4, y:y-rH+11, size:9, font:font, color:textCol});
-          page.drawText(cur+(it.totalCost||0).toFixed(2), {x:colU+4, y:y-rH+11, size:9, font:font, color:textCol});
-          page.drawText(cur+((it.totalCost||0)*qty).toFixed(2), {x:colS+4, y:y-rH+11, size:9, font:bold, color:textCol});
-          y -= rH;
-        });
-
-        /* ── Total ── */
-        y -= 6;
-        page.drawLine({start:{x:M,y}, end:{x:W-M,y}, thickness:0.5, color:divider});
-        y -= 18;
-        var totalStr = cur+grandTotal.toFixed(2);
-        page.drawText('TOTAL', {x:colS+4, y, size:10, font:bold, color:primary});
-        y -= 16;
-        page.drawText(totalStr, {x:colS+4, y, size:14, font:bold, color:primary});
-        y -= 24;
-
-        /* ── Notes ── */
-        if (q.notes && s.showNotas) {
-          y -= 6;
-          page.drawText('Notas: '+safeStr(q.notes), {x:M, y, size:8, font:font, color:muted, maxWidth:CW, lineHeight:12});
-          y -= 24;
-        }
-
-        /* ── Terms ── */
-        if (s.termsText) {
-          y -= 4;
-          page.drawLine({start:{x:M,y}, end:{x:W-M,y}, thickness:0.3, color:divider});
-          y -= 14;
-          page.drawText(safeStr(s.termsText), {x:M, y, size:8, font:font, color:muted, maxWidth:CW, lineHeight:11});
-          y -= 20;
-        }
-
-        /* ── Datos bancarios (antes del footer) ── */
-        if (config.showBankInfo !== false && config.bizAccountNumber) {
-          y -= 8;
-          page.drawRectangle({x:M, y:y-28, width:CW, height:34, color:rgb(0.97,0.97,0.98)});
-          page.drawText('DATOS DE PAGO', {x:M+8, y:y-10, size:7, font:bold, color:muted});
-          var bankLine = [config.bizBank, config.bizAccountHolder, config.bizAccountNumber].filter(Boolean).map(safeStr).join('  ·  ');
-          page.drawText(bankLine, {x:M+8, y:y-22, size:9, font:font, color:textCol});
-          y -= 40;
-        }
-
-        /* ── Footer bar ── */
-        page.drawRectangle({x:0, y:0, width:W, height:58, color:light});
-        page.drawLine({start:{x:0,y:58}, end:{x:W,y:58}, thickness:0.5, color:divider});
-        page.drawText(biz, {x:M, y:40, size:9, font:bold, color:textCol});
-        var contact = [config.bizPhone, config.bizEmail].filter(Boolean).map(safeStr).join(' | ');
-        if (contact) page.drawText(contact, {x:M, y:27, size:8, font:font, color:muted});
-        if (config.bizSocial) page.drawText(safeStr(config.bizSocial), {x:M, y:14, size:8, font:font, color:muted});
-
-        /* ── QR en footer ── */
-        var qrEmbed = qrDataURL
-          ? doc.embedPng(dataUrlToUint8(qrDataURL)).then(function(img) {
-              page.drawImage(img, {x:W-M-52, y:4, width:52, height:52});
-            })
-          : Promise.resolve();
-
-        return qrEmbed.then(function() { return doc.save(); });
-      });});
+        return cadena.then(function() { return doc.save(); });
+      });
     });
   }).then(function(pdfBytes) {
-    var blob = new Blob([pdfBytes], {type:'application/pdf'});
-    var fname = (q.quoteNum||'cotizacion')+'_'+safeStr(q.client||'').replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'')+'.pdf';
+    var blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    var fname = (q.quoteNum || 'cotizacion') + '_' +
+      safeStr(q.client || '').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '') + '.pdf';
+
     if (navigator.share && navigator.canShare) {
-      var file = new File([blob], fname, {type:'application/pdf'});
-      if (navigator.canShare({files:[file]})) {
-        navigator.share({title:q.quoteNum, files:[file]}).catch(function(e) {
-          if (e.name!=='AbortError') { downloadBlob(blob, fname); snack('PDF descargado'); }
+      var file = new File([blob], fname, { type: 'application/pdf' });
+      if (navigator.canShare({ files: [file] })) {
+        navigator.share({ title: q.quoteNum, files: [file] }).catch(function(e) {
+          if (e.name !== 'AbortError') { downloadBlob(blob, fname); snack('PDF descargado'); }
         });
-        if (btn) { btn.disabled=false; btn.innerHTML='<span class="material-symbols-rounded" style="font-size:18px">picture_as_pdf</span> PDF'; }
+        restaurarBoton();
         return;
       }
     }
     downloadBlob(blob, fname);
     snack('PDF descargado');
-    if (btn) { btn.disabled=false; btn.innerHTML='<span class="material-symbols-rounded" style="font-size:18px">picture_as_pdf</span> PDF'; }
+    restaurarBoton();
   }).catch(function(err) {
-    snack(err.message||'Error al generar el PDF');
-    if (btn) { btn.disabled=false; btn.innerHTML='<span class="material-symbols-rounded" style="font-size:18px">picture_as_pdf</span> PDF'; }
+    limpiar();
+    console.error('[PDF]', err);
+    snack((err && err.message) || 'Error al generar el PDF');
+    restaurarBoton();
   });
 }
 

@@ -43,7 +43,10 @@
   width: 100%;
   padding: 22px var(--space-4) var(--space-2);
   background: var(--md-surface-container-high);
-  border: 0.5px solid var(--line);
+  /* 1px y --line-strong: el contorno es lo único que indica dónde se escribe,
+     así que es un componente de interfaz y necesita 3:1 (WCAG 1.4.11).
+     Antes era 0.5px de --line, con 1.2:1 — prácticamente invisible. */
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   color: var(--md-on-surface);
   font-family: var(--font-sans);
@@ -65,7 +68,7 @@
 .m3-field label {
   position: absolute; left: 16px; top: 7px;
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.3px;
   color: var(--md-on-surface-variant);
@@ -194,7 +197,9 @@
 
 .m3-btn-text {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  height: 40px; padding: 0 14px;
+  /* 40 → 44: se usa para "Reusar" y el bote de basura del historial, que son
+     botones de solo icono y por lo tanto los más fáciles de fallar. */
+  height: 44px; min-width: 44px; padding: 0 14px;
   border: none; border-radius: var(--radius-pill);
   background: transparent;
   font-family: var(--font-sans); font-size: 14px; font-weight: 600;
@@ -353,7 +358,7 @@
 }
 .result-subtitle {
   font-family: var(--font-sans);
-  font-size: 10px;
+  font-size: 12px;
   color: var(--md-on-primary);
   opacity: 0.65;
   font-weight: 600;
@@ -386,7 +391,7 @@
   color: var(--md-on-primary);
 }
 .breakdown-chip .lbl {
-  font-size: 9px; font-weight: 600;
+  font-size: 12px; font-weight: 600;
   color: var(--md-on-primary);
   opacity: 0.65; margin-top: 1px;
   text-transform: uppercase; letter-spacing: 0.3px;
@@ -405,7 +410,7 @@
   margin-bottom: 4px;
 }
 .resin-params-hint {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--md-on-surface-variant);
   margin: 0 0 var(--space-3);
   opacity: 0.8;
@@ -525,15 +530,50 @@
 }
 
 /* ── EMPTY STATE ────────────────────────────────────────────────── */
+/* ── ESTADO VACÍO ───────────────────────────────────────────────
+   Jerarquía vertical: icono → título → explicación → botón.
+   El botón abajo del texto, con aire suficiente para no confundirse
+   con el contenido que aparecerá cuando ya haya datos. */
 .empty-state {
-  text-align: center; padding: 56px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 56px 24px;
   color: var(--md-on-surface-variant);
 }
-.empty-state .material-symbols-rounded {
-  font-size: 52px; opacity: 0.3;
-  margin-bottom: 16px; display: block;
+.empty-state-icon {
+  width: 56px; height: 56px;
+  border-radius: var(--radius-md);
+  background: var(--bg-elev);
+  border: 0.5px solid var(--line);
+  box-shadow: var(--shadow-card);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
 }
-.empty-state p { font-size: 14px; line-height: 1.6; }
+.empty-state-icon .material-symbols-rounded {
+  font-size: 26px;
+  color: var(--ink-3);
+  display: block;
+}
+.empty-state-title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.empty-state p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-3);
+  max-width: 300px;
+}
+.empty-state-action {
+  margin-top: 20px;
+  width: auto;
+  padding: 0 20px;
+}
 
 /* ── COLOR PICKER ───────────────────────────────────────────────── */
 .color-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
@@ -699,7 +739,7 @@
 .dash-stat-val-sm { font-size: 16px; font-weight: 600; }
 .dash-stat-label {
   font-family: var(--font-sans);
-  font-size: 10px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
   color: var(--md-on-surface-variant);
   text-transform: uppercase; letter-spacing: 0.8px;
 }
@@ -746,7 +786,7 @@
 .dash-recent-item:last-child { border-bottom: none; }
 .dash-recent-item:active { opacity: 0.65; }
 .dash-recent-num {
-  font-size: 11px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
   color: var(--md-primary);
   letter-spacing: 0.3px;
   text-transform: uppercase;
@@ -796,7 +836,7 @@
 }
 .catalog-badge {
   display: inline-block;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -855,7 +895,7 @@
   height: 16px;
   border-radius: 50%;
   margin-left: 4px;
-  font-size: 11px;
+  font-size: 12px;
   opacity: 0.5;
   cursor: pointer;
   transition: opacity 0.15s, background 0.15s;
@@ -874,24 +914,33 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.6px;
   color: var(--md-on-surface-variant);
   text-transform: uppercase;
   margin-bottom: 10px;
 }
+/* El renglón de una partida nunca es ancho: en móvil mide ~300 px y en
+   escritorio vive dentro de un cajón de 520 px. Con descripción, cantidad,
+   precio y quitar en una sola línea, a la descripción le quedaban 56 px y
+   decía «Guía q…» — justo el dato que dice qué estás contando.
+   Por eso van siempre en dos renglones, con la ✕ en la esquina: libera el
+   espacio y además queda lejos de los botones de cantidad, que es donde más
+   se fallaba el toque. */
 .draft-item {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  position: relative;
+  gap: 8px;
   padding: 10px 12px;
   background: var(--md-surface-container-low);
   border-radius: var(--radius-md);
   border: 0.5px solid var(--line);
   margin-bottom: 8px;
 }
-.draft-item-info { flex: 1; min-width: 0; }
+.draft-item-info { flex: 1; min-width: 0; padding-right: 44px; }
 .draft-item-desc {
   font-size: 14px;
   font-weight: 600;
@@ -911,11 +960,15 @@
 .draft-item-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: flex-end;
+  gap: 8px;
   flex-shrink: 0;
 }
 .draft-qty-btn {
-  width: 28px; height: 28px;
+  width: 44px; height: 44px;
+  /* Sin esto, al agregar el campo de precio el flex los encogía a 38–39 px
+     y se perdía el área táctil que se acababa de ganar. */
+  flex-shrink: 0;
   border: 0.5px solid var(--line);
   border-radius: var(--radius-pill);
   background: var(--md-surface);
@@ -929,19 +982,79 @@
 .draft-qty-val {
   font-size: 14px;
   font-weight: 700;
-  min-width: 20px;
+  /* Ahora es un campo editable: necesita verse como tal y tener área táctil */
+  width: 52px;
+  min-height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunk);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  -moz-appearance: textfield;
   text-align: center;
   color: var(--md-on-surface);
 }
-.draft-item-price {
+/* Precio escrito a mano. Un precio cerrado con el cliente —$850 por guía
+   quirúrgica— no sale de ninguna fórmula, y la única manera de llegar era
+   empujar el deslizador de margen hasta que el redondeo cooperara: 38 % daba
+   $845 y 39 % daba $855. Ahora se escribe, y el campo tiene que parecer
+   campo o nadie va a intentar escribir en él. */
+.draft-price-wrap {
+  display: inline-flex;
+  align-items: center;
+  /* Empuja el precio al extremo derecho y deja la cantidad en el izquierdo:
+     son dos cosas distintas y conviene que se vean separadas. */
+  margin-left: auto;
+  gap: 2px;
+  height: 44px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunk);
+  flex-shrink: 0;
+}
+.draft-price-cur {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+}
+input.draft-item-price {
+  /* Cabe "12500.00": los precios cerrados de maquetas y prototipos llegan a
+     cuatro y cinco cifras, y un campo que corta el número no sirve. */
+  width: 72px;
+  height: 44px;
+  min-height: 44px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--md-on-surface);
-  min-width: 52px;
+  font-family: var(--font-mono);
   text-align: right;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--md-on-surface);
+  -moz-appearance: textfield;
 }
+input.draft-item-price::-webkit-outer-spin-button,
+input.draft-item-price::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* Qué sale de ese precio: el total de la línea y el margen que queda.
+   El margen es el dato que se pierde al escribir el precio, así que es el
+   que hay que devolver a la vista. */
+.draft-item-calc {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--ink-3);
+  margin-top: 3px;
+}
+.draft-item-calc:empty { display: none; }
+.draft-item-loss { color: var(--md-error); font-weight: 600; }
 .draft-remove-btn {
-  width: 28px; height: 28px;
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 44px; height: 44px;
+  flex-shrink: 0;
   border: none;
   background: none;
   color: var(--md-on-surface-variant);
@@ -982,7 +1095,7 @@
   justify-content: center;
   background: var(--md-primary);
   color: var(--md-on-primary);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   width: 18px; height: 18px;
   border-radius: 999px;
@@ -1008,7 +1121,7 @@
 .qf-th-center, .qf-td-center { text-align: center; }
 .qf-th-right, .qf-td-right  { text-align: right; }
 .qf-td-bold { font-weight: 700; }
-.qf-td-sub  { font-size: 11px; opacity: 0.65; margin-top: 2px; }
+.qf-td-sub  { font-size: 12px; opacity: 0.65; margin-top: 2px; }
 
 /* ── RIPPLE (herencia) ──────────────────────────────────────────── */
 .m3-ripple { position: relative; overflow: hidden; }
@@ -1052,7 +1165,7 @@
   display: inline-block;
   padding: 2px 8px;
   border-radius: var(--radius-pill);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.3px;
   text-transform: uppercase;
@@ -1108,8 +1221,8 @@
 }
 .client-stats { text-align: right; flex-shrink: 0; }
 .client-stat-val   { font-size: 20px; font-weight: 900; color: var(--md-primary); }
-.client-stat-lbl   { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--md-on-surface-variant); }
-.client-stat-total { font-size: 11px; font-weight: 600; color: var(--md-on-surface-variant); margin-top: 2px; }
+.client-stat-lbl   { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--md-on-surface-variant); }
+.client-stat-total { font-size: 12px; font-weight: 600; color: var(--md-on-surface-variant); margin-top: 2px; }
 .client-notes {
   font-size: 13px;
   font-style: italic;
@@ -1159,7 +1272,7 @@
 .cq-row:last-child { border-bottom: none; }
 .cq-row-left  { display: flex; flex-direction: column; gap: 2px; }
 .cq-row-num   { font-size: 12px; font-weight: 700; color: var(--md-primary); }
-.cq-row-date  { font-size: 11px; color: var(--md-on-surface-variant); }
+.cq-row-date  { font-size: 12px; color: var(--md-on-surface-variant); }
 .cq-row-right { display: flex; align-items: center; gap: 4px; }
 .cq-row-total { font-size: 14px; font-weight: 700; color: var(--md-on-surface); }
 .cq-empty     { font-size: 13px; color: var(--md-on-surface-variant); padding: 8px 0; text-align: center; }
@@ -1204,7 +1317,7 @@
 }
 .suggest-info   { display: flex; flex-direction: column; gap: 1px; }
 .suggest-name   { font-size: 14px; font-weight: 600; color: var(--md-on-surface); }
-.suggest-sub    { font-size: 11px; color: var(--md-on-surface-variant); }
+.suggest-sub    { font-size: 12px; color: var(--md-on-surface-variant); }
 
 /* ── INVENTORY CARDS ────────────────────────────────────────────── */
 .inv-card {
@@ -1239,7 +1352,7 @@
   letter-spacing: -0.5px; line-height: 1;
 }
 .inv-weight-unit { font-size: 13px; font-weight: 600; opacity: 0.6; }
-.inv-weight-sub  { font-size: 11px; color: var(--md-on-surface-variant); margin-top: 2px; }
+.inv-weight-sub  { font-size: 12px; color: var(--md-on-surface-variant); margin-top: 2px; }
 .inv-bar-wrap {
   background: var(--md-surface-container-high);
   border-radius: var(--radius-pill);
@@ -1296,7 +1409,7 @@
   gap: 1px;
 }
 .month-rev   { font-size: 13px; font-weight: 700; color: var(--md-on-surface); }
-.month-count { font-size: 10px; color: var(--md-on-surface-variant); }
+.month-count { font-size: 12px; color: var(--md-on-surface-variant); }
 
 /* ── INPUT NUMÉRICO DE MARGEN ───────────────────────────────────── */
 .margin-num-input {
@@ -1552,7 +1665,7 @@
 .m3-field label {
   color: var(--ink-3);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -1825,7 +1938,7 @@
 /* ── TAG pill ────────────────────────────────────────────────────── */
 .tag {
   display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--font-mono); font-size: 10px;
+  font-family: var(--font-mono); font-size: 12px;
   letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--ink-2);
   padding: 4px 9px; border-radius: 999px;
@@ -1847,7 +1960,7 @@
   min-width: 0; overflow: hidden;
 }
 .field label {
-  font-family: var(--font-mono); font-size: 10px;
+  font-family: var(--font-mono); font-size: 12px;
   letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--ink-3);
 }
@@ -1898,6 +2011,7 @@
   padding: 3px; border-radius: 999px; border: 0.5px solid var(--line);
 }
 .seg button {
+  min-height: 44px;
   padding: 8px 14px; border-radius: 999px;
   font-size: 13px; color: var(--ink-3); font-weight: 500;
   transition: all 0.15s; white-space: nowrap;
@@ -1910,7 +2024,7 @@
 .rule {
   display: flex; align-items: center; gap: 12px;
   color: var(--ink-3);
-  font-family: var(--font-mono); font-size: 10px;
+  font-family: var(--font-mono); font-size: 12px;
   letter-spacing: 0.14em; text-transform: uppercase;
 }
 .rule::before,
@@ -2003,7 +2117,7 @@ span.suffix {
 }
 .page-header h1 em { font-style: normal; color: var(--accent); }
 .page-header .eyebrow {
-  font-family: var(--font-mono); font-size: 10px;
+  font-family: var(--font-mono); font-size: 12px;
   letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--ink-3); margin-bottom: 8px;
 }
@@ -2032,7 +2146,7 @@ span.suffix {
   padding: 4px 9px; border-radius: 999px;
   border: 0.5px solid var(--line);
   background: var(--bg-sunk);
-  font-size: 11px; color: var(--ink-3);
+  font-size: 12px; color: var(--ink-3);
   white-space: nowrap;
 }
 
@@ -2059,4 +2173,156 @@ span.suffix {
 .cfg-nav-row:last-child { border-bottom: none; }
 .cfg-nav-row .cfg-nav-text { flex: 1; min-width: 0; }
 .cfg-nav-row .cfg-nav-label { font-size: 14px; color: var(--ink); font-weight: 500; }
-.cfg-nav-row .cfg-nav-sub { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+.cfg-nav-row .cfg-nav-sub { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ÁREAS TÁCTILES — mínimo 44×44
+   ═══════════════════════════════════════════════════════════════════
+   Las guías de Apple y Google coinciden en 44 px como el mínimo para
+   acertarle con el pulgar. La app tenía una docena de controles entre
+   16 y 32 px: el pulgar los falla y el error suele caer en el botón de
+   al lado, que a veces es destructivo.
+
+   Se agrupan aquí en vez de perseguirlos uno por uno en estilos en
+   línea, para que el día que aparezca un control nuevo baste con darle
+   una de estas clases.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Botón de cerrar de las hojas emergentes.
+   Solo estaba estilizado dentro de @media (min-width:900px): en el celular
+   la ✕ caía suelta contra el borde, sin botón alrededor, con ~20 px de área
+   táctil. Justo en las pantallas donde más se usa. */
+.sheet-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.sheet-header-row h2 { margin: 0; }
+.sheet-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin-right: -10px;        /* alinea el icono con el borde, no la caja */
+  border: none;
+  background: none;
+  border-radius: 50%;
+  color: var(--ink-3);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sheet-close-btn:active { background: var(--bg-sunk); }
+
+/* Flecha de regreso de las sub-páginas de Ajustes — estaba en 13 px sin
+   relleno, unos 19 px de alto, y aparece en las siete sub-páginas. */
+.cfg-sub-header .back-btn,
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px 0 4px;
+  margin-left: -4px;
+}
+
+/* Botones de solo icono. Se marcan con .icon-btn o se detectan por tener
+   un único símbolo dentro. */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Enlaces de acción en línea: "Ver todo →", "+ Categoría".
+   Eran texto suelto de 12 px sin área táctil. */
+.link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 8px;
+  margin: 0 -8px;             /* el relleno no debe mover el layout */
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Chips de filtro de cotizaciones — estaban en 31 px */
+#quotes-filter-chips button { min-height: 44px; }
+
+/* Preset: el chip crece y la ✕ deja de ser un blanco de 16 px dentro de
+   otro botón. Además deletePreset() ahora pide confirmación, porque un
+   control destructivo anidado siempre se va a fallar alguna vez. */
+.preset-chip { min-height: 44px; }
+.preset-chip-del {
+  min-width: 28px;
+  min-height: 28px;
+  margin-left: 6px;
+}
+
+/* Acciones de las tarjetas de catálogo, inventario y clientes */
+.catalog-item-actions button,
+.inv-actions button,
+.client-actions button { min-height: 44px; min-width: 44px; }
+
+/* Campos numéricos de Ajustes: eran números transparentes sin borde ni
+   fondo, así que no parecían editables y el área de toque era la altura
+   de la letra. */
+/* Estos campos traen border:none y background:transparent EN LÍNEA, y el
+   estilo en línea gana sobre la hoja. Se fuerza solo la altura: el objetivo
+   aquí es el área táctil, no cambiar el aspecto.
+
+   Que no parezcan campos editables es un hallazgo aparte (Rosa, H17) y
+   requiere decidir si se conserva el diseño de "número grande sin caja". */
+#page-config-electrico input[type="number"],
+#page-config-gastos input[type="number"],
+#page-config-indirectos input[type="number"],
+#page-config-otros input[type="number"] {
+  min-height: 44px !important;
+}
+
+/* Los de AMS sí llevan contorno: son dos campos chicos de 52 px dentro de un
+   bloque denso, y sin borde no se distinguen del texto que los rodea. */
+#ams-color-changes,
+#ams-purge-grams {
+  min-height: 44px !important;
+  padding: 0 10px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--radius-sm) !important;
+  background: var(--bg-sunk) !important;
+}
+
+/* El apilado de la partida del borrador vivía aquí, en una consulta de ancho
+   de pantalla. No servía: el cajón de escritorio mide 520 px, igual de
+   estrecho que el teléfono, y la descripción se aplastaba a "Guía q…" aunque
+   el monitor fuera de 1054. Pasó a ser el comportamiento normal de
+   .draft-item — ver el bloque DRAFT QUOTE. */
+
+/* Acciones rápidas de la calculadora. En cuanto hay un borrador el botón
+   principal pasa de "Agregar a orden" a "Generar cotización" con el contador,
+   y a 375 px eso ya no cabe en un tercio de fila: la acción más importante de
+   la pantalla quedaba cortada por la mitad. Se baja a su propio renglón. */
+@media (max-width: 420px) {
+  .calc-actions { flex-wrap: wrap; }
+  .calc-actions #btn-cotizar { flex: 1 0 100%; }
+}
+
+/* Navegación del sidebar en escritorio: 38 px.
+   Con ratón basta, pero en tableta y en pantallas táctiles grandes se usa el
+   dedo, y además da consistencia con el resto. */
+.sidebar-item { min-height: 44px; }
+
+/* Chips de color del selector de rollo y el acordeón del desglose: 34 y 42 px. */
+.color-chip        { min-height: 44px; }
+#btn-breakdown-toggle { min-height: 44px; box-sizing: border-box; }
+
+/* Botón de acción del encabezado de página ("+ Nueva cotización",
+   "+ Agregar filamento") — 34 px, y es el botón principal de esas pantallas. */
+.page-header-btn { min-height: 44px; }

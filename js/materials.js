@@ -1,8 +1,12 @@
 /* ===== MATERIALS CRUD ===== */
 function renderMaterials() {
   const el = document.getElementById('material-list');
+  marcarListaVacia('materials', !materials.length);
   if (!materials.length) {
-    el.innerHTML = '<div class="empty-state"><span class="material-symbols-rounded">category</span><p>No hay materiales.</p></div>';
+    el.innerHTML = tplEmptyState('category',
+      'Sin materiales',
+      'Registra los filamentos y resinas que usas, con su precio por kilo. Sin esto no se puede cotizar.',
+      { label: 'Agregar material', onclick: 'showMaterialModal()', icon: 'add' });
     return;
   }
   const cur = config.currency;

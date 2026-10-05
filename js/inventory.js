@@ -4,8 +4,12 @@ function renderInventory() {
   var el = document.getElementById('inventory-list');
   if (!el) return;
 
+  marcarListaVacia('inventory', !inventory.length);
   if (!inventory.length) {
-    el.innerHTML = '<div class="empty-state"><span class="material-symbols-rounded">inventory_2</span><p>Sin inventario. Agrega tu primer rollo de filamento.</p></div>';
+    el.innerHTML = tplEmptyState('inventory_2',
+      'Sin rollos registrados',
+      'Lleva el control de cuánto filamento te queda. Al aceptar una cotización se descuenta solo.',
+      { label: 'Agregar filamento', onclick: 'showInventoryModal()', icon: 'add' });
     return;
   }
 
@@ -21,10 +25,11 @@ function showInventoryModal(editIndex) {
   var item = editIndex != null ? inventory[editIndex] : null;
   var title = item ? 'Editar filamento' : 'Agregar filamento';
 
-  /* Build material options */
+  /* Opciones de material — el value es el ID, no el nombre, para que
+     renombrar un material no desvincule los rollos. */
   var matOptions = materials.map(function(m) {
-    var sel = item && item.material === m.name ? ' selected' : '';
-    return '<option value="' + esc(m.name) + '"' + sel + '>' + esc(m.name) + '</option>';
+    var sel = item && item.materialId === m.id ? ' selected' : '';
+    return '<option value="' + esc(m.id) + '"' + sel + '>' + esc(m.name) + '</option>';
   }).join('');
   if (!materials.length) matOptions = '<option value="">Sin materiales</option>';
 
@@ -34,8 +39,10 @@ function showInventoryModal(editIndex) {
 /* ── Guardar filamento ───────────────────────────────────────────── */
 function saveInventory(editIndex) {
   var matEl = document.getElementById('inv-material');
-  var material = matEl ? matEl.value.trim() : '';
-  if (!material) { snack('Selecciona el material'); return; }
+  var materialId = matEl ? matEl.value.trim() : '';
+  if (!materialId) { snack('Selecciona el material'); return; }
+  var matObj = materials.find(function(m) { return m.id === materialId; });
+  if (!matObj) { snack('El material seleccionado ya no existe'); return; }
 
   var totalG     = parseFloat(document.getElementById('inv-total').value)     || 0;
   var remainingG = parseFloat(document.getElementById('inv-remaining').value) || 0;
@@ -48,7 +55,8 @@ function saveInventory(editIndex) {
 
   var entry = {
     id:         Date.now().toString(),
-    material:   material,
+    materialId: materialId,        /* vínculo vivo con el catálogo */
+    material:   matObj.name,       /* copia legible, respaldo si se borra */
     brand:      brand.trim(),
     color:      color.trim(),
     totalG:     totalG,
@@ -93,11 +101,13 @@ function deductInventory(i) {
 /* ── Eliminar ────────────────────────────────────────────────────── */
 function deleteInventory(i) {
   var item = inventory[i]; if (!item) return;
-  if (!confirm('\u00bfEliminar ' + item.material + (item.color ? ' ' + item.color : '') + '?')) return;
-  inventory.splice(i, 1);
-  sv('inventory', inventory);
-  renderInventory();
-  snack('Filamento eliminado');
+  var nombre = nombreMaterialDeRollo(item) + (item.color ? ' ' + item.color : '');
+  m3Confirm('\u00bfEliminar ' + esc(nombre) + '?', function() {
+    inventory.splice(i, 1);
+    sv('inventory', inventory);
+    renderInventory();
+    snack('Filamento eliminado');
+  }, { detail: 'Quedan ' + (item.remainingG || 0).toFixed(0) + ' g sin usar en este rollo.' });
 }
 
 /* ── Resumen de inventario para dashboard ────────────────────────── */

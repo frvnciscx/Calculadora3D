@@ -13,23 +13,35 @@ function closeModal() {
   document.getElementById('modal-container').innerHTML = '';
 }
 
-/* M3 Confirm Dialog — replaces browser confirm() */
-function m3Confirm(message, onConfirm) {
+/* M3 Confirm Dialog — reemplaza al confirm() del navegador.
+   opts (opcional): { confirmLabel, icon, detail }
+     confirmLabel — texto del botón de acción (default 'Eliminar')
+     icon         — símbolo de Material (default 'warning')
+     detail       — línea secundaria con el detalle de lo que va a pasar */
+function m3Confirm(message, onConfirm, opts) {
+  opts = opts || {};
+  var label  = opts.confirmLabel || 'Eliminar';
+  var icon   = opts.icon         || 'warning';
+  var detail = opts.detail       || '';
+
   document.getElementById('modal-container').innerHTML =
     '<div class="m3-scrim" onclick="closeModal()"></div>' +
     '<div class="m3-dialog">' +
-      '<span class="material-symbols-rounded" style="font-size:24px;color:var(--md-error);margin-bottom:16px">warning</span>' +
-      '<h3 style="font-size:24px;font-weight:400;margin-bottom:16px">' + message + '</h3>' +
+      '<span class="material-symbols-rounded" style="font-size:24px;color:var(--md-error);margin-bottom:16px">' + icon + '</span>' +
+      '<h3 style="font-size:24px;font-weight:400;margin-bottom:' + (detail ? '12px' : '16px') + '">' + message + '</h3>' +
+      (detail
+        ? '<div style="font-size:13px;color:var(--ink-3);line-height:1.6;margin-bottom:16px;text-align:left">' + detail + '</div>'
+        : '') +
       '<div class="m3-dialog-actions">' +
         '<button class="m3-btn-text" onclick="closeModal()">Cancelar</button>' +
-        '<button class="m3-btn-filled" style="background:var(--md-error);color:var(--md-on-error);width:auto;padding:0 24px" id="m3-confirm-btn">Eliminar</button>' +
+        '<button class="m3-btn-filled" style="background:var(--md-error);color:var(--md-on-error);width:auto;padding:0 24px" id="m3-confirm-btn">' + label + '</button>' +
       '</div>' +
     '</div>';
   document.getElementById('m3-confirm-btn').onclick = function() { closeModal(); onConfirm(); };
 }
 
 /* Sub-páginas de config + quote-editor como sub-página virtual */
-var _CFG_SUBPAGES = ['negocio','banco','electrico','gastos','otros'];
+var _CFG_SUBPAGES = ['negocio','banco','electrico','gastos','indirectos','otros'];
 
 /* Resuelve el ID del elemento en el DOM para cada sub-página */
 function _cfgSubPageId(name) {
@@ -67,9 +79,26 @@ function _cleanConfigDesktop() {
   }
 }
 
+/* ── De dónde venimos ──────────────────────────────────────────────
+   El botón de atrás de la calculadora decía "Cotizaciones" y siempre
+   llevaba ahí, aunque hubieras entrado desde Inicio o desde el catálogo.
+   Ahora recuerda la página anterior y regresa a esa.
+   El historial se excluye a propósito: tiene su propio botón de regreso
+   que apunta a la calculadora, y guardarlo aquí haría un ciclo. */
+var _paginaAnterior = 'quotes';
+
+function regresarDeCalculadora() {
+  showPage(_paginaAnterior || 'quotes');
+}
+
 function showPage(name) {
   /* ── Al salir de config en desktop: resetear inline styles ─────── */
   if (window.innerWidth >= 900) _cleanConfigDesktop();
+
+  if (name === 'calc') {
+    var _desde = document.body.dataset.page;
+    if (_desde && _desde !== 'calc' && _desde !== 'history') _paginaAnterior = _desde;
+  }
 
   /* ── Catálogo: sub-páginas antiguas → catálogo unificado ───────── */
   if (name === 'printers' || name === 'materials' || name === 'inventory') {
@@ -88,8 +117,6 @@ function showPage(name) {
     document.body.dataset.page = 'clients';
     document.querySelectorAll('[data-page="clients"]').forEach(function(b) { b.classList.add('active'); });
     document.querySelectorAll('.m3-fab').forEach(function(f) { f.style.display = 'none'; });
-    var qaBar0 = document.getElementById('page-action-bar');
-    if (qaBar0) qaBar0.style.display = '';
     _showActionBtn('clients');
     showQuotesTab('clients');
     return;
@@ -132,8 +159,6 @@ function showPage(name) {
 
   document.querySelectorAll('.m3-fab').forEach(f => f.style.display = 'none');
 
-  var qaBar = document.getElementById('page-action-bar');
-  if (qaBar) qaBar.style.display = (name === 'quotes' || name === 'catalog') ? '' : 'none';
   _showActionBtn(name === 'quotes' ? (_activeQuotesTab || 'quotes') : name === 'catalog' ? 'catalog' : null);
 
   if (name === 'dashboard')    renderDashboard();
@@ -145,22 +170,49 @@ function showPage(name) {
   if (name === 'quote-editor') loadQuoteEditor();
 }
 
-/* ── Barra de acción: muestra el botón correcto según contexto ─── */
-function _showActionBtn(context) {
-  var btns = { quotes: 'qa-btn-quotes', clients: 'qa-btn-clients', catalog: 'qa-btn-catalog' };
-  Object.keys(btns).forEach(function(k) {
-    var el = document.getElementById(btns[k]);
-    if (el) el.style.display = (k === context) ? '' : 'none';
-  });
+/* ── Estado vacío: un solo botón, no dos ───────────────────────────
+   Cuando una lista está vacía, su estado vacío ya trae el botón debajo
+   de la explicación. El del encabezado (escritorio) y el de la barra
+   inferior (móvil) apuntan a la misma acción, así que ahí sobran: la
+   pantalla mostraba el mismo "Nueva cotización" dos veces sin que uno
+   pesara más que el otro. Vuelven en cuanto hay registros.
+
+   Las listas se registran solas al renderizarse, con marcarListaVacia(). */
+var _listasVacias  = {};
+var _contextoAccion = null;
+
+function marcarListaVacia(lista, vacia) {
+  _listasVacias[lista] = !!vacia;
+  _showActionBtn(_contextoAccion);
 }
 
-/* ── Tabs del header de calculadora ─── */
-function showCalcTab(tab) {
-  var tabCotizar   = document.getElementById('calc-tab-cotizar');
-  var tabHistorial = document.getElementById('calc-tab-historial');
-  if (tabCotizar)   tabCotizar.classList.toggle('active',   tab === 'cotizar');
-  if (tabHistorial) tabHistorial.classList.toggle('active', tab === 'historial');
-  if (tab === 'historial') showPage('history');
+/* El catálogo tiene un solo botón para tres listas: la que manda es la
+   pestaña abierta. */
+function _listaDelContexto(context) {
+  return context === 'catalog' ? (_activeCatalogTab || 'printers') : context;
+}
+
+/* ── Barra de acción: muestra el botón correcto según contexto ─── */
+function _showActionBtn(context) {
+  _contextoAccion = context;
+  var vacia = context ? !!_listasVacias[_listaDelContexto(context)] : false;
+  /* [barra inferior en móvil, botón del encabezado en escritorio] */
+  var btns = {
+    quotes:  ['qa-btn-quotes',  'phdr-btn-quotes'],
+    clients: ['qa-btn-clients', 'phdr-btn-clients'],
+    catalog: ['qa-btn-catalog', 'phdr-btn-catalog'],
+  };
+  Object.keys(btns).forEach(function(k) {
+    var visible = (k === context) && !vacia;
+    btns[k].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = visible ? '' : 'none';
+    });
+  });
+  /* La barra es un bloque con fondo y borde: sin botón adentro deja una
+     franja flotando encima del contenido. */
+  var bar = document.getElementById('page-action-bar');
+  if (bar) bar.style.display = (context && !vacia) ? '' : 'none';
 }
 
 /* ── Catálogo — tab entre Impresoras / Materiales / Inventario ─── */
@@ -247,10 +299,17 @@ function populateSelects() {
   const pv = ps.value, mv = ms.value;
 
   ps.innerHTML = printers.map(p => `<option value="${p.id}">${p.name} (${p.power}W)</option>`).join('');
-  if (pv) ps.value = pv;
+
+  /* Preselección: lo que había en pantalla, o la última impresora usada.
+     config.lastPrinterId se venía guardando desde siempre y nadie lo leía:
+     la app volvía a la primera impresora de la lista en cada carga, aunque
+     imprimieras el 90% en otra. */
+  const pDeseada = pv || config.lastPrinterId;
+  if (pDeseada && printers.some(p => p.id === pDeseada)) ps.value = pDeseada;
 
   /* Filtrar materiales según tipo de impresora seleccionada */
-  _filterMaterials(mv);
+  const mDeseado = mv || config.lastMaterialId;
+  _filterMaterials(mDeseado);
 }
 
 /* Filtra el select de materiales según el tipo de la impresora activa */

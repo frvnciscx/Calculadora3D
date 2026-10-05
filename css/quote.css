@@ -110,12 +110,51 @@
   text-align: right;
   margin-bottom: 16px;
 }
+/* Subtotal, descuento y comisión: líneas secundarias arriba del TOTAL.
+   Un documento que solo dice TOTAL no deja ver el descuento que concediste. */
+.qf-total-sub {
+  font-size: 13px;
+  color: #444;
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 2px 0;
+}
+.qf-total-sub span:last-child { min-width: 92px; text-align: right; }
+
 .qf-total-line {
   font-size: 20px;
   font-weight: 800;
   display: flex;
   justify-content: flex-end;
   gap: 16px;
+  padding-top: 6px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(0,0,0,0.12);
+}
+.qf-total-line span:last-child { min-width: 92px; text-align: right; }
+
+/* Desglose de costos — opcional, lo controlan los interruptores de Diseño */
+.qf-breakdown-block {
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 12px 0 8px;
+}
+.qf-breakdown-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 6px;
+}
+.qf-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #333;
+  padding: 2px 0;
 }
 
 /* Notes, terms, footer blocks */
@@ -126,8 +165,8 @@
   border-top: 1px solid #eee;
 }
 .qf-terms-block {
-  font-size: 11px;
-  opacity: 0.6;
+  font-size: 12px;
+  color: #3d3d3d;            /* antes opacity 0.6 — 4.6:1, al filo */
   padding: 8px 0;
   border-top: 1px solid #eee;
 }
@@ -159,15 +198,15 @@
   flex-shrink: 0;
 }
 .qf-qr-label {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  opacity: 0.5;
+  color: #555;               /* antes opacity 0.5 — 3.5:1, no cumplía */
 }
 .qf-footer-block {
-  font-size: 11px;
-  opacity: 0.5;
+  font-size: 12px;
+  color: #555;               /* antes opacity 0.5 — 3.5:1, no cumplía */
   padding: 4px 0;
 }
 
@@ -180,11 +219,11 @@
   background: rgba(0,0,0,0.02);
 }
 .qf-bank-label {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  opacity: 0.45;
+  color: #555;               /* antes opacity 0.45 — casi invisible */
   margin-bottom: 5px;
 }
 .qf-bank-row {

@@ -6,6 +6,10 @@ const DEF_CONFIG = {
   fixedMonthlyCost: 2000,
   monthlyPrintHours: 200,
   wastePercent: 10,
+  maintenancePercent: 5,   /* % sobre costos de máquina — refacciones, boquillas, mantenimiento */
+  /* Gastos indirectos — prorrateados por hora igual que los fijos */
+  indirectMonthlyCost: 0,  /* total mensual de consumibles indirectos */
+  indirectCostItems: [],   /* [{name:'Guantes', amount:120}, ...] */
   bizName: '',
   bizPhone: '',
   bizEmail: '',
@@ -14,7 +18,8 @@ const DEF_CONFIG = {
   bizBank: '',
   bizAccountHolder: '',
   bizAccountNumber: '',
-  amsPurgeGrams: 40,       /* gramos de purga por cambio de color en AMS */
+  amsPurgeGrams: 0.7,      /* gramos de purga por cambio de color en AMS — medido en Bambu Studio:
+                              (Expulsado + Torre) ÷ cambios de filamento. Rango PLA 0.25–0.9 g */
   theme: 'dark',
   lastPrinterId: '',
   lastMaterialId: '',
@@ -69,6 +74,18 @@ function sv(k, v) {
   var SYNC_KEYS = ['quotes','clients','inventory','materials','config','quoteStyle','quoteCounter'];
   if (SYNC_KEYS.indexOf(k) !== -1 && typeof schedulePush === 'function') schedulePush();
 }
+
+/* Agrupa llamadas seguidas en una sola, esperando a que paren.
+   Útil para no guardar en cada tecla: svDebounced('config', config).
+
+   En localStorage escribir de más solo gasta milisegundos. En una base de
+   datos en la nube cada escritura cuenta contra la cuota y puede costar
+   dinero, así que conviene adquirir el hábito desde ahora. */
+var _svTimers = {};
+function svDebounced(k, v, ms) {
+  clearTimeout(_svTimers[k]);
+  _svTimers[k] = setTimeout(function() { sv(k, v); }, ms || 600);
+}
 function lv(k) { return localStorage.getItem('c3d_' + k); }
 
 /* Redondea al múltiplo de 5 más cercano hacia arriba (terminación 5 o 10) */
@@ -91,6 +108,13 @@ printers = printers.map(function(p) {
 });
 let materials   = ld('materials', DEF_MATERIALS);
 let config      = { ...DEF_CONFIG, ...ld('config', DEF_CONFIG) };
+/* Migración: amsPurgeGrams arrancó con un default irreal de 40 g por cambio de color.
+   Medido en Bambu Studio ronda 0.7 g, así que cualquier valor ≥ 10 g es residuo del
+   default viejo — con 40 g una pieza de 4 colores cotizaba 120 g de material fantasma. */
+if (config.amsPurgeGrams >= 10) {
+  config.amsPurgeGrams = DEF_CONFIG.amsPurgeGrams;
+  sv('config', config);
+}
 let quoteStyle  = { ...DEF_QUOTE_STYLE, ...ld('quoteStyle', DEF_QUOTE_STYLE) };
 let history     = ld('history', []);
 let quotes      = ld('quotes', []);
@@ -106,6 +130,39 @@ let clients = ld('clients', DEF_CLIENTS);
 
 /* ── Filament Inventory ───────────────────────────────────────────── */
 let inventory = ld('inventory', []);
+
+/* ── Migración: el rollo guardaba el NOMBRE del material, no su id ──────────
+   Antes: { material: "PLA" } y la calculadora comparaba cadenas en minúsculas.
+   Renombrar «PLA» a «PLA Básico» en Materiales dejaba huérfanos a todos los
+   rollos: seguían en Inventario pero desaparecían del selector de color, sin
+   ningún mensaje que lo explicara.
+
+   Ahora el rollo guarda materialId (el vínculo vivo) y conserva `material`
+   como respaldo legible por si el material se borra del catálogo. */
+(function migrarMaterialDeRollos() {
+  var cambios = false;
+  inventory.forEach(function(rollo) {
+    if (rollo.materialId) return;
+    var m = materials.find(function(x) {
+      return x.name && rollo.material &&
+             x.name.toLowerCase() === rollo.material.toLowerCase();
+    });
+    if (m) { rollo.materialId = m.id; cambios = true; }
+  });
+  if (cambios) sv('inventory', inventory);
+})();
+
+/* Nombre del material de un rollo.
+   Resuelve por id para que renombrar el material se refleje al instante;
+   cae al texto guardado solo si el material ya no existe en el catálogo. */
+function nombreMaterialDeRollo(rollo) {
+  if (!rollo) return '';
+  if (rollo.materialId) {
+    var m = materials.find(function(x) { return x.id === rollo.materialId; });
+    if (m) return m.name;
+  }
+  return rollo.material || '';
+}
 /* lastCalc persists during the browser session — survives page navigation */
 let lastCalc = (function() {
   try { var v = sessionStorage.getItem('c3d_lastCalc'); return v ? JSON.parse(v) : null; }
