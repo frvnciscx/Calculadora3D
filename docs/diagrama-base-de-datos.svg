@@ -1,0 +1,263 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1000" width="1400" height="1000" font-family="Plus Jakarta Sans, system-ui, -apple-system, Segoe UI, sans-serif">
+  <defs>
+    <style>
+      .t-title  { font-size: 23px; font-weight: 700; fill: #111814; letter-spacing: -0.4px; }
+      .t-sub    { font-size: 12px; fill: #69756E; }
+      .t-sect   { font-size: 10px; font-weight: 700; fill: #69756E; letter-spacing: 1.2px; }
+      .t-head   { font-size: 12px; font-weight: 700; fill: #FFFFFF;
+                  font-family: JetBrains Mono, ui-monospace, monospace; }
+      .t-f      { font-size: 10.5px; fill: #3E4A43; font-family: JetBrains Mono, ui-monospace, monospace; }
+      .t-fm     { font-size: 10.5px; fill: #111814; font-weight: 700;
+                  font-family: JetBrains Mono, ui-monospace, monospace; }
+      .t-note   { font-size: 9.5px; fill: #8A948E; }
+      .t-card   { font-size: 11px; font-weight: 700; fill: #0A7A58;
+                  font-family: JetBrains Mono, ui-monospace, monospace; }
+      .t-rel    { font-size: 9.5px; fill: #69756E; font-style: italic; }
+      .t-badge  { font-size: 8px; font-weight: 700; fill: #FFFFFF; letter-spacing: 0.4px; }
+      .t-leg    { font-size: 10.5px; fill: #3E4A43; }
+      .t-body   { font-size: 11px; fill: #3E4A43; }
+      .box      { fill: #FFFFFF; stroke: #DCE3DF; stroke-width: 1; }
+      .hd       { fill: #0A7A58; }
+      .hd-root  { fill: #22302A; }
+      .hd-sing  { fill: #6B7F76; }
+      .inner    { fill: #F4F7F5; stroke: #D3DED8; stroke-width: 1; }
+      .warnbox  { fill: #FDF4F2; stroke: #E8C4BC; stroke-width: 1; }
+      .conn     { stroke: #A9B8B0; stroke-width: 1.4; fill: none; }
+      .fk       { stroke: #B45309; stroke-width: 1.4; fill: none; stroke-dasharray: 5 3; }
+      .weak     { stroke: #C0392B; stroke-width: 1.4; fill: none; stroke-dasharray: 3 3; }
+    </style>
+    <marker id="a-fk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#B45309"/>
+    </marker>
+    <marker id="a-weak" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#C0392B"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="1000" fill="#FBFCFB"/>
+
+  <text x="40" y="46" class="t-title">Base de datos — llaves y relaciones</text>
+  <text x="40" y="68" class="t-sub">Firestore · La Casita del Molde · el identificador de cada documento es su llave primaria; las llaves foráneas son campos que guardan el id de otro documento</text>
+
+  <!-- ══ Nota de lectura ══ -->
+  <rect x="40" y="88" width="1320" height="62" rx="8" class="inner"/>
+  <text x="56" y="110" class="t-body"><tspan font-weight="700">Cómo leer esto si vienes de bases de datos relacionales:</tspan> Firestore no obliga a que exista lo que apunta una llave foránea — no hay integridad referencial. Si borras un cliente,</text>
+  <text x="56" y="128" class="t-body">el campo clientId de sus cotizaciones sigue ahí apuntando al vacío. Por eso la app guarda además una <tspan font-weight="700">copia</tspan> del nombre: la cotización debe seguir siendo legible aunque el cliente</text>
+  <text x="56" y="142" class="t-body">ya no exista. Las copias no son un error de diseño aquí; son lo que mantiene los documentos históricos intactos.</text>
+
+  <!-- ══ Raíz ══ -->
+  <rect x="560" y="178" width="280" height="86" rx="8" class="box"/>
+  <rect x="560" y="178" width="280" height="28" rx="8" class="hd-root"/>
+  <rect x="560" y="198" width="280" height="8" class="hd-root"/>
+  <text x="576" y="197" class="t-head">users/{uid}</text>
+  <rect x="576" y="214" width="20" height="12" rx="3" fill="#0A7A58"/>
+  <text x="586" y="223" class="t-badge" text-anchor="middle">PK</text>
+  <text x="604" y="224" class="t-fm">uid</text>
+  <text x="648" y="224" class="t-note">lo genera Firebase Auth al iniciar sesión</text>
+  <text x="576" y="243" class="t-f">email · displayName · createdAt</text>
+  <text x="576" y="257" class="t-note">Todo lo demás cuelga de aquí. Por eso la regla de seguridad es una línea.</text>
+
+  <!-- Bus de contención -->
+  <path d="M700 264 L700 300" class="conn"/>
+  <path d="M190 300 L1210 300" class="conn"/>
+  <path d="M190 300 L190 326" class="conn"/>
+  <path d="M530 300 L530 326" class="conn"/>
+  <path d="M870 300 L870 326" class="conn"/>
+  <path d="M1210 300 L1210 326" class="conn"/>
+  <text x="710" y="282" class="t-rel">1</text>
+  <text x="196" y="318" class="t-rel">N</text>
+  <text x="536" y="318" class="t-rel">N</text>
+  <text x="876" y="318" class="t-rel">N</text>
+  <text x="1216" y="318" class="t-rel">N</text>
+
+  <!-- ══════ quotes ══════ -->
+  <rect x="40" y="326" width="300" height="368" rx="8" class="box"/>
+  <rect x="40" y="326" width="300" height="28" rx="8" class="hd"/>
+  <rect x="40" y="346" width="300" height="8" class="hd"/>
+  <text x="56" y="345" class="t-head">quotes/{quoteId}</text>
+
+  <rect x="56" y="364" width="20" height="12" rx="3" fill="#0A7A58"/>
+  <text x="66" y="373" class="t-badge" text-anchor="middle">PK</text>
+  <text x="84" y="374" class="t-fm">quoteId</text>
+
+  <text x="56" y="392" class="t-f">quoteNum</text>
+  <text x="140" y="392" class="t-note">COT-0002 · visible, no es la PK</text>
+  <text x="56" y="408" class="t-f">quoteDate · status</text>
+
+  <rect x="56" y="418" width="20" height="12" rx="3" fill="#B45309"/>
+  <text x="66" y="427" class="t-badge" text-anchor="middle">FK</text>
+  <text x="84" y="428" class="t-fm">clientId</text>
+  <text x="150" y="428" class="t-note">→ clients</text>
+
+  <text x="56" y="446" class="t-f">clientName · clientPhone</text>
+  <text x="56" y="459" class="t-note">copia — sobrevive si se borra el cliente</text>
+  <text x="56" y="477" class="t-f">subtotal · discount · commission</text>
+  <text x="56" y="493" class="t-f">grandTotal · totalBaseCost</text>
+
+  <!-- items embebidos -->
+  <rect x="56" y="504" width="268" height="176" rx="6" class="inner"/>
+  <text x="70" y="523" class="t-card">items[]</text>
+  <text x="124" y="523" class="t-note">arreglo embebido</text>
+  <text x="70" y="538" class="t-note">no es subcolección: vive dentro del documento</text>
+  <text x="70" y="557" class="t-f">desc · qty · weight · timeH</text>
+  <text x="70" y="573" class="t-f">matCost · fixedCost · maintCost</text>
+  <text x="70" y="589" class="t-f">baseCost · totalCost</text>
+  <text x="70" y="602" class="t-note">fotografía del costo al cotizar</text>
+
+  <rect x="70" y="614" width="20" height="12" rx="3" fill="#B45309"/>
+  <text x="80" y="623" class="t-badge" text-anchor="middle">FK</text>
+  <text x="98" y="624" class="t-fm">spoolId</text>
+  <text x="160" y="624" class="t-note">→ inventory</text>
+
+  <rect x="70" y="634" width="20" height="12" rx="3" fill="#B45309"/>
+  <text x="80" y="643" class="t-badge" text-anchor="middle">FK</text>
+  <text x="98" y="644" class="t-fm">amsColors[].spoolId</text>
+  <text x="70" y="660" class="t-note">un rollo por color en multicolor</text>
+  <text x="70" y="673" class="t-note">al aceptar, descuenta de cada uno</text>
+
+  <!-- ══════ clients ══════ -->
+  <rect x="380" y="326" width="300" height="194" rx="8" class="box"/>
+  <rect x="380" y="326" width="300" height="28" rx="8" class="hd"/>
+  <rect x="380" y="346" width="300" height="8" class="hd"/>
+  <text x="396" y="345" class="t-head">clients/{clientId}</text>
+  <rect x="396" y="364" width="20" height="12" rx="3" fill="#0A7A58"/>
+  <text x="406" y="373" class="t-badge" text-anchor="middle">PK</text>
+  <text x="424" y="374" class="t-fm">clientId</text>
+  <text x="396" y="396" class="t-f">name · phone · email</text>
+  <text x="396" y="412" class="t-f">social · notes · tag</text>
+  <line x1="396" y1="424" x2="664" y2="424" stroke="#E8EEEA"/>
+  <text x="396" y="442" class="t-f">quoteCount · totalQuoted</text>
+  <text x="396" y="458" class="t-f">lastQuoteAt</text>
+  <text x="396" y="472" class="t-note">campos derivados: se recalculan al guardar</text>
+  <text x="396" y="486" class="t-note">una cotización, para no tener que leerlas</text>
+  <text x="396" y="500" class="t-note">todas solo para mostrar la lista</text>
+
+  <!-- ══════ inventory ══════ -->
+  <rect x="380" y="548" width="300" height="146" rx="8" class="box"/>
+  <rect x="380" y="548" width="300" height="28" rx="8" class="hd"/>
+  <rect x="380" y="568" width="300" height="8" class="hd"/>
+  <text x="396" y="567" class="t-head">inventory/{spoolId}</text>
+  <rect x="396" y="586" width="20" height="12" rx="3" fill="#0A7A58"/>
+  <text x="406" y="595" class="t-badge" text-anchor="middle">PK</text>
+  <text x="424" y="596" class="t-fm">spoolId</text>
+  <text x="396" y="618" class="t-f">brand · color · colorHex</text>
+  <text x="396" y="634" class="t-f">totalG · remainingG · costPerKg</text>
+
+  <rect x="396" y="646" width="24" height="12" rx="3" fill="#C0392B"/>
+  <text x="408" y="655" class="t-badge" text-anchor="middle">FK?</text>
+  <text x="426" y="656" class="t-fm">material</text>
+  <text x="494" y="656" class="t-note">guarda el NOMBRE</text>
+  <text x="396" y="676" class="t-note">no el id — ver advertencia abajo</text>
+
+  <!-- ══════ printers ══════ -->
+  <rect x="720" y="326" width="300" height="154" rx="8" class="box"/>
+  <rect x="720" y="326" width="300" height="28" rx="8" class="hd"/>
+  <rect x="720" y="346" width="300" height="8" class="hd"/>
+  <text x="736" y="345" class="t-head">printers/{printerId}</text>
+  <rect x="736" y="364" width="20" height="12" rx="3" fill="#0A7A58"/>
+  <text x="746" y="373" class="t-badge" text-anchor="middle">PK</text>
+  <text x="764" y="374" class="t-fm">printerId</text>
+  <text x="736" y="396" class="t-f">name · type · power</text>
+  <text x="736" y="412" class="t-f">cost · lifeHours</text>
+  <text x="736" y="428" class="t-f">multicolor · heads</text>
+  <text x="736" y="448" class="t-note">cost ÷ lifeHours = depreciación por hora</text>
+  <text x="736" y="464" class="t-note">La cotización guarda el nombre, no el id:</text>
+  <text x="736" y="476" class="t-note">es un dato histórico, no un vínculo vivo.</text>
+
+  <!-- ══════ materials ══════ -->
+  <rect x="720" y="548" width="300" height="146" rx="8" class="box"/>
+  <rect x="720" y="548" width="300" height="28" rx="8" class="hd"/>
+  <rect x="720" y="568" width="300" height="8" class="hd"/>
+  <text x="736" y="567" class="t-head">materials/{materialId}</text>
+  <rect x="736" y="586" width="20" height="12" rx="3" fill="#0A7A58"/>
+  <text x="746" y="595" class="t-badge" text-anchor="middle">PK</text>
+  <text x="764" y="596" class="t-fm">materialId</text>
+  <text x="736" y="618" class="t-f">name</text>
+  <text x="790" y="618" class="t-note">PLA, PETG, Resina…</text>
+  <text x="736" y="634" class="t-f">type · costPerKg · density</text>
+  <text x="736" y="660" class="t-note">name funciona hoy como llave de hecho,</text>
+  <text x="736" y="676" class="t-note">aunque la llave real sea materialId.</text>
+
+  <!-- ══════ singletons ══════ -->
+  <rect x="1060" y="326" width="300" height="194" rx="8" class="box"/>
+  <rect x="1060" y="326" width="300" height="28" rx="8" class="hd-sing"/>
+  <rect x="1060" y="346" width="300" height="8" class="hd-sing"/>
+  <text x="1076" y="345" class="t-head">settings/config</text>
+  <text x="1076" y="372" class="t-note">Documento único — no es colección.</text>
+  <text x="1076" y="386" class="t-note">No tiene llave propia: su id es fijo.</text>
+  <text x="1076" y="408" class="t-f">kwhCost · laborCostPerHour</text>
+  <text x="1076" y="424" class="t-f">fixedMonthlyCost · monthlyPrintHours</text>
+  <text x="1076" y="440" class="t-f">indirectMonthlyCost · wastePercent</text>
+  <text x="1076" y="456" class="t-f">maintenancePercent · amsPurgeGrams</text>
+  <text x="1076" y="472" class="t-f">fixedCostItems[] · indirectCostItems[]</text>
+  <text x="1076" y="492" class="t-note">Los arreglos van embebidos: son pocos</text>
+  <text x="1076" y="506" class="t-note">y siempre se leen junto con lo demás.</text>
+
+  <rect x="1060" y="548" width="300" height="146" rx="8" class="box"/>
+  <rect x="1060" y="548" width="300" height="28" rx="8" class="hd-sing"/>
+  <rect x="1060" y="568" width="300" height="8" class="hd-sing"/>
+  <text x="1076" y="567" class="t-head">counters/quotes</text>
+  <text x="1076" y="596" class="t-f">current: 2</text>
+  <line x1="1076" y1="608" x2="1344" y2="608" stroke="#E8EEEA"/>
+  <text x="1076" y="626" class="t-note">Genera el folio COT-0003. Se incrementa con</text>
+  <text x="1076" y="640" class="t-note">increment(1): suma el servidor, no el cliente.</text>
+  <text x="1076" y="660" class="t-note">Sin eso, dos dispositivos sin conexión crean</text>
+  <text x="1076" y="674" class="t-note">dos cotizaciones con el mismo número.</text>
+
+  <!-- ══ Relaciones ══ -->
+  <path d="M340 428 L380 428" class="fk" marker-end="url(#a-fk)"/>
+  <text x="344" y="420" class="t-rel">N : 1</text>
+
+  <path d="M340 624 L380 624" class="fk" marker-end="url(#a-fk)"/>
+  <text x="344" y="616" class="t-rel">N : 1</text>
+
+  <path d="M680 656 L720 656" class="weak" marker-end="url(#a-weak)"/>
+  <text x="684" y="648" class="t-rel" fill="#C0392B">N : 1</text>
+
+  <!-- ══ Colecciones restantes ══ -->
+  <rect x="40" y="716" width="1320" height="58" rx="8" class="box"/>
+  <text x="56" y="738" class="t-sect">RESTO DE COLECCIONES — misma forma, sin llaves foráneas</text>
+  <text x="56" y="760" class="t-f">catalog/{productId}</text>
+  <text x="200" y="760" class="t-note">productos por costo y por tabla de precios</text>
+  <text x="470" y="760" class="t-f">history/{calcId}</text>
+  <text x="592" y="760" class="t-note">últimos 100 cálculos</text>
+  <text x="760" y="760" class="t-f">presets/{presetId}</text>
+  <text x="900" y="760" class="t-note">impresora + material + margen guardados</text>
+
+  <!-- ══ Advertencia ══ -->
+  <rect x="40" y="790" width="800" height="90" rx="8" class="warnbox"/>
+  <text x="56" y="812" class="t-body" fill="#8C2F22"><tspan font-weight="700">⚠ Vínculo frágil detectado — inventory.material → materials.name</tspan></text>
+  <text x="56" y="832" class="t-body">El rollo guarda el <tspan font-weight="700">nombre</tspan> del material como texto, no su id, y la app los compara en minúsculas</text>
+  <text x="56" y="848" class="t-body">(js/calculator.js, _updateSpoolSelector). Si renombras «PLA» a «PLA Básico» en Materiales, todos los rollos</text>
+  <text x="56" y="864" class="t-body">de PLA dejan de aparecer en el selector de color de la calculadora. Guardar materialId lo resuelve.</text>
+
+  <!-- ══ Leyenda ══ -->
+  <rect x="868" y="790" width="492" height="90" rx="8" class="inner"/>
+  <text x="884" y="810" class="t-sect">CÓMO LEER EL DIAGRAMA</text>
+
+  <rect x="884" y="820" width="20" height="12" rx="3" fill="#0A7A58"/>
+  <text x="894" y="829" class="t-badge" text-anchor="middle">PK</text>
+  <text x="912" y="830" class="t-leg">Llave primaria — el id del documento</text>
+
+  <rect x="884" y="840" width="20" height="12" rx="3" fill="#B45309"/>
+  <text x="894" y="849" class="t-badge" text-anchor="middle">FK</text>
+  <text x="912" y="850" class="t-leg">Llave foránea — guarda el id de otro documento</text>
+
+  <rect x="884" y="860" width="24" height="12" rx="3" fill="#C0392B"/>
+  <text x="896" y="869" class="t-badge" text-anchor="middle">FK?</text>
+  <text x="916" y="870" class="t-leg">Vínculo por texto, no por id — se rompe al renombrar</text>
+
+  <path d="M1140 826 L1172 826" class="conn"/>
+  <text x="1180" y="830" class="t-leg">Contención (1 : N)</text>
+  <path d="M1140 846 L1172 846" class="fk" marker-end="url(#a-fk)"/>
+  <text x="1180" y="850" class="t-leg">Referencia por llave foránea</text>
+  <path d="M1140 866 L1172 866" class="weak" marker-end="url(#a-weak)"/>
+  <text x="1180" y="870" class="t-leg">Referencia frágil</text>
+
+  <!-- ══ Nota final ══ -->
+  <rect x="40" y="896" width="1320" height="76" rx="8" class="inner"/>
+  <text x="56" y="918" class="t-body"><tspan font-weight="700">Por qué hay tantas copias y tan pocas llaves foráneas.</tspan>  En una base relacional se evita repetir datos: se guarda el id y se hace un JOIN. Firestore no tiene JOIN, y cada</text>
+  <text x="56" y="936" class="t-body">lectura cuenta contra la cuota — mostrar 50 cotizaciones con el nombre de su cliente costaría 50 lecturas extra. Por eso se guarda el nombre junto a la cotización.</text>
+  <text x="56" y="956" class="t-body">La regla práctica: <tspan font-weight="700">usa llave foránea cuando necesites el dato VIVO</tspan> (el inventario debe reflejar el rollo de hoy); <tspan font-weight="700">usa copia cuando necesites el dato CONGELADO</tspan> (la</text>
+  <text x="56" y="968" class="t-body">cotización debe decir lo que costó ese día, aunque todo lo demás cambie).</text>
+</svg>

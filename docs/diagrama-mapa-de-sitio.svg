@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 700" width="1240" height="700" font-family="Plus Jakarta Sans, system-ui, -apple-system, Segoe UI, sans-serif">
+  <defs>
+    <style>
+      .t-title   { font-size: 22px; font-weight: 700; fill: #111814; letter-spacing: -0.4px; }
+      .t-sub     { font-size: 12px; font-weight: 400; fill: #69756E; }
+      .t-section { font-size: 10px; font-weight: 700; fill: #69756E; letter-spacing: 1.2px; }
+      .t-head    { font-size: 13px; font-weight: 700; fill: #FFFFFF; }
+      .t-headsub { font-size: 9px;  font-weight: 500; fill: #BFE8D8; letter-spacing: 0.3px; }
+      .t-item    { font-size: 11px; font-weight: 500; fill: #22302A; }
+      .t-prop    { font-size: 11px; font-weight: 600; fill: #3E4A43; }
+      .t-propsub { font-size: 9px;  font-weight: 400; fill: #8A948E; }
+      .t-leg     { font-size: 10px; font-weight: 500; fill: #69756E; }
+      .box       { fill: #FFFFFF; stroke: #DCE3DF; stroke-width: 1; }
+      .head      { fill: #0A7A58; }
+      .prop      { fill: #F4F7F5; stroke: #B9C4BD; stroke-width: 1; stroke-dasharray: 4 3; }
+      .conn      { stroke: #CBD4CE; stroke-width: 1; fill: none; }
+    </style>
+  </defs>
+
+  <rect width="1240" height="700" fill="#FBFCFB"/>
+
+  <text x="40" y="48" class="t-title">Mapa de sitio — Calculadora 3D</text>
+  <text x="40" y="70" class="t-sub">La Casita del Molde · aplicación de página única: todas las pantallas existen en el DOM y showPage() alterna su visibilidad</text>
+
+  <text x="40" y="118" class="t-section">PANTALLAS ACTUALES</text>
+
+  <!-- ══ Columna 1 — Inicio ══ -->
+  <rect x="40" y="134" width="216" height="46" rx="8" class="head"/>
+  <text x="56" y="156" class="t-head">Inicio</text>
+  <text x="56" y="171" class="t-headsub">dashboard.js</text>
+  <path d="M148 180 L148 196" class="conn"/>
+  <rect x="40" y="196" width="216" height="30" rx="6" class="box"/>
+  <text x="56" y="215" class="t-item">Ingresos y margen del mes</text>
+  <rect x="40" y="234" width="216" height="30" rx="6" class="box"/>
+  <text x="56" y="253" class="t-item">Historial de 6 meses</text>
+  <rect x="40" y="272" width="216" height="30" rx="6" class="box"/>
+  <text x="56" y="291" class="t-item">Cotizaciones recientes</text>
+  <rect x="40" y="310" width="216" height="30" rx="6" class="box"/>
+  <text x="56" y="329" class="t-item">Salud del negocio</text>
+
+  <!-- ══ Columna 2 — Calculadora ══ -->
+  <rect x="276" y="134" width="216" height="46" rx="8" class="head"/>
+  <text x="292" y="156" class="t-head">Calculadora</text>
+  <text x="292" y="171" class="t-headsub">calculator.js · costing.js</text>
+  <path d="M384 180 L384 196" class="conn"/>
+  <rect x="276" y="196" width="216" height="30" rx="6" class="box"/>
+  <text x="292" y="215" class="t-item">01 · Pieza</text>
+  <rect x="276" y="234" width="216" height="30" rx="6" class="box"/>
+  <text x="292" y="253" class="t-item">02 · Impresora y material</text>
+  <rect x="276" y="272" width="216" height="30" rx="6" class="box"/>
+  <text x="292" y="291" class="t-item">Bloque Resina</text>
+  <rect x="276" y="310" width="216" height="30" rx="6" class="box"/>
+  <text x="292" y="329" class="t-item">Bloque Multicolor AMS</text>
+  <rect x="276" y="348" width="216" height="30" rx="6" class="box"/>
+  <text x="292" y="367" class="t-item">03 · Post-procesado</text>
+  <rect x="276" y="386" width="216" height="30" rx="6" class="box"/>
+  <text x="292" y="405" class="t-item">04 · Margen</text>
+  <rect x="276" y="424" width="216" height="30" rx="6" class="box"/>
+  <text x="292" y="443" class="t-item">Resultado y desglose</text>
+
+  <!-- ══ Columna 3 — Cotizaciones ══ -->
+  <rect x="512" y="134" width="216" height="46" rx="8" class="head"/>
+  <text x="528" y="156" class="t-head">Cotizaciones</text>
+  <text x="528" y="171" class="t-headsub">quotes.js · clients.js</text>
+  <path d="M620 180 L620 196" class="conn"/>
+  <rect x="512" y="196" width="216" height="30" rx="6" class="box"/>
+  <text x="528" y="215" class="t-item">Lista, filtros y búsqueda</text>
+  <rect x="512" y="234" width="216" height="30" rx="6" class="box"/>
+  <text x="528" y="253" class="t-item">Borrador de orden</text>
+  <rect x="512" y="272" width="216" height="30" rx="6" class="box"/>
+  <text x="528" y="291" class="t-item">Exportar PDF e imagen</text>
+  <rect x="512" y="310" width="216" height="30" rx="6" class="box"/>
+  <text x="528" y="329" class="t-item">WhatsApp y QR</text>
+  <rect x="512" y="348" width="216" height="30" rx="6" class="box"/>
+  <text x="528" y="367" class="t-item">Sincronización con Notion</text>
+  <rect x="512" y="386" width="216" height="30" rx="6" class="box"/>
+  <text x="528" y="405" class="t-item">Clientes</text>
+
+  <!-- ══ Columna 4 — Catálogo ══ -->
+  <rect x="748" y="134" width="216" height="46" rx="8" class="head"/>
+  <text x="764" y="156" class="t-head">Catálogo</text>
+  <text x="764" y="171" class="t-headsub">catalog.js · inventory.js</text>
+  <path d="M856 180 L856 196" class="conn"/>
+  <rect x="748" y="196" width="216" height="30" rx="6" class="box"/>
+  <text x="764" y="215" class="t-item">Productos y tabla de precios</text>
+  <rect x="748" y="234" width="216" height="30" rx="6" class="box"/>
+  <text x="764" y="253" class="t-item">Impresoras</text>
+  <rect x="748" y="272" width="216" height="30" rx="6" class="box"/>
+  <text x="764" y="291" class="t-item">Materiales</text>
+  <rect x="748" y="310" width="216" height="30" rx="6" class="box"/>
+  <text x="764" y="329" class="t-item">Inventario de filamento</text>
+  <rect x="748" y="348" width="216" height="30" rx="6" class="box"/>
+  <text x="764" y="367" class="t-item">Historial de cálculos</text>
+
+  <!-- ══ Columna 5 — Ajustes ══ -->
+  <rect x="984" y="134" width="216" height="46" rx="8" class="head"/>
+  <text x="1000" y="156" class="t-head">Ajustes</text>
+  <text x="1000" y="171" class="t-headsub">config.js · quote-editor.js</text>
+  <path d="M1092 180 L1092 196" class="conn"/>
+  <rect x="984" y="196" width="216" height="30" rx="6" class="box"/>
+  <text x="1000" y="215" class="t-item">Datos del negocio</text>
+  <rect x="984" y="234" width="216" height="30" rx="6" class="box"/>
+  <text x="1000" y="253" class="t-item">Cuenta bancaria</text>
+  <rect x="984" y="272" width="216" height="30" rx="6" class="box"/>
+  <text x="1000" y="291" class="t-item">Electricidad y trabajo</text>
+  <rect x="984" y="310" width="216" height="30" rx="6" class="box"/>
+  <text x="1000" y="329" class="t-item">Gastos fijos</text>
+  <rect x="984" y="348" width="216" height="30" rx="6" class="box"/>
+  <text x="1000" y="367" class="t-item">Gastos indirectos</text>
+  <rect x="984" y="386" width="216" height="30" rx="6" class="box"/>
+  <text x="1000" y="405" class="t-item">Otros parámetros</text>
+  <rect x="984" y="424" width="216" height="30" rx="6" class="box"/>
+  <text x="1000" y="443" class="t-item">Diseño de cotización</text>
+
+  <!-- ══ Propuesto ══ -->
+  <line x1="40" y1="492" x2="1200" y2="492" stroke="#E2E6E3" stroke-width="1"/>
+  <text x="40" y="522" class="t-section">POR CONSTRUIR</text>
+
+  <rect x="40" y="538" width="216" height="52" rx="8" class="prop"/>
+  <text x="56" y="560" class="t-prop">Insumos y herrajes</text>
+  <text x="56" y="576" class="t-propsub">imanes, argollas, tornillería</text>
+
+  <rect x="276" y="538" width="216" height="52" rx="8" class="prop"/>
+  <text x="292" y="560" class="t-prop">Órdenes de compra</text>
+  <text x="292" y="576" class="t-propsub">cruza cotización con inventario</text>
+
+  <rect x="512" y="538" width="216" height="52" rx="8" class="prop"/>
+  <text x="528" y="560" class="t-prop">Producción</text>
+  <text x="528" y="576" class="t-propsub">en cola → imprimiendo → entregada</text>
+
+  <rect x="748" y="538" width="216" height="52" rx="8" class="prop"/>
+  <text x="764" y="560" class="t-prop">Autenticación</text>
+  <text x="764" y="576" class="t-propsub">Firebase Auth · multi-dispositivo</text>
+
+  <rect x="984" y="538" width="216" height="52" rx="8" class="prop"/>
+  <text x="1000" y="560" class="t-prop">Portal del cliente</text>
+  <text x="1000" y="576" class="t-propsub">requiere URLs y autenticación</text>
+
+  <!-- ══ Leyenda ══ -->
+  <rect x="40" y="626" width="14" height="14" rx="3" class="head"/>
+  <text x="62" y="637" class="t-leg">Sección principal</text>
+
+  <rect x="190" y="626" width="14" height="14" rx="3" class="box"/>
+  <text x="212" y="637" class="t-leg">Pantalla o bloque existente</text>
+
+  <rect x="404" y="626" width="14" height="14" rx="3" class="prop"/>
+  <text x="426" y="637" class="t-leg">Propuesto — ver docs/MAPA-DE-SITIO.md</text>
+
+  <text x="1200" y="637" class="t-leg" text-anchor="end">Octubre 2026</text>
+</svg>
