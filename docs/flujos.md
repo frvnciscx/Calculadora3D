@@ -2,9 +2,9 @@
 
 Qué hace la persona en cada flujo de la primera versión y qué hace la app en cada paso, con su diagrama. Cubre lo que entra a la primera versión según [`reglas-de-negocio.md`](reglas-de-negocio.md) §4.12.
 
-**Actualizado:** 2026-10-19 (los 7 flujos hechos; abiertas P86 y P87, del flujo 7)
+**Actualizado:** 2026-11-03 (los 7 flujos hechos y sus preguntas respondidas: D87 y D88 cierran el flujo 7)
 
-**Fuentes:** decisiones D1–D66 de [`reglas-de-negocio.md`](reglas-de-negocio.md) · código v100 revisado el 2026-10-16.
+**Fuentes:** decisiones D1–D88 de [`reglas-de-negocio.md`](reglas-de-negocio.md) · código v100 revisado el 2026-10-16.
 
 **Relacionados:** [`reglas-de-negocio.md`](reglas-de-negocio.md) · [`competencia.md`](competencia.md) · [`MAPA-DE-SITIO.md`](MAPA-DE-SITIO.md) · [`CLAUDE.md`](../CLAUDE.md)
 
@@ -22,7 +22,7 @@ Qué hace la persona en cada flujo de la primera versión y qué hace la app en 
 | 4 | Pagos: anticipo, saldo, recibo y cancelación con devolución | D12, D14, D17, D19, D26, D59, D75, D77–D79 | [`pagos.html`](flujos/pagos.html) | Hecho |
 | 5 | Producción y entrega: lista por fecha, empezar y entregar | D11, D13, D60, D68, D80–D82 | [`produccion-y-entrega.html`](flujos/produccion-y-entrega.html) | Hecho |
 | 6 | Cuentas: entrar, confirmar el correo, cerrar sesión, otro dispositivo y borrar la cuenta | D37, D39–D41, D49, D53, D83–D86 | [`cuentas.html`](flujos/cuentas.html) | Hecho; rehecho con D84 el 2026-10-19 |
-| 7 | Arranque de un negocio nuevo | D47, D84–D86 | [`arranque.html`](flujos/arranque.html) | Hecho; preguntas P86 y P87 |
+| 7 | Arranque de un negocio nuevo | D47, D84–D88 | [`arranque.html`](flujos/arranque.html) | Hecho; ajustado con D87 y D88 el 2026-11-03 |
 
 ---
 
@@ -213,26 +213,35 @@ Mientras no llega el anticipo, la tarjeta muestra el plazo y no una fecha («5 d
 ### Qué muestra
 
 - **Cuándo pasa:** la primera vez que se abre la app, o al crear una cuenta nueva sin ajustes en el teléfono. Una cuenta que ya tiene datos no pasa por aquí: usa sus propios ajustes (D86).
-- **Una introducción corta,** que se puede saltar. Cuántos pasos lleva se pregunta en P87.
+- **La introducción de hoy, con sus 5 pasos corregidos** (D88), que se puede saltar. ~~Cuántos pasos lleva se pregunta en P87.~~
 - **Impresoras de una lista de comunes** (D47). Si la suya no está, la agrega a mano con potencia, costo y vida útil.
 - **Materiales con precio de referencia,** que se puede cambiar (D47).
-- **Gastos del mes:** gastos fijos y horas de impresión al mes (D47). La nota al margen recuerda que las horas son el dato que más pesa en el precio (`MEJORAS.md` 2). Qué pasa si no los sabe se pregunta en P86.
+- **Gastos del mes:** gastos fijos y horas de impresión al mes (D47). La nota al margen recuerda que las horas son el dato que más pesa en el precio (`MEJORAS.md` 2). ~~Qué pasa si no los sabe se pregunta en P86.~~ Si no los sabe, los deja para después y la calculadora avisa (D87); lo dice la nota de la izquierda.
 - **Termina con la calculadora lista,** donde sigue el flujo 2. Sin clientes de ejemplo (D47).
 
 ### Pasos
 
 | Paso | Qué hace la persona | Qué hace la app | Sale de |
 |---|---|---|---|
-| Introducción | Lee o salta | Explica el costo real y el camino del slicer a la cotización | P87 |
+| Introducción | Lee los 5 pasos o los salta | Explica el costo real, que el filamento es la menor parte, qué se configura, del slicer a la cotización y qué pasa al aceptar | D88 |
 | Elegir impresoras | Marca las suyas en la lista, o agrega la suya a mano | Carga su potencia, costo y vida útil de referencia, que se pueden cambiar | D47 |
 | Elegir materiales | Marca los que usa y ajusta el precio si quiere | Carga el precio por kilo de referencia | D47 |
-| Gastos del mes | Escribe sus gastos fijos y sus horas de impresión al mes | Calcula el costo por hora que se reparte en cada pieza | D47, P86 |
+| Gastos del mes | Escribe sus gastos fijos y sus horas de impresión al mes, o los deja para después | Calcula el costo por hora que se reparte en cada pieza. Si faltan, la calculadora avisa «Tus precios todavía no incluyen gastos fijos», con un acceso para llenarlos | D47, D87 |
 | Listo | — | Abre la calculadora. Sin cuenta, guardar la primera cotización pide entrar (D84) | D84, D85 |
 
 ### Cambia con este flujo (derivadas)
 
 - Los valores iniciales de hoy (las 4 impresoras de La Casita del Molde, sus precios, $2,000 de gastos fijos inventados y dos clientes de ejemplo, [`js/store.js:52`](../js/store.js)) se reemplazan por la lista de comunes y lo que el taller escriba.
 - La introducción de hoy tiene 5 pasos que solo explican ([`js/onboarding.js`](../js/onboarding.js)); dos ya no corresponden: el 4 dice que se copia el peso del slicer (con D57 se lee el archivo) y el 5 que al aceptar se descuenta el inventario (con D13 es al empezar producción).
+- **Correcciones a la introducción** (D88). El texto final se escribe al implementar; los pasos 1 y 2 se quedan como están:
+
+| Paso de hoy | Qué cambia | Sale de |
+|---|---|---|
+| 3. «Configura una vez» | Dice que es «lo único que hay que capturar antes de empezar a cotizar»; ahora agrega que los gastos del mes se pueden dejar para después | D87 |
+| 4. «Del slicer a la cotización» | En vez de «Copia el peso y el tiempo», sube el archivo laminado de Bambu Studio u OrcaSlicer, o escribe el peso y el tiempo en horas y minutos. El consejo de usar el «Total» del slicer sigue para la captura a mano | D57, D58 |
+| 5. «Al aceptar, todo se mueve solo» | Al aceptar se pide el anticipo; cada pago entra al panel y el filamento se descuenta al empezar producción. El título cambia, porque al aceptar ya no se mueve todo | D12, D13, D19 |
+
+- **La pantalla de acceso dice «La Casita del Molde»** ([`js/onboarding.js:187`](../js/onboarding.js)). Para otros talleres lleva el nombre del producto (D56).
 
 ---
 
@@ -258,8 +267,8 @@ Mientras no llega el anticipo, la tarjeta muestra el plazo y no una fecha («5 d
 | P83 | Qué opciones da la app si hay datos en el teléfono y en la cuenta | (a) «Juntar» o «Quedarme con los de la cuenta» | Respondida con otra regla → D84 · sus opciones quedan sin efecto |
 | P84 | ¿Se interpretó bien D84? | (a) sin cuenta se calcula y se arma; guardar o enviar pide entrar | Respondida (a) → D85 |
 | P85 | Qué pasa con los ajustes hechos sin cuenta al entrar a una cuenta con datos | (a) se quedan los de la cuenta, sin preguntar | Respondida (a) → D86 |
-| P86 | Qué pasa si el taller no sabe sus gastos fijos o sus horas al mes | (a) se puede dejar para después, con un aviso en la calculadora | Abierta |
-| P87 | Cuántos pasos lleva la introducción | (a) tres pasos cortos, y la configuración aparte | Abierta |
+| P86 | Qué pasa si el taller no sabe sus gastos fijos o sus horas al mes | (a) se puede dejar para después, con un aviso en la calculadora | Respondida (a) → D87 |
+| P87 | Cuántos pasos lleva la introducción | (a) tres pasos cortos, y la configuración aparte | Respondida (b) → D88 |
 
 **P66. ¿Cómo se cambia un pedido ya aceptado?** Una aceptada no se puede editar. Ejemplo: el cliente ya pagó el anticipo de 8 herraduras y ahora quiere 10.
 - (a) Se regresa un paso a Enviada, se edita (pasa a Borrador), se reenvía y se vuelve a aceptar. El anticipo se queda registrado y el saldo se recalcula con el total nuevo.
@@ -377,9 +386,11 @@ Mientras no llega el anticipo, la tarjeta muestra el plazo y no una fecha («5 d
 - (b) Es obligatorio para terminar el arranque.
 - (c) La app propone valores de referencia que se pueden cambiar.
 - **Recomendado: (a).** No frena a quien quiere probar, y el aviso es honesto: (c) repetiría el problema de los $2,000 inventados de hoy (`MEJORAS.md` 8), y (b) obliga a inventar un número.
+- **Respuesta (2026-11-03): (a) → D87.**
 
 **P87. ¿Cuántos pasos lleva la introducción?** Hoy son 5 pantallas que solo explican, y el arranque suma tres pantallas de configuración. Ejemplo: alguien descarga la app y quiere calcular su primera pieza.
 - (a) Tres pasos cortos (el costo real, del slicer a la cotización, y cómo se cobra con anticipo), y la configuración aparte.
 - (b) Los 5 de hoy, corregidos, más la configuración.
 - (c) Sin introducción: se explica en cada pantalla, cuando hace falta.
 - **Recomendado: (a).** Ocho pantallas antes de calcular son muchas; tres explican lo que distingue a la app y el resto se aprende usándola. Es un agregado mío sobre D47: si prefieres (c), se quita en un minuto.
+- **Respuesta (2026-11-03): (b) → D88.** Se quedan los 5 pasos de hoy, corregidos; las correcciones están en el flujo 7.

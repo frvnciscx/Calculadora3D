@@ -2,7 +2,7 @@
 
 Lo que hay que llevar al repo del Asistente desde el cotizador. Se prepara aquí y se aplica desde la sesión central del Asistente (Francisco, 2026-10-19), porque esta sesión no trabaja en ese repo.
 
-**Actualizado:** 2026-10-19 · **Aplicado en el Asistente:** pendiente
+**Actualizado:** 2026-11-03 · **Aplicado en el Asistente:** pendiente
 
 **Fuentes:** [`aprendizajes.md`](../aprendizajes.md) y la revisión del Asistente del 2026-10-19 (`docs/projects/cotizador/README.md` del 2026-10-16 y `docs/asistente/herramientas.md` del 2026-10-19).
 
@@ -15,7 +15,7 @@ Lo que hay que llevar al repo del Asistente desde el cotizador. Se prepara aquí
 | Archivo | Va en el Asistente | Qué hacer |
 |---|---|---|
 | [`cotizador-README.md`](cotizador-README.md) | `docs/projects/cotizador/README.md` | Reemplazar el archivo completo. El de allá es del 2026-10-16: todavía tiene a Notion, la sincronización y la lista de lo que sigue de ese día |
-| [`herramientas.md`](herramientas.md) | `docs/asistente/herramientas.md` | Una viñeta en §7.5, cerrar la nota del cotizador en §8.5, una viñeta en §10 y tres en §11.4 |
+| [`herramientas.md`](herramientas.md) | `docs/asistente/herramientas.md` | Una viñeta en §7.5, cerrar la nota del cotizador y una viñeta nueva en §8.5, dos viñetas en §10 y tres en §11.4 |
 
 Lo de `forma-de-trabajo.md` ya está en el Asistente: la numeración distinta en las respuestas y «Interpretación:» llegaron el 2026-10-19 desde la app de envío.
 

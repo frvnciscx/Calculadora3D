@@ -1,6 +1,6 @@
 # Para `docs/asistente/herramientas.md` del Asistente
 
-Lo nuevo del cotizador (2026-10-16 al 2026-10-19) que sirve en otros proyectos. Cada bloque dice en qué sección va. Origen de cada viñeta: [`aprendizajes.md`](../aprendizajes.md) de este repo, entre paréntesis. Al aplicarlo, cambiar el «Actualizado» de `herramientas.md`.
+Lo nuevo del cotizador (2026-10-16 al 2026-11-03) que sirve en otros proyectos. Cada bloque dice en qué sección va. Origen de cada viñeta: [`aprendizajes.md`](../aprendizajes.md) de este repo, entre paréntesis. Al aplicarlo, cambiar el «Actualizado» de `herramientas.md`.
 
 ---
 
@@ -24,10 +24,22 @@ Queda:
 ~~Al 2026-10-19, el `CLAUDE.md` del cotizador todavía escribe las rutas completas de un equipo.~~ Desde el 2026-10-19 escribe `<ASISTENTE>`, igual que la app de envío.
 ```
 
+Y una viñeta nueva en la misma sección:
+
+```text
+- **La rama de la sesión parece una rama de más** (cotizador, 2026-11-03): la app de Claude abre cada sesión en un worktree con su propia rama (`claude/<nombre>`). Al hacer el commit en GitHub Desktop, «Publish branch» la sube a GitHub, y Francisco pensó que había creado otra rama por error. Al cerrar una sesión con cambios, decir en qué rama quedaron y que llegan a `main` con un Pull Request. (T7)
+```
+
 ## §10. Python y scripts: una viñeta nueva
 
 ```text
 - **Heredoc con rutas de Windows** (cotizador, 2026-10-19): un script pasado con `python - <<'PY'` desde Bash falló con `unicodeescape` porque el texto traía `C:\Users\...` (`\U` es un escape de Python), y el heredoc también estropea los acentos. Escribir el script con la herramienta de archivos y correrlo por su ruta, o editar con Edit. (T4)
+```
+
+Y otra, en la misma sección:
+
+```text
+- **Nombres que solo cambian en mayúsculas** (cotizador, 2026-11-03): Windows no distingue `base-de-datos.md` de `BASE-DE-DATOS.md`; crear uno reemplaza al otro. Antes de crear un archivo, buscar si ya existe con otras mayúsculas. (T8)
 ```
 
 ## §11.4 Hosting estático: tres viñetas nuevas

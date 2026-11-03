@@ -1,14 +1,14 @@
 # Reglas de negocio — Cotizador 3D
 
-Qué regla manda en cada paso de una cotización: qué acción la mueve de estado, cuándo se cobra el anticipo, cuándo se entrega, cómo entran el IVA, las comisiones y el empaque, y cómo funcionan las cuentas en las tiendas. Es la base para `flujos.md` y `base-de-datos.md`.
+Qué regla manda en cada paso de una cotización: qué acción la mueve de estado, cuándo se cobra el anticipo, cuándo se entrega, cómo entran el IVA, las comisiones y el empaque, y cómo funcionan las cuentas en las tiendas. Es la base para `flujos.md` y [`modelo-de-datos.md`](modelo-de-datos.md).
 
 Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y la app se publica en las tiendas.
 
-**Actualizado:** 2026-10-19 (reglas de negocio cerradas; con las respuestas de `flujos.md` y de publicación van 86 decisiones)
+**Actualizado:** 2026-11-03 (D87–D98, del arranque de un negocio nuevo y del modelo de datos: van 98 decisiones; las reglas de negocio se cerraron el 2026-10-16 y desde entonces suman las de `flujos.md`, `modelo-de-datos.md` y de publicación)
 
 **Fuentes:** código v100 (`main`, commit `7cc4b14`) revisado el 2026-10-16 · decisiones del cotizador en el repo del Asistente (`docs/projects/cotizador/README.md`, 2026-10-15) · [`AUDITORIA-UX.md`](AUDITORIA-UX.md) · respuestas de Francisco a P1–P65 (2026-10-16) · requisitos de publicación de Apple y Google, y planes de Firebase, revisados el 2026-10-16 (fuentes en §4.10).
 
-**Relacionados:** [`BASE-DE-DATOS.md`](BASE-DE-DATOS.md) · [`MAPA-DE-SITIO.md`](MAPA-DE-SITIO.md) · [`AUDITORIA-UX.md`](AUDITORIA-UX.md) · [`CLAUDE.md`](../CLAUDE.md)
+**Relacionados:** [`modelo-de-datos.md`](modelo-de-datos.md) · [`BASE-DE-DATOS.md`](BASE-DE-DATOS.md) · [`MAPA-DE-SITIO.md`](MAPA-DE-SITIO.md) · [`AUDITORIA-UX.md`](AUDITORIA-UX.md) · [`CLAUDE.md`](../CLAUDE.md)
 
 > **Cómo se trabaja este documento.** Preguntas en bloques de 10 con la opción recomendada. Cada respuesta se convierte en una decisión (D#) con fecha y quién la tomó, y la regla se escribe en su tema (§4). Nada se borra: una pregunta respondida se marca con la decisión que produjo, y una decisión superada se tacha con el motivo.
 
@@ -48,12 +48,12 @@ Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y l
 | D7 | Borrador → Enviada: automático al tocar WhatsApp o Link, y un botón «Marcar como enviada». El PDF y la imagen no cambian el estado | Francisco (P2: c) | 2026-10-16 |
 | D8 | Se puede aceptar o rechazar un borrador sin pasar por Enviada | Francisco (P3: a) | 2026-10-16 |
 | D9 | Editar una cotización enviada la regresa a Borrador hasta que se reenvía | Francisco (P4: b) | 2026-10-16 |
-| D10 | Vigencia en días (default en Ajustes), impresa en el documento («Válida hasta…») y con aviso en la lista al vencer; sin estado nuevo | Francisco (P5: b) | 2026-10-16 |
+| D10 | Vigencia en días (default en Ajustes), impresa en el documento («Válida hasta…») y con aviso en la lista al vencer; sin estado nuevo. **Precisada por D97 (2026-11-03):** 15 días al empezar | Francisco (P5: b) | 2026-10-16 |
 | D11 | Aceptada → En producción con un botón «Empezar producción», que avisa si falta el anticipo | Francisco (P6: c) | 2026-10-16 |
 | D12 | Entrega y pago van por separado: la tarjeta dice «Entregada · saldo $X» hasta que se registra el pago | Francisco (P7: c) | 2026-10-16 |
 | D13 | El filamento se descuenta al pasar a En producción (antes: al aceptar) | Francisco (P8: b) | 2026-10-16 |
 | D14 | Anticipo: porcentaje por defecto en Ajustes (50 %), editable en cada cotización | Francisco (P9: a) | 2026-10-16 |
-| D15 | La cotización lleva un plazo («5 días hábiles a partir del anticipo»); al aceptar se convierte en fecha, editable | Francisco (P10: c) | 2026-10-16 |
+| D15 | La cotización lleva un plazo («5 días hábiles a partir del anticipo»); al aceptar se convierte en fecha, editable. **Precisada por D97 (2026-11-03):** 5 días hábiles al empezar, editable en Ajustes | Francisco (P10: c) | 2026-10-16 |
 | D16 | Un pedido ya aceptado se cancela con un estado nuevo, «Cancelada», distinto de Rechazada. Se agrega al ciclo de D1 | Francisco (P11: b) | 2026-10-16 |
 | D17 | Al cancelar se escribe cuánto anticipo se devuelve; por defecto, nada. La cotización debe especificar la política: «por cancelación del cliente no se regresa el anticipo dentro de los primeros 2 días hábiles» (palabras de Francisco; cómo se aplica: P21) | Francisco (P12: b) | 2026-10-16 |
 | D18 | Se puede regresar un paso atrás desde cualquier estado, y se deshace lo que pasó al avanzar. Los pagos no se tocan | Francisco (P13: a) | 2026-10-16 |
@@ -64,10 +64,10 @@ Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y l
 | D23 | Las comisiones de marketplace se definen por canal en Ajustes, con su porcentaje, y cada cotización elige su canal | Francisco (P18: a) | 2026-10-16 |
 | D24 | El campo «Comisión» de hoy es la comisión de quien recomienda al cliente («si alguien me recomienda recibe una comisión, no estaba pensado para las tiendas»). Se queda, separado de los canales de D23 | Francisco (P19) | 2026-10-16 |
 | D25 | El empaque se cobra por pieza: un costo en cada producto del catálogo y en la calculadora, con el de Ajustes como valor inicial. Sale de gastos indirectos | Francisco (P20: b) | 2026-10-16 |
-| D26 | Ventana de cancelación: si el cliente cancela dentro de los 2 días hábiles siguientes a su anticipo, se le devuelve; después, ya no. Confirma cómo se aplica D17 | Francisco (P21: a) | 2026-10-16 |
+| D26 | Ventana de cancelación: si el cliente cancela dentro de los 2 días hábiles siguientes a su anticipo, se le devuelve; después, ya no. Confirma cómo se aplica D17. **Precisada por D97 (2026-11-03):** los días de la ventana se cambian en Ajustes; 2 al empezar | Francisco (P21: a) | 2026-10-16 |
 | D27 | Los días hábiles se marcan en Ajustes, más los festivos que se agreguen; se empieza con lunes a viernes | Francisco (P22: c) | 2026-10-16 |
 | D28 | La vigencia cuenta desde la fecha de la cotización, y al editarla la fecha se renueva | Francisco (P23: a) | 2026-10-16 |
-| D29 | La ganancia del mes sale de los pagos: cada pago trae su parte proporcional de la ganancia del pedido | Francisco (P24: a) | 2026-10-16 |
+| D29 | La ganancia del mes sale de los pagos: cada pago trae su parte proporcional de la ganancia del pedido. **Precisada por D92 y D93 (2026-11-03):** lo registrado no cambia si el pedido cambia, y un cargo libre deja ganancia solo por encima de lo que cuesta | Francisco (P24: a) | 2026-10-16 |
 | D30 | La comisión del recomendador no es ingreso del negocio: queda como «por pagar al recomendador» | Francisco (P25: a) | 2026-10-16 |
 | D31 | La cotización guarda el nombre de quien recomendó y una marca de «comisión pagada» con fecha | Francisco (P26: a) | 2026-10-16 |
 | D32 | El IVA se calcula sobre el total que paga el cliente, después del descuento y la comisión. Se confirma con el contador | Francisco (P27: a) | 2026-10-16 |
@@ -79,13 +79,13 @@ Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y l
 | D38 | Google Play primero; la App Store después | Francisco (P35: a) | 2026-10-16 |
 | D39 | La app se puede usar sin cuenta, como invitado, con los datos solo en ese teléfono. **Precisada por D84 (2026-10-19):** sin cuenta se usa la calculadora, pero guardar una cotización pide iniciar sesión | Francisco (P36: a) | 2026-10-16 |
 | D40 | Al crear la cuenta, los datos de invitado se suben solos; si la cuenta ya tiene datos, la app pregunta qué conservar. **Precisada por D84 (2026-10-19):** lo que se sube son los ajustes hechos sin cuenta y la cotización en curso; ~~qué pasa con los ajustes si la cuenta ya tiene datos se pregunta en P85~~ si la cuenta ya tiene datos, se quedan sus ajustes sin preguntar (D86) | Francisco (P37: a) | 2026-10-16 |
-| D41 | Borrar la cuenta borra todo de inmediato, después de confirmar y de ofrecer descargar un respaldo | Francisco (P38: a) | 2026-10-16 |
+| D41 | Borrar la cuenta borra todo de inmediato, después de confirmar y de ofrecer descargar un respaldo. El borrado pedido desde la página web: D98 | Francisco (P38: a) | 2026-10-16 |
 | D42 | La app es gratis al lanzar; los planes se definen cuando el desarrollo esté terminado | Francisco (P39: a) | 2026-10-16 |
 | D43 | Solo México: pesos, IVA del 16 %, RFC y CFDI | Francisco (P40: a) | 2026-10-16 |
 | D44 | El IVA cobrado no es ingreso del negocio: se muestra aparte en el panel («se añade a la información del dashboard») | Francisco (P41: a) | 2026-10-16 |
 | D45 | Para el contador, la app genera un Excel del mes con cada pago, el IVA cobrado y las comisiones por pagar | Francisco (P42: a) | 2026-10-16 |
 | D46 | La base de datos se organiza por negocio desde el MVP: cada negocio tiene sus datos y una lista de personas, que al principio tiene solo una | Francisco (P43: a) | 2026-10-16 |
-| D47 | Un negocio nuevo elige de una lista de impresoras y materiales comunes, con precios de referencia editables, y la introducción le pide sus gastos fijos y sus horas de impresión al mes. Sin clientes de ejemplo | Francisco (P44: a) | 2026-10-16 |
+| D47 | Un negocio nuevo elige de una lista de impresoras y materiales comunes, con precios de referencia editables, y la introducción le pide sus gastos fijos y sus horas de impresión al mes. Sin clientes de ejemplo. **Precisada por D87 y D88 (2026-11-03):** los gastos y las horas se pueden dejar para después, y la introducción conserva sus 5 pasos, corregidos | Francisco (P44: a) | 2026-10-16 |
 | D48 | Cuenta de desarrollador personal en Google Play; la prueba cerrada se hace con al menos 12 personas durante 14 días seguidos | Francisco (P45: a) | 2026-10-16 |
 | D49 | La versión web sigue, con la misma cuenta y los mismos datos que la app de Android. Hay que revisar el dominio y cómo funciona la gestión de usuarios (revisión en §4.13) | Francisco (P46: a) | 2026-10-16 |
 | D50 | La primera versión es un corte básico (§4.12); lo demás entra según lo que digan los usuarios de la prueba («empezamos con lo básico y con la información que se obtenga de los usuarios podemos seguir con las implementaciones e incluir más cosas») | Francisco (P47: b) | 2026-10-16 |
@@ -97,10 +97,10 @@ Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y l
 | D56 | El nombre de la app es «Placa 3D», con el dominio `placa3d.com`. Es provisional: «mantenlo por ahora, se puede cambiar» | Francisco (P55: a) | 2026-10-16 |
 | D57 | La primera versión lee el archivo laminado de Bambu Studio y OrcaSlicer (`.gcode.3mf`): peso por color, tiempo y miniatura, que aparece en la cotización. El G-code de otros slicers, después | Francisco (P56: a) | 2026-10-16 |
 | D58 | El tiempo de impresión se captura en horas y minutos, no en horas con decimales | Francisco (P57: a) | 2026-10-16 |
-| D59 | Cada pago genera un recibo en PDF o imagen, listo para WhatsApp, con lo pagado y el saldo. No es factura fiscal | Francisco (P58: a) | 2026-10-16 |
+| D59 | Cada pago genera un recibo en PDF o imagen, listo para WhatsApp, con lo pagado y el saldo. No es factura fiscal. Su folio: D95 | Francisco (P58: a) | 2026-10-16 |
 | D60 | Los pedidos aceptados y en producción se ven en una lista ordenada por fecha de entrega; el tablero por columnas, después | Francisco (P59: a) | 2026-10-16 |
 | D61 | La primera versión tiene un bloque de insumos y herrajes con nombre, costo unitario y cantidad por pieza; la lista de compras, después | Francisco (P60: a) | 2026-10-16 |
-| D62 | La cotización admite cargos libres con concepto y monto (envío, urgencia, diseño extra) | Francisco (P61: a) | 2026-10-16 |
+| D62 | La cotización admite cargos libres con concepto y monto (envío, urgencia, diseño extra). **Precisada por D93 (2026-11-03):** cada cargo puede llevar lo que cuesta | Francisco (P61: a) | 2026-10-16 |
 | D63 | Que el cliente acepte desde la liga es lo primero después de la prueba cerrada | Francisco (P62: a) | 2026-10-16 |
 | D64 | El cobro en línea (Mercado Pago) va después, cuando los talleres de la prueba lo pidan | Francisco (P63: a) | 2026-10-16 |
 | D65 | Conexión con impresoras, tiendas en línea y roles: no por ahora; se revisa con lo que digan los usuarios | Francisco (P64: a) | 2026-10-16 |
@@ -125,6 +125,18 @@ Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y l
 | D84 | Para crear cotizaciones hay que iniciar sesión («Para crear las cotizaciones se debe iniciar sesión»). **Interpretación:** sin cuenta se usa la calculadora y se arma la cotización; al guardarla o enviarla, la app pide entrar o crear la cuenta, y la cotización en curso se guarda en ella. Se confirma en P84. Precisa D39 y D40, y deja sin efecto las opciones de P83: sin cuenta ya no hay cotizaciones que juntar. **Confirmado en D85** | Francisco (respuesta a P83, en `flujos.md`) | 2026-10-19 |
 | D85 | Confirma la interpretación de D84: sin cuenta se calcula y se arma la cotización; guardarla o enviarla pide entrar, y lo capturado pasa a la cuenta | Francisco (P84: a, en `flujos.md`) | 2026-10-19 |
 | D86 | Al entrar a una cuenta que ya tiene datos, se quedan sus ajustes (impresoras, materiales y gastos) sin preguntar; solo la cotización en curso se agrega. Reemplaza, para los ajustes, la pregunta de D40 | Francisco (P85: a, en `flujos.md`) | 2026-10-19 |
+| D87 | Si el taller no sabe sus gastos fijos o sus horas de impresión al mes, puede dejarlos para después. Mientras falten, la calculadora avisa «Tus precios todavía no incluyen gastos fijos», con un acceso para llenarlos. Precisa D47 | Francisco (P86: a, en `flujos.md`) | 2026-11-03 |
+| D88 | La introducción conserva los 5 pasos de hoy, corregidos donde ya no corresponden, y después vienen las pantallas para elegir impresoras, materiales y gastos. Las correcciones están en `flujos.md` §7. Precisa D47 | Francisco (P87: b, en `flujos.md`) | 2026-11-03 |
+| D89 | El folio lo da Firebase al guardar con conexión. Sin conexión, la cotización queda «Sin folio» y lo recibe sola al conectarse | Francisco (P88: a, en `modelo-de-datos.md`) | 2026-11-03 |
+| D90 | Al abrir, la app baja las cotizaciones vivas (de Borrador a Entregada con saldo) y las de los últimos 3 meses. Las más viejas se buscan con conexión, por el nombre del cliente o el folio | Francisco (P89: a, en `modelo-de-datos.md`) | 2026-11-03 |
+| D91 | La miniatura del archivo del slicer (unos 10 KB) y el logo (unos 50 KB) se guardan reducidos dentro de los documentos, sin Cloud Storage ni plan de pago | Francisco (P90: a, en `modelo-de-datos.md`) | 2026-11-03 |
+| D92 | Las partes de un pago ya registrado (ganancia, comisión, IVA) no cambian si el pedido cambia: los pagos que faltan llevan el resto. Precisa D29 | Francisco (P91: a, en `modelo-de-datos.md`) | 2026-11-03 |
+| D93 | Cada cargo libre puede llevar «lo que te cuesta», en $0 si no se llena; deja de ganancia el monto menos ese costo. Precisa D29 y D62 | Francisco (P92: a, en `modelo-de-datos.md`) | 2026-11-03 |
+| D94 | Al migrar, las cotizaciones aceptadas de hoy pasan como Entregadas y pagadas, con un pago «migrado» por el total en la fecha de aceptación (o en la de la cotización, si no la tienen). Las que sigan en curso se regresan un paso y se borra su pago | Francisco (P93: a, en `modelo-de-datos.md`) | 2026-11-03 |
+| D95 | El recibo de un pago lleva el folio de la cotización y el número de pago: «COT-0012 · Pago 2» | Francisco (P94: a, en `modelo-de-datos.md`) | 2026-11-03 |
+| D96 | Una cotización con pagos no se borra: se cancela, y su dinero se queda en su mes. Las que no tienen pagos se borran como hoy | Francisco (P95: a, en `modelo-de-datos.md`) | 2026-11-03 |
+| D97 | Un taller nuevo empieza con anticipo de 50 %, vigencia de 15 días, plazo de 5 días hábiles y ventana de cancelación de 2 días hábiles; todo se cambia en Ajustes, y el texto de la política se arma con los días de cada taller. Precisa D10, D15 y D26 | Francisco (P96: a, en `modelo-de-datos.md`) | 2026-11-03 |
+| D98 | El borrado de datos pedido desde la página web: la página explica cómo borrar desde la app y da un correo, y Francisco borra a mano desde la consola de Firebase en el plazo que diga la página (por ejemplo, 7 días) | Francisco (P97: a, en `modelo-de-datos.md`) | 2026-11-03 |
 
 ---
 
@@ -174,7 +186,7 @@ Cada regla dice de dónde viene: **D#** es una decisión de Francisco; **derivad
 
 ### 4.2 Vigencia (D10, D28)
 
-- Los días de vigencia se definen en Ajustes y cada cotización los imprime: «Válida hasta el 16/10/2026».
+- Los días de vigencia se definen en Ajustes y cada cotización los imprime: «Válida hasta el 16/10/2026». Un taller nuevo empieza con 15 días (D97).
 - Al vencer, la lista lo avisa; la cotización sigue en Enviada, porque no hay estado «Vencida».
 - La vigencia cuenta desde la fecha de la cotización. Al editarla, la fecha se renueva y la vigencia vuelve a empezar (D28). Hoy editar no cambia la fecha (§3).
 
@@ -184,15 +196,17 @@ Cada regla dice de dónde viene: **D#** es una decisión de Francisco; **derivad
 - El documento lo dice: «Anticipo 50 %: $X · resto contra entrega».
 - Cada pago se registra aparte, con monto, fecha y forma de pago (D77), y el saldo es el total menos los pagos (derivada de D12).
 - Un pago registrado por error se borra con confirmación; su recibo queda anulado en el historial (D78).
+- **Recibo** (D59, D95). Lleva el folio de la cotización y el número de pago: «COT-0012 · Pago 2».
+- **Una cotización con pagos no se borra** (D96): se cancela, y su dinero se queda en su mes. Las que no tienen pagos se borran como hoy.
 - Un anticipo de 0 % significa que la cotización no lo pide, y «Empezar producción» no avisa nada (derivada de D11 y D14).
 - **Cancelación** (D17). Al cancelar se escribe cuánto anticipo se devuelve; por defecto, nada. La cotización imprime la política de cancelación.
-- **Ventana de 2 días hábiles** (D26, D79). Si el anticipo se pagó en partes, cuenta desde el pago que lo completa. Si el cliente cancela dentro de los 2 días hábiles siguientes a su anticipo, se le devuelve; después, ya no. Ejemplo: paga el lunes 5 de octubre; si cancela a más tardar el miércoles 7 se le devuelve, desde el jueves 8 no.
+- **Ventana de 2 días hábiles** (D26, D79, D97). Cada taller cambia los días en Ajustes; empieza con 2. Si el anticipo se pagó en partes, cuenta desde el pago que lo completa. Si el cliente cancela dentro de los 2 días hábiles siguientes a su anticipo, se le devuelve; después, ya no. Ejemplo: paga el lunes 5 de octubre; si cancela a más tardar el miércoles 7 se le devuelve, desde el jueves 8 no.
 - La cotización lo dice: «Si cancelas dentro de los 2 días hábiles siguientes a tu anticipo, te lo devolvemos; después, no es reembolsable».
 - Al cancelar, la app propone el monto según la ventana (todo el anticipo dentro de ella, $0 fuera) y se puede cambiar, porque D17 deja el monto en tus manos (derivada de D17 y D26).
 
 ### 4.4 Fecha de entrega (D15, D20, D27)
 
-- La cotización lleva un plazo en días hábiles: «5 días hábiles a partir del anticipo».
+- La cotización lleva un plazo en días hábiles: «5 días hábiles a partir del anticipo». Un taller nuevo empieza con 5 y lo cambia en Ajustes (D97).
 - El plazo corre desde que se registra el anticipo. Si la cotización no pide anticipo, corre desde que se acepta.
 - Un pago menor que el anticipo no echa a correr el plazo: corre cuando lo pagado llega al anticipo pedido (D75).
 - Si al aceptar todavía no hay anticipo, la fecha se calcula cuando llega; mientras tanto la tarjeta dice el plazo, no una fecha (derivada de D15 y D20).
@@ -214,6 +228,8 @@ Cada regla dice de dónde viene: **D#** es una decisión de Francisco; **derivad
 - Aparte se muestra lo que falta por cobrar: los saldos de las cotizaciones aceptadas, en producción y entregadas.
 - Una devolución por cancelación resta en el mes en que se hace (derivada de D17 y D19).
 - **Ganancia** (D29). Cada pago trae su parte de la ganancia del pedido. Ejemplo: cotización de $1,200 con costo de $700 (ganancia de $500); el anticipo de $600 trae $250 de ganancia a septiembre y el saldo de $600 trae $250 a octubre.
+- **Si el pedido cambia después de un pago** (D92), lo registrado no cambia: los pagos que faltan llevan el resto. Ejemplo: el pedido de arriba crece en octubre a $1,800 con $800 de ganancia; septiembre se queda con $250 y los $1,200 que faltan traen $550.
+- **Cargos libres** (D93). Cada cargo puede llevar lo que te cuesta, en $0 si no se llena, y deja de ganancia el monto menos ese costo. Ejemplo: $150 de envío que le pagas a la paquetería no dejan ganancia; $100 de urgencia, sí.
 - **Comisión del recomendador** (D30). No es ingreso del negocio: queda como «por pagar al recomendador». De cada pago, la parte proporcional de la comisión va a «por pagar» (derivada de D19 y D30). Ejemplo: total de $1,100 con $100 de comisión; un anticipo de $550 suma $500 de ingreso y $50 por pagar.
 - Hoy el panel cuenta la comisión como ingreso y ganancia (§3); D30 lo corrige.
 - **IVA cobrado** (D44). No es ingreso del negocio: el panel lo muestra aparte. Ejemplo: piezas por $1,000, 10 % de descuento, 10 % de comisión e IVA; el cliente paga $1,148.40, tu ingreso es $900, y aparte quedan $158.40 de IVA cobrado y $90 por pagar al recomendador.
@@ -282,17 +298,17 @@ Fuentes: [App Review Guidelines de Apple](https://developer.apple.com/app-store/
 - **Quién la usa** (D34). Cualquier negocio de impresión 3D, después de una prueba cerrada con Francisco y con quien él invite. Cada cuenta es un negocio con sus propios datos, impresoras y precios (derivada).
 - **Cuenta de desarrollador y prueba cerrada** (D48). Cuenta personal en Google Play. Por ser personal y nueva, antes de publicar necesita una prueba cerrada con al menos 12 personas durante 14 días seguidos: otros talleres, clientes de confianza o amigos.
 - **Nombre** (D35, D54, D56). «Placa 3D», con `placa3d.com`, de forma provisional: se puede cambiar hasta que se cree la app en Google Play, porque ahí se fija el identificador (derivada). Antes de pagar el dominio se busca en Marcanet y en Google Play (D52). El identificador lleva el nombre del producto, porque ya no se puede cambiar después de publicar, y «La Casita del Molde» es el negocio de Francisco dentro de la app. Cambiar el nombre cuesta poco en el código: «Quotia» solo aparece en comentarios de `css/tokens.css` y `quote.html`; el nombre visible hoy es «La Casita del Molde» (`manifest.json`).
-- **Personas por negocio** (D36, D46). Una por negocio en el primer MVP; si el producto avanza, se agregan roles. Para no mover datos cuando lleguen, la base se organiza por negocio desde el inicio: cada negocio tiene sus datos y una lista de personas, que al principio tiene solo una. `BASE-DE-DATOS.md` lo tiene por persona y se actualiza en `base-de-datos.md`.
+- **Personas por negocio** (D36, D46). Una por negocio en el primer MVP; si el producto avanza, se agregan roles. Para no mover datos cuando lleguen, la base se organiza por negocio desde el inicio: cada negocio tiene sus datos y una lista de personas, que al principio tiene solo una. `BASE-DE-DATOS.md` lo tiene por persona y ~~se actualiza en `base-de-datos.md`~~ se actualizó en [`modelo-de-datos.md`](modelo-de-datos.md) (2026-11-03; el nombre cambió porque en Windows `base-de-datos.md` y `BASE-DE-DATOS.md` son el mismo archivo).
 - **Inicio de sesión** (D37). Con correo y con Google, y sin cuenta (D39). Antes de publicar en la App Store hay que agregar la opción de Apple, porque Apple la exige si se ofrece Google (derivada de D37 y del requisito 4.8, §4.10).
 - **Tiendas** (D38). Google Play primero; la App Store después.
 - **Invitado** (D39, D84). Sin cuenta se usa la calculadora y se arma la cotización; al guardarla o enviarla, la app pide entrar o crear la cuenta (confirmado en D85). Lo que se configura sin cuenta vive solo en ese teléfono.
 - **Confirmar el correo** (D53). Con correo y contraseña, Firebase manda un correo para confirmar la dirección; la app lo recuerda mientras no se confirme, pero deja usarla. Con Google no aplica: el correo ya viene confirmado.
 - **De invitado a cuenta** (D40, D84). Al entrar, la cotización en curso se guarda en la cuenta. En una cuenta nueva se suben también los ajustes hechos sin cuenta; si la cuenta ya tiene datos, se quedan los suyos sin preguntar (D86). Nunca se sube un teléfono vacío encima de una cuenta con datos.
 - **Cerrar sesión** (D83). Los datos se borran del teléfono y siguen en la cuenta; si hay cambios sin subir, la app avisa y no cierra sesión hasta subirlos.
-- **Borrar la cuenta** (D41). Se borra todo de inmediato, después de confirmar y de ofrecer descargar un respaldo. El respaldo ya existe: Ajustes › Exportar ([`js/config.js:300`](../js/config.js)). Además se publica una liga web para pedir el borrado, que Google Play exige (derivada del requisito, §4.10).
+- **Borrar la cuenta** (D41). Se borra todo de inmediato, después de confirmar y de ofrecer descargar un respaldo. El respaldo ya existe: Ajustes › Exportar ([`js/config.js:300`](../js/config.js)). Además se publica una liga web para pedir el borrado, que Google Play exige (derivada del requisito, §4.10). La página da un correo y Francisco borra a mano desde la consola de Firebase, en el plazo que diga la página (D98).
 - **Cobro** (D42). La app es gratis al lanzar. Los planes se definen cuando el desarrollo esté terminado y se cobran con el sistema de pagos de la tienda (§4.10).
 - **País** (D43). Solo México: pesos, IVA del 16 %, RFC y CFDI. Las tiendas dejan elegir en qué países aparece la app.
-- **Un negocio nuevo** (D47). Elige de una lista de impresoras y materiales comunes, con precios de referencia que puede cambiar, y la introducción le pide sus gastos fijos y sus horas de impresión al mes. No hay clientes de ejemplo. Hoy los valores iniciales son los de La Casita del Molde ([`js/store.js:52`](../js/store.js)).
+- **Un negocio nuevo** (D47). Elige de una lista de impresoras y materiales comunes, con precios de referencia que puede cambiar, y la introducción le pide sus gastos fijos y sus horas de impresión al mes. No hay clientes de ejemplo. Hoy los valores iniciales son los de La Casita del Molde ([`js/store.js:52`](../js/store.js)). Si no sabe sus gastos fijos o sus horas, los deja para después y la calculadora avisa que sus precios todavía no los incluyen (D87). Antes de configurar ve la introducción de 5 pasos de hoy, corregida (D88).
 - **Versión web** (D49). Sigue, con la misma cuenta y los mismos datos que la app de Android. Cómo funciona eso: §4.13.
 - **Aviso de privacidad** (D51). El asistente escribe un borrador con lo que la app guarda de verdad (nombres, teléfonos y, con factura, RFC de los clientes de cada negocio), y lo revisa un abogado o el contador antes de subir la app a Google Play.
 
@@ -363,7 +379,7 @@ Francisco pidió revisarlo en P46. Revisado el 2026-10-16 contra la documentaci�
   - Lo que se acaba primero son las 50 000 lecturas diarias de Firestore, compartidas por todos los negocios (§4.10). Ahí se pasa a Blaze, pago por uso, con un tope de gasto.
 - **El plan gratuito de Vercel no permite uso comercial.** Hobby es «solo para uso personal no comercial», y Vercel cuenta como comercial cualquier proyecto que deje ganancia a cualquiera que participe en él. Quotia la usa un negocio y tendrá planes (D42), así que en Vercel necesitaría el plan Pro, de unos 20 USD al mes por persona. Si hoy la app está en Hobby, ya está en zona gris. Firebase Hosting no menciona esa restricción en sus precios: 10 GB de almacenamiento y 10 GB de transferencia al mes sin costo, y 0.15 USD por GB extra en Blaze.
 - **Dónde se publica la web: Firebase Hosting** (D55), con el dominio propio. Consecuencias (derivadas): el inicio de sesión con Google también funciona por redirección, porque la app y el inicio de sesión quedan en el mismo dominio; Vercel deja de usarse cuando la web pase a Firebase; y la sección de despliegue del `README.md` y `deploy.sh` cambian en ese momento.
-- **`BASE-DE-DATOS.md` §7 tiene un dato viejo:** dice 360 MB al día de transferencia; hoy son 10 GB al mes. Se corrige en `base-de-datos.md`.
+- **`BASE-DE-DATOS.md` §7 tiene un dato viejo:** dice 360 MB al día de transferencia; hoy son 10 GB al mes. ~~Se corrige en `base-de-datos.md`.~~ Corregido en [`modelo-de-datos.md`](modelo-de-datos.md) §1 y §8 (2026-11-03).
 
 Fuentes de este seguimiento: [QUOTIA (quotia.app)](https://quotia.app) · [Registro RDAP](https://rdap.org) · [Uso justo y uso comercial en Vercel](https://vercel.com/docs/limits/fair-use-guidelines) · [Precio de Vercel Pro (fuente no oficial)](https://makerkit.dev/blog/saas/vercel-cost) · [Precios de Firebase Hosting](https://firebase.google.com/docs/hosting/usage-quotas-pricing)
 
@@ -891,7 +907,8 @@ Salen de revisar, antes del primer *merge* a `main`, qué publica hoy el sitio.
 
 ## 6. Lo que sigue
 
-1. **[`flujos.md`](flujos.md)**, en curso desde el 2026-10-16, con sus diagramas de `/diagram-design`: la máquina de estados de la cotización (con Cancelada y regresar un paso), de la calculadora a la cotización, de invitado a cuenta, borrar la cuenta, pagos con saldo y cancelación, y de leer el archivo del slicer a la cotización (D57).
-2. **`base-de-datos.md`**: el modelo por negocio (D46), completo aunque la primera versión no use todo (§4.12), y al día con v100.
+1. ~~**[`flujos.md`](flujos.md)**, en curso desde el 2026-10-16, con sus diagramas de `/diagram-design`: la máquina de estados de la cotización (con Cancelada y regresar un paso), de la calculadora a la cotización, de invitado a cuenta, borrar la cuenta, pagos con saldo y cancelación, y de leer el archivo del slicer a la cotización (D57).~~ Hecho: los 7 flujos con sus diagramas, y sus preguntas (P66–P87) respondidas al 2026-11-03.
+2. ~~**`base-de-datos.md`**: el modelo por negocio (D46), completo aunque la primera versión no use todo (§4.12), y al día con v100.~~ Hecho como [`modelo-de-datos.md`](modelo-de-datos.md) el 2026-11-03, con su diagrama; sus preguntas se respondieron el mismo día (D89–D98).
 3. **Borrador del aviso de privacidad** (D51), antes de subir la app a Google Play.
 4. **Buscar «Placa 3D» en Marcanet y en Google Play** antes de pagar el dominio y la cuenta de desarrollador (D52, D56). Le toca a Francisco.
+5. **Juntar v101 a `main`** con un Pull Request en GitHub: hasta entonces la app publicada sigue con la sincronización sin contraseña (D71) y con los documentos del repo a la vista (D70). Le toca a Francisco; la rama ya está en GitHub desde el 2026-11-03.

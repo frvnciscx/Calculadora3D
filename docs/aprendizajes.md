@@ -2,9 +2,9 @@
 
 Para el asistente: lo que funcionó y los errores que no hay que repetir al trabajar el cotizador con Francisco. Cada aprendizaje va como qué pasó → por qué → qué hacer, igual que en `<ASISTENTE>\docs\asistente\`. La última columna dice si ya está en el Asistente o si conviene llevarlo allá ([`para-el-asistente/`](para-el-asistente/README.md)).
 
-**Actualizado:** 2026-10-19
+**Actualizado:** 2026-11-03
 
-**Fuentes:** las sesiones del 2026-10-16 al 2026-10-19 y los documentos de este repo: [`reglas-de-negocio.md`](reglas-de-negocio.md), [`flujos.md`](flujos.md), [`competencia.md`](competencia.md) y el [`CHANGELOG.md`](../CHANGELOG.md) de v101.
+**Fuentes:** las sesiones del 2026-10-16 al 2026-11-03 y los documentos de este repo: [`reglas-de-negocio.md`](reglas-de-negocio.md), [`flujos.md`](flujos.md), [`competencia.md`](competencia.md) y el [`CHANGELOG.md`](../CHANGELOG.md) de v101.
 
 ---
 
@@ -18,6 +18,8 @@ Para el asistente: lo que funcionó y los errores que no hay que repetir al trab
 | T4 | Un script de Python escrito con `python - <<'PY'` en Bash falló con `unicodeescape` (2026-10-19) | En el texto había rutas `C:\Users\...`: `\U` es un escape de Python | Escribir el script con la herramienta de archivos y correrlo por ruta, o editar con Edit. Lo mismo para scripts con acentos: el heredoc los cambia | Conviene llevarlo (`herramientas.md` §10) |
 | T5 | En la pregunta P14 se dijo que «hoy el ingreso cuenta en el mes en que se acepta», y era falso: el panel usa la fecha de la cotización (2026-10-16) | Se repitió lo que decía el `CHANGELOG.md` sin leer el código | Antes de escribir «hoy funciona así», leer el código. Se corrigió en público y quedó tachado | Ya está (forma de trabajo §6) |
 | T6 | Francisco no tenía acceso a Vercel para borrar una variable (2026-10-16) | La cuenta del proyecto no está a su alcance en ese momento | Buscar el camino que sí controla: el arreglo llega al juntar a `main` en GitHub, porque Vercel publica solo desde ahí | Nuevo, solo de este proyecto |
+| T7 | Francisco pensó que había creado otra rama por error al hacer el commit en GitHub Desktop (2026-11-03). En su equipo y en GitHub solo estaban `main` y `claude/project-review-e78fd0` | La app de Claude abre cada sesión en un worktree con su propia rama, y el botón «Publish branch» la sube a GitHub como rama nueva | Al cerrar una sesión con cambios, decir en qué rama quedaron y que llegan a `main` con un Pull Request. Antes de explicar, revisar las ramas con `git branch -a` y `git fetch --prune` | Conviene llevarlo (`herramientas.md` §8.5) |
+| T8 | Las reglas anunciaban `docs/base-de-datos.md`, y ya existía `docs/BASE-DE-DATOS.md` (2026-11-03) | Windows no distingue mayúsculas de minúsculas: los dos nombres son el mismo archivo, y crear el nuevo habría reemplazado el anterior | Antes de crear un archivo, buscar si ya existe con otras mayúsculas. El documento nuevo se llamó `modelo-de-datos.md` y el anterior se quedó con una nota | Conviene llevarlo (`herramientas.md` §10) |
 
 ## 2. Publicación y seguridad
 
