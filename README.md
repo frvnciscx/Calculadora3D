@@ -1,12 +1,46 @@
 # La Casita del Molde — Calculadora de Costos 3D
 
-PWA para calcular costos de impresión 3D y generar cotizaciones profesionales.
+PWA para calcular costos de impresión 3D y generar cotizaciones profesionales. Va a ser un producto para otros talleres de impresión 3D en México, con el nombre provisional **«Placa 3D»** (D56).
 
-**URL:** https://calculadora3d-delta.vercel.app
+**URL:** https://calculadora3-d-delta.vercel.app (con guion; `calculadora3d-delta`, sin guion, es otro producto)
+
+**Versión:** v101 en el código ([`CHANGELOG.md`](CHANGELOG.md)). La app publicada se actualiza cuando un cambio llega a `main`.
+
+---
+
+## Estado del proyecto (2026-11-03)
+
+La planeación de la primera versión está en [`docs/`](docs/). El registro de decisiones es [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md): cada una con número (D#), fecha y quién la tomó.
+
+### Hacia dónde va
+
+- **Para otros talleres en México,** primero en Google Play, con una prueba cerrada de 12 personas durante 14 días; la App Store, después (D34, D38, D43, D48).
+- **Cuentas y datos en Firebase,** con modo sin conexión; Notion sale del proyecto (D33). Sin cuenta se usa la calculadora; guardar una cotización pide entrar (D84).
+- **Gratis al lanzar;** los planes se definen cuando el desarrollo esté terminado (D42).
+
+### Lo avanzado
+
+| Qué | Dónde | Estado |
+|---|---|---|
+| Reglas de negocio: ciclo de vida de la cotización, anticipo y pagos, fecha de entrega, inventario, IVA, comisiones, empaque, cuentas, tiendas y qué entra a la primera versión | [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) | 98 decisiones (D1–D98) |
+| Los 7 flujos de la primera versión, con diagramas: estados de la cotización, de la calculadora a la cotización, enviar y aceptar, pagos, producción y entrega, cuentas, y arranque de un negocio nuevo | [`docs/flujos.md`](docs/flujos.md) y [`docs/flujos/`](docs/flujos/) | Hechos, con sus preguntas respondidas |
+| Competencia: 12 apps y plataformas, qué ofrecen que esta app no, y qué se agregó a la primera versión | [`docs/competencia.md`](docs/competencia.md) | Revisada el 2026-10-16 |
+| Seguridad (v101): se quitó la sincronización con Notion, que no pedía contraseña, y Vercel publica solo los archivos de la app | [`CHANGELOG.md`](CHANGELOG.md), [`.vercelignore`](.vercelignore) | En la rama `claude/project-review-e78fd0`; falta juntarla a `main` |
+| Modelo de datos para Firebase, organizado por negocio, con su diagrama | [`docs/modelo-de-datos.md`](docs/modelo-de-datos.md) | Hecho, con sus preguntas respondidas |
+| Lo aprendido al trabajar el proyecto | [`docs/aprendizajes.md`](docs/aprendizajes.md) | Al día |
+
+### Lo que sigue
+
+1. **Juntar v101 a `main`** con un Pull Request. Mientras tanto, la app publicada sigue con la sincronización sin contraseña.
+2. ~~**Responder las preguntas del modelo de datos**~~ Respondidas el 2026-11-03 (D89–D98 en [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md)).
+3. **Borrador del aviso de privacidad** (D51), antes de subir la app a Google Play.
+4. **Construir la primera versión** ([`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) §4.12) y hacer la prueba cerrada en Google Play.
 
 ---
 
 ## Funcionalidades
+
+Lo que hace la app hoy (v101).
 
 ### Calculadora
 - Cálculo en tiempo real al escribir (peso, tiempo, impresora, material, margen)
@@ -22,15 +56,6 @@ PWA para calcular costos de impresión 3D y generar cotizaciones profesionales.
 - Costo de lavado IPA: ml por impresión × costo por litro (configurable)
 - Costo de curado UV: Elegoo Mercury Plus — 24W × 5 min lavado + 36W × 3 min curado ≈ 0.0038 kWh
 - Parámetros editables directamente en la calculadora, se guardan en config automáticamente
-
-### Cotizaciones
-- Orden multi-producto con cantidades individuales
-- Estados: **pendiente** / **aceptada** / **rechazada** — badge visual y cambio directo desde la lista
-- Botón de WhatsApp con mensaje preformateado listo para enviar
-- Exportar a PDF, imagen compartible o texto plano
-- QR del negocio en cada cotización (configurar URL en Ajustes)
-- Búsqueda por cliente, número o producto
-- Sincronización con Notion: botón "Notion" en cotizaciones aceptadas → crea entrada en DB "Ventas 2026"
 
 ### Base de clientes
 - CRUD con nombre, teléfono, email y notas
@@ -55,12 +80,12 @@ PWA para calcular costos de impresión 3D y generar cotizaciones profesionales.
 ### Cotizaciones
 - Orden multi-producto con cantidades individuales
 - **Descuento:** campo % en el modal de borrador — actualiza subtotal / monto / total en tiempo real
-- Estados: **pendiente** / **aceptada** / **rechazada** — badge visual y cambio directo desde la lista
+- Estados: **pendiente** / **aceptada** / **rechazada** — badge visual y cambio directo desde la lista. El estado «enviada» existe, pero ningún botón lo asigna. El ciclo de la primera versión está en [`docs/flujos/estados-cotizacion.html`](docs/flujos/estados-cotizacion.html)
 - Botón de WhatsApp con mensaje preformateado listo para enviar
 - Exportar a PDF, imagen compartible o texto plano
 - QR del negocio en cada cotización (configurar URL en Ajustes)
 - Búsqueda por cliente, número o producto
-- Sincronización con Notion: botón "Notion" en cotizaciones aceptadas → crea entrada en DB "Ventas 2026"
+- Notion: al aceptar, la cotización se manda sola a Notion, una vez; también hay un botón «Notion». Sale del proyecto con Firebase (D33)
 - Cada cotización guarda: `subtotal`, `discount`, `discountAmt`, `grandTotal`, `totalBaseCost`
 
 ### Dashboard
@@ -70,6 +95,14 @@ PWA para calcular costos de impresión 3D y generar cotizaciones profesionales.
 - Historial mensual de los últimos 6 meses con barras y ratio de aceptación
 - Alerta de stock bajo en filamento
 - Cotizaciones recientes con estado
+
+### Acceso e introducción
+- Pantalla de acceso con correo. Es una **sesión simulada** (`js/auth.js`), sin servidor ni seguridad: sus funciones tienen la misma forma que las de Firebase Authentication, para cambiarlas después
+- Introducción de 5 pasos la primera vez (`js/onboarding.js`); se puede saltar
+
+### Costeo
+- La fórmula vive sola en `js/costing.js`: recibe números y devuelve números
+- 24 pruebas automáticas con cotizaciones reales: `npm test`
 
 ---
 
@@ -102,6 +135,9 @@ Los módulos siguen separación de responsabilidades:
 | `config.js` | Configuración general, desglose costos fijos, export/import JSON |
 | `dashboard.js` | Métricas, historial mensual, ganancia/margen del mes |
 | `theme.js` | Tema claro/oscuro/auto |
+| `costing.js` | Fórmula de costeo, sin pantalla; la prueba `tests/costing.test.js` |
+| `auth.js` | Sesión simulada, con la forma de Firebase Authentication |
+| `onboarding.js` | Pantalla de acceso e introducción |
 
 ---
 
@@ -142,9 +178,15 @@ Los módulos siguen separación de responsabilidades:
 
 ```
 ├── index.html
+├── quote.html             — Página de una cotización
 ├── manifest.json
-├── sw.js                  — Service Worker (v30)
+├── sw.js                  — Service Worker (caché calc3d-v101)
+├── .vercelignore          — Lo que sí se publica en Vercel (D70)
+├── CLAUDE.md              — Instrucciones para Claude Code
+├── CHANGELOG.md           — Qué cambió en cada versión
+├── MEJORAS.md             — Pendientes del uso diario
 ├── deploy.sh              — git add + commit + push en un paso
+├── package.json           — npm test
 ├── api/
 │   └── notion.js          — Vercel Function: POST /api/notion
 ├── assets/
@@ -155,9 +197,17 @@ Los módulos siguen separación de responsabilidades:
 │   ├── tokens.css         — Design tokens: colores, tipografía, espaciado, sombras
 │   ├── base.css           — Reset, layout, nav bar, safe areas, utilidades
 │   ├── components.css     — Todos los componentes UI
+│   ├── desktop.css        — Diseño de escritorio (900 px o más): barra lateral
+│   ├── onboarding.css     — Pantalla de acceso e introducción
 │   └── quote.css          — Template visual de cotización
+├── docs/                  — Planeación: reglas de negocio, flujos, competencia, auditorías
+├── tests/
+│   └── costing.test.js    — Pruebas de la fórmula (npm test)
 └── js/
     ├── store.js           — Data store y helpers localStorage (prefijo c3d_)
+    ├── costing.js         — Fórmula de costeo, sin pantalla
+    ├── auth.js            — Sesión simulada
+    ├── onboarding.js      — Acceso e introducción
     ├── templates.js       — Funciones puras de HTML (sin DOM, sin estado)
     ├── ui.js              — showPage(), navegación, snack, modal
     ├── native.js          — Safe areas, drag sheets, transiciones, haptic
@@ -175,6 +225,8 @@ Los módulos siguen separación de responsabilidades:
     └── theme.js           — Tema claro/oscuro/auto
 ```
 
+Los demás archivos de la raíz (los `.docx`, `calculadora 3d/`, `ordenes/`) no se publican.
+
 ---
 
 ## Integraciones
@@ -185,6 +237,9 @@ Los módulos siguen separación de responsabilidades:
 - **Configuración requerida:** agregar `NOTION_API_KEY` en Vercel → Settings → Environment Variables
 - El botón aparece únicamente en cotizaciones con estado *Aceptada*
 - Guarda `notionPageId` y `notionSyncedAt` en el objeto quote tras sincronizar
+- Al aceptar, la cotización se manda sola, una vez
+- **Sale del proyecto con Firebase** (D33): no se construye nada nuevo sobre Notion
+- La sincronización del estado completo (`js/sync.js`, `/api/sync/pull` y `/api/sync/push`) **se quitó en v101** porque no pedía contraseña (D71)
 
 ---
 
@@ -203,7 +258,11 @@ Mejoras implementadas para comportamiento de app nativa:
 
 ## Deploy
 
-Conectado a Vercel — cada `git push` a `main` despliega automáticamente.
+Conectado a Vercel: cada cambio que llega a `main` se publica solo, y Vercel publica solo lo que lista [`.vercelignore`](.vercelignore) (D70).
+
+Los cambios se trabajan en una rama y llegan a `main` con un Pull Request; el commit y el push se hacen con GitHub Desktop. El plan gratuito de Vercel es para uso no comercial: el producto irá a Firebase Hosting (D55).
+
+`deploy.sh` hace commit y push de la rama en la que estés: solo publica si estás en `main`.
 
 ```bash
 ./deploy.sh
@@ -224,12 +283,16 @@ Claves: `printers`, `materials`, `config`, `quoteStyle`, `history`, `quotes`, `q
 
 Usa **Ajustes → Exportar** para respaldar en JSON e **Importar** para restaurar.
 
+Con Firebase, los datos de cada negocio irán en su cuenta (D33, D46).
+
 ---
 
 ## Próximas iteraciones
 
-- Seguimiento de pedidos en producción (en cola → imprimiendo → listo → entregado)
-- Recordatorio de cotizaciones pendientes sin respuesta después de X días
-- Exportar catálogo de precios como PDF con logo
-- Rediseño en Figma
-- Publicar en Google Play vía PWABuilder (TWA)
+Lo que entra a la primera versión y lo que queda para después está en [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) §4.12. De la lista anterior:
+
+- ~~Seguimiento de pedidos en producción (en cola → imprimiendo → listo → entregado)~~ Entra a la primera versión: estados «En producción» y «Entregada», y lista de pedidos por fecha de entrega (D11, D60; flujo 5)
+- Recordatorio de cotizaciones pendientes sin respuesta después de X días. Sin decidir; la cotización ya tiene vigencia (D10)
+- Exportar catálogo de precios como PDF con logo. Sin decidir
+- Rediseño en Figma. Sin decidir; si se hace, arranca con `/system-design` (ver [`CLAUDE.md`](CLAUDE.md))
+- ~~Publicar en Google Play vía PWABuilder (TWA)~~ Google Play primero, con prueba cerrada (D38, D48). [`docs/ANDROID.md`](docs/ANDROID.md) recomienda Capacitor en lugar de TWA

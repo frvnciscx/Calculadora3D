@@ -1,5 +1,7 @@
 # Diseño de base de datos — Firebase (plan gratuito)
 
+> **Superado en parte por [`modelo-de-datos.md`](modelo-de-datos.md) (2026-11-03).** La estructura ya no cuelga de la persona sino del negocio (D46), con las reglas de seguridad, los índices, los estados, los pagos y la cuota al día. Aquí siguen valiendo §1, §4 (el folio), §8 (sin conexión) y §9 (migrar por pasos). Dos datos de este documento ya no son ciertos: la transferencia de Firebase Hosting es de 10 GB al mes, no 360 MB al día (§7), y `js/sync.js` se quitó en v101 (§7 y §10). Qué cambió, en `modelo-de-datos.md` §1.
+
 Escrito para leerse de principio a fin, no como referencia suelta.
 
 **Diagrama:** [`diagrama-base-de-datos.svg`](diagrama-base-de-datos.svg)
