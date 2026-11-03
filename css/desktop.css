@@ -136,7 +136,7 @@
     height: 100vh;
   }
 
-  /* ── Top bar: oculta en desktop (sidebar tiene logo, sync y tema) ── */
+  /* ── Top bar: oculta en desktop (sidebar tiene logo y tema) ── */
   .top-bar {
     display: none !important;
   }

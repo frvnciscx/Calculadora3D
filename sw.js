@@ -1,4 +1,4 @@
-const CACHE_NAME = 'calc3d-v100';
+const CACHE_NAME = 'calc3d-v101';
 /* IMPORTANTE: esta lista debe coincidir con los <script> y <link> de index.html.
    Si agregas un archivo y olvidas ponerlo aquí, la app se rompe sin conexión.
    Verificación rápida:
@@ -20,7 +20,6 @@ const ASSETS = [
   './js/theme.js',
   './js/ui.js',
   './js/native.js',
-  './js/sync.js',
   './js/templates.js',
   './js/calculator.js',
   './js/history.js',

@@ -70,9 +70,8 @@ function ld(k, d) {
 }
 function sv(k, v) {
   localStorage.setItem('c3d_' + k, JSON.stringify(v));
-  /* Trigger sync en escrituras de datos importantes */
-  var SYNC_KEYS = ['quotes','clients','inventory','materials','config','quoteStyle','quoteCounter'];
-  if (SYNC_KEYS.indexOf(k) !== -1 && typeof schedulePush === 'function') schedulePush();
+  /* La sincronización con Notion se retiró en v101 (D71 de docs/reglas-de-negocio.md):
+     sus funciones no pedían contraseña. Los datos en la nube llegan con Firebase. */
 }
 
 /* Agrupa llamadas seguidas en una sola, esperando a que paren.

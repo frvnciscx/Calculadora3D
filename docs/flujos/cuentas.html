@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar a la app · Diagrama de decisiones</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --color-paper:#f5f5f5; --color-ink:#2d3142; --color-muted:#4f5d75; --color-accent:#bf4520; --font-sans:'Geist',system-ui,sans-serif; --font-serif:'Instrument Serif',serif; --font-mono:'Geist Mono',ui-monospace,monospace; }
+    body { font-family:var(--font-sans); background:var(--color-paper); color:var(--color-ink); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:3rem 2rem; }
+    .frame { max-width:1200px; width:100%; overflow-x:auto; }
+    .eyebrow { font-family:var(--font-mono); font-size:0.66rem; font-weight:500; letter-spacing:0.18em; text-transform:uppercase; color:var(--color-muted); margin-bottom:0.5rem; }
+    h1 { font-family:var(--font-serif); font-size:clamp(1.5rem,2.4vw + 0.75rem,2rem); font-weight:400; letter-spacing:-0.02em; line-height:1.15; color:var(--color-ink); margin-bottom:1.5rem; }
+    svg { width:100%; min-width:960px; display:block; }
+    svg text { font-family:'Geist',sans-serif; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Flujo 6 · Diagrama de decisiones</p>
+    <h1>Entrar a la app</h1>
+
+    <svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cuentas-title cuentas-desc">
+      <title id="cuentas-title">Entrar a la app</title>
+      <desc id="cuentas-desc">Se entra con cuenta, de correo o Google, o sin cuenta para usar la calculadora; al guardar una cotización se pide entrar. Si la cuenta ya tiene datos se usan los suyos y se agrega la cotización en curso; si es nueva, se suben los ajustes del teléfono.</desc>
+      <defs>
+        <pattern id="cuentas-dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.9" fill="rgba(45,49,66,0.10)"/></pattern>
+        <marker id="cuentas-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#4f5d75"/></marker>
+        <marker id="cuentas-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#bf4520"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+      <rect width="100%" height="100%" fill="url(#cuentas-dots)" opacity="0.55"/>
+
+      <!-- Flechas, dibujadas antes que los nodos. -->
+      <line x1="480" y1="76" x2="480" y2="100" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#cuentas-arrow)"/>
+      <line x1="592" y1="140" x2="672" y2="140" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#cuentas-arrow)"/>
+      <line x1="780" y1="162" x2="780" y2="210" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#cuentas-arrow)"/>
+      <line x1="480" y1="180" x2="480" y2="284" stroke="#4f5d75" stroke-width="1.2"/>
+      <path d="M780 254 V280 A8 8 0 0 1 772 288 H484" fill="none" stroke="#4f5d75" stroke-width="1.2"/>
+      <line x1="480" y1="292" x2="480" y2="312" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#cuentas-arrow)"/>
+      <line x1="600" y1="352" x2="672" y2="352" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#cuentas-arrow)"/>
+      <line x1="480" y1="392" x2="480" y2="424" stroke="#4f5d75" stroke-width="1.2"/>
+      <path d="M780 374 V420 A8 8 0 0 1 772 428 H484" fill="none" stroke="#4f5d75" stroke-width="1.2"/>
+      <line x1="480" y1="432" x2="480" y2="456" stroke="#bf4520" stroke-width="1.4" marker-end="url(#cuentas-arrow-accent)"/>
+
+      <!-- Etiquetas sobre máscara opaca. -->
+      <g font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.12em" fill="#4f5d75">
+        <rect x="600" y="122" width="64" height="12" rx="2" fill="#f5f5f5"/><text x="632" y="131">SIN CUENTA</text>
+        <rect x="788" y="180" width="64" height="12" rx="2" fill="#f5f5f5"/><text x="820" y="189">AL GUARDAR</text>
+        <rect x="488" y="226" width="64" height="12" rx="2" fill="#f5f5f5"/><text x="520" y="235">CON CUENTA</text>
+        <rect x="624" y="334" width="24" height="12" rx="2" fill="#f5f5f5"/><text x="636" y="343">SÍ</text>
+        <rect x="488" y="402" width="24" height="12" rx="2" fill="#f5f5f5"/><text x="500" y="411">NO</text>
+      </g>
+
+      <!-- Inicio -->
+      <rect x="396" y="32" width="168" height="44" rx="20" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)"/>
+      <text x="480" y="53" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Abrir la app</text>
+      <text x="480" y="67" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">pantalla de acceso</text>
+
+      <!-- Decisión: cómo entra -->
+      <polygon points="480,100 592,140 480,180 368,140" fill="#fff" stroke="#2d3142"/>
+      <text x="480" y="144" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">¿Cómo entras?</text>
+
+      <rect x="672" y="118" width="216" height="44" rx="6" fill="#fff" stroke="#2d3142"/>
+      <text x="780" y="137" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Usar la calculadora</text>
+      <text x="780" y="152" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">sin guardar cotizaciones</text>
+
+      <rect x="672" y="210" width="216" height="44" rx="6" fill="#fff" stroke="#2d3142"/>
+      <text x="780" y="229" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Entrar o crear cuenta</text>
+      <text x="780" y="244" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">con correo o Google</text>
+
+      <circle cx="480" cy="288" r="4" fill="#2d3142"/>
+
+      <!-- Decisión: datos en los dos lados -->
+      <polygon points="480,312 600,352 480,392 360,352" fill="#fff" stroke="#2d3142"/>
+      <text x="480" y="349" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">¿La cuenta ya</text>
+      <text x="480" y="363" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">tiene datos?</text>
+
+      <rect x="672" y="330" width="216" height="44" rx="6" fill="#fff" stroke="#2d3142"/>
+      <text x="780" y="349" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Usar los de la cuenta</text>
+      <text x="780" y="364" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">y agregar la cotización en curso</text>
+
+      <circle cx="480" cy="428" r="4" fill="#2d3142"/>
+
+      <!-- Fin, en color: es el resultado que se busca. -->
+      <rect x="396" y="456" width="168" height="44" rx="20" fill="rgba(191,69,32,0.08)" stroke="#bf4520"/>
+      <text x="480" y="477" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Con tu cuenta</text>
+      <text x="480" y="491" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">mismos datos en web y Android</text>
+
+      <!-- Reglas al margen: notas, no flechas. -->
+      <text x="40" y="112" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">CORREO Y CONTRASEÑA</text>
+      <text x="40" y="126" fill="#2d3142" font-size="8" font-family="'Geist Mono',monospace">la app recuerda confirmar el correo,</text>
+      <text x="40" y="138" fill="#2d3142" font-size="8" font-family="'Geist Mono',monospace">sin bloquear; con Google no aplica</text>
+      <text x="40" y="336" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">CUENTA NUEVA</text>
+      <text x="40" y="350" fill="#2d3142" font-size="8" font-family="'Geist Mono',monospace">se suben los ajustes hechos sin</text>
+      <text x="40" y="362" fill="#2d3142" font-size="8" font-family="'Geist Mono',monospace">cuenta y la cotización en curso</text>
+
+      <!-- Leyenda -->
+      <line x1="40" y1="540" x2="920" y2="540" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+      <text x="40" y="556" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">LEYENDA · LA FORMA DICE EL TIPO</text>
+      <rect x="40" y="572" width="24" height="12" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)"/>
+      <text x="72" y="582" fill="#4f5d75" font-size="8.5">Inicio o fin</text>
+      <rect x="196" y="572" width="24" height="12" rx="2" fill="#fff" stroke="#2d3142"/>
+      <text x="228" y="582" fill="#4f5d75" font-size="8.5">Paso</text>
+      <polygon points="328,578 340,572 352,578 340,584" fill="#fff" stroke="#2d3142"/>
+      <text x="360" y="582" fill="#4f5d75" font-size="8.5">Decisión</text>
+      <circle cx="476" cy="578" r="4" fill="#2d3142"/>
+      <text x="488" y="582" fill="#4f5d75" font-size="8.5">Se juntan los caminos</text>
+      <line x1="640" y1="578" x2="668" y2="578" stroke="#bf4520" stroke-width="1.4" marker-end="url(#cuentas-arrow-accent)"/>
+      <text x="676" y="582" fill="#4f5d75" font-size="8.5">Llega al resultado</text>
+    </svg>
+  </div>
+</body>
+</html>

@@ -7,7 +7,7 @@ Qué cambió en cada versión de la app, en orden: lo más reciente arriba.
 La app no muestra su versión en pantalla. El dato está en `sw.js`, primera línea:
 
 ```js
-const CACHE_NAME = 'calc3d-v100';
+const CACHE_NAME = 'calc3d-v101';
 ```
 
 Ese número sube en cada despliegue y es lo que identifica el build. Para comprobar
@@ -26,6 +26,32 @@ app y volviendo a entrar.
 > `calculadora3d-delta.vercel.app`, que **no es esta app** — sirve otro producto
 > («3D COST PRO», en pesos argentinos). Hay que corregir esa URL antes de que alguien
 > la siga para probar.
+
+---
+
+## 2026-10-16 · caché v101
+
+Cambio de seguridad. Los precios y los datos no cambian.
+
+### Quitado
+
+- **La sincronización con Notion** (`api/sync/`, `js/sync.js` y el icono de nube de la
+  barra superior y de la barra lateral). Sus dos funciones no pedían contraseña: cualquiera
+  con la dirección de la app podía descargar la copia de los datos o subir una nueva, y la
+  app la aplicaba sola al abrir. Se retira por D71 de `docs/reglas-de-negocio.md`; los
+  datos en la nube llegan con Firebase. El respaldo de Ajustes › Exportar e Importar sigue.
+
+### Añadido
+
+- **`.vercelignore`** con la lista de lo único que se publica: `index.html`, `quote.html`,
+  `manifest.json`, `sw.js`, `css/`, `js/`, `assets/` y `api/`. Hasta v100 el sitio publicaba
+  también los documentos, las órdenes de compra y los archivos de respaldo (D70).
+
+### Qué conviene probar en producción
+
+1. Que `/docs/AUDITORIA.md` y `/MEJORAS.md` respondan 404 en la dirección de la app.
+2. Que la app abra y cotice igual que antes, y que `caches.keys()` diga `calc3d-v101`.
+3. Que el botón «Notion» de las cotizaciones aceptadas siga funcionando: esa función no se tocó.
 
 ---
 
