@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arranque de un negocio nuevo · Diagrama de decisiones</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --color-paper:#f5f5f5; --color-ink:#2d3142; --color-muted:#4f5d75; --color-accent:#bf4520; --font-sans:'Geist',system-ui,sans-serif; --font-serif:'Instrument Serif',serif; --font-mono:'Geist Mono',ui-monospace,monospace; }
+    body { font-family:var(--font-sans); background:var(--color-paper); color:var(--color-ink); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:3rem 2rem; }
+    .frame { max-width:1200px; width:100%; overflow-x:auto; }
+    .eyebrow { font-family:var(--font-mono); font-size:0.66rem; font-weight:500; letter-spacing:0.18em; text-transform:uppercase; color:var(--color-muted); margin-bottom:0.5rem; }
+    h1 { font-family:var(--font-serif); font-size:clamp(1.5rem,2.4vw + 0.75rem,2rem); font-weight:400; letter-spacing:-0.02em; line-height:1.15; color:var(--color-ink); margin-bottom:1.5rem; }
+    svg { width:100%; min-width:960px; display:block; }
+    svg text { font-family:'Geist',sans-serif; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Flujo 7 · Diagrama de decisiones</p>
+    <h1>Arranque de un negocio nuevo</h1>
+
+    <svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="arranque-title arranque-desc">
+      <title id="arranque-title">Arranque de un negocio nuevo</title>
+      <desc id="arranque-desc">La primera vez, después de una introducción corta, el taller elige sus impresoras de una lista o agrega la suya a mano, elige sus materiales con precio de referencia y escribe sus gastos y horas del mes; al terminar, la calculadora queda lista.</desc>
+      <defs>
+        <pattern id="arranque-dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.9" fill="rgba(45,49,66,0.10)"/></pattern>
+        <marker id="arranque-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#4f5d75"/></marker>
+        <marker id="arranque-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#bf4520"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+      <rect width="100%" height="100%" fill="url(#arranque-dots)" opacity="0.55"/>
+
+      <!-- Flechas, dibujadas antes que los nodos. -->
+      <line x1="480" y1="68" x2="480" y2="88" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arranque-arrow)"/>
+      <line x1="480" y1="132" x2="480" y2="152" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arranque-arrow)"/>
+      <line x1="480" y1="196" x2="480" y2="216" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arranque-arrow)"/>
+      <line x1="600" y1="256" x2="672" y2="256" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arranque-arrow)"/>
+      <line x1="480" y1="296" x2="480" y2="320" stroke="#4f5d75" stroke-width="1.2"/>
+      <path d="M780 278 V316 A8 8 0 0 1 772 324 H484" fill="none" stroke="#4f5d75" stroke-width="1.2"/>
+      <line x1="480" y1="328" x2="480" y2="344" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arranque-arrow)"/>
+      <line x1="480" y1="388" x2="480" y2="408" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arranque-arrow)"/>
+      <line x1="480" y1="452" x2="480" y2="472" stroke="#bf4520" stroke-width="1.4" marker-end="url(#arranque-arrow-accent)"/>
+
+      <!-- Etiquetas de la decisión, sobre máscara opaca. -->
+      <g font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.12em" fill="#4f5d75">
+        <rect x="624" y="238" width="24" height="12" rx="2" fill="#f5f5f5"/><text x="636" y="247">NO</text>
+        <rect x="488" y="302" width="24" height="12" rx="2" fill="#f5f5f5"/><text x="500" y="311">SÍ</text>
+      </g>
+
+      <!-- Inicio -->
+      <rect x="396" y="24" width="168" height="44" rx="20" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)"/>
+      <text x="480" y="45" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Primera vez</text>
+      <text x="480" y="59" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">app nueva o cuenta nueva</text>
+
+      <rect x="380" y="88" width="200" height="44" rx="6" fill="#fff" stroke="#2d3142"/>
+      <text x="480" y="107" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Introducción</text>
+      <text x="480" y="122" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">pasos cortos · se puede saltar</text>
+
+      <rect x="380" y="152" width="200" height="44" rx="6" fill="#fff" stroke="#2d3142"/>
+      <text x="480" y="171" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Elegir impresoras</text>
+      <text x="480" y="186" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">de una lista de comunes</text>
+
+      <!-- Decisión -->
+      <polygon points="480,216 600,256 480,296 360,256" fill="#fff" stroke="#2d3142"/>
+      <text x="480" y="253" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">¿Está tu</text>
+      <text x="480" y="267" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">impresora?</text>
+
+      <rect x="672" y="234" width="216" height="44" rx="6" fill="#fff" stroke="#2d3142"/>
+      <text x="780" y="253" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Agregarla a mano</text>
+      <text x="780" y="268" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">potencia, costo y vida útil</text>
+
+      <circle cx="480" cy="324" r="4" fill="#2d3142"/>
+
+      <rect x="380" y="344" width="200" height="44" rx="6" fill="#fff" stroke="#2d3142"/>
+      <text x="480" y="363" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Elegir materiales</text>
+      <text x="480" y="378" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">con precio de referencia</text>
+
+      <rect x="380" y="408" width="200" height="44" rx="6" fill="#fff" stroke="#2d3142"/>
+      <text x="480" y="427" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Gastos del mes</text>
+      <text x="480" y="442" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">gastos fijos y horas al mes</text>
+
+      <!-- Fin, en color: es el resultado que se busca. -->
+      <rect x="396" y="472" width="168" height="44" rx="20" fill="rgba(191,69,32,0.08)" stroke="#bf4520"/>
+      <text x="480" y="493" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Calculadora lista</text>
+      <text x="480" y="507" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">sigue en el flujo 2</text>
+
+      <!-- Reglas al margen: notas, no flechas. -->
+      <text x="40" y="92" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">CUENTA CON DATOS</text>
+      <text x="40" y="106" fill="#2d3142" font-size="8" font-family="'Geist Mono',monospace">no pasa por aquí:</text>
+      <text x="40" y="118" fill="#2d3142" font-size="8" font-family="'Geist Mono',monospace">usa sus propios ajustes</text>
+      <text x="672" y="412" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LAS HORAS AL MES</text>
+      <text x="672" y="426" fill="#2d3142" font-size="8" font-family="'Geist Mono',monospace">son el dato que más pesa</text>
+      <text x="672" y="438" fill="#2d3142" font-size="8" font-family="'Geist Mono',monospace">en el precio de cada pieza</text>
+
+      <!-- Leyenda -->
+      <line x1="40" y1="540" x2="920" y2="540" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+      <text x="40" y="556" fill="#4f5d75" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">LEYENDA · LA FORMA DICE EL TIPO</text>
+      <rect x="40" y="572" width="24" height="12" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)"/>
+      <text x="72" y="582" fill="#4f5d75" font-size="8.5">Inicio o fin</text>
+      <rect x="196" y="572" width="24" height="12" rx="2" fill="#fff" stroke="#2d3142"/>
+      <text x="228" y="582" fill="#4f5d75" font-size="8.5">Paso</text>
+      <polygon points="328,578 340,572 352,578 340,584" fill="#fff" stroke="#2d3142"/>
+      <text x="360" y="582" fill="#4f5d75" font-size="8.5">Decisión</text>
+      <circle cx="476" cy="578" r="4" fill="#2d3142"/>
+      <text x="488" y="582" fill="#4f5d75" font-size="8.5">Se juntan los caminos</text>
+      <line x1="640" y1="578" x2="668" y2="578" stroke="#bf4520" stroke-width="1.4" marker-end="url(#arranque-arrow-accent)"/>
+      <text x="676" y="582" fill="#4f5d75" font-size="8.5">Llega al resultado</text>
+    </svg>
+  </div>
+</body>
+</html>

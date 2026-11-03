@@ -1,0 +1,14 @@
+# Qué se publica en Vercel (D70 de docs/reglas-de-negocio.md).
+# Es una lista de lo que SÍ se publica: la primera línea deja fuera todo lo
+# que está en la raíz, y cada «!» vuelve a incluir una parte de la app.
+# Así un documento nuevo nunca se publica por accidente: si algún día la app
+# necesita otro archivo o carpeta en la raíz, hay que agregarlo aquí.
+/*
+!index.html
+!quote.html
+!manifest.json
+!sw.js
+!css
+!js
+!assets
+!api
