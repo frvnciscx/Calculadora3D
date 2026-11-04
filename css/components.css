@@ -1675,7 +1675,7 @@ input.draft-item-price::-webkit-inner-spin-button {
 /* Botón primario — lime con texto negro */
 .m3-btn-filled {
   background: var(--accent);
-  color: #000;
+  color: var(--on-accent);
   border-radius: 999px;
   height: 52px;
   font-weight: 600;
@@ -1728,7 +1728,7 @@ input.draft-item-price::-webkit-inner-spin-button {
 }
 .result-total, .result-subtitle, .result-base-val,
 .breakdown-chip .val, .breakdown-chip .lbl {
-  color: #000;
+  color: var(--on-accent);
 }
 .result-subtitle { opacity: 0.7; }
 .breakdown-chip {
@@ -1808,7 +1808,7 @@ input.draft-item-price::-webkit-inner-spin-button {
 #draft-grand-total { font-size: 22px; font-weight: 600; letter-spacing: -0.04em; color: var(--ink); }
 
 /* Draft badge */
-.draft-badge { background: var(--accent); color: #000; }
+.draft-badge { background: var(--accent); color: var(--on-accent); }
 .m3-btn-outlined .draft-badge { background: var(--ink); color: var(--bg); }
 
 /* Status badges — Dark Luxe */
@@ -1821,9 +1821,9 @@ input.draft-item-price::-webkit-inner-spin-button {
 .catalog-badge-cost { background: var(--bg-sunk); color: var(--ink-2); }
 
 /* Client cards */
-.client-avatar { background: var(--accent); color: #000; }
+.client-avatar { background: var(--accent); color: var(--on-accent); }
 .client-stat-val { color: var(--ink); font-size: 18px; font-weight: 600; }
-.suggest-avatar { background: var(--accent); color: #000; }
+.suggest-avatar { background: var(--accent); color: var(--on-accent); }
 
 /* Client suggestions dropdown */
 .client-suggestions {
@@ -1855,7 +1855,7 @@ input.draft-item-price::-webkit-inner-spin-button {
 /* FAB */
 .m3-fab {
   background: var(--accent);
-  color: #000;
+  color: var(--on-accent);
   bottom: calc(var(--nav-h) + 16px);
 }
 .m3-fab:hover { filter: brightness(1.1); transform: scale(1.04); box-shadow: 0 0 24px -4px var(--accent); }
@@ -1877,7 +1877,7 @@ input.draft-item-price::-webkit-inner-spin-button {
 .m3-switch-track { background: var(--line); border-color: var(--line); }
 .m3-switch-track::after { background: var(--ink-3); }
 .m3-switch input:checked + .m3-switch-track { background: var(--accent); border-color: var(--accent); }
-.m3-switch input:checked + .m3-switch-track::after { background: #000; }
+.m3-switch input:checked + .m3-switch-track::after { background: var(--on-accent); }
 
 /* Page tabs */
 .page-tabs { border-bottom-color: var(--line); }
@@ -1999,11 +1999,11 @@ input.draft-item-price::-webkit-inner-spin-button {
   cursor: pointer; border: none;
 }
 .btn:active { transform: scale(0.97); }
-.btn-primary  { background: var(--accent); color: #000; font-weight: 600; }
+.btn-primary  { background: var(--accent); color:var(--on-accent); font-weight: 600; }
 .btn-primary:hover { filter: brightness(1.06); }
 .btn-ghost    { background: var(--bg-elev); color: var(--ink); border: 0.5px solid var(--line); }
 .btn-ghost:hover { filter: brightness(1.2); }
-.btn-accent   { background: var(--accent); color: #000; }
+.btn-accent   { background: var(--accent); color: var(--on-accent); }
 
 /* ── SEG — segmented control ─────────────────────────────────────── */
 .seg {
@@ -2059,7 +2059,7 @@ input.draft-item-price::-webkit-inner-spin-button {
   transition: transform 0.2s;
   box-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
-.switch.on::after { transform: translateX(18px); background: #000; }
+.switch.on::after { transform: translateX(18px); background: var(--on-accent); }
 
 /* ── SLIDER ──────────────────────────────────────────────────────── */
 .slider {

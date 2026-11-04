@@ -89,6 +89,7 @@
   /* Acento — Mint 500 */
   --accent:      var(--mint-500);  /* #00E699 */
   --accent-tint: var(--mint-a10);  /* rgba(0,230,153,0.10) */
+  --on-accent:   #000000;          /* texto sobre el acento: negro sobre menta */
 
   /* Semánticos */
   --ok:      var(--status-positive); /* #00E699 */
@@ -253,6 +254,8 @@
   /* Acento — Emerald para mejor contraste en claro */
   --accent:      var(--emerald-800); /* #004D34 */
   --accent-tint: rgba(0, 77, 52, 0.08);
+  --on-accent:   #ffffff;          /* texto sobre el acento: blanco sobre esmeralda */
+
 
   /* Semánticos light */
   --ok:      var(--emerald-700); /* #006245 */
