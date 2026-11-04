@@ -589,32 +589,6 @@
   width: 56px; height: 56px; border: none; cursor: pointer; background: none;
 }
 
-/* ── TOGGLE SWITCH ──────────────────────────────────────────────── */
-.m3-switch {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 0;
-}
-.m3-switch label { font-size: 14px; font-weight: 500; }
-.m3-switch input[type="checkbox"] {
-  width: 50px; height: 28px; -webkit-appearance: none; appearance: none;
-  background: var(--md-surface-container-highest);
-  border: 1.5px solid var(--md-outline);
-  border-radius: var(--radius-pill);
-  position: relative; cursor: pointer;
-  transition: all 0.3s var(--ease-out);
-}
-.m3-switch input[type="checkbox"]::after {
-  content: ''; position: absolute; top: 3px; left: 3px;
-  width: 18px; height: 18px; border-radius: var(--radius-pill);
-  background: var(--md-on-surface-variant);
-  transition: all 0.3s var(--ease-out);
-}
-.m3-switch input[type="checkbox"]:checked {
-  background: var(--md-primary); border-color: var(--md-primary);
-}
-.m3-switch input[type="checkbox"]:checked::after {
-  left: 25px; background: var(--md-on-primary);
-}
 
 /* ── LOGO UPLOAD ────────────────────────────────────────────────── */
 .logo-upload-area {
@@ -1480,6 +1454,7 @@ input.draft-item-price::-webkit-inner-spin-button {
   align-items: center;
   cursor: pointer;
   flex-shrink: 0;
+  padding: 10px 0;
 }
 .m3-switch input[type="checkbox"] { display: none; }
 .m3-switch-track {
@@ -2044,22 +2019,6 @@ input.draft-item-price::-webkit-inner-spin-button {
   font-family: var(--font-mono); font-variant-numeric: tabular-nums;
   color: var(--ink); font-size: 14px;
 }
-
-/* ── SWITCH — toggle simple ─────────────────────────────────────── */
-.switch {
-  position: relative; width: 42px; height: 24px;
-  background: var(--line); border-radius: 999px;
-  cursor: pointer; transition: background 0.2s; flex-shrink: 0;
-}
-.switch.on { background: var(--accent); }
-.switch::after {
-  content: ""; position: absolute; top: 2px; left: 2px;
-  width: 20px; height: 20px;
-  background: var(--bg-elev); border-radius: 50%;
-  transition: transform 0.2s;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
-}
-.switch.on::after { transform: translateX(18px); background: var(--on-accent); }
 
 /* ── SLIDER ──────────────────────────────────────────────────────── */
 .slider {
