@@ -4,7 +4,7 @@ Qué regla manda en cada paso de una cotización: qué acción la mueve de estad
 
 Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y la app se publica en las tiendas.
 
-**Actualizado:** 2026-11-03 (D87–D98, del arranque de un negocio nuevo y del modelo de datos: van 98 decisiones; las reglas de negocio se cerraron el 2026-10-16 y desde entonces suman las de `flujos.md`, `modelo-de-datos.md` y de publicación)
+**Actualizado:** 2026-11-03 (D87–D103: arranque de un negocio nuevo, modelo de datos y limpieza del repositorio; van 103 decisiones; las reglas de negocio se cerraron el 2026-10-16 y desde entonces suman las de `flujos.md`, `modelo-de-datos.md` y de publicación)
 
 **Fuentes:** código v100 (`main`, commit `7cc4b14`) revisado el 2026-10-16 · decisiones del cotizador en el repo del Asistente (`docs/projects/cotizador/README.md`, 2026-10-15) · [`AUDITORIA-UX.md`](AUDITORIA-UX.md) · respuestas de Francisco a P1–P65 (2026-10-16) · requisitos de publicación de Apple y Google, y planes de Firebase, revisados el 2026-10-16 (fuentes en §4.10).
 
@@ -137,6 +137,11 @@ Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y l
 | D96 | Una cotización con pagos no se borra: se cancela, y su dinero se queda en su mes. Las que no tienen pagos se borran como hoy | Francisco (P95: a, en `modelo-de-datos.md`) | 2026-11-03 |
 | D97 | Un taller nuevo empieza con anticipo de 50 %, vigencia de 15 días, plazo de 5 días hábiles y ventana de cancelación de 2 días hábiles; todo se cambia en Ajustes, y el texto de la política se arma con los días de cada taller. Precisa D10, D15 y D26 | Francisco (P96: a, en `modelo-de-datos.md`) | 2026-11-03 |
 | D98 | El borrado de datos pedido desde la página web: la página explica cómo borrar desde la app y da un correo, y Francisco borra a mano desde la consola de Firebase en el plazo que diga la página (por ejemplo, 7 días) | Francisco (P97: a, en `modelo-de-datos.md`) | 2026-11-03 |
+| D99 | `node_modules/` sale de git: estaba en `.gitignore`, pero se subió antes (abril). Si hace falta, `npm install` lo vuelve a crear | Francisco (P98: a) | 2026-11-03 |
+| D100 | `calculadora 3d/` y `calculadora 3d.zip` salen de git: el paquete de diseño original no lo usa la app. Sigue en el historial (commit `5f05e0b`) | Francisco (P99: «si») | 2026-11-03 |
+| D101 | Los tres `.docx` de documentación de la versión 1 salen de git, y `.gitignore` ignora los `.docx`. Francisco guarda una copia fuera del repo si la quiere | Francisco (P100: a) | 2026-11-03 |
+| D102 | `ordenes/` sale de git y se ignora, como los respaldos: las órdenes de compra son del negocio, no de la app, y se guardan fuera del repo | Francisco (P101: a) | 2026-11-03 |
+| D103 | `deploy.sh` se quita, con su sección del `README.md`: se publica con GitHub Desktop y un Pull Request, y su `git add .` podía subir archivos por error | Francisco (P102: a) | 2026-11-03 |
 
 ---
 
@@ -902,6 +907,39 @@ Salen de revisar, antes del primer *merge* a `main`, qué publica hoy el sitio.
 - **Recomendado: (a).** Borrar la variable se hace en el panel en un minuto y corta el riesgo de inmediato; quitar el código evita que vuelva. Si hoy usas «Sincronizar» para pasar datos entre teléfono y computadora, eso deja de funcionar: el respaldo de Ajustes › Exportar e Importar sigue disponible.
 - **Respuesta (2026-10-16): (a) → D71.**
 - **Actualización (2026-10-16):** Francisco no tiene acceso a la cuenta de Vercel por ahora. El corte llega al juntar v101 a `main`, porque Vercel publica solo desde GitHub. Borrar `NOTION_STATE_DB_ID` queda como limpieza para cuando recupere el acceso.
+- **Actualización (2026-11-03):** v101 está publicado (Pull Request #1). Comprobado solo con códigos de estado: la app responde 200 con la caché `calc3d-v101`, y `/MEJORAS.md`, `/CHANGELOG.md`, `/README.md`, `/docs/AUDITORIA.md`, `/docs/reglas-de-negocio.md`, `/js/sync.js`, `/api/sync/pull` y `/api/sync/push` responden 404. Sigue pendiente borrar `NOTION_STATE_DB_ID` en Vercel; ya no hay código que la use.
+
+### Limpieza del repositorio (2026-11-03)
+
+Francisco pidió revisar qué no sirve en el repositorio y preguntarle antes de sacarlo de git.
+
+| # | Pregunta | Recomendado | Estado |
+|---|---|---|---|
+| P98 | ¿Se saca `node_modules/` de git? | (a) sí | Respondida (a) → D99 |
+| P99 | ¿Se sacan `calculadora 3d/` y `calculadora 3d.zip`? | (a) sí | Respondida «si» → D100 |
+| P100 | ¿Se sacan los tres `.docx`? | (a) sí, con una copia fuera del repo si se quiere | Respondida (a) → D101 |
+| P101 | ¿Qué se hace con `ordenes/`? | (a) sacar las dos e ignorar la carpeta | Respondida (a) → D102 |
+| P102 | ¿Se quita `deploy.sh`? | (a) sí, con su sección del `README.md` | Respondida (a) → D103 |
+
+**P98. ¿Se saca `node_modules/` de git?** Son 142 archivos y 17.5 MB, el 90 % del repo: la librería `sharp` para Linux, que ningún script usa. Ya estaba en `.gitignore`, pero se subió antes.
+- (a) Sí; `npm install` lo vuelve a crear si hace falta. (b) No.
+- **Respuesta (2026-11-03): (a) → D99.**
+
+**P99. ¿Se sacan `calculadora 3d/` y `calculadora 3d.zip`?** El paquete de diseño original de La Casita del Molde: prototipo y 5 capturas. Ya estaban en `.gitignore`, y en la carpeta principal ya se habían borrado.
+- (a) Sí. (b) No, como referencia de diseño.
+- **Respuesta (2026-11-03): «si» → D100.**
+
+**P100. ¿Se sacan los tres `.docx`?** La documentación de la versión 1 (abril), superada por el `README.md`, el `CHANGELOG.md` y `docs/`.
+- (a) Sí, con una copia fuera del repo si se quiere. (b) No.
+- **Respuesta (2026-11-03): (a) → D101.**
+
+**P101. ¿Qué se hace con `ordenes/`?** `ejemplo.md` está vacío, y `OC-2026-07-29-01.md` es una orden de compra de imanes y filamento.
+- (a) Sacar las dos e ignorar la carpeta, como los respaldos; la orden se guarda fuera del repo. (b) Sacar solo `ejemplo.md`.
+- **Respuesta (2026-11-03): (a) → D102.**
+
+**P102. ¿Se quita `deploy.sh`?** Hace `git add .`, commit y push de un jalón; ya se publica con GitHub Desktop.
+- (a) Sí, con su sección del `README.md`. (b) No.
+- **Respuesta (2026-11-03): (a) → D103.**
 
 ---
 
@@ -911,4 +949,4 @@ Salen de revisar, antes del primer *merge* a `main`, qué publica hoy el sitio.
 2. ~~**`base-de-datos.md`**: el modelo por negocio (D46), completo aunque la primera versión no use todo (§4.12), y al día con v100.~~ Hecho como [`modelo-de-datos.md`](modelo-de-datos.md) el 2026-11-03, con su diagrama; sus preguntas se respondieron el mismo día (D89–D98).
 3. **Borrador del aviso de privacidad** (D51), antes de subir la app a Google Play.
 4. **Buscar «Placa 3D» en Marcanet y en Google Play** antes de pagar el dominio y la cuenta de desarrollador (D52, D56). Le toca a Francisco.
-5. **Juntar v101 a `main`** con un Pull Request en GitHub: hasta entonces la app publicada sigue con la sincronización sin contraseña (D71) y con los documentos del repo a la vista (D70). Le toca a Francisco; la rama ya está en GitHub desde el 2026-11-03.
+5. ~~**Juntar v101 a `main`** con un Pull Request en GitHub: hasta entonces la app publicada sigue con la sincronización sin contraseña (D71) y con los documentos del repo a la vista (D70). Le toca a Francisco; la rama ya está en GitHub desde el 2026-11-03.~~ Hecho el 2026-11-03 (Pull Request #1, merge `92c5fb8`). Comprobado ese día, solo con códigos de estado: la app responde 200 con la caché `calc3d-v101`, y `/MEJORAS.md`, `/CHANGELOG.md`, `/README.md`, `/docs/AUDITORIA.md`, `/docs/reglas-de-negocio.md`, `/js/sync.js`, `/api/sync/pull` y `/api/sync/push` responden 404.

@@ -24,7 +24,7 @@ Estos documentos viven en el repo del Asistente y se leen de ahí: no se copian 
 
 | Documento | Qué tiene |
 |---|---|
-| [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) | Ciclo de vida de la cotización, anticipo, entrega, IVA, comisiones, empaque, cuentas, tiendas y qué entra a la primera versión. Es el **único registro de decisiones** (D1–D98 al 2026-11-03), también de las que salen de `flujos.md`, `modelo-de-datos.md` y `competencia.md`. Manda sobre los demás documentos cuando se contradigan |
+| [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) | Ciclo de vida de la cotización, anticipo, entrega, IVA, comisiones, empaque, cuentas, tiendas y qué entra a la primera versión. Es el **único registro de decisiones** (D1–D103 al 2026-11-03), también de las que salen de `flujos.md`, `modelo-de-datos.md` y `competencia.md`. Manda sobre los demás documentos cuando se contradigan |
 | [`docs/flujos.md`](docs/flujos.md) | Los flujos de la primera versión, con diagramas HTML en `docs/flujos/`. **Hechos los 7**, con sus preguntas respondidas, al 2026-11-03 |
 | [`docs/competencia.md`](docs/competencia.md) | Qué ofrecen las apps y plataformas que compiten, qué tienen y no tiene la app, y cómo proceder (2026-10-16) |
 | [`docs/modelo-de-datos.md`](docs/modelo-de-datos.md) | Qué guarda la app en Firebase, organizado por negocio, con su diagrama (2026-11-03). Sus preguntas, respondidas: D89–D98 |
@@ -64,6 +64,7 @@ Derivadas de los documentos de arriba. Si chocan, mandan ellos.
 - **Git:** el commit, el push y el merge los hace Francisco con GitHub Desktop. Al cerrar, decir qué archivos cambiaron y proponer el mensaje del commit.
 - **La app publicada es `calculadora3-d-delta.vercel.app`, con guion.** `calculadora3d-delta` (sin guion) es otro producto. ~~El `README.md` todavía apunta ahí~~ (corregido el 2026-11-03).
 - **No capturar datos de prueba en la app publicada** sin permiso. (La sincronización con Notion se quitó en v101, D71.)
+- **En git va solo lo de la app y sus documentos.** La documentación vieja en Word, las órdenes de compra, los respaldos y `node_modules/` están en `.gitignore` (D99–D103). Antes de agregar un archivo nuevo a la raíz, ver si es del negocio y no de la app.
 - **Lo que se publica está en `.vercelignore`** como lista de lo que sí sale (D70). Si la app necesita un archivo nuevo en la raíz, hay que agregarlo ahí.
 - **Notion sale del proyecto; los datos y las cuentas van en Firebase** (D33 de `docs/reglas-de-negocio.md`, 2026-10-16). Lo que hoy usa Notion se retira; no se construye nada nuevo sobre él.
 - Si un cambio toca `js/costing.js`, correr `npm test` antes de reportar: las pruebas usan cotizaciones reales.

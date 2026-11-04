@@ -53,6 +53,8 @@ Cambio de seguridad. Los precios y los datos no cambian.
 2. Que la app abra y cotice igual que antes, y que `caches.keys()` diga `calc3d-v101`.
 3. Que el botón «Notion» de las cotizaciones aceptadas siga funcionando: esa función no se tocó.
 
+**Comprobado el 2026-11-03**, después de publicar (Pull Request #1), solo con códigos de estado: el 1 sí, y la caché publicada es `calc3d-v101`. También responden 404 `/CHANGELOG.md`, `/README.md`, `/docs/reglas-de-negocio.md`, `/js/sync.js`, `/api/sync/pull` y `/api/sync/push`. Cotizar (2) y el botón «Notion» (3) los prueba Francisco en la app.
+
 ---
 
 ## 2026-10-04 · caché v100

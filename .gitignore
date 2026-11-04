@@ -2,6 +2,11 @@ node_modules/
 calculadora 3d/
 *.zip
 
+# Lo que no es de la app (D99–D103 de docs/reglas-de-negocio.md): la documentación
+# vieja en Word y las órdenes de compra del negocio se guardan fuera del repo.
+*.docx
+ordenes/
+
 # Permisos y rutas absolutas de ESTA máquina. launch.json sí se versiona:
 # es la configuración del servidor de desarrollo y sirve igual en cualquier lado.
 .claude/settings.local.json
