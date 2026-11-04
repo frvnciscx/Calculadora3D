@@ -270,6 +270,58 @@ function initCalcLive() {
     });
     rangeEl._marginSync = true;
   }
+
+  initCalcFloatingBar();
+}
+
+/* ── Barra flotante del teléfono ───────────────────────────────────
+   Cuando los botones de la calculadora salen de la pantalla por arriba,
+   se fijan abajo, sobre la navegación, con el precio a un lado. Es el mismo
+   botón «Agregar a orden», movido con la clase .is-floating
+   (components.css), no una copia. En escritorio no se usa: ahí el resumen
+   ya está fijo en su columna (desktop.css).
+
+   IntersectionObserver avisa cuando un elemento entra o sale de la pantalla,
+   sin revisar en cada pixel de desplazamiento. Se observa el hueco (slot) de
+   los botones, que conserva su alto mientras ellos flotan: así la página no
+   brinca y el observador sigue sabiendo dónde estaban. */
+function initCalcFloatingBar() {
+  var slot    = document.getElementById('calc-actions-slot');
+  var actions = slot && slot.querySelector('.calc-actions');
+  var total   = document.getElementById('result-total');
+  var mini    = document.getElementById('calc-float-total');
+  /* initCalcLive corre cada vez que se abre la calculadora: solo una vez */
+  if (!actions || slot._floatingBar || !('IntersectionObserver' in window)) return;
+  slot._floatingBar = true;
+
+  var mobile = window.matchMedia('(max-width: 899px)');
+
+  function setFloating(on) {
+    on = on && mobile.matches;
+    if (on === actions.classList.contains('is-floating')) return;
+    /* Guardar el alto ANTES de sacar los botones del flujo de la página */
+    slot.style.minHeight = on ? slot.offsetHeight + 'px' : '';
+    actions.classList.toggle('is-floating', on);
+  }
+
+  new IntersectionObserver(function(entries) {
+    var e = entries[0];
+    /* Flota solo si salió por ARRIBA (top < 0). Al cambiar de página el
+       slot se oculta y llega todo en 0: eso la apaga. */
+    setFloating(!e.isIntersecting && e.boundingClientRect.top < 0);
+  }).observe(slot);
+
+  /* Si la ventana crece a tamaño escritorio, apagarla */
+  if (mobile.addEventListener) {
+    mobile.addEventListener('change', function() { if (!mobile.matches) setFloating(false); });
+  }
+
+  /* El precio de la barra copia al de arriba cada vez que cambia.
+     MutationObserver avisa cuando cambia el contenido de un elemento, así
+     no hay que tocar cada lugar de calculate() que escribe el total. */
+  function syncTotal() { if (mini && total) mini.textContent = total.textContent; }
+  syncTotal();
+  if (total) new MutationObserver(syncTotal).observe(total, { childList: true, characterData: true, subtree: true });
 }
 
 /* ── Poblar y mostrar selector de spool del inventario ────────── */

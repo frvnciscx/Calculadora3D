@@ -49,10 +49,15 @@ function clearDraftQuote() {
    - Draft con ítems y sin cálculo activo: "Generar cotización" (generateQuote)
    - Cálculo activo (con o sin draft): "Agregar a orden" + badge */
 function refreshDraftIndicator() {
-  var btn = document.getElementById('btn-cotizar');
-  if (!btn) return;
   var hasDraft = draftQuote && draftQuote.items && draftQuote.items.length > 0;
   var hasCalc  = !!lastCalc;
+
+  /* Contador de la pestaña «Orden» (escritorio) */
+  var tabCount = document.getElementById('calc-tab-orden-count');
+  if (tabCount) tabCount.textContent = hasDraft ? draftQuote.items.length : '';
+
+  var btn = document.getElementById('btn-cotizar');
+  if (!btn) return;
 
   if (hasDraft && !hasCalc) {
     /* Modo: hay productos en borrador pero nada nuevo que agregar → ir a cotizar */
@@ -188,11 +193,49 @@ function generateQuote() {
   renderDraftModal();
 }
 
-/* ── Modal multi-producto ─────────────────────────────────────── */
+/* ── Orden multi-producto ─────────────────────────────────────── */
+/* En escritorio la orden vive en la pestaña «Orden» de la columna derecha
+   de la calculadora; en el teléfono, en el panel que sale desde abajo.
+   Todos los caminos pasan por aquí: generar, editar una cotización de la
+   lista y quitar un producto. El ancho es el mismo de desktop.css. */
+var _mqEscritorio = window.matchMedia('(min-width: 900px)');
+
 function renderDraftModal() {
   var draft = draftQuote;
   if (!draft) return;
+  if (_mqEscritorio.matches) {
+    if (document.body.dataset.page !== 'calc') showPage('calc');
+    showCalcTab('orden');
+    return;
+  }
   document.getElementById('modal-container').innerHTML = tplDraftModal(draft, config.currency);
+}
+
+/* Pestañas Pieza | Orden de la columna derecha (solo escritorio). La CSS
+   lee data-tab de .calc-summary para mostrar una u otra. */
+function showCalcTab(tab) {
+  var summary = document.querySelector('.calc-summary');
+  if (!summary) return;
+  summary.dataset.tab = tab;
+  document.querySelectorAll('.calc-tabs button').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  if (tab === 'orden') {
+    var pane = document.getElementById('calc-order-pane');
+    if (pane) pane.innerHTML = tplDraftPanel(draftQuote, config.currency);
+  }
+}
+
+/* Guarda cliente, teléfono y notas en el borrador mientras se escriben */
+function guardarDatosDraft() {
+  if (!draftQuote) return;
+  var clientEl = document.getElementById('q-client');
+  var phoneEl  = document.getElementById('q-phone');
+  var notesEl  = document.getElementById('q-notes');
+  if (clientEl) draftQuote.client = clientEl.value.trim();
+  if (phoneEl)  draftQuote.phone  = phoneEl.value.trim();
+  if (notesEl)  draftQuote.notes  = notesEl.value.trim();
+  saveDraftQuote(draftQuote);
 }
 
 /* ── Cambio de descuento — delega a onCommissionChange ───────── */
@@ -338,18 +381,18 @@ function removeDraftItem(i) {
   draftQuote.items.splice(i, 1);
   saveDraftQuote(draftQuote);
   renderDraftModal();
+  refreshDraftIndicator();   /* el contador de la pestaña «Orden» */
 }
 
 /* Ir a la calculadora a calcular otro producto */
 function addMoreToQuote() {
-  var clientEl = document.getElementById('q-client');
-  var phoneEl  = document.getElementById('q-phone');
-  var notesEl  = document.getElementById('q-notes');
-  if (draftQuote) {
-    if (clientEl) draftQuote.client = clientEl.value.trim();
-    if (phoneEl)  draftQuote.phone  = phoneEl.value.trim();
-    if (notesEl)  draftQuote.notes  = notesEl.value.trim();
-    saveDraftQuote(draftQuote);
+  guardarDatosDraft();
+  /* En escritorio la calculadora ya está a la izquierda: basta con regresar
+     a la pestaña de la pieza */
+  if (_mqEscritorio.matches && document.body.dataset.page === 'calc') {
+    showCalcTab('pieza');
+    snack('Calcula el siguiente producto y presiona «Agregar a orden»');
+    return;
   }
   closeModal();
   snack('Calcula el siguiente producto y presiona \u00abAgregar a orden\u00bb');
@@ -417,13 +460,16 @@ function saveQuote() {
     existing.grandTotal    = grandTotal;
     existing.totalBaseCost = totalBaseCost;
     sv('quotes', quotes);
+    var editada = _editQuoteIndex;
     _editQuoteIndex = null;
     clearDraftQuote();
     clearLastCalc();
     closeModal();
+    showCalcTab('pieza');
     refreshDraftIndicator();
     snack('Cotización actualizada ✓');
     showPage('quotes');
+    viewQuote(editada);   /* mostrarla, no solo dejarla en la lista */
     return;
   }
 
@@ -451,9 +497,11 @@ function saveQuote() {
   clearLastCalc();
   /* No ocultamos calc-result — hero siempre visible en nuevo layout */
   closeModal();
+  showCalcTab('pieza');
   refreshDraftIndicator();
   snack('Cotizaci\u00f3n ' + q.quoteNum + ' generada');
   showPage('quotes');
+  viewQuote(0);   /* la nueva qued\u00f3 primera (unshift): mostrarla de una vez */
 }
 
 /* ── Listado de cotizaciones ──────────────────────────────────── */

@@ -133,6 +133,25 @@
     </button>
   </div>
 
+  <!-- ── Dos columnas en escritorio ───────────────────────────────────
+       calc-summary (resultado + botones) y calc-form (los campos). En el
+       teléfono se apilan en este orden; en escritorio (desktop.css) el
+       formulario va a la izquierda y el resumen a la derecha, fijo a la
+       vista mientras se desplaza. El contenido de adentro no se volvió a
+       sangrar para que el cambio sea fácil de revisar. -->
+  <div class="calc-layout">
+  <aside class="calc-summary" data-tab="pieza">
+
+  <!-- Pestañas Pieza | Orden: solo en escritorio (desktop.css). showCalcTab()
+       en quotes.js las cambia. En el teléfono la orden sigue abriéndose como
+       panel desde abajo. -->
+  <div class="calc-tabs seg">
+    <button type="button" class="active" data-tab="pieza" onclick="showCalcTab('pieza')">Pieza</button>
+    <button type="button" data-tab="orden" onclick="showCalcTab('orden')">
+      Orden <span class="calc-tab-count" id="calc-tab-orden-count"></span>
+    </button>
+  </div>
+
   <!-- ── HERO: resultado siempre visible ─── -->
   <div id="calc-result" style="padding:18px 20px 0">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -232,21 +251,33 @@
     </div>
   </div>
 
-  <!-- Acciones rápidas -->
-  <div class="calc-actions" style="padding:16px 20px 0;display:flex;gap:10px">
-    <button class="btn btn-ghost" style="flex:1" onclick="saveCurrentPreset()">
+  <!-- Acciones rápidas. En el teléfono, cuando se desplazan fuera de la
+       pantalla, initCalcFloatingBar() (calculator.js) las fija abajo con el
+       precio; el hueco (slot) guarda su alto para que la página no brinque. -->
+  <div id="calc-actions-slot">
+  <div class="calc-actions">
+    <span class="calc-float-total num" id="calc-float-total" aria-hidden="true">$0</span>
+    <button class="btn btn-ghost" onclick="saveCurrentPreset()">
       <span class="material-symbols-rounded" style="font-size:16px">star</span> Preset
     </button>
     <!-- Sin este botón, saveToHistory() nunca se llamaba y la pestaña Historial
          no podía tener contenido jamás. -->
-    <button class="btn btn-ghost" style="flex:1" onclick="saveToHistory()">
+    <button class="btn btn-ghost" onclick="saveToHistory()">
       <span class="material-symbols-rounded" style="font-size:16px">history</span> Guardar
     </button>
-    <button class="btn btn-primary" style="flex:2" id="btn-cotizar" onclick="addItemToDraft()">
+    <button class="btn btn-primary" id="btn-cotizar" onclick="addItemToDraft()">
       <span class="material-symbols-rounded" style="font-size:16px">receipt_long</span>
       <span id="btn-cotizar-label">Agregar a orden</span>
     </button>
   </div>
+  </div><!-- /calc-actions-slot -->
+
+  <!-- Contenido de la pestaña «Orden»: lo dibuja tplDraftPanel (templates.js) -->
+  <div id="calc-order-pane"></div>
+
+  </aside><!-- /calc-summary -->
+
+  <div class="calc-form">
 
   <!-- ── Sección 01: Datos de la pieza ─── -->
   <div style="padding:28px 20px 0">
@@ -481,7 +512,8 @@
     </div>
   </div>
 
-
+  </div><!-- /calc-form -->
+  </div><!-- /calc-layout -->
 
 </div>
 

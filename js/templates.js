@@ -736,7 +736,52 @@ function tplDraftItem(item, i, cur) {
   '</div>';
 }
 
+/* La orden se dibuja en dos envolturas con el mismo contenido:
+   - tplDraftModal: panel que sale desde abajo (teléfono)
+   - tplDraftPanel: pestaña «Orden» de la columna derecha de la calculadora
+     (escritorio; ver renderDraftModal en quotes.js)
+   tplDraftBody es lo que comparten: cliente, productos y totales. */
+
+function _draftLabels() {
+  var isEdit = (typeof _editQuoteIndex !== 'undefined' && _editQuoteIndex !== null);
+  return {
+    title: isEdit && typeof quotes !== 'undefined' && quotes[_editQuoteIndex]
+             ? 'Editar ' + quotes[_editQuoteIndex].quoteNum
+             : 'Nueva cotización',
+    save:  isEdit ? 'Actualizar' : 'Generar cotización'
+  };
+}
+
 function tplDraftModal(draft, cur) {
+  var l = _draftLabels();
+  return '<div class="m3-scrim" onclick="closeModal()"></div>' +
+    '<div class="m3-bottom-sheet draft-drawer">' +
+      tplSheetHeader(l.title) +
+      tplDraftBody(draft, cur) +
+      '<div class="m3-sheet-actions">' +
+        '<button class="m3-btn-outlined" onclick="closeModal()">Cancelar</button>' +
+        '<button class="m3-btn-filled" onclick="saveQuote()">' + l.save + '</button>' +
+      '</div>' +
+    '</div>';
+}
+
+function tplDraftPanel(draft, cur) {
+  if (!draft || !draft.items || !draft.items.length) {
+    return '<div class="draft-panel-empty">' +
+      tplIcon('receipt_long', 28) +
+      '<p>La orden está vacía.</p>' +
+      '<p class="hint">Calcula una pieza y presiona «Agregar a orden».</p>' +
+    '</div>';
+  }
+  var l = _draftLabels();
+  return '<div class="draft-panel">' +
+    '<h2 class="draft-panel-title">' + l.title + '</h2>' +
+    tplDraftBody(draft, cur) +
+    '<button class="m3-btn-filled draft-panel-save" onclick="saveQuote()">' + l.save + '</button>' +
+  '</div>';
+}
+
+function tplDraftBody(draft, cur) {
   var subtotal      = draft.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
   var discount      = draft.discount || 0;
   var discountAmt   = subtotal * (discount / 100);
@@ -746,26 +791,22 @@ function tplDraftModal(draft, cur) {
   var commissionAmt = discounted * (commission / 100);
   var grandTotal    = discounted + commissionAmt;
   var itemsHTML     = draft.items.map(function(item, i) { return tplDraftItem(item, i, cur); }).join('');
-  var isEdit        = (typeof _editQuoteIndex !== 'undefined' && _editQuoteIndex !== null);
-  var modalTitle    = isEdit && typeof quotes !== 'undefined' && quotes[_editQuoteIndex]
-                      ? 'Editar ' + quotes[_editQuoteIndex].quoteNum
-                      : 'Nueva cotización';
-  var saveLabel     = isEdit ? 'Actualizar' : 'Generar cotización';
 
-  return '<div class="m3-scrim" onclick="closeModal()"></div>' +
-    '<div class="m3-bottom-sheet draft-drawer">' +
-      tplSheetHeader(modalTitle) +
+  /* guardarDatosDraft() guarda cliente, teléfono y notas mientras se
+     escriben. Antes solo se guardaban al agregar producto o al generar:
+     quitar un producto volvía a dibujar la orden y borraba lo escrito. */
+  return '' +
       /* Campo cliente con autocompletado */
       '<div class="client-autocomplete-wrap">' +
         '<div class="m3-field">' +
           '<input type="text" id="q-client" placeholder=" " value="' + esc(draft.client || '') + '" ' +
-            'oninput="onClientInput(this)" autocomplete="off">' +
+            'oninput="onClientInput(this);guardarDatosDraft()" autocomplete="off">' +
           '<label for="q-client">Nombre del cliente</label>' +
         '</div>' +
         '<div id="q-client-suggestions" class="client-suggestions"></div>' +
       '</div>' +
       '<div class="m3-field optional">' +
-        '<input type="tel" id="q-phone" inputmode="tel" placeholder=" " value="' + esc(draft.phone || '') + '">' +
+        '<input type="tel" id="q-phone" inputmode="tel" placeholder=" " value="' + esc(draft.phone || '') + '" oninput="guardarDatosDraft()">' +
         '<label for="q-phone">Teléfono</label>' +
       '</div>' +
       '<label style="display:flex;align-items:center;gap:10px;padding:2px 0 12px;cursor:pointer">' +
@@ -773,7 +814,7 @@ function tplDraftModal(draft, cur) {
         '<span style="font-size:13px;color:var(--ink-2)">Guardar cliente en mi lista</span>' +
       '</label>' +
       '<div class="m3-field optional">' +
-        '<input type="text" id="q-notes" placeholder=" " value="' + esc(draft.notes || '') + '">' +
+        '<input type="text" id="q-notes" placeholder=" " value="' + esc(draft.notes || '') + '" oninput="guardarDatosDraft()">' +
         '<label for="q-notes">Notas adicionales</label>' +
       '</div>' +
       '<div class="draft-items-section">' +
@@ -824,10 +865,5 @@ function tplDraftModal(draft, cur) {
       '<div class="draft-total-row">' +
         '<span>TOTAL</span>' +
         '<span id="draft-grand-total">' + cur + grandTotal.toFixed(2) + '</span>' +
-      '</div>' +
-      '<div class="m3-sheet-actions">' +
-        '<button class="m3-btn-outlined" onclick="closeModal()">Cancelar</button>' +
-        '<button class="m3-btn-filled" onclick="saveQuote()">' + saveLabel + '</button>' +
-      '</div>' +
-    '</div>';
+      '</div>';
 }

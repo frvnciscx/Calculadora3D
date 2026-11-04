@@ -2261,14 +2261,8 @@ span.suffix {
    el monitor fuera de 1054. Pasó a ser el comportamiento normal de
    .draft-item — ver el bloque DRAFT QUOTE. */
 
-/* Acciones rápidas de la calculadora. En cuanto hay un borrador el botón
-   principal pasa de "Agregar a orden" a "Generar cotización" con el contador,
-   y a 375 px eso ya no cabe en un tercio de fila: la acción más importante de
-   la pantalla quedaba cortada por la mitad. Se baja a su propio renglón. */
-@media (max-width: 420px) {
-  .calc-actions { flex-wrap: wrap; }
-  .calc-actions #btn-cotizar { flex: 1 0 100%; }
-}
+/* (La regla de max-width: 420px de las acciones de la calculadora se movió
+   al bloque CALCULADORA, al final del archivo, debajo de su regla base.) */
 
 /* Navegación del sidebar en escritorio: 38 px.
    Con ratón basta, pero en tableta y en pantallas táctiles grandes se usa el
@@ -2296,4 +2290,76 @@ span.suffix {
    Si el campo tiene error, el mensaje en rojo sigue visible. */
 .m3-field.helper-on-rest:focus-within:not(.m3-field-error) .m3-helper {
   visibility: hidden;
+}
+
+/* ── CALCULADORA — botones de acción ─────────────────────────────── */
+/* Antes este estilo estaba escrito en el HTML (style="…"), y así ninguna
+   regla de la hoja podía cambiarlo: la de 420 px de abajo nunca se aplicaba. */
+.calc-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px 0;
+}
+.calc-actions .btn-ghost { flex: 1; }
+.calc-actions #btn-cotizar { flex: 2; }
+
+/* En cuanto hay un borrador el botón principal pasa de "Agregar a orden" a
+   "Generar cotización" con el contador, y a 375 px eso ya no cabe en un
+   tercio de fila. Se baja a su propio renglón. Va DESPUÉS de la regla base:
+   misma fuerza, así que gana la que está más abajo. */
+@media (max-width: 420px) {
+  .calc-actions { flex-wrap: wrap; }
+  .calc-actions #btn-cotizar { flex: 1 0 100%; }
+}
+
+/* El precio solo aparece en la barra flotante del teléfono */
+.calc-float-total { display: none; }
+
+/* Pestañas Pieza | Orden y su contenido: solo existen en escritorio
+   (desktop.css las muestra). En el teléfono la orden es un panel. */
+.calc-tabs, #calc-order-pane { display: none; }
+
+/* Barra flotante del teléfono. initCalcFloatingBar() (calculator.js) pone
+   la clase .is-floating cuando los botones salen de la pantalla por arriba.
+   Es el mismo botón «Agregar a orden», no una copia: así sigue cambiando
+   solo a «Generar cotización» como siempre. Misma posición y fondo que
+   #page-action-bar de Cotizaciones y Catálogo. */
+@media (max-width: 899px) {
+  .calc-actions.is-floating {
+    position: fixed;
+    bottom: var(--nav-h);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(440px, 100%);
+    padding: 10px 20px;
+    flex-wrap: nowrap;
+    background: color-mix(in oklab, var(--bg) 88%, transparent);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border-top: 0.5px solid var(--line);
+    z-index: 90;
+  }
+  /* En la barra: precio a la izquierda y el botón principal; Preset y
+     Guardar se quedan solo arriba, junto al resultado. */
+  .calc-actions.is-floating .btn-ghost { display: none; }
+  .calc-actions.is-floating .calc-float-total {
+    display: block;
+    flex: 0 0 auto;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .calc-actions.is-floating #btn-cotizar { flex: 1 1 auto; }
+
+  /* Holgura para que la barra no tape el margen, lo último de la página */
+  #page-calc {
+    padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 96px);
+  }
+
+  /* Con la barra flotando, el aviso (snackbar) sube para no tapar el botón.
+     :has() pregunta «¿hay en la página una barra flotando?» desde el body. */
+  body:has(.calc-actions.is-floating) .m3-snackbar {
+    bottom: calc(var(--nav-h) + 84px + env(safe-area-inset-bottom, 0px));
+  }
 }

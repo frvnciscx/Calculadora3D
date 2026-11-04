@@ -538,3 +538,76 @@
   .cfg-tab { min-height: 44px; }
 
 }
+
+/* ── Calculadora en dos columnas ───────────────────────────────── */
+/* Izquierda: los campos, que se desplazan. Derecha: resultado, desglose y
+   botones, fijos a la vista (sticky) mientras se captura. */
+@media (min-width: 900px) {
+  /* En escritorio el body no se desplaza (overflow: hidden): cada .page se
+     desplaza por dentro. El sticky de abajo se pega a esa página, así que
+     .page debe conservar su overflow de base.css. (Un overflow-x: clip
+     aquí le quitaba el desplazamiento y la calculadora no bajaba.) */
+
+  .calc-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 32px;
+    align-items: start;          /* sin esto la columna se estira y sticky no tiene a dónde moverse */
+    max-width: 1120px;           /* en pantallas anchas los campos no se estiran de más */
+    padding-right: 24px;
+  }
+  .calc-form    { grid-column: 1; grid-row: 1; }
+  .calc-summary {
+    grid-column: 2; grid-row: 1;
+    position: sticky;
+    top: 20px;
+    margin-top: 20px;
+    /* Con el desglose abierto puede medir más que la pantalla: se desplaza
+       por dentro para que los botones nunca queden fuera de alcance. */
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    padding-bottom: 20px;
+    background: var(--bg-elev);
+    border: 0.5px solid var(--line);
+    border-radius: var(--r-m);
+  }
+
+  /* En 380 px, «Generar cotización» con su contador no cabe en media fila */
+  .calc-summary .calc-actions { flex-wrap: wrap; }
+  .calc-summary #btn-cotizar  { flex: 1 0 100%; }
+
+  /* ── Pestañas Pieza | Orden ── */
+  .calc-tabs { display: flex; margin: 16px 20px 0; }
+  .calc-tabs button { flex: 1; }
+  .calc-tab-count {
+    margin-left: 4px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .calc-tab-count:empty { display: none; }
+
+  /* En la pestaña Orden la columna se desplaza con la página: la orden es
+     larga, y con altura máxima quedaba una barra de desplazamiento interna,
+     como un panel dentro de la pantalla. */
+  .calc-summary[data-tab="orden"] {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  /* data-tab lo cambia showCalcTab() (quotes.js) */
+  .calc-summary[data-tab="orden"] #calc-result,
+  .calc-summary[data-tab="orden"] #calc-actions-slot { display: none; }
+  .calc-summary[data-tab="orden"] #calc-order-pane  { display: block; }
+
+  /* Contenido de la orden: el mismo del panel del teléfono (tplDraftBody) */
+  .draft-panel       { padding: 16px 20px 0; }
+  .draft-panel-title { font-size: 18px; font-weight: 600; margin: 0 0 14px; }
+  .draft-panel-save  { margin-top: 16px; }
+  .draft-panel-empty {
+    padding: 40px 20px 20px;
+    text-align: center;
+    color: var(--ink-3);
+  }
+  .draft-panel-empty p { margin: 8px 0 0; }
+}
