@@ -4,7 +4,7 @@ Qué es el cotizador de impresión 3D, dónde vive cada cosa, qué decidió Fran
 
 **Actualizado:** 2026-11-03
 
-**Fuentes:** la app publicada y su código (revisados el 2026-10-15) · repo `frvnciscx/Calculadora3D`: `docs/reglas-de-negocio.md` (D1–D98), `docs/flujos.md`, `docs/modelo-de-datos.md`, `docs/competencia.md`, `docs/aprendizajes.md` y `CHANGELOG.md` (caché `calc3d-v101`), al 2026-11-03 · preparado desde la sesión del producto, en `docs/para-el-asistente/` de su repo · versión anterior: 2026-10-16.
+**Fuentes:** la app publicada y su código (revisados el 2026-10-15) · repo `frvnciscx/Calculadora3D`: `docs/reglas-de-negocio.md` (D1–D103), `docs/flujos.md`, `docs/modelo-de-datos.md`, `docs/competencia.md`, `docs/aprendizajes.md` y `CHANGELOG.md` (caché `calc3d-v101`), al 2026-11-03 · preparado desde la sesión del producto, en `docs/para-el-asistente/` de su repo · versión anterior: 2026-10-16.
 
 > **No es Teckio.** Es un producto aparte: las reglas 1–5 de [`CLAUDE.md`](../../../CLAUDE.md), `DESIGN.md` e `INSTRUCTIONS.md` no aplican. Sus diagramas usan el estilo neutro de `/diagram-design`.
 
@@ -29,7 +29,7 @@ Qué es el cotizador de impresión 3D, dónde vive cada cosa, qué decidió Fran
 | App publicada | `calculadora3-d-delta.vercel.app` | Con guion. `calculadora3d-delta` (sin guion) es **otro producto** («3D COST PRO»). El README del repo se corrigió el 2026-11-03 |
 | Código | Repo privado `frvnciscx/Calculadora3D`, rama `main` | Las sesiones trabajan en su worktree (`claude/<nombre>`). Francisco hace el commit y publica la rama con GitHub Desktop, y la junta a `main` con un Pull Request en GitHub |
 | Proyecto de Claude Code | Una carpeta por equipo, anotada en su `~/.claude/CLAUDE.md` («Repo del cotizador en este equipo») | Su `CLAUDE.md` escribe `<ASISTENTE>` en lugar de la ruta de este repo desde el 2026-10-19 |
-| Decisiones | `docs/reglas-de-negocio.md` §2 de su repo | Único registro (D1–D98 al 2026-11-03), también de las que salen de `flujos.md` y `competencia.md`. Con fecha y quién la tomó; nada se borra |
+| Decisiones | `docs/reglas-de-negocio.md` §2 de su repo | Único registro (D1–D103 al 2026-11-03), también de las que salen de `flujos.md` y `competencia.md`. Con fecha y quién la tomó; nada se borra |
 | Flujos | `docs/flujos.md` y `docs/flujos/` de su repo | Los 7 de la primera versión, con diagramas de `/diagram-design` y sus preguntas respondidas al 2026-11-03 |
 | Modelo de datos | `docs/modelo-de-datos.md` de su repo | Firebase por negocio, con diagrama, al 2026-11-03. Reemplaza en parte a `BASE-DE-DATOS.md` |
 | Competencia | `docs/competencia.md` de su repo | 12 apps y plataformas revisadas el 2026-10-16; la directa en México es Bugeo App |
@@ -37,7 +37,7 @@ Qué es el cotizador de impresión 3D, dónde vive cada cosa, qué decidió Fran
 | Lo aprendido | `docs/aprendizajes.md` de su repo | Lo que sirve en otros proyectos se prepara en `docs/para-el-asistente/` |
 | Notion | ~~Página «Ventas»~~ | Sale del proyecto (D33, 2026-10-16). La sincronización con «App State — Calc3D» se quitó en v101 (D71); el botón que manda ventas aceptadas sigue hasta la migración |
 
-> **No capturar datos de prueba en la app publicada sin su permiso.** ~~Ajustes › «Sincronizar» sube el estado completo a Notion.~~ Desde v101 ya no existe; v101 llega a la app publicada cuando se junta a `main`.
+> **No capturar datos de prueba en la app publicada sin su permiso.** ~~Ajustes › «Sincronizar» sube el estado completo a Notion.~~ Desde v101 ya no existe; ~~v101 llega a la app publicada cuando se junta a `main`~~ v101 está publicado desde el 2026-11-03.
 
 ---
 
@@ -63,7 +63,7 @@ Las del arranque, del 2026-10-15 y 2026-10-16. Desde el 2026-10-16 las decisione
 2. ~~**`flujos.md`:** los 7 flujos están hechos; faltan P86 y P87, del arranque de un negocio nuevo.~~ Cerrado el 2026-11-03 con D87 y D88.
 3. ~~**`base-de-datos.md`:** el modelo organizado por negocio (D46), completo aunque la primera versión no use todo, y al día con v100.~~ Hecho el 2026-11-03 como `modelo-de-datos.md`; sus preguntas se respondieron el mismo día (D89–D98).
 4. **Borrador del aviso de privacidad** (D51), antes de subir la app a Google Play.
-5. **Juntar v101 a `main`:** quita la sincronización sin contraseña y deja de publicar los documentos del repo (D70, D71). La rama está en GitHub desde el 2026-11-03; falta el Pull Request.
+5. ~~**Juntar v101 a `main`:** quita la sincronización sin contraseña y deja de publicar los documentos del repo (D70, D71). La rama está en GitHub desde el 2026-11-03; falta el Pull Request.~~ Hecho el 2026-11-03 (Pull Request #1) y comprobado: los documentos y `/api/sync/` responden 404.
 
 ---
 

@@ -22,16 +22,16 @@ La planeación de la primera versión está en [`docs/`](docs/). El registro de 
 
 | Qué | Dónde | Estado |
 |---|---|---|
-| Reglas de negocio: ciclo de vida de la cotización, anticipo y pagos, fecha de entrega, inventario, IVA, comisiones, empaque, cuentas, tiendas y qué entra a la primera versión | [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) | 98 decisiones (D1–D98) |
+| Reglas de negocio: ciclo de vida de la cotización, anticipo y pagos, fecha de entrega, inventario, IVA, comisiones, empaque, cuentas, tiendas y qué entra a la primera versión | [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) | 103 decisiones (D1–D103) |
 | Los 7 flujos de la primera versión, con diagramas: estados de la cotización, de la calculadora a la cotización, enviar y aceptar, pagos, producción y entrega, cuentas, y arranque de un negocio nuevo | [`docs/flujos.md`](docs/flujos.md) y [`docs/flujos/`](docs/flujos/) | Hechos, con sus preguntas respondidas |
 | Competencia: 12 apps y plataformas, qué ofrecen que esta app no, y qué se agregó a la primera versión | [`docs/competencia.md`](docs/competencia.md) | Revisada el 2026-10-16 |
-| Seguridad (v101): se quitó la sincronización con Notion, que no pedía contraseña, y Vercel publica solo los archivos de la app | [`CHANGELOG.md`](CHANGELOG.md), [`.vercelignore`](.vercelignore) | En la rama `claude/project-review-e78fd0`; falta juntarla a `main` |
+| Seguridad (v101): se quitó la sincronización con Notion, que no pedía contraseña, y Vercel publica solo los archivos de la app | [`CHANGELOG.md`](CHANGELOG.md), [`.vercelignore`](.vercelignore) | Publicado el 2026-11-03 y comprobado: los documentos y `/api/sync/` responden 404 |
 | Modelo de datos para Firebase, organizado por negocio, con su diagrama | [`docs/modelo-de-datos.md`](docs/modelo-de-datos.md) | Hecho, con sus preguntas respondidas |
 | Lo aprendido al trabajar el proyecto | [`docs/aprendizajes.md`](docs/aprendizajes.md) | Al día |
 
 ### Lo que sigue
 
-1. **Juntar v101 a `main`** con un Pull Request. Mientras tanto, la app publicada sigue con la sincronización sin contraseña.
+1. ~~**Juntar v101 a `main`** con un Pull Request. Mientras tanto, la app publicada sigue con la sincronización sin contraseña.~~ Hecho el 2026-11-03 (Pull Request #1).
 2. ~~**Responder las preguntas del modelo de datos**~~ Respondidas el 2026-11-03 (D89–D98 en [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md)).
 3. **Borrador del aviso de privacidad** (D51), antes de subir la app a Google Play.
 4. **Construir la primera versión** ([`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) §4.12) y hacer la prueba cerrada en Google Play.
@@ -185,7 +185,6 @@ Los módulos siguen separación de responsabilidades:
 ├── CLAUDE.md              — Instrucciones para Claude Code
 ├── CHANGELOG.md           — Qué cambió en cada versión
 ├── MEJORAS.md             — Pendientes del uso diario
-├── deploy.sh              — git add + commit + push en un paso
 ├── package.json           — npm test
 ├── api/
 │   └── notion.js          — Vercel Function: POST /api/notion
@@ -225,7 +224,7 @@ Los módulos siguen separación de responsabilidades:
     └── theme.js           — Tema claro/oscuro/auto
 ```
 
-Los demás archivos de la raíz (los `.docx`, `calculadora 3d/`, `ordenes/`) no se publican.
+Lo que no es de la app (`node_modules/`, la documentación en `.docx`, el diseño original en `calculadora 3d/` y las órdenes de compra) no está en git (D99–D103).
 
 ---
 
@@ -262,17 +261,6 @@ Conectado a Vercel: cada cambio que llega a `main` se publica solo, y Vercel pub
 
 Los cambios se trabajan en una rama y llegan a `main` con un Pull Request; el commit y el push se hacen con GitHub Desktop. El plan gratuito de Vercel es para uso no comercial: el producto irá a Firebase Hosting (D55).
 
-`deploy.sh` hace commit y push de la rama en la que estés: solo publica si estás en `main`.
-
-```bash
-./deploy.sh
-# Pide descripción del cambio y hace add + commit + push
-```
-
-Primera vez en un equipo nuevo:
-```bash
-chmod +x deploy.sh
-```
 
 ---
 
