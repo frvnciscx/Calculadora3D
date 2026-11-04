@@ -268,20 +268,21 @@
     <!-- Lo que se captura es la placa, no la pieza. El slicer reporta el peso
          y el tiempo de la corrida completa; sin decir cuántas piezas salen de
          ahí, una placa de 30 llaveros se cotizaba como un llavero de 900 g. -->
-    <div style="font-size:12px;color:var(--ink-3);line-height:1.6;margin-bottom:14px">
-      Captura lo que te da el slicer para la <strong style="color:var(--ink-2)">placa completa</strong>.
-      Si trae varias piezas, dilo en «Piezas» y la app divide.
+    <div class="hint" style="margin-bottom:14px">
+    Captura lo que te da el slicer para la <strong>placa completa</strong>.
+    Si trae varias piezas, dilo en «Piezas» y la app divide.
     </div>
+
     <div class="flex-row" style="margin-bottom:16px">
-      <div class="m3-field" id="field-weight">
+      <div class="m3-field helper-on-rest" id="field-weight">
         <input type="number" id="calc-weight" placeholder=" " min="0" step="0.1" inputmode="decimal">
         <label for="calc-weight">Peso (g)</label>
-        <span class="m3-helper" id="helper-weight">Ej: 15g</span>
+        <span class="m3-helper" id="helper-weight">De toda la pieza</span>
       </div>
-      <div class="m3-field" id="field-time">
+      <div class="m3-field helper-on-rest" id="field-time">
         <input type="number" id="calc-time" placeholder=" " min="0" step="0.01" inputmode="decimal">
         <label for="calc-time">Tiempo (hrs)</label>
-        <span class="m3-helper" id="helper-time">Ej: 1.5h</span>
+        <span class="m3-helper" id="helper-time">De toda la placa</span>
       </div>
     </div>
     <div class="flex-row" style="margin-bottom:16px">
@@ -290,7 +291,7 @@
         <label for="calc-pieces">Piezas</label>
         <span class="m3-helper" id="helper-pieces">En esa placa</span>
       </div>
-      <div class="m3-field optional">
+      <div class="m3-field optional helper-on-rest">
         <input type="number" id="calc-design-time" placeholder=" " min="0" step="0.1" inputmode="decimal">
         <label for="calc-design-time">Diseño (hrs)</label>
         <span class="m3-helper">Se reparte entre las piezas</span>
@@ -426,6 +427,13 @@
         </label>
       </div>
       <div id="postproc-fields" class="hidden" style="margin-top:14px">
+                <!-- Como el peso y el tiempo, la pintura se divide entre las piezas de la
+             placa (MEJORAS #12): si se captura la de una sola pieza, sale N veces bajo. -->
+        <div class="hint">
+        Captura la pintura y el tiempo de <strong>toda la placa</strong>,
+        no de una pieza: la app también los divide entre las piezas.
+        </div>
+
         <div class="postproc-section-label">Colores de pintura</div>
         <div id="paint-colors-list"></div>
         <button class="m3-btn-text m3-btn-sm" onclick="addPaintColor()" style="margin-top:4px;width:auto">
@@ -473,12 +481,7 @@
     </div>
   </div>
 
-  <!-- Botón agregar a orden (duplicado al final para mobile UX) -->
-  <div style="padding:20px 20px 0">
-    <button class="btn btn-primary" style="width:100%" id="btn-add-item" onclick="addItemToDraft()">
-      <span class="material-symbols-rounded" style="font-size:16px">add_shopping_cart</span> Agregar a orden
-    </button>
-  </div>
+
 
 </div>
 

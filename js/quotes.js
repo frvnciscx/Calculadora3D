@@ -151,14 +151,6 @@ function addItemToDraft() {
     var colorList = document.getElementById('paint-colors-list');
     if (colorList) colorList.innerHTML = '';
   }
-
-  /* Rehabilitar el botón para la siguiente pieza */
-  var btnAdd = document.getElementById('btn-add-item');
-  if (btnAdd) {
-    btnAdd.classList.remove('item-added');
-    btnAdd.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">add_shopping_cart</span> Agregar a orden';
-    btnAdd.disabled = false;
-  }
 }
 
 /* ── Editar cotización existente (no aceptada) ────────────────── */

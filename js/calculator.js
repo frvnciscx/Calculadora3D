@@ -159,13 +159,6 @@ function calculate(silent) {
     }
   }
 
-  /* Resetear botón "Agregar a orden" si estaba en estado "agregado" */
-  var btnAdd = document.getElementById('btn-add-item');
-  if (btnAdd && btnAdd.classList.contains('item-added')) {
-    btnAdd.classList.remove('item-added');
-    btnAdd.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">add_shopping_cart</span> Agregar a orden';
-    btnAdd.disabled = false;
-  }
 
   /* Recordar última impresora y material usados.
      calculate() corre en CADA pulsación del teclado, así que antes esto
