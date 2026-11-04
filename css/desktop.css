@@ -539,75 +539,419 @@
 
 }
 
-/* ── Calculadora en dos columnas ───────────────────────────────── */
-/* Izquierda: los campos, que se desplazan. Derecha: resultado, desglose y
-   botones, fijos a la vista (sticky) mientras se captura. */
+/* ── Calculadora en escritorio ─────────────────────────────────────
+   Diseñada para escritorio, no el layout del teléfono estirado:
+   - Encabezado fijo arriba (título, contador de la orden, historial).
+   - Izquierda: los campos, acomodados al ancho de su columna con container
+     queries (el diseño mira cuánto mide la columna, no la pantalla).
+   - Derecha: un panel exactamente de la altura disponible. Precio arriba,
+     desglose siempre abierto en medio (solo él se desplaza si no cabe) y
+     botones fijos abajo.
+   - «Revisar cotización» (#page-calc[data-mode="review"], setCalcMode en
+     quotes.js): cliente y tabla de productos a la izquierda, totales y
+     botón a la derecha. Todo cabe en la pantalla; solo la tabla se desplaza.
+   En escritorio el body no se desplaza (overflow: hidden): cada .page lo
+   hace por dentro, y los sticky de aquí se pegan a esa página. */
 @media (min-width: 900px) {
-  /* En escritorio el body no se desplaza (overflow: hidden): cada .page se
-     desplaza por dentro. El sticky de abajo se pega a esa página, así que
-     .page debe conservar su overflow de base.css. (Un overflow-x: clip
-     aquí le quitaba el desplazamiento y la calculadora no bajaba.) */
+  #page-calc {
+    --calc-header-h: 64px;
+    --calc-gap: 16px;
+    /* Alto de los paneles: la pantalla menos el encabezado y dos márgenes */
+    --calc-panel-h: calc(100vh - var(--calc-header-h) - 2 * var(--calc-gap));
+    /* El margen inferior de 40 px de las demás páginas (.page, arriba) hacía
+       que al llegar al fondo el panel subiera y se metiera bajo el
+       encabezado: sticky no puede salirse de su contenedor. */
+    padding-bottom: var(--calc-gap) !important;
+    /* La calculadora decide su acomodo por el ancho de la página, no el de
+       la pantalla (ver «Dos columnas» abajo). */
+    container: calcpage / inline-size;
+  }
 
+  /* ── Encabezado fijo ── */
+  .calc-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    height: var(--calc-header-h);
+    box-sizing: border-box;
+    /* De orilla a orilla de la página, por encima de su margen lateral */
+    margin: 0 calc(-1 * var(--space-4));
+    padding: 0 calc(var(--space-4) + 12px);
+    justify-content: flex-start;
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--line);
+  }
+  .calc-header-title {
+    display: block;
+    margin: 0 8px 0 0;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  /* Toggle «Costo de la pieza | Orden»: junto al título, a la vista */
+  .calc-mode-seg { display: inline-flex; }
+  .calc-mode-seg button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+  }
+  .calc-mode-seg button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .calc-seg-count {
+    min-width: 20px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-align: center;
+  }
+  .calc-seg-count:empty { display: none; }
+  .calc-header-end { margin-left: auto; }
+
+  /* ── Dos columnas, solo si la PÁGINA tiene espacio ──
+     Se decide con el ancho de la página (container query «calcpage»), no
+     el de la pantalla: con el contenedor lateral abierto la página se
+     angosta, y con menos de 680 px útiles la calculadora se apila en una
+     columna (resultado arriba, campos abajo), como en el teléfono.
+     680 = campos (~350) + panel (300) + separación. */
+  @container calcpage (min-width: 680px) {
   .calc-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 380px;
-    gap: 32px;
-    align-items: start;          /* sin esto la columna se estira y sticky no tiene a dónde moverse */
-    max-width: 1120px;           /* en pantallas anchas los campos no se estiran de más */
-    padding-right: 24px;
+    grid-template-columns: minmax(0, 1fr) clamp(320px, 30vw, 400px);
+    column-gap: 24px;
+    align-items: start;          /* sin esto el panel se estira y sticky no tiene a dónde moverse */
+    max-width: 1280px;
+    padding-top: var(--calc-gap);
   }
-  .calc-form    { grid-column: 1; grid-row: 1; }
+  .calc-form,
+  .calc-review-main { grid-column: 1; grid-row: 1; min-width: 0; }
+
+  /* ── Panel derecho: a la altura de la pantalla ── */
   .calc-summary {
     grid-column: 2; grid-row: 1;
     position: sticky;
-    top: 20px;
-    margin-top: 20px;
-    /* Con el desglose abierto puede medir más que la pantalla: se desplaza
-       por dentro para que los botones nunca queden fuera de alcance. */
-    max-height: calc(100vh - 40px);
-    overflow-y: auto;
-    padding-bottom: 20px;
+    top: calc(var(--calc-header-h) + var(--calc-gap));
+    height: var(--calc-panel-h);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     background: var(--bg-elev);
     border: 0.5px solid var(--line);
     border-radius: var(--r-m);
   }
-
-  /* En 380 px, «Generar cotización» con su contador no cabe en media fila */
+  .calc-summary #calc-result {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  /* El desglose siempre abierto: en escritorio sobra espacio para verlo.
+     Le gana a .hidden (que toggleBreakdown pone) por ser más específico. */
+  .calc-summary #btn-breakdown-toggle { display: none !important; }
+  .calc-summary #breakdown-detail {
+    display: block !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    margin-top: 12px;
+  }
+  .calc-summary #breakdown-detail::before {
+    content: 'Desglose por pieza';
+    display: block;
+    margin: 4px 0 2px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  /* Sin tarjeta dentro de la tarjeta: las filas van directo en el panel */
+  .calc-summary #breakdown-detail > .card {
+    background: none;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+  }
+  .calc-summary #calc-actions-slot {
+    flex: none;
+    margin-top: 12px;
+    padding-bottom: 20px;
+    border-top: 0.5px solid var(--line);
+  }
+  /* En el panel, «Generar cotización» con su contador no cabe en media fila */
   .calc-summary .calc-actions { flex-wrap: wrap; }
   .calc-summary #btn-cotizar  { flex: 1 0 100%; }
 
-  /* ── Pestañas Pieza | Orden ── */
-  .calc-tabs { display: flex; margin: 16px 20px 0; }
-  .calc-tabs button { flex: 1; }
-  .calc-tab-count {
-    margin-left: 4px;
+  /* Modo «Orden»: la vista previa a la derecha, un poco más ancha (es una
+     hoja de ~440 px). En una columna no se muestra: ahí manda la orden. */
+  #page-calc[data-mode="review"] #calc-review-preview { display: flex; }
+  #page-calc[data-mode="review"] .calc-layout {
+    grid-template-columns: minmax(0, 1fr) clamp(300px, 34vw, 500px);
+  }
+  } /* /@container calcpage */
+
+  /* Página angosta (p. ej. el contenedor lateral abierto en una pantalla
+     chica): el botón principal en su propio renglón, y con menos de 520 px
+     el encabezado deja solo íconos en el toggle (los títulos siguen en el
+     atributo title y el contador sigue visible). */
+  @container calcpage (max-width: 679px) {
+    .calc-actions { flex-wrap: wrap; }
+    .calc-actions #btn-cotizar { flex: 1 0 100%; }
+  }
+  @container calcpage (max-width: 520px) {
+    .calc-header-title,
+    .calc-mode-seg .seg-label { display: none; }
+  }
+
+  /* ── Campos al ancho de su columna (container queries) ── */
+  .calc-form {
+    container-type: inline-size;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .calc-form > * { flex: 1 1 100%; min-width: 0; }
+  .calc-form .calc-sec { padding-top: 24px !important; }
+  .calc-form .calc-sec-datos { padding-top: 4px !important; }
+
+  @container (min-width: 620px) {
+    /* Peso, Tiempo, Piezas y Diseño en una fila. display: contents hace
+       que las dos filas «desaparezcan» y sus campos entren a la rejilla. */
+    .calc-datos-nums {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      column-gap: 12px;
+    }
+    .calc-datos-nums > .flex-row { display: contents; }
+
+    /* Impresora y Material lado a lado; el color del rollo abajo */
+    .calc-sec-impresora > .m3-card {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 20px;
+    }
+    .calc-sec-impresora #field-spool-wrap { grid-column: 1 / -1; }
+
+    /* Los colores AMS en rejilla de 2 × 2 */
+    #ams-color-slots {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 16px;
+    }
+
+    /* Post-procesado y Margen lado a lado */
+    .calc-form > .calc-sec-post,
+    .calc-form > .calc-sec-margen { flex-basis: 50%; }
+  }
+
+  /* ── Modo «Orden» (toggle del encabezado, setCalcMode en quotes.js) ──
+     Izquierda: cliente, tabla de productos y resumen con el botón.
+     Derecha: la vista previa de la cotización, en vivo. */
+  #page-calc[data-mode="review"] .calc-form,
+  #page-calc[data-mode="review"] .calc-summary #calc-result,
+  #page-calc[data-mode="review"] .calc-summary #calc-actions-slot { display: none !important; }
+  #page-calc[data-mode="review"] #calc-review-main { display: flex; }
+
+  .calc-review-main {
+    container-type: inline-size;
+    flex-direction: column;
+    gap: 14px;
+    height: var(--calc-panel-h);
+    /* Nunca más alta que la pantalla. En pantallas bajas, si no cabe todo,
+       la columna se desplaza por dentro (la tabla primero, luego el resumen). */
+    overflow-y: auto;
+  }
+
+  /* Cliente | Teléfono arriba; «Guardar cliente» y Notas a lo ancho.
+     Con espacio (container query), Notas sube a la misma fila. */
+  .review-client {
+    flex: none;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    column-gap: 16px;
+    padding: 0 4px;
+  }
+  .review-client > :nth-child(n+3) { grid-column: 1 / -1; }
+  @container (min-width: 720px) {
+    .review-client { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.5fr); }
+    .review-client > :nth-child(4) { grid-column: 3; grid-row: 1; }
+  }
+
+  .review-items {
+    container-type: inline-size;
+    flex: 1 0 220px;             /* crece con el espacio; nunca menos de ~2 productos */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-elev);
+    border: 0.5px solid var(--line);
+    border-radius: var(--r-m);
+  }
+  .review-items-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px 8px 20px;
+    border-bottom: 0.5px solid var(--line);
+  }
+  .review-items-head .m3-btn-text { width: auto; }
+  .review-table-wrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  .review-table { width: 100%; border-collapse: collapse; }
+  .review-table th {
+    position: sticky;            /* el encabezado de la tabla no se va al desplazar */
+    top: 0;
+    z-index: 1;
+    background: var(--bg-elev);
+    padding: 10px 12px;
+    text-align: left;
     font-family: var(--font-mono);
-    font-size: 12px;
-  }
-  .calc-tab-count:empty { display: none; }
-
-  /* En la pestaña Orden la columna se desplaza con la página: la orden es
-     larga, y con altura máxima quedaba una barra de desplazamiento interna,
-     como un panel dentro de la pantalla. */
-  .calc-summary[data-tab="orden"] {
-    position: static;
-    max-height: none;
-    overflow: visible;
-  }
-
-  /* data-tab lo cambia showCalcTab() (quotes.js) */
-  .calc-summary[data-tab="orden"] #calc-result,
-  .calc-summary[data-tab="orden"] #calc-actions-slot { display: none; }
-  .calc-summary[data-tab="orden"] #calc-order-pane  { display: block; }
-
-  /* Contenido de la orden: el mismo del panel del teléfono (tplDraftBody) */
-  .draft-panel       { padding: 16px 20px 0; }
-  .draft-panel-title { font-size: 18px; font-weight: 600; margin: 0 0 14px; }
-  .draft-panel-save  { margin-top: 16px; }
-  .draft-panel-empty {
-    padding: 40px 20px 20px;
-    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     color: var(--ink-3);
+    border-bottom: 0.5px solid var(--line);
   }
-  .draft-panel-empty p { margin: 8px 0 0; }
+  .review-table td {
+    padding: 12px;
+    vertical-align: middle;
+    border-bottom: 0.5px solid var(--line-2);
+  }
+  .review-table tr:last-child td { border-bottom: 0; }
+  .review-table th:first-child,
+  .review-table td:first-child { padding-left: 20px; }
+  .review-table .num-col { text-align: right; white-space: nowrap; }
+  .review-qty { display: flex; align-items: center; gap: 6px; }
+  .review-table .draft-price-wrap { margin-left: 0; width: 120px; }
+
+  /* La tabla se adapta a su propio ancho. Con poco espacio: sin botones
+     − / + (el campo de cantidad sigue) y sin la columna Importe, que ya
+     se lee en la línea «× 3 = $135» bajo cada producto. */
+  @container (max-width: 600px) {
+    .review-table .draft-qty-btn { display: none; }
+    .review-table .num-col { display: none; }
+    .review-table .draft-price-wrap { width: 88px; padding: 0 6px; }
+    .review-table th,
+    .review-table td { padding-left: 6px; padding-right: 6px; }
+    .review-table th:first-child,
+    .review-table td:first-child { padding-left: 14px; }
+  }
+
+  /* Resumen y botón, abajo de la tabla. Con espacio, el botón va a un lado
+     de los totales en lugar de debajo. */
+  .review-footer {
+    flex: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px 20px 16px;
+    background: var(--bg-elev);
+    border: 0.5px solid var(--line);
+    border-radius: var(--r-m);
+  }
+  .review-footer .draft-subtotal-row { margin-top: 0; }
+  .review-footer .draft-discount-row .material-symbols-rounded { display: none; }
+  .review-footer .discount-input  { width: 44px; }
+  .review-footer .discount-amount { min-width: 64px; }
+  .review-generate {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  @container (min-width: 560px) {
+    .review-footer {
+      grid-template-columns: minmax(0, 1fr) 220px;
+      column-gap: 28px;
+      align-items: end;
+    }
+  }
+
+  /* Derecha: vista previa, con la hoja centrada y desplazable por dentro */
+  .calc-review-preview {
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+  }
+  .preview-head {
+    flex: none;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 0.5px solid var(--line);
+  }
+  .preview-note { font-size: 12px; color: var(--ink-3); }
+  .preview-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px;
+    background: var(--bg-sunk);
+  }
+  .preview-paper { max-width: 460px; margin: 0 auto; }
+
+  /* ── Contenedor lateral de la cotización (tipo VS Code) ──
+     Es un hijo más de la fila del body: aparece a la derecha y la página
+     se angosta para darle lugar. Sin velo oscuro y sin tapar la barra
+     lateral, a diferencia del panel (drawer) anterior. */
+  .page { min-width: 0; }        /* para que la página pueda angostarse */
+  body.dock-open #quote-dock {
+    display: flex;
+    flex-direction: column;
+    /* 460 px, o el 40 % de la pantalla si es angosta */
+    flex: 0 0 min(460px, 40vw);
+    width: min(460px, 40vw);
+    height: 100vh;
+    background: var(--bg);
+    border-left: 0.5px solid var(--line);
+  }
+  .dock-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 64px;
+    box-sizing: border-box;
+    padding: 10px 12px 10px 20px;
+    border-bottom: 0.5px solid var(--line);
+  }
+  .dock-title {
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dock-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px;
+    background: var(--bg-sunk);
+  }
+  .dock-actions {
+    flex: none;
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px 16px;
+    border-top: 0.5px solid var(--line);
+  }
+  .dock-actions button {
+    flex: 1;
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 10px;
+  }
 }

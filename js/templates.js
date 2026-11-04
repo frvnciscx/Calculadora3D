@@ -736,11 +736,18 @@ function tplDraftItem(item, i, cur) {
   '</div>';
 }
 
-/* La orden se dibuja en dos envolturas con el mismo contenido:
-   - tplDraftModal: panel que sale desde abajo (teléfono)
-   - tplDraftPanel: pestaña «Orden» de la columna derecha de la calculadora
-     (escritorio; ver renderDraftModal en quotes.js)
-   tplDraftBody es lo que comparten: cliente, productos y totales. */
+/* ── La orden ─────────────────────────────────────────────────────
+   Cuatro piezas con los mismos campos (los mismos id) en dos pantallas:
+     tplDraftClient  cliente, teléfono, guardar cliente y notas
+     tplDraftItem    un producto como tarjeta (teléfono)
+     tplReviewRow    un producto como fila de tabla (escritorio)
+     tplDraftTotals  subtotal, descuento, comisión y total
+   Teléfono:   tplDraftModal = panel desde abajo con cliente + tarjetas + totales
+   Escritorio: modo «Orden» de la calculadora (setCalcMode en quotes.js):
+               tplReviewMain (cliente, tabla, resumen y botón) a la izquierda
+               y la vista previa de la cotización en el panel derecho.
+   Como los id son los mismos, saveQuote, onCommissionChange y
+   _repintarDraftTotales funcionan igual en las dos. */
 
 function _draftLabels() {
   var isEdit = (typeof _editQuoteIndex !== 'undefined' && _editQuoteIndex !== null);
@@ -752,12 +759,24 @@ function _draftLabels() {
   };
 }
 
+/* Teléfono: panel que sale desde abajo */
 function tplDraftModal(draft, cur) {
   var l = _draftLabels();
+  var itemsHTML = draft.items.map(function(item, i) { return tplDraftItem(item, i, cur); }).join('');
   return '<div class="m3-scrim" onclick="closeModal()"></div>' +
     '<div class="m3-bottom-sheet draft-drawer">' +
       tplSheetHeader(l.title) +
-      tplDraftBody(draft, cur) +
+      tplDraftClient(draft) +
+      '<div class="draft-items-section">' +
+        '<div class="draft-items-header">' +
+          '<span>PRODUCTOS (' + draft.items.length + ')</span>' +
+          '<button class="m3-btn-text" style="font-size:13px;width:auto;padding:0 8px;height:36px" onclick="addMoreToQuote()">' +
+            tplIcon('add', 16) + ' Agregar producto' +
+          '</button>' +
+        '</div>' +
+        itemsHTML +
+      '</div>' +
+      tplDraftTotals(draft, cur) +
       '<div class="m3-sheet-actions">' +
         '<button class="m3-btn-outlined" onclick="closeModal()">Cancelar</button>' +
         '<button class="m3-btn-filled" onclick="saveQuote()">' + l.save + '</button>' +
@@ -765,36 +784,139 @@ function tplDraftModal(draft, cur) {
     '</div>';
 }
 
-function tplDraftPanel(draft, cur) {
-  if (!draft || !draft.items || !draft.items.length) {
-    return '<div class="draft-panel-empty">' +
-      tplIcon('receipt_long', 28) +
-      '<p>La orden está vacía.</p>' +
-      '<p class="hint">Calcula una pieza y presiona «Agregar a orden».</p>' +
-    '</div>';
-  }
+/* Escritorio, columna izquierda del modo «Orden»: cliente arriba, la tabla
+   de productos (se desplaza por dentro si es larga) y abajo el resumen con
+   el botón. La derecha es la vista previa (ver _pintarVistaPrevia). */
+function tplReviewMain(draft, cur) {
   var l = _draftLabels();
-  return '<div class="draft-panel">' +
-    '<h2 class="draft-panel-title">' + l.title + '</h2>' +
-    tplDraftBody(draft, cur) +
-    '<button class="m3-btn-filled draft-panel-save" onclick="saveQuote()">' + l.save + '</button>' +
-  '</div>';
+  return tplReviewItems(draft, cur) +
+    '<div class="review-footer">' +
+      '<div class="review-footer-totals">' + tplDraftTotals(draft, cur) + '</div>' +
+      '<button class="m3-btn-filled review-generate" onclick="saveQuote()">' +
+        tplIcon('send', 18) + ' ' + l.save +
+      '</button>' +
+    '</div>';
 }
 
-function tplDraftBody(draft, cur) {
-  var subtotal      = draft.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
-  var discount      = draft.discount || 0;
-  var discountAmt   = subtotal * (discount / 100);
-  var discounted    = subtotal - discountAmt;
-  var commEnabled   = draft.commissionEnabled || false;
-  var commission    = commEnabled ? (draft.commission || 0) : 0;
-  var commissionAmt = discounted * (commission / 100);
-  var grandTotal    = discounted + commissionAmt;
-  var itemsHTML     = draft.items.map(function(item, i) { return tplDraftItem(item, i, cur); }).join('');
+function tplReviewItems(draft, cur) {
+  var rows = draft.items.map(function(item, i) { return tplReviewRow(item, i, cur); }).join('');
+  return '<div class="review-client">' + tplDraftClient(draft) + '</div>' +
+    '<div class="review-items">' +
+      '<div class="review-items-head">' +
+        '<span class="micro">Productos (' + draft.items.length + ')</span>' +
+        '<button class="m3-btn-text m3-btn-sm" onclick="addMoreToQuote()">' +
+          tplIcon('add', 16) + ' Agregar producto' +
+        '</button>' +
+      '</div>' +
+      '<div class="review-table-wrap">' +
+        '<table class="review-table">' +
+          '<thead><tr>' +
+            '<th>Producto</th><th>Cantidad</th><th>Precio por pieza</th>' +
+            '<th class="num-col">Importe</th><th><span class="sr-only">Quitar</span></th>' +
+          '</tr></thead>' +
+          '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</div>';
+}
 
-  /* guardarDatosDraft() guarda cliente, teléfono y notas mientras se
-     escriben. Antes solo se guardaban al agregar producto o al generar:
-     quitar un producto volvía a dibujar la orden y borraba lo escrito. */
+/* Un producto como fila. Mismos id y funciones que la tarjeta del teléfono
+   (tplDraftItem), más dql-i: el importe de la fila (precio × cantidad). */
+function tplReviewRow(item, i, cur) {
+  var qty = item.qty || 1;
+  return '<tr>' +
+    '<td>' +
+      '<div class="draft-item-desc">' + esc(item.desc) + '</div>' +
+      '<div class="draft-item-sub">' + esc(item.printer) + ' &middot; ' + esc(item.material) + '</div>' +
+      '<div class="draft-item-calc" id="dqc-' + i + '">' + tplDraftItemCalc(item, cur) + '</div>' +
+    '</td>' +
+    '<td>' +
+      '<div class="review-qty">' +
+        '<button class="draft-qty-btn" onclick="draftItemQty(' + i + ',-1)" aria-label="Quitar uno">&#8722;</button>' +
+        '<input type="number" class="draft-qty-val" id="dqi-' + i + '" value="' + qty + '" ' +
+          'min="1" step="1" inputmode="numeric" aria-label="Cantidad" ' +
+          'onchange="draftItemQtySet(' + i + ', this.value)">' +
+        '<button class="draft-qty-btn" onclick="draftItemQty(' + i + ',1)" aria-label="Agregar uno">&#43;</button>' +
+      '</div>' +
+    '</td>' +
+    '<td>' +
+      '<label class="draft-price-wrap">' +
+        '<span class="draft-price-cur">' + cur + '</span>' +
+        '<input type="number" class="draft-item-price" id="dqp-' + i + '" ' +
+          'value="' + (item.totalCost || 0).toFixed(2) + '" min="0" step="0.01" ' +
+          'inputmode="decimal" aria-label="Precio por pieza" ' +
+          'onchange="draftItemPriceSet(' + i + ', this.value)">' +
+      '</label>' +
+    '</td>' +
+    '<td class="num-col num" id="dql-' + i + '">' + cur + ((item.totalCost || 0) * qty).toFixed(2) + '</td>' +
+    '<td><button class="draft-remove-btn" onclick="removeDraftItem(' + i + ')" title="Quitar" aria-label="Quitar ' + esc(item.desc) + '">&#10005;</button></td>' +
+  '</tr>';
+}
+
+/* ── Después de generar: modal para enviar la cotización ──────────
+   Las opciones son las que ya existían en la lista de cotizaciones.
+   Los id btn-export-pdf-i / btn-export-img-i los usan exportQuotePDF y
+   exportQuoteImage para mostrar «Generando…». help-sheet: modal centrado
+   en escritorio, panel desde abajo en el teléfono. */
+function tplSendQuoteModal(q, i, actualizada) {
+  var cur = config.currency;
+  var opcion = function(id, icon, title, sub, fn) {
+    return '<button type="button" class="send-option"' + (id ? ' id="' + id + '"' : '') + ' onclick="' + fn + '">' +
+      tplIcon(icon, 22) +
+      '<span class="send-option-text"><strong>' + title + '</strong><small>' + sub + '</small></span>' +
+    '</button>';
+  };
+  var tel = (q.phone || '').replace(/\D/g, '');
+  return '<div class="m3-scrim" onclick="closeModal()"></div>' +
+    '<div class="m3-bottom-sheet help-sheet send-sheet" role="dialog" aria-modal="true" aria-labelledby="send-title">' +
+      '<div class="m3-drag-handle"></div>' +
+      '<div class="send-head">' +
+        '<span class="send-check">' + tplIcon('check', 22) + '</span>' +
+        '<div>' +
+          '<h2 id="send-title">' + esc(q.quoteNum) + (actualizada ? ' actualizada' : ' generada') + '</h2>' +
+          '<p>' + esc(q.client) + ' · ' + cur + (q.grandTotal || 0).toFixed(2) + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<div class="micro" style="margin:4px 0 10px">Enviar o guardar</div>' +
+      '<div class="send-options">' +
+        opcion('btn-export-pdf-' + i, 'picture_as_pdf', 'PDF', 'Descargar en A4', 'exportQuotePDF(' + i + ')') +
+        opcion('btn-export-img-' + i, 'image', 'Imagen', 'Para mandar por chat', 'exportQuoteImage(' + i + ')') +
+        opcion('', 'chat', 'WhatsApp', tel ? 'Al ' + esc(q.phone) : 'Falta el teléfono del cliente', 'whatsappQuote(' + i + ')') +
+        opcion('', 'link', 'Enlace', 'Página para el cliente', 'sharePublicLink(' + i + ')') +
+        opcion('', 'share', 'Texto', 'Copiar o compartir', 'shareQuote(' + i + ')') +
+        opcion('', 'visibility', 'Ver cotización', 'Como la verá el cliente', 'closeModal();viewQuote(' + i + ')') +
+      '</div>' +
+      '<div class="m3-sheet-actions">' +
+        '<button class="m3-btn-outlined" onclick="closeModal();showPage(\'quotes\')">Ir a cotizaciones</button>' +
+        '<button class="m3-btn-filled" onclick="closeModal()">Listo</button>' +
+      '</div>' +
+    '</div>';
+}
+
+/* ── Contenedor lateral de la cotización (escritorio) ──────────────
+   Como el panel del agente en VS Code: se acomoda a la derecha de la
+   página, sin oscurecer ni tapar nada; la página se angosta para darle
+   lugar. viewQuote (quotes.js) lo llena; closeQuoteDock lo cierra. */
+function tplQuoteDock(q, i, quoteHTML) {
+  return '<div class="dock-head">' +
+      '<div>' +
+        '<div class="micro">Cotización</div>' +
+        '<div class="dock-title">' + esc(q.quoteNum) + ' · ' + esc(q.client || '') + '</div>' +
+      '</div>' +
+      '<button class="sheet-close-btn" onclick="closeQuoteDock()" aria-label="Cerrar">' + tplIcon('close', 20) + '</button>' +
+    '</div>' +
+    '<div class="dock-body"><div id="quote-render-area">' + quoteHTML + '</div></div>' +
+    '<div class="dock-actions">' +
+      '<button class="m3-btn-tonal" id="btn-export-pdf-' + i + '" onclick="exportQuotePDF(' + i + ')">' + tplIcon('picture_as_pdf', 18) + ' PDF</button>' +
+      '<button class="m3-btn-tonal" id="btn-export-img-' + i + '" onclick="exportQuoteImage(' + i + ')">' + btnImgLabel() + '</button>' +
+      '<button class="m3-btn-tonal" onclick="whatsappQuote(' + i + ')">' + tplIcon('chat', 18) + ' WhatsApp</button>' +
+    '</div>';
+}
+
+/* guardarDatosDraft() guarda cliente, teléfono y notas mientras se
+   escriben. Antes solo se guardaban al agregar producto o al generar:
+   quitar un producto volvía a dibujar la orden y borraba lo escrito. */
+function tplDraftClient(draft) {
   return '' +
       /* Campo cliente con autocompletado */
       '<div class="client-autocomplete-wrap">' +
@@ -816,16 +938,20 @@ function tplDraftBody(draft, cur) {
       '<div class="m3-field optional">' +
         '<input type="text" id="q-notes" placeholder=" " value="' + esc(draft.notes || '') + '" oninput="guardarDatosDraft()">' +
         '<label for="q-notes">Notas adicionales</label>' +
-      '</div>' +
-      '<div class="draft-items-section">' +
-        '<div class="draft-items-header">' +
-          '<span>PRODUCTOS (' + draft.items.length + ')</span>' +
-          '<button class="m3-btn-text" style="font-size:13px;width:auto;padding:0 8px;height:36px" onclick="addMoreToQuote()">' +
-            tplIcon('add', 16) + ' Agregar producto' +
-          '</button>' +
-        '</div>' +
-        itemsHTML +
-      '</div>' +
+      '</div>';
+}
+
+function tplDraftTotals(draft, cur) {
+  var subtotal      = draft.items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+  var discount      = draft.discount || 0;
+  var discountAmt   = subtotal * (discount / 100);
+  var discounted    = subtotal - discountAmt;
+  var commEnabled   = draft.commissionEnabled || false;
+  var commission    = commEnabled ? (draft.commission || 0) : 0;
+  var commissionAmt = discounted * (commission / 100);
+  var grandTotal    = discounted + commissionAmt;
+
+  return '' +
       /* Subtotal + descuento */
       '<div class="draft-subtotal-row">' +
         '<span>Subtotal</span>' +

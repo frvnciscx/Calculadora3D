@@ -1,4 +1,4 @@
-const CACHE_NAME = 'calc3d-v101';
+const CACHE_NAME = 'calc3d-v102';
 /* IMPORTANTE: esta lista debe coincidir con los <script> y <link> de index.html.
    Si agregas un archivo y olvidas ponerlo aquí, la app se rompe sin conexión.
    Verificación rápida:

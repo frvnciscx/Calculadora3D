@@ -52,9 +52,12 @@ function refreshDraftIndicator() {
   var hasDraft = draftQuote && draftQuote.items && draftQuote.items.length > 0;
   var hasCalc  = !!lastCalc;
 
-  /* Contador de la pestaña «Orden» (escritorio) */
-  var tabCount = document.getElementById('calc-tab-orden-count');
-  if (tabCount) tabCount.textContent = hasDraft ? draftQuote.items.length : '';
+  /* Toggle «Costo de la pieza | Orden» del encabezado (escritorio): Orden
+     queda deshabilitado hasta que haya al menos un producto */
+  var segOrden = document.getElementById('calc-seg-orden');
+  var segN     = document.getElementById('calc-seg-orden-n');
+  if (segOrden) segOrden.disabled = !hasDraft;
+  if (segN)     segN.textContent  = hasDraft ? draftQuote.items.length : '';
 
   var btn = document.getElementById('btn-cotizar');
   if (!btn) return;
@@ -140,8 +143,9 @@ function addItemToDraft() {
   if (piezasEl) piezasEl.value = 1;
   var ppEl = document.getElementById('calc-per-piece');
   if (ppEl) ppEl.classList.add('hidden');
-  _setFieldState('field-weight', 'helper-weight', 'neutral', 'Ej: 15g para un topper');
-  _setFieldState('field-time', 'helper-time', 'neutral', 'Ej: 1.5 hrs');
+  /* Los mismos textos de ayuda de index.html (helper-on-rest) */
+  _setFieldState('field-weight', 'helper-weight', 'neutral', 'De toda la placa');
+  _setFieldState('field-time', 'helper-time', 'neutral', 'De toda la placa');
   clearLastCalc();
 
   /* Limpiar post-procesado si estaba activo */
@@ -194,8 +198,11 @@ function generateQuote() {
 }
 
 /* ── Orden multi-producto ─────────────────────────────────────── */
-/* En escritorio la orden vive en la pestaña «Orden» de la columna derecha
-   de la calculadora; en el teléfono, en el panel que sale desde abajo.
+/* Teléfono: la orden es un panel que sale desde abajo.
+   Escritorio: la calculadora cambia al modo «Orden» (review) con el toggle
+   del encabezado o con «Generar cotización»: cliente, tabla de productos y
+   totales a la izquierda; vista previa en vivo a la derecha. «Orden» está
+   deshabilitado mientras la orden está vacía.
    Todos los caminos pasan por aquí: generar, editar una cotización de la
    lista y quitar un producto. El ancho es el mismo de desktop.css. */
 var _mqEscritorio = window.matchMedia('(min-width: 900px)');
@@ -205,25 +212,98 @@ function renderDraftModal() {
   if (!draft) return;
   if (_mqEscritorio.matches) {
     if (document.body.dataset.page !== 'calc') showPage('calc');
-    showCalcTab('orden');
+    setCalcMode('review');
     return;
   }
   document.getElementById('modal-container').innerHTML = tplDraftModal(draft, config.currency);
 }
 
-/* Pestañas Pieza | Orden de la columna derecha (solo escritorio). La CSS
-   lee data-tab de .calc-summary para mostrar una u otra. */
-function showCalcTab(tab) {
-  var summary = document.querySelector('.calc-summary');
-  if (!summary) return;
-  summary.dataset.tab = tab;
-  document.querySelectorAll('.calc-tabs button').forEach(function(b) {
-    b.classList.toggle('active', b.dataset.tab === tab);
+/* Modo de la calculadora en escritorio: 'calc' (costo de la pieza) o
+   'review' (la orden). Lo cambia el toggle del encabezado. La CSS lee
+   data-mode de #page-calc. */
+function setCalcMode(mode) {
+  var pageEl = document.getElementById('page-calc');
+  if (!pageEl) return;
+  if (mode === 'review' && !(draftQuote && draftQuote.items && draftQuote.items.length)) mode = 'calc';
+  pageEl.dataset.mode = mode;
+
+  document.querySelectorAll('.calc-mode-seg button').forEach(function(b) {
+    var on = b.dataset.mode === mode;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
   });
-  if (tab === 'orden') {
-    var pane = document.getElementById('calc-order-pane');
-    if (pane) pane.innerHTML = tplDraftPanel(draftQuote, config.currency);
+
+  var title = document.getElementById('calc-header-title');
+  var main  = document.getElementById('calc-review-main');
+  var prev  = document.getElementById('calc-review-preview');
+  if (mode === 'review') {
+    if (title) title.textContent = _draftLabels().title;
+    if (main)  main.innerHTML = tplReviewMain(draftQuote, config.currency);
+    pageEl.scrollTop = 0;
+    _pintarVistaPrevia();
+  } else {
+    if (title) title.textContent = 'Calculadora';
+    /* Vaciar: así los id de la orden (q-client, q-discount…) no quedan
+       repetidos si después se abre la orden en otro lado */
+    if (main) main.innerHTML = '';
+    if (prev) prev.innerHTML = '';
   }
+}
+
+/* ── Vista previa de la orden (escritorio, panel derecho) ──────────
+   La cotización tal como la verá el cliente, armada con el mismo
+   buildQuoteHTML del visor y de las exportaciones, y actualizada mientras
+   se edita la orden (con una pausa corta para no redibujar en cada tecla). */
+var _vistaPreviaTimer = null;
+var _vistaPreviaQR    = undefined;   /* undefined = aún no se pide */
+
+function _programarVistaPrevia() {
+  clearTimeout(_vistaPreviaTimer);
+  _vistaPreviaTimer = setTimeout(_pintarVistaPrevia, 150);
+}
+
+function _pintarVistaPrevia() {
+  var prev   = document.getElementById('calc-review-preview');
+  var pageEl = document.getElementById('page-calc');
+  if (!prev || !draftQuote || !pageEl || pageEl.dataset.mode !== 'review') return;
+  if (_vistaPreviaQR === undefined) {
+    _vistaPreviaQR = null;
+    getQRDataURL().then(function(qr) { _vistaPreviaQR = qr; _pintarVistaPrevia(); });
+  }
+  prev.innerHTML =
+    '<div class="preview-head"><span class="micro">Vista previa</span>' +
+      '<span class="preview-note">Así la verá el cliente</span></div>' +
+    '<div class="preview-body"><div class="preview-paper">' +
+      buildQuoteHTML(_cotizacionDelBorrador(), _vistaPreviaQR) +
+    '</div></div>';
+}
+
+/* Arma una cotización «de mentiras» con el borrador, para la vista previa.
+   El folio es el que tendría al generarse: nextQuoteNum() no se llama aquí
+   porque gasta el número (suma 1 al contador y lo guarda). */
+function _cotizacionDelBorrador() {
+  var d = draftQuote;
+  var items       = d.items || [];
+  var discount    = d.discount || 0;
+  var commission  = d.commissionEnabled ? (d.commission || 0) : 0;
+  var subtotal    = items.reduce(function(s, it) { return s + it.totalCost * it.qty; }, 0);
+  var discountAmt = subtotal * (discount / 100);
+  var commAmt     = (subtotal - discountAmt) * (commission / 100);
+  var editando    = _editQuoteIndex !== null && quotes[_editQuoteIndex];
+  return {
+    quoteNum:      editando ? quotes[_editQuoteIndex].quoteNum : 'COT-' + String(quoteCounter + 1).padStart(4, '0'),
+    quoteDate:     editando ? quotes[_editQuoteIndex].quoteDate : new Date().toISOString(),
+    client:        d.client || 'Nombre del cliente',
+    phone:         d.phone  || '',
+    notes:         d.notes  || '',
+    items:         items,
+    subtotal:      subtotal,
+    discount:      discount,
+    discountAmt:   discountAmt,
+    commission:    commission,
+    commissionAmt: commAmt,
+    grandTotal:    subtotal - discountAmt + commAmt
+  };
 }
 
 /* Guarda cliente, teléfono y notas en el borrador mientras se escriben */
@@ -236,6 +316,7 @@ function guardarDatosDraft() {
   if (phoneEl)  draftQuote.phone  = phoneEl.value.trim();
   if (notesEl)  draftQuote.notes  = notesEl.value.trim();
   saveDraftQuote(draftQuote);
+  _programarVistaPrevia();
 }
 
 /* ── Cambio de descuento — delega a onCommissionChange ───────── */
@@ -282,6 +363,7 @@ function onCommissionChange() {
   if (amtEl)     amtEl.textContent     = discountAmt > 0 ? '−' + cur + discountAmt.toFixed(2) : '—';
   if (commAmtEl) commAmtEl.textContent = commAmt     > 0 ? '+' + cur + commAmt.toFixed(2)     : '—';
   if (totalEl)   totalEl.textContent   = cur + finalTotal.toFixed(2);
+  _programarVistaPrevia();
 }
 
 /* Ajustar cantidad de un ítem en el borrador */
@@ -362,6 +444,9 @@ function _repintarDraftTotales(i) {
     if (qtyEl)   qtyEl.value      = item.qty;
     if (priceEl) priceEl.value    = (item.totalCost || 0).toFixed(2);
     if (calcEl)  calcEl.innerHTML = tplDraftItemCalc(item, cur);
+    /* Importe de la fila en la tabla de escritorio (tplReviewRow) */
+    var lineEl  = document.getElementById('dql-' + i);
+    if (lineEl)  lineEl.textContent = cur + ((item.totalCost || 0) * item.qty).toFixed(2);
   }
 
   var subEl      = document.getElementById('draft-subtotal');
@@ -372,6 +457,7 @@ function _repintarDraftTotales(i) {
   if (amtEl)     amtEl.textContent     = discAmt > 0 ? '−' + cur + discAmt.toFixed(2) : '—';
   if (commAmtEl) commAmtEl.textContent = commAmt > 0 ? '+' + cur + commAmt.toFixed(2) : '—';
   if (totalEl)   totalEl.textContent   = cur + grandTotal.toFixed(2);
+  _programarVistaPrevia();
 }
 
 /* Quitar un ítem del borrador */
@@ -381,16 +467,16 @@ function removeDraftItem(i) {
   draftQuote.items.splice(i, 1);
   saveDraftQuote(draftQuote);
   renderDraftModal();
-  refreshDraftIndicator();   /* el contador de la pestaña «Orden» */
+  refreshDraftIndicator();   /* el contador «Orden · n» del encabezado */
 }
 
 /* Ir a la calculadora a calcular otro producto */
 function addMoreToQuote() {
   guardarDatosDraft();
-  /* En escritorio la calculadora ya está a la izquierda: basta con regresar
-     a la pestaña de la pieza */
+  /* En escritorio la revisión vive dentro de la calculadora: basta con
+     volver al modo de calcular */
   if (_mqEscritorio.matches && document.body.dataset.page === 'calc') {
-    showCalcTab('pieza');
+    setCalcMode('calc');
     snack('Calcula el siguiente producto y presiona «Agregar a orden»');
     return;
   }
@@ -465,11 +551,10 @@ function saveQuote() {
     clearDraftQuote();
     clearLastCalc();
     closeModal();
-    showCalcTab('pieza');
+    setCalcMode('calc');
     refreshDraftIndicator();
-    snack('Cotización actualizada ✓');
-    showPage('quotes');
-    viewQuote(editada);   /* mostrarla, no solo dejarla en la lista */
+    if (typeof renderQuotes === 'function') renderQuotes();
+    showSendQuoteModal(editada, true);
     return;
   }
 
@@ -497,11 +582,18 @@ function saveQuote() {
   clearLastCalc();
   /* No ocultamos calc-result — hero siempre visible en nuevo layout */
   closeModal();
-  showCalcTab('pieza');
+  setCalcMode('calc');
   refreshDraftIndicator();
-  snack('Cotizaci\u00f3n ' + q.quoteNum + ' generada');
-  showPage('quotes');
-  viewQuote(0);   /* la nueva qued\u00f3 primera (unshift): mostrarla de una vez */
+  if (typeof renderQuotes === 'function') renderQuotes();
+  showSendQuoteModal(0);   /* la nueva qued\u00f3 primera (unshift) */
+}
+
+/* Despu\u00e9s de generar: te quedas donde estabas y eliges c\u00f3mo enviarla
+   (PDF, imagen, WhatsApp, enlace, texto) o verla. Antes te mandaba a la
+   lista de cotizaciones con el visor encima. */
+function showSendQuoteModal(i, actualizada) {
+  var q = quotes[i]; if (!q) return;
+  document.getElementById('modal-container').innerHTML = tplSendQuoteModal(q, i, actualizada);
 }
 
 /* ── Listado de cotizaciones ──────────────────────────────────── */
@@ -509,6 +601,7 @@ var quoteSearchTerm = '';
 var _quoteFilter    = 'all'; /* all | aceptada | enviada | pendiente | rechazada */
 
 function renderQuotes() {
+  _sincronizarDock();   /* antes del return: el contenedor puede estar abierto en otra sección */
   var el = document.getElementById('quotes-list');
   if (!el) return;
 
@@ -1027,6 +1120,19 @@ function viewQuote(i) {
   var q = quotes[i]; if (!q) return;
   var imgBtnLabel = btnImgLabel();
 
+  /* Escritorio: en el contenedor de la derecha (tipo VS Code), sin
+     oscurecer la pantalla; la página se angosta para darle lugar. */
+  if (_mqEscritorio.matches) {
+    _dockQuoteNum = q.quoteNum;
+    getQRDataURL().then(function(qrDataURL) {
+      var dock = document.getElementById('quote-dock');
+      if (!dock) return;
+      dock.innerHTML = tplQuoteDock(q, i, buildQuoteHTML(q, qrDataURL));
+      document.body.classList.add('dock-open');
+    });
+    return;
+  }
+
   getQRDataURL().then(function(qrDataURL) {
     document.getElementById('modal-container').innerHTML =
       '<div class="m3-scrim" onclick="closeModal()"></div>' +
@@ -1044,6 +1150,28 @@ function viewQuote(i) {
         '</div>' +
       '</div>';
   });
+}
+
+/* El contenedor sigue abierto al cambiar de sección, pero sus botones
+   (PDF, Imagen, WhatsApp) usan la posición i en la lista, y esa posición
+   cambia al generar, duplicar o eliminar. Por eso se recuerda el folio, que
+   no cambia, y renderQuotes() vuelve a pintar el contenedor con la
+   posición nueva, o lo cierra si la cotización ya no existe. */
+var _dockQuoteNum = null;
+
+function _sincronizarDock() {
+  if (!_dockQuoteNum || !_mqEscritorio.matches || !document.body.classList.contains('dock-open')) return;
+  for (var i = 0; i < quotes.length; i++) {
+    if (quotes[i].quoteNum === _dockQuoteNum) { viewQuote(i); return; }
+  }
+  closeQuoteDock();
+}
+
+function closeQuoteDock() {
+  _dockQuoteNum = null;
+  var dock = document.getElementById('quote-dock');
+  if (dock) dock.innerHTML = '';
+  document.body.classList.remove('dock-open');
 }
 
 /* ── Compartir como texto (sin costos internos) ───────────────── */
@@ -1143,6 +1271,9 @@ function exportQuoteImage(i) {
   var q = quotes[i]; if (!q) return;
 
   var btn = document.getElementById('btn-export-img-' + i);
+  /* Se guarda lo que ten\u00eda el bot\u00f3n para devolverlo igual: el mismo id lo
+     usan el visor, el contenedor lateral y la tarjeta del modal de env\u00edo */
+  var btnHTML = btn ? btn.innerHTML : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Generando\u2026'; }
   snack('Generando imagen\u2026');
 
@@ -1198,13 +1329,13 @@ function exportQuoteImage(i) {
         snack('Imagen descargada');
       }
 
-      if (btn) { btn.disabled = false; btn.innerHTML = btnImgLabel(); }
+      if (btn) { btn.disabled = false; btn.innerHTML = btnHTML; }
     }, 'image/png');
 
   }).catch(function(err) {
     if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
     snack(err.message || 'Error al generar la imagen');
-    if (btn) { btn.disabled = false; btn.innerHTML = btnImgLabel(); }
+    if (btn) { btn.disabled = false; btn.innerHTML = btnHTML; }
   });
 }
 
@@ -1281,11 +1412,9 @@ function loadPdfLib() {
 function exportQuotePDF(i) {
   var q = quotes[i]; if (!q) return;
   var btn = document.getElementById('btn-export-pdf-' + i);
+  var btnHTML = btn ? btn.innerHTML : '';   /* ver exportQuoteImage */
   function restaurarBoton() {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px">picture_as_pdf</span> PDF';
-    }
+    if (btn) { btn.disabled = false; btn.innerHTML = btnHTML; }
   }
   if (btn) { btn.disabled = true; btn.textContent = 'Generando\u2026'; }
   snack('Generando PDF\u2026');

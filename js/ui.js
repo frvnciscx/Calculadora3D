@@ -165,7 +165,9 @@ function showPage(name) {
   if (name === 'catalog')      { showCatalogTab(_activeCatalogTab || 'printers'); }
   if (name === 'quotes')       { renderQuotes(); showQuotesTab('quotes'); }
   if (name === 'config' || name.indexOf('config-') === 0) loadConfig();
-  if (name === 'calc')         { populateSelects(); restoreCalcResult(); refreshDraftIndicator(); initCalcLive(); renderPresets(); _updateResinParamsBlock(); _updateAMSBlock(); _updateSpoolSelector(); }
+  /* setCalcMode('calc'): la calculadora siempre abre en modo calcular; la
+     revisión de la cotización (escritorio) solo se abre con «Generar». */
+  if (name === 'calc')         { setCalcMode('calc'); populateSelects(); restoreCalcResult(); refreshDraftIndicator(); initCalcLive(); renderPresets(); _updateResinParamsBlock(); _updateAMSBlock(); _updateSpoolSelector(); }
   if (name === 'history')      renderHistory();
   if (name === 'quote-editor') loadQuoteEditor();
 }

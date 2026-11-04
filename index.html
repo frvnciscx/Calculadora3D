@@ -119,18 +119,37 @@
 <!-- ===== PAGE: CALCULATOR ===== -->
 <div id="page-calc" class="page" style="padding-top:0">
 
-  <!-- ── Mini-header: atrás + seg ─── -->
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 4px">
-    <button class="back-btn" onclick="regresarDeCalculadora()" style="gap:6px;color:var(--ink-3);font-size:13px">
+  <!-- ── Encabezado de la calculadora ───
+       En el teléfono: Regresar e historial, como siempre. En escritorio
+       (desktop.css) queda fijo arriba al desplazarse y suma el título y el
+       toggle «Costo de la pieza | Orden» (setCalcMode en quotes.js). «Orden»
+       se habilita con el primer producto (refreshDraftIndicator). -->
+  <div class="calc-header">
+    <button class="back-btn calc-back" onclick="regresarDeCalculadora()">
       <span class="material-symbols-rounded" style="font-size:18px">arrow_back_ios</span>Regresar
     </button>
-    <!-- El historial es un destino, no un modo. El segmentado "Cotizar |
-         Historial" prometía cambiar de vista y lo que hacía era navegar.
-         Queda solo el acceso: en móvil no existe en ningún otro lado. -->
-    <button class="icon-btn" onclick="showPage('history')" style="color:var(--ink-3)"
-            title="Historial de cálculos" aria-label="Historial de cálculos">
-      <span class="material-symbols-rounded" style="font-size:20px">history</span>
-    </button>
+    <h1 class="calc-header-title" id="calc-header-title">Calculadora</h1>
+    <div class="calc-mode-seg seg" role="tablist" aria-label="Costo de la pieza u orden">
+      <button type="button" role="tab" data-mode="calc" class="active" aria-selected="true" onclick="setCalcMode('calc')" title="Costo de la pieza">
+        <span class="material-symbols-rounded" style="font-size:16px">calculate</span>
+        <span class="seg-label">Costo de la pieza</span>
+      </button>
+      <button type="button" role="tab" data-mode="review" id="calc-seg-orden" aria-selected="false" disabled
+              onclick="generateQuote()" title="Se habilita al agregar el primer producto">
+        <span class="material-symbols-rounded" style="font-size:16px">receipt_long</span>
+        <span class="seg-label">Orden</span>
+        <span class="calc-seg-count" id="calc-seg-orden-n"></span>
+      </button>
+    </div>
+    <div class="calc-header-end">
+      <!-- El historial es un destino, no un modo. El segmentado "Cotizar |
+           Historial" prometía cambiar de vista y lo que hacía era navegar.
+           Queda solo el acceso: en móvil no existe en ningún otro lado. -->
+      <button class="icon-btn" onclick="showPage('history')" style="color:var(--ink-3)"
+              title="Historial de cálculos" aria-label="Historial de cálculos">
+        <span class="material-symbols-rounded" style="font-size:20px">history</span>
+      </button>
+    </div>
   </div>
 
   <!-- ── Dos columnas en escritorio ───────────────────────────────────
@@ -140,17 +159,7 @@
        vista mientras se desplaza. El contenido de adentro no se volvió a
        sangrar para que el cambio sea fácil de revisar. -->
   <div class="calc-layout">
-  <aside class="calc-summary" data-tab="pieza">
-
-  <!-- Pestañas Pieza | Orden: solo en escritorio (desktop.css). showCalcTab()
-       en quotes.js las cambia. En el teléfono la orden sigue abriéndose como
-       panel desde abajo. -->
-  <div class="calc-tabs seg">
-    <button type="button" class="active" data-tab="pieza" onclick="showCalcTab('pieza')">Pieza</button>
-    <button type="button" data-tab="orden" onclick="showCalcTab('orden')">
-      Orden <span class="calc-tab-count" id="calc-tab-orden-count"></span>
-    </button>
-  </div>
+  <aside class="calc-summary">
 
   <!-- ── HERO: resultado siempre visible ─── -->
   <div id="calc-result" style="padding:18px 20px 0">
@@ -272,15 +281,20 @@
   </div>
   </div><!-- /calc-actions-slot -->
 
-  <!-- Contenido de la pestaña «Orden»: lo dibuja tplDraftPanel (templates.js) -->
-  <div id="calc-order-pane"></div>
+  <!-- Modo «Orden» (escritorio): vista previa de la cotización tal como la
+       verá el cliente. La dibuja _pintarVistaPrevia (quotes.js). -->
+  <div id="calc-review-preview" class="calc-review-preview"></div>
 
   </aside><!-- /calc-summary -->
+
+  <!-- Modo «Orden» (escritorio): cliente, tabla de productos y resumen, en
+       lugar de los campos de la pieza. Lo dibuja tplReviewMain. -->
+  <section id="calc-review-main" class="calc-review-main" aria-label="Revisar cotización"></section>
 
   <div class="calc-form">
 
   <!-- ── Sección 01: Datos de la pieza ─── -->
-  <div style="padding:28px 20px 0">
+  <div class="calc-sec calc-sec-datos" style="padding:28px 20px 0">
     <div class="rule micro" style="margin-bottom:18px">01 · Datos de la pieza</div>
 
     <button class="card" onclick="showCatalogModal()" style="width:100%;padding:14px;display:flex;align-items:center;gap:14px;text-align:left;margin-bottom:16px">
@@ -304,11 +318,14 @@
     Si trae varias piezas, dilo en «Piezas» y la app divide.
     </div>
 
+    <!-- Los cuatro números de la placa. En el teléfono van de dos en dos;
+         en escritorio, con espacio, los cuatro en una fila (desktop.css). -->
+    <div class="calc-datos-nums">
     <div class="flex-row" style="margin-bottom:16px">
       <div class="m3-field helper-on-rest" id="field-weight">
         <input type="number" id="calc-weight" placeholder=" " min="0" step="0.1" inputmode="decimal">
         <label for="calc-weight">Peso (g)</label>
-        <span class="m3-helper" id="helper-weight">De toda la pieza</span>
+        <span class="m3-helper" id="helper-weight">De toda la placa</span>
       </div>
       <div class="m3-field helper-on-rest" id="field-time">
         <input type="number" id="calc-time" placeholder=" " min="0" step="0.01" inputmode="decimal">
@@ -328,6 +345,7 @@
         <span class="m3-helper">Se reparte entre las piezas</span>
       </div>
     </div>
+    </div><!-- /calc-datos-nums -->
     <!-- Qué quedó por pieza. Sin esta línea el usuario tiene que confiar en
          que la división ocurrió; con placa de 30 el número grande baja mucho
          y conviene ver de dónde salió. -->
@@ -339,7 +357,7 @@
   <div id="calc-presets" style="padding:0 20px"></div>
 
   <!-- ── Sección 02: Impresora y material ─── -->
-  <div style="padding:28px 20px 0">
+  <div class="calc-sec calc-sec-impresora" style="padding:28px 20px 0">
     <div class="rule micro" style="margin-bottom:18px">02 · Impresora y material</div>
     <div class="m3-card">
       <div class="m3-field">
@@ -439,7 +457,7 @@
   </div>
 
   <!-- ── Sección 03: Post-procesado ─── -->
-  <div style="padding:28px 20px 0">
+  <div class="calc-sec calc-sec-post" style="padding:28px 20px 0">
     <div class="rule micro" style="margin-bottom:18px">03 · Post-procesado</div>
 
     <!-- Pintura -->
@@ -491,7 +509,7 @@
   </div>
 
   <!-- ── Sección 04: Margen de ganancia ─── -->
-  <div style="padding:28px 20px 0">
+  <div class="calc-sec calc-sec-margen" style="padding:28px 20px 0">
     <div class="rule micro" style="margin-bottom:18px">04 · Margen de ganancia</div>
     <div class="card" style="padding:20px">
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
@@ -1289,6 +1307,12 @@
     <span id="catalog-add-label">Agregar</span>
   </button>
 </div>
+
+<!-- CONTENEDOR LATERAL DE LA COTIZACIÓN (escritorio) — como el panel del
+     agente en VS Code: se acomoda a la derecha en la fila del body, sin
+     oscurecer ni tapar nada. viewQuote() lo llena; closeQuoteDock() lo
+     cierra. En el teléfono no existe (viewQuote usa el panel de abajo). -->
+<aside id="quote-dock" class="quote-dock" aria-label="Cotización"></aside>
 
 <!-- NAV BAR -->
 <nav class="nav-bar" role="navigation" aria-label="Navegación principal">

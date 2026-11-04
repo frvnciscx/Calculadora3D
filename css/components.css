@@ -1802,6 +1802,9 @@ input.draft-item-price::-webkit-inner-spin-button {
   background: var(--bg-elev);
   border: 0.5px solid var(--line);
 }
+/* Vacía (sin sugerencias) no debe dibujar nada: su borde se veía como una
+   segunda raya bajo «Nombre del cliente» */
+.client-suggestions:empty { display: none; }
 .client-suggest-item:active { background: var(--bg-sunk); }
 
 /* Inventory */
@@ -2313,12 +2316,84 @@ span.suffix {
   .calc-actions #btn-cotizar { flex: 1 0 100%; }
 }
 
+/* Cambios de color y purga (bloque AMS): con 52 px escritos en el HTML,
+   «auto» se leía «au» y «0.7» se leía «0.» */
+#ams-color-changes, #ams-purge-grams { width: 72px !important; }
+
 /* El precio solo aparece en la barra flotante del teléfono */
 .calc-float-total { display: none; }
 
-/* Pestañas Pieza | Orden y su contenido: solo existen en escritorio
-   (desktop.css las muestra). En el teléfono la orden es un panel. */
-.calc-tabs, #calc-order-pane { display: none; }
+/* Encabezado de la calculadora (antes con style="…" en el HTML) */
+.calc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px 4px;
+}
+.calc-header .back-btn { gap: 6px; color: var(--ink-3); font-size: 13px; }
+.calc-header-end { display: flex; align-items: center; gap: 8px; }
+
+/* Solo existen en escritorio (desktop.css los muestra): el título, el
+   toggle «Costo de la pieza | Orden», el modo Orden con su vista previa y
+   el contenedor lateral de la cotización. En el teléfono la orden y la
+   cotización se abren en el panel que sale desde abajo. */
+.calc-header-title,
+.calc-mode-seg,
+#calc-review-main,
+#calc-review-preview,
+#quote-dock { display: none; }
+
+/* ── Modal de envío después de generar (teléfono y escritorio) ──────── */
+.send-sheet .send-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.send-sheet .send-head h2 { margin: 0; font-size: 20px; }
+.send-sheet .send-head p  { margin: 2px 0 0; font-size: 13px; color: var(--ink-3); }
+.send-check {
+  width: 44px; height: 44px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.send-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.send-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 12px 14px;
+  text-align: left;
+  border-radius: var(--r-m);
+  border: 0.5px solid var(--line);
+  background: var(--bg-sunk);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+.send-option:hover { border-color: var(--accent); }
+.send-option:disabled { opacity: 0.6; cursor: default; }
+.send-option > .material-symbols-rounded { color: var(--accent); }
+.send-option-text { display: flex; flex-direction: column; min-width: 0; }
+.send-option-text strong { font-size: 14px; font-weight: 600; }
+.send-option-text small  { font-size: 12px; color: var(--ink-3); }
+
+/* Texto solo para lectores de pantalla (p. ej. el encabezado de la columna
+   del botón Quitar): no se ve, pero se lee. */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
 
 /* Barra flotante del teléfono. initCalcFloatingBar() (calculator.js) pone
    la clase .is-floating cuando los botones salen de la pantalla por arriba.

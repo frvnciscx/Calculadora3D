@@ -16,8 +16,8 @@ function calculate(silent) {
     /* Modo live — solo calcula si hay datos válidos, sin errores visuales */
     if (weight <= 0 || timeH <= 0 || !printer || !material) return;
     /* Actualizar estados valid en tiempo real */
-    _setFieldState('field-weight', 'helper-weight', weight > 0 ? 'valid' : 'neutral', weight > 0 ? '' : 'Ej: 15g para un topper');
-    _setFieldState('field-time',   'helper-time',   timeH  > 0 ? 'valid' : 'neutral', timeH  > 0 ? '' : 'Ej: 1.5 hrs');
+    _setFieldState('field-weight', 'helper-weight', weight > 0 ? 'valid' : 'neutral', weight > 0 ? '' : 'De toda la placa');
+    _setFieldState('field-time',   'helper-time',   timeH  > 0 ? 'valid' : 'neutral', timeH  > 0 ? '' : 'De toda la placa');
   } else {
     /* Modo explícito — muestra errores */
     var hasError = false;

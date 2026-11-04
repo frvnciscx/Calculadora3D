@@ -4,7 +4,7 @@ PWA para calcular costos de impresión 3D y generar cotizaciones profesionales. 
 
 **URL:** https://calculadora3-d-delta.vercel.app (con guion; `calculadora3d-delta`, sin guion, es otro producto)
 
-**Versión:** v101 en el código ([`CHANGELOG.md`](CHANGELOG.md)). La app publicada se actualiza cuando un cambio llega a `main`.
+**Versión:** v102 en el código ([`CHANGELOG.md`](CHANGELOG.md)). La app publicada se actualiza cuando un cambio llega a `main`.
 
 ---
 
@@ -40,7 +40,7 @@ La planeación de la primera versión está en [`docs/`](docs/). El registro de 
 
 ## Funcionalidades
 
-Lo que hace la app hoy (v101).
+Lo que hace la app hoy (v102).
 
 ### Calculadora
 - Cálculo en tiempo real al escribir (peso, tiempo, impresora, material, margen)
@@ -49,6 +49,8 @@ Lo que hace la app hoy (v101).
 - Filtrado de materiales según tipo de impresora seleccionada (FDM / Resina)
 - Catálogo de productos con dos tipos: costo calculado y tabla de precios por tamaño
 - Exportar lista de precios a Excel
+- **Escritorio:** campos a la izquierda y resultado con desglose y botones a la derecha, siempre a la vista; encabezado fijo con el toggle «Costo de la pieza | Orden»
+- **Teléfono:** los botones flotan abajo con el precio al bajar por los campos
 
 ### Impresión en resina
 - Bloque contextual "Post-proceso Resina" aparece automáticamente al seleccionar impresora tipo Resina
@@ -79,6 +81,9 @@ Lo que hace la app hoy (v101).
 
 ### Cotizaciones
 - Orden multi-producto con cantidades individuales
+- **Escritorio, modo Orden:** cliente, tabla de productos y resumen a la izquierda; vista previa en vivo de la cotización a la derecha
+- **Al generar** sale un modal para enviarla (PDF, imagen, WhatsApp, enlace, texto o verla) sin salir de la calculadora
+- **Escritorio:** la cotización se ve en un contenedor lateral, como el panel del agente en VS Code, que no tapa la página
 - **Descuento:** campo % en el modal de borrador — actualiza subtotal / monto / total en tiempo real
 - Estados: **pendiente** / **aceptada** / **rechazada** — badge visual y cambio directo desde la lista. El estado «enviada» existe, pero ningún botón lo asigna. El ciclo de la primera versión está en [`docs/flujos/estados-cotizacion.html`](docs/flujos/estados-cotizacion.html)
 - Botón de WhatsApp con mensaje preformateado listo para enviar
@@ -180,7 +185,7 @@ Los módulos siguen separación de responsabilidades:
 ├── index.html
 ├── quote.html             — Página de una cotización
 ├── manifest.json
-├── sw.js                  — Service Worker (caché calc3d-v101)
+├── sw.js                  — Service Worker (caché calc3d-v102)
 ├── .vercelignore          — Lo que sí se publica en Vercel (D70)
 ├── CLAUDE.md              — Instrucciones para Claude Code
 ├── CHANGELOG.md           — Qué cambió en cada versión
@@ -196,7 +201,7 @@ Los módulos siguen separación de responsabilidades:
 │   ├── tokens.css         — Design tokens: colores, tipografía, espaciado, sombras
 │   ├── base.css           — Reset, layout, nav bar, safe areas, utilidades
 │   ├── components.css     — Todos los componentes UI
-│   ├── desktop.css        — Diseño de escritorio (900 px o más): barra lateral
+│   ├── desktop.css        — Diseño de escritorio (900 px o más): barra lateral, calculadora en dos columnas, modo Orden y contenedor lateral
 │   ├── onboarding.css     — Pantalla de acceso e introducción
 │   └── quote.css          — Template visual de cotización
 ├── docs/                  — Planeación: reglas de negocio, flujos, competencia, auditorías

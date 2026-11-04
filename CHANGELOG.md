@@ -7,7 +7,7 @@ Qué cambió en cada versión de la app, en orden: lo más reciente arriba.
 La app no muestra su versión en pantalla. El dato está en `sw.js`, primera línea:
 
 ```js
-const CACHE_NAME = 'calc3d-v101';
+const CACHE_NAME = 'calc3d-v102';
 ```
 
 Ese número sube en cada despliegue y es lo que identifica el build. Para comprobar
@@ -22,10 +22,54 @@ versión vieja desde el service worker. Se fuerza la actualización recargando c
 pestaña de Aplicación → Service Workers abierta, o cerrando todas las pestañas de la
 app y volviendo a entrar.
 
-> **Antes de probar en producción:** el `README.md` apunta a
+> ~~**Antes de probar en producción:** el `README.md` apunta a
 > `calculadora3d-delta.vercel.app`, que **no es esta app** — sirve otro producto
 > («3D COST PRO», en pesos argentinos). Hay que corregir esa URL antes de que alguien
-> la siga para probar.
+> la siga para probar.~~ Corregido el 2026-11-03: la app es `calculadora3-d-delta.vercel.app`, con guion.
+
+---
+
+## 2026-11-04 · caché v102
+
+Cambios de pantalla, sobre todo en escritorio. La fórmula de costeo no cambia (24 pruebas en verde).
+
+### Escritorio (900 px o más)
+
+- **La calculadora usa el ancho.** A la izquierda van los campos: los cuatro números de la placa
+  en una fila, la impresora y el material lado a lado, y el bloque multicolor en cuadrícula. A la
+  derecha, el resultado con su desglose siempre abierto y los botones, que no se van al desplazarse.
+- **Encabezado fijo** con el título y el toggle **«Costo de la pieza | Orden»**. «Orden» se
+  habilita con el primer producto y muestra cuántos lleva.
+- **Modo Orden:** a la izquierda van el cliente, la tabla de productos (cantidad, precio e importe)
+  y el resumen con «Generar cotización». A la derecha, la **vista previa** de la cotización tal como
+  la verá el cliente, que se actualiza mientras se escribe. El folio que muestra es el que tendrá al
+  generarse; la vista previa no gasta folios.
+- **Contenedor lateral de la cotización**, como el panel del agente en VS Code. «Ver cotización»
+  la abre a la derecha sin oscurecer la pantalla, y la página se angosta para darle lugar. Sigue
+  abierto al cambiar de sección hasta cerrarlo. Si la página queda angosta, la calculadora pasa a
+  una columna.
+
+### Teléfono y escritorio
+
+- **Al generar, ya no te saca de la calculadora.** Sale un modal con las opciones para enviarla:
+  PDF, imagen, WhatsApp, enlace, texto y ver cotización. Al editar una, dice «actualizada».
+- **Teléfono:** al bajar por los campos, los botones de la calculadora flotan abajo con el precio.
+- **Modo claro:** el texto y el punto de los toggles van en blanco sobre el color de acento.
+- Se quitó el botón «Agregar a orden» repetido.
+- Los textos de ayuda de Peso y Tiempo dicen «De toda la placa». Antes, al agregar un producto,
+  volvía «Ej: 15g para un topper».
+- Los campos de cambios de color y purga del bloque multicolor ya no cortan lo escrito.
+
+### Qué conviene probar en producción
+
+1. Que `caches.keys()` diga `calc3d-v102`.
+2. En escritorio: calcular, agregar dos productos, pasar a «Orden», escribir el cliente y ver que la
+   vista previa cambia; generar y elegir PDF desde el modal.
+3. «Ver cotización» abre el contenedor lateral y sus botones exportan esa cotización, también
+   después de generar otra.
+4. En el teléfono: la orden sigue saliendo desde abajo y el modal de envío aparece al generar.
+5. En **modo claro**, el modo Orden, el modal y el contenedor. En local se probó el escritorio
+   a 1400 × 900 y 1000 × 700 en oscuro, el modo claro a 1400 × 900 y el teléfono a 390 px.
 
 ---
 
