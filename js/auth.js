@@ -1,198 +1,303 @@
-/* ===== AUTH — sesión simulada ==============================================
-
-   Esta es una simulación. No hay servidor, no hay contraseñas verificadas,
-   no hay seguridad: cualquier correo con cualquier contraseña de 6 o más
-   caracteres entra. Sirve para diseñar y probar el flujo de la aplicación.
-
-   LO IMPORTANTE ES LA FORMA, NO LA IMPLEMENTACIÓN
-   ------------------------------------------------
-   Las funciones de abajo tienen deliberadamente la misma firma que las de
-   Firebase Authentication:
-
-     signInWithEmailAndPassword({ email, password })
-     signInWithGoogle()
-     signOut()
-     onAuthStateChanged(callback)
-     getCurrentUser()
-
-   Y devuelven un objeto de usuario con los mismos campos que devuelve
-   Firebase: { uid, email, displayName, photoUrl }.
-
-   Por eso, el día que conectes Firebase de verdad, el cambio es reemplazar
-   el CUERPO de estas funciones. Todo el resto de la app —la pantalla de
-   acceso, el guardado de sesión, el onboarding— sigue funcionando sin
-   tocarse, porque llama a los mismos nombres y recibe los mismos datos.
-
-   Esa técnica se llama "programar contra una interfaz". Es la misma idea
-   que tiene un sistema de diseño: defines el componente botón una vez, y
-   después puedes cambiarle el color sin rediseñar cada pantalla.
-
-   Cuando migres, el reemplazo se ve así:
-
-     // ANTES (aquí)
-     function signInWithEmailAndPassword(datos) {
-       ... guarda en localStorage ...
-     }
-
-     // DESPUÉS (Firebase, vía el plugin de Capacitor)
-     function signInWithEmailAndPassword(datos) {
-       return FirebaseAuthentication.signInWithEmailAndPassword(datos);
-     }
-
+/* ===== AUTH — Capa de autenticación con Firebase Auth =====================
+   Usa el bundle oficial compat de Firebase para garantizar funcionamiento
+   tanto en servidor web (Vercel) como en local (file://) y sin problemas
+   de orden de carga de scripts.
    ========================================================================= */
 
-var AUTH_KEY = 'session';   /* se guarda como c3d_session */
+var firebaseConfig = {
+  apiKey: "AIzaSyAkV2PPCKtc8Uupr0gsfXnFu_QY4IReIrk",
+  authDomain: "calculadora3d-prod.firebaseapp.com",
+  projectId: "calculadora3d-prod",
+  storageBucket: "calculadora3d-prod.firebasestorage.app",
+  messagingSenderId: "661233635816",
+  appId: "1:661233635816:web:e36329dff59a39a8c9145d",
+  measurementId: "G-DK806WJTZ2"
+};
 
-/* Suscriptores a cambios de sesión. Firebase usa este mismo patrón:
-   le pasas una función y te avisa cada vez que el usuario entra o sale. */
+var _fbAuth = null;
 var _authListeners = [];
+var currentUser = null;
+var _authReady = false;
 
-/* Usuario en memoria. null = nadie ha iniciado sesión. */
-var currentUser = ld(AUTH_KEY, null);
+/* Normaliza el objeto User de Firebase al formato de la app */
+function formatUserData(user) {
+  if (!user) return null;
+  return {
+    uid:         user.uid,
+    email:       user.email || '',
+    displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'Usuario'),
+    photoUrl:    user.photoURL || '',
+    isAnonymous: user.isAnonymous || false
+  };
+}
 
-/* ── Lectura ───────────────────────────────────────────────────── */
+function _notificarAuth() {
+  _authListeners.forEach(function(callback) {
+    try { callback(currentUser); }
+    catch (e) { console.error('[Auth] Error en listener:', e); }
+  });
+}
+
+/* Inicializar Firebase si el SDK está presente en window */
+(function _initFirebase() {
+  if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+    try {
+      if (!firebase.apps || !firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      _fbAuth = firebase.auth();
+
+      /* Persistencia local (guarda la sesión en IndexedDB / localStorage) */
+      if (_fbAuth.setPersistence && firebase.auth.Auth && firebase.auth.Auth.Persistence) {
+        _fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(err) {
+          console.warn('[Auth] No se pudo fijar persistencia LOCAL:', err);
+        });
+      }
+
+      /* Escuchar cambios de sesión de Firebase */
+      _fbAuth.onAuthStateChanged(function(user) {
+        currentUser = formatUserData(user);
+        _authReady = true;
+        _notificarAuth();
+      });
+    } catch (e) {
+      console.error('[Auth] Error inicializando Firebase:', e);
+      _authReady = true;
+    }
+  } else {
+    console.warn('[Auth] SDK de Firebase no detectado en ventana. Modo fallback activo.');
+    _authReady = true;
+  }
+})();
+
+/* Mapeo de errores de Firebase a mensajes amigables en español */
+function translateAuthError(error) {
+  if (!error) return new Error('Error de autenticación desconocido.');
+  var message = error.message || 'Ocurrió un error al autenticar.';
+  switch (error.code) {
+    case 'auth/invalid-email':
+      message = 'El formato de correo no es válido.';
+      break;
+    case 'auth/user-not-found':
+      message = 'No existe una cuenta registrada con este correo.';
+      break;
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      message = 'Correo o contraseña incorrectos.';
+      break;
+    case 'auth/email-already-in-use':
+      message = 'Ya existe una cuenta con este correo. Inicia sesión.';
+      break;
+    case 'auth/weak-password':
+      message = 'La contraseña debe tener al menos 6 caracteres.';
+      break;
+    case 'auth/network-request-failed':
+      message = 'Sin conexión a internet. Verifica tu red.';
+      break;
+    case 'auth/too-many-requests':
+      message = 'Demasiados intentos fallidos. Intenta más tarde.';
+      break;
+    case 'auth/popup-closed-by-user':
+      message = 'Se cerró la ventana de Google antes de completar el acceso.';
+      break;
+    case 'auth/popup-blocked':
+      message = 'La ventana de Google fue bloqueada. Permite las ventanas emergentes en tu navegador.';
+      break;
+    case 'auth/operation-not-allowed':
+    case 'auth/configuration-not-found':
+      message = 'El método de acceso por Correo/Contraseña no está habilitado en la consola de Firebase.';
+      break;
+  }
+  var err = new Error(message);
+  err.code = error.code;
+  return err;
+}
+
+/* ── Métodos de autenticación ─────────────────────────────────── */
 
 function getCurrentUser() {
-  return currentUser;
+  if (currentUser) return currentUser;
+  if (_fbAuth && _fbAuth.currentUser) {
+    currentUser = formatUserData(_fbAuth.currentUser);
+    return currentUser;
+  }
+  return null;
 }
 
 function isSignedIn() {
-  return currentUser !== null;
+  return getCurrentUser() !== null;
 }
 
-/* Registra una función que se ejecuta cada vez que cambia la sesión.
-   Devuelve una función para cancelar la suscripción, igual que Firebase. */
 function onAuthStateChanged(callback) {
+  if (typeof callback !== 'function') return function() {};
   _authListeners.push(callback);
-  callback(currentUser);            /* avisa el estado actual de inmediato */
+
+  if (_authReady) {
+    try { callback(currentUser); }
+    catch (e) { console.error('[Auth] Error listener inmediato:', e); }
+  }
+
   return function cancelar() {
     _authListeners = _authListeners.filter(function(f) { return f !== callback; });
   };
 }
 
-function _notificar() {
-  _authListeners.forEach(function(f) {
-    try { f(currentUser); } catch (e) { console.error('[auth] listener falló', e); }
-  });
-}
+function signInWithEmailAndPassword(datos, passwordOpt) {
+  var email = '';
+  var password = '';
 
-/* ── Escritura ─────────────────────────────────────────────────── */
-
-function _crearSesion(user) {
-  currentUser = user;
-  sv(AUTH_KEY, user);
-  _notificar();
-  return user;
-}
-
-/* Genera un identificador estable a partir del correo.
-   Firebase genera un uid aleatorio; aquí lo derivamos del correo para que
-   la misma persona obtenga siempre el mismo uid entre recargas. */
-function _uidDesdeCorreo(email) {
-  var h = 0;
-  for (var i = 0; i < email.length; i++) {
-    h = ((h << 5) - h) + email.charCodeAt(i);
-    h |= 0;                                   /* fuerza entero de 32 bits */
+  if (typeof datos === 'object' && datos !== null) {
+    email = (datos.email || '').trim().toLowerCase();
+    password = datos.password || '';
+  } else {
+    email = (datos || '').trim().toLowerCase();
+    password = passwordOpt || '';
   }
-  return 'sim_' + Math.abs(h).toString(36);
+
+  if (!email) return Promise.reject(new Error('Ingresa tu correo electrónico.'));
+  if (!password) return Promise.reject(new Error('Ingresa tu contraseña.'));
+
+  if (!_fbAuth) {
+    return Promise.reject(new Error('Firebase Auth no está conectado. Revisa tu conexión.'));
+  }
+
+  return _fbAuth.signInWithEmailAndPassword(email, password)
+    .then(function(userCredential) {
+      currentUser = formatUserData(userCredential.user);
+      _notificarAuth();
+      return currentUser;
+    })
+    .catch(function(error) {
+      console.error('[Auth] Error signIn:', error);
+      throw translateAuthError(error);
+    });
 }
 
-/* Deriva un nombre legible del correo: paco.vazquez@x.com → Paco Vazquez */
-function _nombreDesdeCorreo(email) {
-  return email.split('@')[0]
-    .replace(/[._-]+/g, ' ')
-    .replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+function createUserWithEmailAndPassword(datos, passwordOpt, displayNameOpt) {
+  var email = '';
+  var password = '';
+  var displayName = '';
+
+  if (typeof datos === 'object' && datos !== null) {
+    email = (datos.email || '').trim().toLowerCase();
+    password = datos.password || '';
+    displayName = (datos.displayName || '').trim();
+  } else {
+    email = (datos || '').trim().toLowerCase();
+    password = passwordOpt || '';
+    displayName = (displayNameOpt || '').trim();
+  }
+
+  if (!email) return Promise.reject(new Error('Ingresa un correo electrónico válido.'));
+  if (!password || password.length < 6) return Promise.reject(new Error('La contraseña debe tener al menos 6 caracteres.'));
+
+  if (!_fbAuth) {
+    return Promise.reject(new Error('Firebase Auth no está conectado. Revisa tu conexión.'));
+  }
+
+  return _fbAuth.createUserWithEmailAndPassword(email, password)
+    .then(function(userCredential) {
+      var user = userCredential.user;
+      if (displayName && user.updateProfile) {
+        return user.updateProfile({ displayName: displayName }).then(function() {
+          currentUser = formatUserData(user);
+          currentUser.displayName = displayName;
+          _notificarAuth();
+          return currentUser;
+        }).catch(function() {
+          currentUser = formatUserData(user);
+          _notificarAuth();
+          return currentUser;
+        });
+      }
+      currentUser = formatUserData(user);
+      _notificarAuth();
+      return currentUser;
+    })
+    .catch(function(error) {
+      console.error('[Auth] Error createUser:', error);
+      throw translateAuthError(error);
+    });
 }
 
-/**
- * Inicio de sesión con correo y contraseña.
- * @returns {Promise<{user: object}>}  misma forma que Firebase
- */
-function signInWithEmailAndPassword(datos) {
-  var email    = (datos && datos.email    || '').trim().toLowerCase();
-  var password = (datos && datos.password || '');
-
-  /* Las mismas validaciones que aplicaría Firebase, para que los mensajes
-     de error que diseñes ahora sigan siendo los correctos después. */
-  return new Promise(function(resolve, reject) {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      reject({ code: 'auth/invalid-email', message: 'El correo no tiene un formato válido' });
-      return;
-    }
-    if (password.length < 6) {
-      reject({ code: 'auth/weak-password', message: 'La contraseña debe tener al menos 6 caracteres' });
-      return;
-    }
-
-    /* Retraso artificial: la red tarda, y la interfaz debe aguantar ese
-       momento con un estado de carga. Sin esto, diseñas una pantalla que
-       se siente instantánea y en producción parpadea. */
-    setTimeout(function() {
-      resolve({ user: _crearSesion({
-        uid:         _uidDesdeCorreo(email),
-        email:       email,
-        displayName: _nombreDesdeCorreo(email),
-        photoUrl:    '',
-        provider:    'password',
-        simulado:    true
-      })});
-    }, 700);
-  });
-}
-
-/**
- * Inicio de sesión con Google.
- * En la app real esto abre el selector de cuentas del sistema Android.
- */
 function signInWithGoogle() {
-  return new Promise(function(resolve) {
-    setTimeout(function() {
-      resolve({ user: _crearSesion({
-        uid:         'sim_google',
-        email:       'cuenta.google@ejemplo.com',
-        displayName: 'Cuenta de Google',
-        photoUrl:    '',
-        provider:    'google.com',
-        simulado:    true
-      })});
-    }, 900);
-  });
+  if (!_fbAuth || typeof firebase === 'undefined') {
+    return Promise.reject(new Error('Firebase Auth no está disponible.'));
+  }
+  var provider = new firebase.auth.GoogleAuthProvider();
+  return _fbAuth.signInWithPopup(provider)
+    .then(function(userCredential) {
+      currentUser = formatUserData(userCredential.user);
+      _notificarAuth();
+      return currentUser;
+    })
+    .catch(function(error) {
+      console.error('[Auth] Error Google Sign In:', error);
+      throw translateAuthError(error);
+    });
 }
 
-/** Entrar sin cuenta. Firebase lo llama signInAnonymously. */
 function signInAnonymously() {
-  return new Promise(function(resolve) {
-    resolve({ user: _crearSesion({
-      uid:         'sim_invitado',
-      email:       '',
-      displayName: 'Invitado',
-      photoUrl:    '',
-      provider:    'anonymous',
-      simulado:    true
-    })});
-  });
-}
+  if (_fbAuth) {
+    return _fbAuth.signInAnonymously()
+      .then(function(userCredential) {
+        currentUser = formatUserData(userCredential.user);
+        _notificarAuth();
+        return currentUser;
+      })
+      .catch(function(err) {
+        console.warn('[Auth] signInAnonymously falló, usando fallback local:', err);
+        currentUser = {
+          uid: 'invitado_' + Math.random().toString(36).slice(2, 9),
+          email: '',
+          displayName: 'Invitado',
+          photoUrl: '',
+          isAnonymous: true
+        };
+        _notificarAuth();
+        return currentUser;
+      });
+  }
 
-/**
- * Cerrar sesión.
- *
- * Importante: NO borra los datos del negocio. Hoy las cotizaciones viven en
- * localStorage sin dueño, así que cerrar sesión solo quita la identidad.
- * Cuando los datos pasen a Firestore bajo users/{uid}, cerrar sesión sí los
- * dejará de mostrar — porque pertenecerán a esa cuenta, no al dispositivo.
- */
-function signOut() {
-  return new Promise(function(resolve) {
-    currentUser = null;
-    sv(AUTH_KEY, null);
-    _notificar();
-    resolve();
-  });
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    getCurrentUser, isSignedIn, onAuthStateChanged, signOut,
-    signInWithEmailAndPassword, signInWithGoogle, signInAnonymously
+  currentUser = {
+    uid: 'invitado_' + Math.random().toString(36).slice(2, 9),
+    email: '',
+    displayName: 'Invitado',
+    photoUrl: '',
+    isAnonymous: true
   };
+  _notificarAuth();
+  return Promise.resolve(currentUser);
 }
+
+function signOut() {
+  if (_fbAuth) {
+    return _fbAuth.signOut().then(function() {
+      currentUser = null;
+      _notificarAuth();
+      if (typeof limpiarNegocio === 'function') {
+        limpiarNegocio(true);
+      }
+    });
+  }
+  currentUser = null;
+  _notificarAuth();
+  if (typeof limpiarNegocio === 'function') {
+    limpiarNegocio(true);
+  }
+  return Promise.resolve();
+}
+
+/* Exponer en window explícitamente para compatibilidad global */
+window.getCurrentUser                 = getCurrentUser;
+window.isSignedIn                     = isSignedIn;
+window.onAuthStateChanged             = onAuthStateChanged;
+window.signInWithEmailAndPassword     = signInWithEmailAndPassword;
+window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+window.signInWithGoogle               = signInWithGoogle;
+window.signInAnonymously              = signInAnonymously;
+window.signOut                        = signOut;
+window.login                          = signInWithEmailAndPassword;
+window.register                       = createUserWithEmailAndPassword;
+window.logout                         = signOut;
+window.isAuthenticated                = isSignedIn;

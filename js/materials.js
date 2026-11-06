@@ -37,13 +37,18 @@ function saveMaterial(editId) {
   } else {
     materials.push({ id: Date.now().toString(), name, costPerKg, density, type });
   }
-  sv('materials', materials); closeModal(); renderMaterials();
+  const targetMat = editId ? materials.find(m => m.id === editId) : materials[materials.length - 1];
+  sv('materials', materials);
+  if (targetMat && typeof dbGuardarMaterial === 'function') dbGuardarMaterial(targetMat);
+  closeModal(); renderMaterials();
   snack(editId ? 'Material actualizado' : 'Material agregado');
 }
 
 function deleteMaterial(id) {
   m3Confirm('¿Eliminar material?', function() {
     materials = materials.filter(m => m.id !== id);
-    sv('materials', materials); renderMaterials();
+    sv('materials', materials);
+    if (typeof dbBorrarMaterial === 'function') dbBorrarMaterial(id);
+    renderMaterials();
   });
 }

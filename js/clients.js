@@ -162,6 +162,7 @@ function saveClient(editIndex) {
   }
 
   sv('clients', clients);
+  if (typeof dbGuardarCliente === 'function') dbGuardarCliente(c);
   closeModal();
   renderClients();
 }
@@ -177,6 +178,7 @@ function deleteClient(i) {
   m3Confirm('¿Eliminar a ' + esc(c.name) + '?', function() {
     clients.splice(i, 1);
     sv('clients', clients);
+    if (c && c.id && typeof dbBorrarCliente === 'function') dbBorrarCliente(c.id);
     renderClients();
     snack('Cliente eliminado');
   }, { detail: nCot > 0

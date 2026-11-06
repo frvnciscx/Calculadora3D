@@ -74,6 +74,7 @@ function saveInventory(editIndex) {
   }
 
   sv('inventory', inventory);
+  if (typeof dbGuardarRollo === 'function') dbGuardarRollo(entry);
   closeModal();
   renderInventory();
 }
@@ -93,6 +94,7 @@ function deductInventory(i) {
   var newRemaining = Math.max(0, (parseFloat(item.remainingG) || 0) - grams);
   inventory[i].remainingG = newRemaining;
   sv('inventory', inventory);
+  if (typeof dbGuardarRollo === 'function') dbGuardarRollo(item);
   closeModal();
   renderInventory();
   snack(grams.toFixed(0) + 'g descontados. Restante: ' + newRemaining.toFixed(0) + 'g');
@@ -102,9 +104,11 @@ function deductInventory(i) {
 function deleteInventory(i) {
   var item = inventory[i]; if (!item) return;
   var nombre = nombreMaterialDeRollo(item) + (item.color ? ' ' + item.color : '');
+  var rid = item.id;
   m3Confirm('\u00bfEliminar ' + esc(nombre) + '?', function() {
     inventory.splice(i, 1);
     sv('inventory', inventory);
+    if (rid && typeof dbBorrarRollo === 'function') dbBorrarRollo(rid);
     renderInventory();
     snack('Filamento eliminado');
   }, { detail: 'Quedan ' + (item.remainingG || 0).toFixed(0) + ' g sin usar en este rollo.' });

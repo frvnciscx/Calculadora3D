@@ -545,6 +545,7 @@ function saveQuote() {
     existing.commissionAmt = commissionAmt;
     existing.grandTotal    = grandTotal;
     existing.totalBaseCost = totalBaseCost;
+    if (typeof dbGuardarCotizacion === 'function') dbGuardarCotizacion(existing);
     sv('quotes', quotes);
     var editada = _editQuoteIndex;
     _editQuoteIndex = null;
@@ -577,6 +578,7 @@ function saveQuote() {
   };
 
   quotes.unshift(q);
+  if (typeof dbGuardarCotizacion === 'function') dbGuardarCotizacion(q);
   sv('quotes', quotes);
   clearDraftQuote();
   clearLastCalc();
@@ -774,6 +776,7 @@ function _aplicarEstado(i, status) {
   sv('quotes', quotes);
   renderQuotes();
   renderDashboard();
+  if (typeof dbGuardarCotizacion === 'function') dbGuardarCotizacion(q);
   var labels = { aceptada: 'Cotizaci\u00f3n aceptada \u2713', rechazada: 'Cotizaci\u00f3n rechazada',
                  enviada: 'Marcada como enviada', pendiente: 'Regresada a borrador' };
   snack(labels[status] || 'Estado actualizado');
@@ -820,6 +823,9 @@ function _deductQuoteInventory(q, devolver) {
   if (changed) {
     sv('inventory', inventory);
     if (typeof renderInventory === 'function') renderInventory();
+    if (typeof dbGuardarRollo === 'function') {
+      inventory.forEach(function(r) { dbGuardarRollo(r); });
+    }
   }
 }
 
@@ -1517,7 +1523,11 @@ function exportQuotePDF(i) {
 /* ── Eliminar cotización ──────────────────────────────────────── */
 function deleteQuote(i) {
   m3Confirm('\u00bfEliminar cotizaci\u00f3n?', function() {
-    quotes.splice(i, 1); sv('quotes', quotes); renderQuotes();
+    var borradaId = quotes[i] && quotes[i].id;
+    quotes.splice(i, 1);
+    sv('quotes', quotes);
+    if (borradaId && typeof dbBorrarCotizacion === 'function') dbBorrarCotizacion(borradaId);
+    renderQuotes();
   });
 }
 

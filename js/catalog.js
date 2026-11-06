@@ -434,6 +434,7 @@ function saveCatalogProduct(editIndex) {
   else { catalogItems.push(product); }
 
   saveCatalog();
+  if (typeof dbGuardarProducto === 'function') dbGuardarProducto(product);
   showCatalogModal();
   snack(editIndex >= 0 ? 'Producto actualizado' : 'Producto agregado');
 }
@@ -447,8 +448,10 @@ function deleteCatalogProduct(i) {
 }
 
 function _deleteCatalogProductConfirmed(i) {
+  var prodId = catalogItems[i] && catalogItems[i].id;
   catalogItems.splice(i, 1);
   saveCatalog();
+  if (prodId && typeof dbBorrarProducto === 'function') dbBorrarProducto(prodId);
   showCatalogModal();
   snack('Producto eliminado');
 }

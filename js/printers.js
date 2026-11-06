@@ -45,13 +45,18 @@ function savePrinter(editId) {
   } else {
     printers.push({ id: Date.now().toString(), name, power, type, cost, lifeHours, multicolor, heads });
   }
-  sv('printers', printers); closeModal(); renderPrinters();
+  const targetPrinter = editId ? printers.find(p => p.id === editId) : printers[printers.length - 1];
+  sv('printers', printers);
+  if (targetPrinter && typeof dbGuardarImpresora === 'function') dbGuardarImpresora(targetPrinter);
+  closeModal(); renderPrinters();
   snack(editId ? 'Impresora actualizada' : 'Impresora agregada');
 }
 
 function deletePrinter(id) {
   m3Confirm('¿Eliminar impresora?', function() {
     printers = printers.filter(p => p.id !== id);
-    sv('printers', printers); renderPrinters();
+    sv('printers', printers);
+    if (typeof dbBorrarImpresora === 'function') dbBorrarImpresora(id);
+    renderPrinters();
   });
 }

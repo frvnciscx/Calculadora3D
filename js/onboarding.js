@@ -2,8 +2,8 @@
 
    Dos pantallas que viven en la misma capa (#auth-gate), encima de la app:
 
-     1. Acceso        — mientras no haya sesión
-     2. Introducción  — la primera vez que alguien entra
+     1. Acceso y Registro — mientras no haya sesión
+     2. Introducción        — la primera vez que alguien entra
 
    El flujo lo decide _actualizarGate(), que se ejecuta cada vez que cambia
    la sesión. Esa función es la única que decide qué se ve; las demás solo
@@ -172,39 +172,78 @@ function _reflejarUsuario() {
   var u = getCurrentUser();
   if (!u) return;
   var el = document.getElementById('dash-user-name');
-  if (el && !config.bizName) el.textContent = u.displayName.split(' ')[0];
+  if (el && !config.bizName && u.displayName) {
+    el.textContent = u.displayName.split(' ')[0];
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   Pantalla de acceso
+   Pantalla de acceso y registro
    ══════════════════════════════════════════════════════════════════ */
 
+var _authModo = 'login'; /* 'login' | 'registro' */
+
+function cambiarModoAuth(modo) {
+  _authModo = modo;
+  _errorAcceso('');
+  _pintarAcceso();
+}
+
 function _pintarAcceso() {
-  document.getElementById('auth-gate').innerHTML =
+  var gate = document.getElementById('auth-gate');
+  if (!gate) return;
+  var esRegistro = _authModo === 'registro';
+
+  gate.innerHTML =
     '<div class="gate-inner">' +
       '<div class="gate-brand">' +
         '<div class="gate-logo"><span class="material-symbols-rounded">home_work</span></div>' +
         '<div class="gate-title">La Casita del Molde</div>' +
-        '<div class="gate-sub">Calculadora de costos e impresión 3D</div>' +
+        '<div class="gate-sub">' + (esRegistro ? 'Crea tu cuenta para guardar tus cotizaciones' : 'Calculadora de costos e impresión 3D') + '</div>' +
       '</div>' +
+
+      (esRegistro ?
+        '<div class="m3-field">' +
+          '<input type="text" id="auth-name" placeholder=" " autocomplete="name" ' +
+                 'onkeydown="if(event.key===\'Enter\')registrarConCorreo()">' +
+          '<label for="auth-name">Nombre o Taller</label>' +
+        '</div>' : '') +
 
       '<div class="m3-field">' +
         '<input type="email" id="auth-email" placeholder=" " autocomplete="email" ' +
-               'inputmode="email" onkeydown="if(event.key===\'Enter\')entrarConCorreo()">' +
+               'inputmode="email" onkeydown="if(event.key===\'Enter\')' + (esRegistro ? 'registrarConCorreo()' : 'entrarConCorreo()') + '">' +
         '<label for="auth-email">Correo</label>' +
       '</div>' +
 
       '<div class="m3-field">' +
-        '<input type="password" id="auth-pass" placeholder=" " autocomplete="current-password" ' +
-               'onkeydown="if(event.key===\'Enter\')entrarConCorreo()">' +
-        '<label for="auth-pass">Contraseña</label>' +
+        '<input type="password" id="auth-pass" placeholder=" " autocomplete="' + (esRegistro ? 'new-password' : 'current-password') + '" ' +
+               'onkeydown="if(event.key===\'Enter\')' + (esRegistro ? 'registrarConCorreo()' : 'entrarConCorreo()') + '">' +
+        '<label for="auth-pass">Contraseña (mínimo 6 caracteres)</label>' +
       '</div>' +
+
+      (esRegistro ?
+        '<div class="m3-field">' +
+          '<input type="password" id="auth-pass-confirm" placeholder=" " autocomplete="new-password" ' +
+                 'onkeydown="if(event.key===\'Enter\')registrarConCorreo()">' +
+          '<label for="auth-pass-confirm">Confirmar contraseña</label>' +
+        '</div>' : '') +
 
       '<div class="gate-error" id="auth-error"></div>' +
 
-      '<button class="btn btn-primary" style="width:100%" id="auth-submit" onclick="entrarConCorreo()">' +
-        'Entrar' +
-      '</button>' +
+      (esRegistro ?
+        '<button class="btn btn-primary" style="width:100%" id="auth-submit" onclick="registrarConCorreo()">' +
+          'Crear cuenta' +
+        '</button>' +
+        '<button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="cambiarModoAuth(\'login\')">' +
+          '¿Ya tienes cuenta? <strong style="margin-left:4px">Inicia sesión</strong>' +
+        '</button>' :
+        '<button class="btn btn-primary" style="width:100%" id="auth-submit" onclick="entrarConCorreo()">' +
+          'Entrar' +
+        '</button>' +
+        '<button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="cambiarModoAuth(\'registro\')">' +
+          '¿No tienes cuenta? <strong style="margin-left:4px">Regístrate aquí</strong>' +
+        '</button>'
+      ) +
 
       '<div class="gate-or">o</div>' +
 
@@ -216,12 +255,6 @@ function _pintarAcceso() {
       '<button class="btn btn-ghost" style="width:100%" onclick="entrarSinCuenta()">' +
         'Entrar sin cuenta' +
       '</button>' +
-
-      '<div class="gate-note">' +
-        '<strong>Sesión simulada.</strong> No hay servidor todavía: cualquier correo con ' +
-        'una contraseña de 6 caracteres o más funciona. Sirve para probar el flujo ' +
-        'mientras se conecta Firebase.' +
-      '</div>' +
     '</div>';
 }
 
@@ -234,16 +267,28 @@ function _cargando(activo, texto) {
   var btn = document.getElementById('auth-submit');
   if (!btn) return;
   btn.disabled = activo;
-  btn.textContent = activo ? (texto || 'Entrando…') : 'Entrar';
+  btn.textContent = activo ? (texto || 'Entrando…') : (_authModo === 'registro' ? 'Crear cuenta' : 'Entrar');
   btn.style.opacity = activo ? '0.6' : '';
 }
 
 function entrarConCorreo() {
   _errorAcceso('');
-  _cargando(true);
+  var email = ((document.getElementById('auth-email') || {}).value || '').trim();
+  var pass  = (document.getElementById('auth-pass')  || {}).value || '';
+
+  if (!email) {
+    _errorAcceso('Ingresa tu correo electrónico');
+    return;
+  }
+  if (!pass) {
+    _errorAcceso('Ingresa tu contraseña');
+    return;
+  }
+
+  _cargando(true, 'Iniciando sesión…');
   signInWithEmailAndPassword({
-    email:    (document.getElementById('auth-email') || {}).value || '',
-    password: (document.getElementById('auth-pass')  || {}).value || ''
+    email:    email,
+    password: pass
   })
   .then(function() { _actualizarGate(); })
   .catch(function(err) {
@@ -253,24 +298,103 @@ function entrarConCorreo() {
   });
 }
 
+function registrarConCorreo() {
+  _errorAcceso('');
+  var nameEl     = document.getElementById('auth-name');
+  var emailEl    = document.getElementById('auth-email');
+  var passEl     = document.getElementById('auth-pass');
+  var passConfEl = document.getElementById('auth-pass-confirm');
+
+  var name     = nameEl ? nameEl.value.trim() : '';
+  var email    = emailEl ? emailEl.value.trim() : '';
+  var pass     = passEl ? passEl.value : '';
+  var passConf = passConfEl ? passConfEl.value : '';
+
+  if (!email) {
+    _errorAcceso('Ingresa tu correo electrónico');
+    if (emailEl) emailEl.focus();
+    return;
+  }
+  if (!pass || pass.length < 6) {
+    _errorAcceso('La contraseña debe tener al menos 6 caracteres');
+    if (passEl) passEl.focus();
+    return;
+  }
+  if (pass !== passConf) {
+    _errorAcceso('Las contraseñas no coinciden');
+    if (passConfEl) passConfEl.focus();
+    return;
+  }
+
+  _cargando(true, 'Creando cuenta…');
+  createUserWithEmailAndPassword({
+    email:       email,
+    password:    pass,
+    displayName: name || email.split('@')[0]
+  })
+  .then(function() {
+    if (name && typeof config !== 'undefined' && !config.bizName) {
+      config.bizName = name;
+      if (typeof sv === 'function') sv('config', config);
+    }
+    _actualizarGate();
+  })
+  .catch(function(err) {
+    _cargando(false);
+    _errorAcceso(err.message || 'No se pudo crear la cuenta');
+    if (typeof haptic === 'function') haptic('error');
+  });
+}
+
 function entrarConGoogle() {
   _errorAcceso('');
   _cargando(true, 'Conectando…');
-  signInWithGoogle().then(function() { _actualizarGate(); });
+  signInWithGoogle()
+    .then(function() { _actualizarGate(); })
+    .catch(function(err) {
+      _cargando(false);
+      _errorAcceso(err.message || 'No se pudo conectar con Google');
+    });
 }
 
 function entrarSinCuenta() {
-  signInAnonymously().then(function() { _actualizarGate(); });
+  _errorAcceso('');
+  _cargando(true, 'Entrando…');
+  signInAnonymously()
+    .then(function() { _actualizarGate(); })
+    .catch(function(err) {
+      _cargando(false);
+      _errorAcceso(err.message || 'No se pudo entrar como invitado');
+    });
 }
 
 function cerrarSesion() {
   m3Confirm('¿Cerrar sesión?', function() {
-    signOut().then(function() { _actualizarGate(); });
+    var checkWrites = Promise.resolve();
+    var db = (typeof getDb === 'function') ? getDb() : null;
+    if (db && typeof db.waitForPendingWrites === 'function') {
+      var timeout = new Promise(function(_, reject) {
+        setTimeout(function() { reject(new Error('timeout')); }, 2500);
+      });
+      checkWrites = Promise.race([db.waitForPendingWrites(), timeout]);
+    }
+
+    checkWrites.then(function() {
+      return signOut();
+    }).catch(function() {
+      if (!navigator.onLine) {
+        snack('Tienes cambios pendientes y no hay conexión. Conéctate antes de cerrar sesión para no perder datos.');
+        return;
+      }
+      return signOut();
+    }).then(function() {
+      if (typeof _actualizarGate === 'function') _actualizarGate();
+    });
   }, {
     confirmLabel: 'Cerrar sesión',
     icon: 'logout',
-    detail: 'Tus cotizaciones, clientes e inventario se quedan en este dispositivo — ' +
-            'hoy los datos no están ligados a la cuenta.'
+    detail: 'Tus cotizaciones, clientes e inventario están guardados en tu cuenta en la nube. ' +
+            'Al cerrar sesión se limpiarán de este dispositivo para proteger tu privacidad.'
   });
 }
 
@@ -338,5 +462,9 @@ function verOnboardingDeNuevo() {
 document.addEventListener('DOMContentLoaded', function() {
   /* onAuthStateChanged se dispara de inmediato con el estado actual,
      así que esto también cubre el arranque en frío. */
-  onAuthStateChanged(function() { _actualizarGate(); });
+  if (typeof onAuthStateChanged === 'function') {
+    onAuthStateChanged(function() { _actualizarGate(); });
+  } else {
+    _actualizarGate();
+  }
 });

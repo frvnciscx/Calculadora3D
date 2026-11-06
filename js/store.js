@@ -70,6 +70,7 @@ function ld(k, d) {
 }
 function sv(k, v) {
   localStorage.setItem('c3d_' + k, JSON.stringify(v));
+  if (typeof dbNotificarEscritura === 'function') { dbNotificarEscritura(k, v); }
   /* La sincronización con Notion se retiró en v101 (D71 de docs/reglas-de-negocio.md):
      sus funciones no pedían contraseña. Los datos en la nube llegan con Firebase. */
 }
