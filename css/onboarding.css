@@ -77,6 +77,52 @@
   min-height: 18px;
 }
 
+/* ── Contraseña: ojo para mostrarla ──────────────────────────────── */
+.campo-contrasena input { padding-right: 48px; }
+.ver-contrasena {
+  position: absolute;
+  right: 0; bottom: 2px;
+  width: 44px; height: 44px;           /* área de toque de 44 px */
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; border-radius: 50%;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.ver-contrasena:hover { color: var(--ink); background: var(--bg-sunk); }
+.ver-contrasena:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ver-contrasena .material-symbols-rounded { font-size: 20px; }
+
+/* ── Recordar contraseña y ¿Olvidaste tu contraseña? ─────────────── */
+.gate-fila {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; column-gap: 12px;
+}
+.gate-enlace {
+  min-height: 44px; padding: 0;
+  background: none; border: none;
+  font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+  color: var(--accent);
+  cursor: pointer;
+}
+.gate-enlace:hover { text-decoration: underline; }
+.gate-enlace:disabled { opacity: 0.5; cursor: default; text-decoration: none; }
+.gate-enlace:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.gate-error.ok { color: var(--ink-2); }
+
+.gate-recordar {
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 44px;
+  font-size: 14px; color: var(--ink-2);
+  cursor: pointer;
+  user-select: none;
+}
+.gate-recordar input {
+  width: 18px; height: 18px; margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 /* ── Onboarding ──────────────────────────────────────────────────── */
 .ob-skip {
   position: absolute;

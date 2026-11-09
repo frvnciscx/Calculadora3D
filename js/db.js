@@ -273,7 +273,8 @@ var _LISTAS = {
 };
 var _DOCS = {
   config:     { doc: 'general',   render: ['updateTopBar', 'loadConfig'] },
-  quoteStyle: { doc: 'documento', render: [] }
+  /* updateTopBar: el logo de Ajustes › Diseño también va en la barra (D123, D126) */
+  quoteStyle: { doc: 'documento', render: ['updateTopBar'] }
 };
 
 var _escuchando = false;

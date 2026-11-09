@@ -29,7 +29,7 @@ Qué es el cotizador de impresión 3D, dónde vive cada cosa, qué decidió Fran
 | App publicada | `calculadora3-d-delta.vercel.app` | Con guion. `calculadora3d-delta` (sin guion) es **otro producto** («3D COST PRO»). El README del repo se corrigió el 2026-11-03 |
 | Código | Repo privado `frvnciscx/Calculadora3D`, rama `main` | Las sesiones trabajan en su worktree (`claude/<nombre>`). Francisco hace el commit y publica la rama con GitHub Desktop, y la junta a `main` con un Pull Request en GitHub |
 | Proyecto de Claude Code | Una carpeta por equipo, anotada en su `~/.claude/CLAUDE.md` («Repo del cotizador en este equipo») | Su `CLAUDE.md` escribe `<ASISTENTE>` en lugar de la ruta de este repo desde el 2026-10-19 |
-| Decisiones | `docs/reglas-de-negocio.md` §2 de su repo | Único registro (D1–D107 al 2026-11-09), también de las que salen de `flujos.md` y `competencia.md`. Con fecha y quién la tomó; nada se borra |
+| Decisiones | `docs/reglas-de-negocio.md` §2 de su repo | Único registro (D1–D127 al 2026-11-09), también de las que salen de `flujos.md` y `competencia.md`. Con fecha y quién la tomó; nada se borra |
 | Flujos | `docs/flujos.md` y `docs/flujos/` de su repo | Los 7 de la primera versión, con diagramas de `/diagram-design` y sus preguntas respondidas al 2026-11-03 |
 | Modelo de datos | `docs/modelo-de-datos.md` de su repo | Firebase por negocio, con diagrama, al 2026-11-03. Reemplaza en parte a `BASE-DE-DATOS.md` |
 | Competencia | `docs/competencia.md` de su repo | 12 apps y plataformas revisadas el 2026-10-16; la directa en México es Bugeo App |
@@ -72,4 +72,5 @@ Las del arranque, del 2026-10-15 y 2026-10-16. Desde el 2026-10-16 las decisione
 
 - **En su proyecto,** con un `CLAUDE.md` en su repo que apunta a este README, a la forma de trabajo y a los skills del asistente (`diagram-design`, `crd`, `system-design` y `plan`), que se leen desde `<ASISTENTE>` ([herramientas.md §8.5](../../asistente/herramientas.md#85-productos-en-su-propio-repo)). Este README cambia solo si cambia dónde vive algo.
 - **Con el método de Teckio:** preguntas en bloques de 10 con lo recomendado; cada decisión con fecha y quién la tomó; nada se borra; lo que una respuesta no deja claro, como «Interpretación:». Si se rediseña la interfaz, el sistema arranca con `/system-design` y su [punto de partida](../../../.agents/skills/system-design/punto-de-partida.md), y cada componente con `/crd`.
+- **Pruebas:** `npm test` antes de subir cualquier cambio a la app, también de diseño (D113, confirmado en D114). Corre en segundos y no toca la nube real: costeo, sincronización con un Firestore de mentira y lo que une las pantallas con la nube y con la caché.
 - **Forma de trabajo con Francisco:** [docs/asistente/](../../asistente/README.md).

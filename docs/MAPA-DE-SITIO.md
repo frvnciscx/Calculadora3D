@@ -37,6 +37,13 @@ un cliente un enlace a una cotización específica, ni el botón "atrás" del te
 que la gente espera. Es la limitación más grande de la arquitectura actual y está en la
 lista de lo que se puede añadir.
 
+**Barra lateral** (solo en escritorio; al día con v108, D118, D122, D123): arriba, el logo de
+Ajustes › Diseño y el nombre del negocio · Negocio (Dashboard, Calculadora, Cotizaciones,
+Historial) · Catálogo (Impresoras, Materiales, Inventario, Clientes) · Cuenta (Ajustes, y
+debajo el interruptor de modo oscuro) · abajo, la cuenta y «Cerrar sesión». En el teléfono no
+hay barra lateral: el tema y «Cerrar sesión» están en Ajustes › Otros. El tema se guarda en
+cada navegador y empieza en automático.
+
 ---
 
 ## Lo que existe hoy
@@ -166,6 +173,7 @@ Material: nombre, tipo, costo por kilo, densidad.
 
 Negocio · Banco · Electricidad y trabajo · Gastos fijos · Gastos indirectos ·
 Otros parámetros · Diseño de cotización. Más exportar e importar respaldo en JSON.
+En escritorio va centrado, y Diseño de cotización lleva la vista previa a la derecha (D116, D117).
 
 ### Módulos de soporte
 

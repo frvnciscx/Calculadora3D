@@ -1,4 +1,4 @@
-const CACHE_NAME = 'calc3d-v107';
+const CACHE_NAME = 'calc3d-v108';
 /* IMPORTANTE: esta lista debe coincidir con los <script> y <link> de index.html,
    con el mismo nombre: `js/auth.js?v=105` no es `js/auth.js` para la caché.
    La versión ya la da CACHE_NAME. Si agregas un archivo y olvidas ponerlo aquí,

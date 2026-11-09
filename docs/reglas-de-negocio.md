@@ -4,7 +4,7 @@ Qué regla manda en cada paso de una cotización: qué acción la mueve de estad
 
 Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y la app se publica en las tiendas.
 
-**Actualizado:** 2026-11-09 (D104–D112, de la integración de Firebase; antes, D87–D103: arranque de un negocio nuevo, modelo de datos y limpieza del repositorio; van 112 decisiones; las reglas de negocio se cerraron el 2026-10-16 y desde entonces suman las de `flujos.md`, `modelo-de-datos.md` y de publicación)
+**Actualizado:** 2026-11-09 (D115–D127, cambios de diseño; D104–D114, de la integración de Firebase; antes, D87–D103: arranque de un negocio nuevo, modelo de datos y limpieza del repositorio; van 127 decisiones; las reglas de negocio se cerraron el 2026-10-16 y desde entonces suman las de `flujos.md`, `modelo-de-datos.md` y de publicación)
 
 **Fuentes:** código v100 (`main`, commit `7cc4b14`) revisado el 2026-10-16 · decisiones del cotizador en el repo del Asistente (`docs/projects/cotizador/README.md`, 2026-10-15) · [`AUDITORIA-UX.md`](AUDITORIA-UX.md) · respuestas de Francisco a P1–P65 (2026-10-16) · requisitos de publicación de Apple y Google, y planes de Firebase, revisados el 2026-10-16 (fuentes en §4.10).
 
@@ -151,6 +151,21 @@ Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y l
 | D110 | Confirma la interpretación de D109: todos, también Javi, suben directo a `main`, sin ramas en GitHub | Francisco (P113: a) | 2026-11-09 |
 | D111 | Lo que se borraba con v106: cotizaciones, clientes, gastos fijos, gastos indirectos y datos del negocio | Francisco (respuesta a P111) | 2026-11-09 |
 | D112 | Lo que se pueda arreglar sin la consola de Firebase lo arregla Claude; lo demás, Javi («si podemos arreglarlo nosotros hay que hacerlo, sino que lo haga javi») | Francisco (P112) | 2026-11-09 |
+| D113 | Las pruebas de la sincronización viven en el repo, en `tests/`, y corren con `npm test` («Sí, guárdalas»). **Interpretación:** entran también las de entrar con cuenta (v106) y las que revisan lo que une las pantallas con la nube, la caché sin conexión y lo que se publica; y `npm test` se corre antes de subir cualquier cambio a `js/`, `index.html`, `quote.html` o `sw.js`, también los de diseño. Se confirma en P115. **Confirmado en D114** | Francisco (P114) | 2026-11-09 |
+| D114 | Confirma la interpretación de D113: `npm test` se corre siempre antes de subir un cambio a la app, también los de diseño, y entran todas las pruebas de `tests/` | Francisco (P115: «Sí, siempre») | 2026-11-09 |
+| D115 | Pantalla de entrada: casilla «Recordar contraseña» y un ojo para mostrar u ocultar la contraseña («en la vista de inicio de sesión agrega el recordar contraseña, el icono para mostrar la contraseña»). **Interpretación:** «Recordar contraseña» deja que el navegador o el teléfono guarden la contraseña en su administrador de contraseñas, y que la app recuerde el correo; la app nunca guarda la contraseña. Viene marcada. No es recuperar por correo una contraseña olvidada. Se confirma en P116. **Confirmado en D119** | Francisco | 2026-11-09 |
+| D116 | Ajustes › Diseño: la vista previa de la cotización va a la derecha y se queda a la vista al bajar («muestra la vista previa de la cotización del lado derecho»). En el teléfono sigue debajo, porque no cabe al lado | Francisco | 2026-11-09 |
+| D117 | Todo Ajustes va centrado («En toda la sección de ajustes centra los contenidos»): el encabezado, las pestañas y el contenido, con el mismo ancho. **Interpretación:** en escritorio; en el teléfono ya ocupa el ancho de la pantalla. Se confirma en P118. **Confirmado en D121**. Al hacerlo apareció un error y quedó corregido: el panel medía toda la ventana y se salía 240 px por la derecha, y cortaba Exportar e Importar | Francisco | 2026-11-09 |
+| D118 | Barra lateral: «Cerrar sesión» abajo, donde estaba el tema; el tema (Claro, Oscuro, Auto) debajo de Ajustes; Clientes junto a Inventario («mueve la selección de tema abajo de ajustes y clientes muévelo al inventario»). **Interpretación:** Clientes pasa a la sección Catálogo, debajo de Inventario, como otra opción de la barra y no como pestaña dentro de Inventario; en el teléfono, que no tiene barra lateral, el tema y «Cerrar sesión» siguen en Ajustes › Otros. Se confirma en P117 y P118. **Confirmado en D120 y D121** | Francisco | 2026-11-09 |
+| D119 | Queda «Recordar contraseña» como en D115 y se agrega «¿Olvidaste tu contraseña?»: Firebase manda un correo, en español, para poner una contraseña nueva. Usa una función que Firebase Auth ya trae; no cambia nada en Firebase, `js/auth.js` ni `js/db.js` | Francisco (P116: a) | 2026-11-09 |
+| D120 | Clientes queda en la barra lateral, debajo de Inventario (confirma D118) | Francisco (P117: a) | 2026-11-09 |
+| D121 | En el teléfono no cambia nada de D117 y D118: no hay barra lateral, y Ajustes ya ocupa la pantalla | Francisco (P118: a) | 2026-11-09 |
+| D122 | El tema de la barra lateral es un interruptor de claro y oscuro; mientras no se elige, sigue al navegador («El selector de tema cámbialo con un toggle de claro y oscuro, la opción automática déjala por defecto según el navegador del usuario»). **Interpretación:** el tema se guarda en cada navegador y no en la cuenta: antes se subía a la nube con cada cambio, cambiarlo en un equipo lo cambiaba en todos y empezaba en oscuro. Quien había elegido Claro lo conserva. En Ajustes › Otros siguen Claro, Oscuro y Auto, para volver a automático. Se confirma en P119 y P120. **Confirmado en D124 y D125** | Francisco | 2026-11-09 |
+| D123 | El logo de Ajustes › Diseño va también en el ícono de la barra lateral («Que la imagen que se agrega en la cotización se agregue al icono de la sidebar»), y en el de la barra de arriba del teléfono, que usa la misma función. Corrige un error: la barra buscaba el logo con otro nombre (`logoDataUrl`, que nadie llena) y nunca aparecía | Francisco | 2026-11-09 |
+| D124 | El tema se guarda en cada navegador, no en la cuenta (confirma D122) | Francisco (P119: a) | 2026-11-09 |
+| D125 | «Auto» se queda en Ajustes › Otros, para volver a automático después de usar el interruptor (confirma D122) | Francisco (P120: a) | 2026-11-09 |
+| D126 | Claude agrega en `js/db.js` que la barra se redibuje cuando llega de la nube el diseño de la cotización, para que el logo cambie al momento en los otros equipos: una línea en la lista de qué se redibuja (`_DOCS.quoteStyle.render`). No cambia qué se guarda ni cómo se sincroniza. Con su prueba en `tests/sincronizacion.test.js`, que fallaba antes del cambio | Francisco (P121: a) | 2026-11-09 |
+| D127 | «¿Olvidaste tu contraseña?» se queda solo si no hay que cambiar nada del backend; si hubiera que cambiarlo, lo agrega Javi («solo si no tenemos que modificar nada del back, sino le digo a javi que lo agregue»). No hace falta: usa la plantilla de correo que Firebase ya trae. Si se quiere personalizar el correo (remitente, texto o el nombre que aparece), eso se hace en la consola de Firebase y le toca a Javi | Francisco | 2026-11-09 |
 
 ---
 
@@ -971,10 +986,12 @@ Francisco pidió revisar qué cambia entre `main` y la rama `integración-fireba
 | P111 | Qué registros se borran | — (era un dato) | Respondida → D111 |
 | P112 | Quién corrige que se borren registros | (a) Claude, ahora | Respondida → D112; corregido en v107 |
 | P113 | ¿Se interpretó bien D109? | (a) sí, para todos | Respondida (a) → D110 |
+| P114 | ¿Guardo las pruebas de sincronización en `npm test`? | Sí | Respondida «Sí, guárdalas» → D113 |
+| P115 | ¿Se interpretó bien D113? | (a) sí: siempre antes de subir, también en cambios de diseño | Respondida «Sí, siempre» → D114 |
 
 **Comprobado por Francisco el 2026-11-09, en v106:** la app ya abre sin conexión (antes se quedaba en negro) y la configuración se guarda en la cuenta; «los registros se borran». **Por qué:** cada aviso de la nube reemplaza la lista completa del dispositivo, y se pierde lo que se guardó solo en él: duplicar una cotización, el cliente que se crea al guardar una cotización y el id de Notion. El historial de cálculos y los favoritos nunca suben. Detalle y arreglo sugerido en [`firebase.md`](firebase.md) §3.
 
-**Corregido en v107** (2026-11-09). La causa era más amplia que la de P111: cada aviso de la nube reemplazaba la lista completa del dispositivo, y se perdía todo lo que no hubiera alcanzado a subir, también los gastos guardados justo antes de cerrar la app (esperaban 0.8 s para subir). Ahora `js/db.js` junta los dos lados: recuerda cómo llegó cada registro la última vez de la nube, y así distingue qué cambió en el dispositivo y qué en la nube; lo que nunca subió se conserva y se sube; cualquier `sv()` sube lo que cambió; los ajustes suben al ocultarse la app; y el historial de cálculos y los favoritos ya viven en la nube. Comprobado con `js/db.js` y un Firestore simulado en tiempo real, con dos dispositivos y aperturas y cierres de la app: 20 de 20 pruebas, y abrir la app sin cambiar nada no escribe en la nube. La misma prueba sobre v106 reproduce lo que reportó Francisco: 13 fallas, con las cotizaciones, los clientes, los gastos fijos, los indirectos y los datos del negocio perdidos. No se probó con la cuenta real.
+**Corregido en v107** (2026-11-09). La causa era más amplia que la de P111: cada aviso de la nube reemplazaba la lista completa del dispositivo, y se perdía todo lo que no hubiera alcanzado a subir, también los gastos guardados justo antes de cerrar la app (esperaban 0.8 s para subir). Ahora `js/db.js` junta los dos lados: recuerda cómo llegó cada registro la última vez de la nube, y así distingue qué cambió en el dispositivo y qué en la nube; lo que nunca subió se conserva y se sube; cualquier `sv()` sube lo que cambió; los ajustes suben al ocultarse la app; y el historial de cálculos y los favoritos ya viven en la nube. Comprobado con `js/db.js` y un Firestore simulado en tiempo real, con dos dispositivos y aperturas y cierres de la app: 20 de 20 pruebas, y abrir la app sin cambiar nada no escribe en la nube. La misma prueba sobre v106 reproduce lo que reportó Francisco: 13 fallas, con las cotizaciones, los clientes, los gastos fijos, los indirectos y los datos del negocio perdidos. No se probó con la cuenta real. Desde D113 esas pruebas están en el repo (`tests/sincronizacion.test.js` y `tests/entrar-con-cuenta.test.js`) y corren con `npm test`.
 
 **Las reglas de Firebase hoy dejan leer a cualquiera** (comprobado el 2026-11-09: sin sesión, Firestore responde 404 y no 403 a un documento que no existe; solo se miró el código de respuesta). No es la causa de que se borren registros, pero cualquiera con la configuración del proyecto, que está en `js/auth.js`, puede leer los datos. Publicar `firestore.rules` es lo primero de [`firebase.md`](firebase.md).
 
@@ -989,6 +1006,19 @@ Francisco pidió revisar qué cambia entre `main` y la rama `integración-fireba
 - Lo que llega de la nube a Ajustes ya no se vuelve a escribir en ella cada vez que se abre la app.
 
 **Sigue pendiente:** las reglas de seguridad (P105), el folio que da Firebase (D89), bajar solo lo vivo y los últimos 3 meses (D90), y que un taller nuevo empiece sin los datos de La Casita del Molde (D47).
+
+### Cambios de diseño (2026-11-09)
+
+Francisco los pidió antes de subir las pruebas de D113: D115–D127, que van en v108. Claude los probó en el navegador, en escritorio y en teléfono, sin entrar a ninguna cuenta. **Comprobado por Francisco el 2026-11-09, en su equipo y antes de publicar:** el navegador ofrece guardar la contraseña y, al crear una cuenta, sugiere una segura; el logo aparece en la barra lateral.
+
+| # | Pregunta | Recomendado | Estado |
+|---|---|---|---|
+| P116 | ¿«Recordar contraseña» era que el dispositivo la guarde (D115) o recuperarla por correo si se olvida? | (a) las dos: queda lo hecho y se agrega «¿Olvidaste tu contraseña?» | Respondida (a) → D119 |
+| P117 | ¿Clientes junto a Inventario era en la barra lateral (D118) o como pestaña dentro de Inventario? | (a) en la barra lateral, como quedó | Respondida (a) → D120 |
+| P118 | ¿En el teléfono también cambia algo de esto? | (a) no: no hay barra lateral, y Ajustes ya ocupa la pantalla | Respondida (a) → D121 |
+| P119 | ¿El tema se guarda en cada navegador (D122) o en la cuenta, igual en todos los equipos? | (a) en cada navegador, como quedó | Respondida (a) → D124 |
+| P120 | ¿«Auto» se queda en Ajustes › Otros para volver a automático, o se quita también ahí? | (a) se queda | Respondida (a) → D125 |
+| P121 | Si el logo cambia en otro equipo, la barra lateral puede no mostrarlo hasta volver a abrir la app. Para que cambie al momento hace falta una línea en `js/db.js`: la lista de qué se redibuja cuando llega algo de la nube; no cambia qué se guarda ni cómo. ¿La agrega Claude o se le deja a Javi? | (a) Claude, con `npm test` | Respondida (a) → D126 |
 
 ---
 

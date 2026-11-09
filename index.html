@@ -26,7 +26,7 @@
 <aside id="sidebar">
   <div class="sidebar-brand">
     <span id="sidebar-logo-wrap" style="display:flex;align-items:center;flex-shrink:0">
-      <img id="sidebar-logo-img" style="display:none;width:30px;height:30px;border-radius:7px;object-fit:cover" alt="Logo">
+      <img id="sidebar-logo-img" style="display:none;width:30px;height:30px;border-radius:7px;object-fit:contain" alt="Logo">
       <svg id="sidebar-logo-svg" width="30" height="30" viewBox="0 0 40 40" fill="none" aria-hidden="true">
         <rect x="0.5" y="0.5" width="39" height="39" rx="8" stroke="currentColor" stroke-width="1"/>
         <path d="M9 26V14l11-4 11 4v12" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
@@ -65,19 +65,26 @@
     <button class="sidebar-item" data-page="inventory" onclick="showPage('inventory')">
       <span class="material-symbols-rounded sidebar-icon">inventory_2</span> Inventario
     </button>
+    <button class="sidebar-item" data-page="clients" onclick="showPage('clients')">
+      <span class="material-symbols-rounded sidebar-icon">people</span> Clientes
+    </button>
 
     <div class="sidebar-section">Cuenta</div>
     <button class="sidebar-item" data-page="config" onclick="showPage('config')">
       <span class="material-symbols-rounded sidebar-icon">settings</span> Ajustes
     </button>
-    <button class="sidebar-item" data-page="clients" onclick="showPage('clients')">
-      <span class="material-symbols-rounded sidebar-icon">people</span> Clientes
+    <!-- Tema: interruptor de claro y oscuro (D122). applyTheme() pone aria-checked -->
+    <button class="sidebar-item tema-switch-fila" role="switch" aria-checked="false" onclick="toggleTheme()">
+      <span class="material-symbols-rounded sidebar-icon">dark_mode</span>
+      <span class="tema-switch-texto">Modo oscuro</span>
+      <span class="tema-switch" aria-hidden="true"></span>
     </button>
   </nav>
 
   <div class="sidebar-footer">
-    <button class="icon-btn" onclick="toggleTheme()" style="color:var(--ink-3)">
-      <span class="material-symbols-rounded" id="theme-icon-sidebar" style="font-size:18px">light_mode</span>
+    <div class="sidebar-cuenta" id="sidebar-cuenta"></div>
+    <button class="sidebar-item sidebar-salir" onclick="cerrarSesion()">
+      <span class="material-symbols-rounded sidebar-icon">logout</span> Cerrar sesión
     </button>
   </div>
 </aside>
@@ -91,7 +98,7 @@
 <!-- TOP BAR -->
 <div class="top-bar">
   <span id="top-bar-logo-wrap" style="display:flex;align-items:center;flex-shrink:0">
-    <img id="top-bar-logo-img" style="display:none;width:28px;height:28px;border-radius:6px;object-fit:cover" alt="Logo">
+    <img id="top-bar-logo-img" style="display:none;width:28px;height:28px;border-radius:6px;object-fit:contain" alt="Logo">
     <svg id="top-bar-logo-svg" class="brand-mark" width="28" height="28" viewBox="0 0 40 40" fill="none" aria-hidden="true">
       <rect x="0.5" y="0.5" width="39" height="39" rx="8" stroke="currentColor" stroke-width="1"/>
       <path d="M9 26V14l11-4 11 4v12" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
@@ -669,6 +676,11 @@
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Diseño de cotización</h1>
   </div>
 
+  <!-- En escritorio, dos columnas: lo que se ajusta a la izquierda y la vista
+       previa a la derecha (desktop.css). En el teléfono, una debajo de otra. -->
+  <div class="qe-layout">
+  <div class="qe-controles">
+
   <!-- Logo -->
   <div style="padding:12px 20px 0">
     <div class="card" style="padding:16px 18px">
@@ -752,18 +764,22 @@
     </div>
   </div>
 
+  </div><!-- /.qe-controles -->
+
   <!-- Vista previa -->
-  <div style="padding:12px 20px 0">
+  <div class="qe-vista" style="padding:12px 20px 0">
     <div style="font-size:12px;font-family:var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px">Vista previa</div>
     <div id="qe-live-preview" style="overflow-x:auto;border-radius:var(--r-m);border:0.5px solid var(--line)"></div>
   </div>
 
   <!-- Botón Restablecer (alineado igual que Guardar en otras sub-páginas) -->
-  <div style="padding:16px 20px 32px">
+  <div class="qe-restablecer" style="padding:16px 20px 32px">
     <button class="btn btn-ghost" onclick="resetQuoteStyle()" style="color:var(--danger);width:100%">
       <span class="material-symbols-rounded" style="font-size:15px">restart_alt</span> Restablecer diseño
     </button>
   </div>
+
+  </div><!-- /.qe-layout -->
 
 </div>
 
@@ -1259,13 +1275,13 @@
       <div style="padding:14px 0;border-bottom:none">
         <div style="font-size:13px;color:var(--ink-2);margin-bottom:10px">Apariencia</div>
         <div class="seg theme-segment" style="width:100%;display:flex">
-          <button id="theme-light-btn" onclick="setTheme('light')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">
+          <button id="theme-light-btn" data-tema="light" onclick="setTheme('light')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">
             <span class="material-symbols-rounded" style="font-size:14px">light_mode</span> Claro
           </button>
-          <button id="theme-dark-btn" onclick="setTheme('dark')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">
+          <button id="theme-dark-btn" data-tema="dark" onclick="setTheme('dark')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">
             <span class="material-symbols-rounded" style="font-size:14px">dark_mode</span> Oscuro
           </button>
-          <button id="theme-auto-btn" onclick="setTheme('auto')" style="flex:1">Auto</button>
+          <button id="theme-auto-btn" data-tema="auto" onclick="setTheme('auto')" style="flex:1">Auto</button>
         </div>
       </div>
 

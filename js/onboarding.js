@@ -175,6 +175,9 @@ function _reflejarUsuario() {
   if (el && !config.bizName && u.displayName) {
     el.textContent = u.displayName.split(' ')[0];
   }
+  /* La cuenta, abajo de la barra lateral, junto a «Cerrar sesión» */
+  var cuenta = document.getElementById('sidebar-cuenta');
+  if (cuenta) cuenta.textContent = u.email || u.displayName || 'Sin cuenta';
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -187,6 +190,57 @@ function cambiarModoAuth(modo) {
   _authModo = modo;
   _errorAcceso('');
   _pintarAcceso();
+}
+
+/* ── Recordar contraseña ───────────────────────────────────────────
+   La contraseña la guarda el administrador de contraseñas del navegador o
+   del teléfono, nunca la app. Por eso los campos van en un <form> con
+   autocomplete: así el navegador ofrece guardarla y la llena la próxima vez.
+   La app solo recuerda el correo, para que aparezca escrito al volver. */
+var _CLAVE_RECORDAR = 'c3d_recordarContrasena';
+var _CLAVE_CORREO   = 'c3d_correoRecordado';
+
+function _quiereRecordar() {
+  try { return localStorage.getItem(_CLAVE_RECORDAR) !== 'false'; } catch (e) { return true; }
+}
+
+function _recordarAcceso(email, pass, recordar) {
+  try {
+    localStorage.setItem(_CLAVE_RECORDAR, recordar ? 'true' : 'false');
+    if (recordar) localStorage.setItem(_CLAVE_CORREO, email);
+    else localStorage.removeItem(_CLAVE_CORREO);
+  } catch (e) {}
+  /* Chrome y Android: pide guardarla en su administrador de contraseñas.
+     Safari no tiene esta función; ahí la ofrece el llavero al enviar el formulario. */
+  if (recordar && window.PasswordCredential && navigator.credentials && navigator.credentials.store) {
+    try {
+      navigator.credentials.store(new PasswordCredential({ id: email, password: pass })).catch(function() {});
+    } catch (e) {}
+  }
+}
+
+/* El ojo junto a la contraseña: la muestra u oculta */
+function alternarContrasena(id, boton) {
+  var campo = document.getElementById(id);
+  if (!campo || !boton) return;
+  var mostrar = campo.type === 'password';
+  campo.type = mostrar ? 'text' : 'password';
+  boton.setAttribute('aria-pressed', mostrar ? 'true' : 'false');
+  boton.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+  boton.title = mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña';
+  var icono = boton.querySelector('.material-symbols-rounded');
+  if (icono) icono.textContent = mostrar ? 'visibility_off' : 'visibility';
+}
+
+function _campoContrasena(id, nombre, etiqueta, autocompletar) {
+  return '<div class="m3-field campo-contrasena">' +
+      '<input type="password" id="' + id + '" name="' + nombre + '" placeholder=" " autocomplete="' + autocompletar + '">' +
+      '<label for="' + id + '">' + etiqueta + '</label>' +
+      '<button type="button" class="ver-contrasena" aria-label="Mostrar contraseña" aria-pressed="false" ' +
+              'title="Mostrar contraseña" onclick="alternarContrasena(\'' + id + '\', this)">' +
+        '<span class="material-symbols-rounded" aria-hidden="true">visibility</span>' +
+      '</button>' +
+    '</div>';
 }
 
 function _pintarAcceso() {
@@ -202,44 +256,47 @@ function _pintarAcceso() {
         '<div class="gate-sub">' + (esRegistro ? 'Crea tu cuenta para guardar tus cotizaciones' : 'Calculadora de costos e impresión 3D') + '</div>' +
       '</div>' +
 
-      (esRegistro ?
+      /* novalidate: los avisos los da la app, no el navegador */
+      '<form id="auth-form" novalidate onsubmit="event.preventDefault();' + (esRegistro ? 'registrarConCorreo()' : 'entrarConCorreo()') + '">' +
+        (esRegistro ?
+          '<div class="m3-field">' +
+            '<input type="text" id="auth-name" name="name" placeholder=" " autocomplete="name">' +
+            '<label for="auth-name">Nombre o Taller</label>' +
+          '</div>' : '') +
+
         '<div class="m3-field">' +
-          '<input type="text" id="auth-name" placeholder=" " autocomplete="name" ' +
-                 'onkeydown="if(event.key===\'Enter\')registrarConCorreo()">' +
-          '<label for="auth-name">Nombre o Taller</label>' +
-        '</div>' : '') +
+          '<input type="email" id="auth-email" name="email" placeholder=" " autocomplete="username" inputmode="email">' +
+          '<label for="auth-email">Correo</label>' +
+        '</div>' +
 
-      '<div class="m3-field">' +
-        '<input type="email" id="auth-email" placeholder=" " autocomplete="email" ' +
-               'inputmode="email" onkeydown="if(event.key===\'Enter\')' + (esRegistro ? 'registrarConCorreo()' : 'entrarConCorreo()') + '">' +
-        '<label for="auth-email">Correo</label>' +
-      '</div>' +
+        _campoContrasena('auth-pass', 'password', 'Contraseña (mínimo 6 caracteres)',
+                         esRegistro ? 'new-password' : 'current-password') +
 
-      '<div class="m3-field">' +
-        '<input type="password" id="auth-pass" placeholder=" " autocomplete="' + (esRegistro ? 'new-password' : 'current-password') + '" ' +
-               'onkeydown="if(event.key===\'Enter\')' + (esRegistro ? 'registrarConCorreo()' : 'entrarConCorreo()') + '">' +
-        '<label for="auth-pass">Contraseña (mínimo 6 caracteres)</label>' +
-      '</div>' +
+        (esRegistro ?
+          _campoContrasena('auth-pass-confirm', 'password-confirm', 'Confirmar contraseña', 'new-password') : '') +
 
-      (esRegistro ?
-        '<div class="m3-field">' +
-          '<input type="password" id="auth-pass-confirm" placeholder=" " autocomplete="new-password" ' +
-                 'onkeydown="if(event.key===\'Enter\')registrarConCorreo()">' +
-          '<label for="auth-pass-confirm">Confirmar contraseña</label>' +
-        '</div>' : '') +
+        '<div class="gate-fila">' +
+          '<label class="gate-recordar">' +
+            '<input type="checkbox" id="auth-recordar"' + (_quiereRecordar() ? ' checked' : '') + '>' +
+            '<span>Recordar contraseña</span>' +
+          '</label>' +
+          (esRegistro ? '' :
+            '<button type="button" class="gate-enlace" id="auth-olvido" onclick="recuperarContrasena()">' +
+              '¿Olvidaste tu contraseña?' +
+            '</button>') +
+        '</div>' +
 
-      '<div class="gate-error" id="auth-error"></div>' +
+        '<div class="gate-error" id="auth-error" aria-live="polite"></div>' +
 
-      (esRegistro ?
-        '<button class="btn btn-primary" style="width:100%" id="auth-submit" onclick="registrarConCorreo()">' +
-          'Crear cuenta' +
+        '<button type="submit" class="btn btn-primary" style="width:100%" id="auth-submit">' +
+          (esRegistro ? 'Crear cuenta' : 'Entrar') +
         '</button>' +
+      '</form>' +
+
+      (esRegistro ?
         '<button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="cambiarModoAuth(\'login\')">' +
           '¿Ya tienes cuenta? <strong style="margin-left:4px">Inicia sesión</strong>' +
         '</button>' :
-        '<button class="btn btn-primary" style="width:100%" id="auth-submit" onclick="entrarConCorreo()">' +
-          'Entrar' +
-        '</button>' +
         '<button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="cambiarModoAuth(\'registro\')">' +
           '¿No tienes cuenta? <strong style="margin-left:4px">Regístrate aquí</strong>' +
         '</button>'
@@ -256,11 +313,63 @@ function _pintarAcceso() {
         'Entrar sin cuenta' +
       '</button>' +
     '</div>';
+
+  /* El correo recordado, puesto con .value y no dentro del HTML */
+  if (!esRegistro && _quiereRecordar()) {
+    var correo = '';
+    try { correo = localStorage.getItem(_CLAVE_CORREO) || ''; } catch (e) {}
+    var campoCorreo = document.getElementById('auth-email');
+    if (correo && campoCorreo) campoCorreo.value = correo;
+  }
 }
 
 function _errorAcceso(msg) {
   var el = document.getElementById('auth-error');
-  if (el) el.textContent = msg || '';
+  if (!el) return;
+  el.classList.remove('ok');
+  el.textContent = msg || '';
+}
+
+/* Un aviso que no es error (mismo lugar, otro color) */
+function _avisoAcceso(msg) {
+  var el = document.getElementById('auth-error');
+  if (!el) return;
+  el.classList.add('ok');
+  el.textContent = msg || '';
+}
+
+/* ¿Olvidaste tu contraseña? Firebase manda un correo con un enlace para poner
+   una nueva. Es una función que Firebase Auth ya trae: no cambia nada en
+   Firebase ni en js/auth.js. */
+function recuperarContrasena() {
+  _errorAcceso('');
+  var campo = document.getElementById('auth-email');
+  var email = ((campo || {}).value || '').trim();
+  if (!email) {
+    _errorAcceso('Escribe tu correo arriba y vuelve a tocar «¿Olvidaste tu contraseña?»');
+    if (campo) campo.focus();
+    return;
+  }
+  if (typeof firebase === 'undefined' || !firebase.auth) {
+    _errorAcceso('No hay conexión con el servidor. Inténtalo con internet.');
+    return;
+  }
+  var boton = document.getElementById('auth-olvido');
+  if (boton) boton.disabled = true;
+  var auth = firebase.auth();
+  auth.languageCode = 'es';   /* el correo llega en español */
+  auth.sendPasswordResetEmail(email)
+    .then(function() {
+      /* Firebase no dice si la cuenta existe, para no revelar qué correos tienen cuenta */
+      _avisoAcceso('Si hay una cuenta con ' + email + ', te llegará un correo para poner una contraseña nueva. ' +
+                   'Revisa también el correo no deseado.');
+    })
+    .catch(function(err) {
+      _errorAcceso(typeof translateAuthError === 'function'
+        ? translateAuthError(err).message
+        : 'No se pudo enviar el correo. Inténtalo de nuevo.');
+    })
+    .then(function() { if (boton) boton.disabled = false; });
 }
 
 function _cargando(activo, texto) {
@@ -275,6 +384,7 @@ function entrarConCorreo() {
   _errorAcceso('');
   var email = ((document.getElementById('auth-email') || {}).value || '').trim();
   var pass  = (document.getElementById('auth-pass')  || {}).value || '';
+  var recordar = !!(document.getElementById('auth-recordar') || {}).checked;
 
   if (!email) {
     _errorAcceso('Ingresa tu correo electrónico');
@@ -290,7 +400,10 @@ function entrarConCorreo() {
     email:    email,
     password: pass
   })
-  .then(function() { _actualizarGate(); })
+  .then(function() {
+    _recordarAcceso(email, pass, recordar);
+    _actualizarGate();
+  })
   .catch(function(err) {
     _cargando(false);
     _errorAcceso(err.message || 'No se pudo iniciar sesión');
@@ -309,6 +422,7 @@ function registrarConCorreo() {
   var email    = emailEl ? emailEl.value.trim() : '';
   var pass     = passEl ? passEl.value : '';
   var passConf = passConfEl ? passConfEl.value : '';
+  var recordar = !!(document.getElementById('auth-recordar') || {}).checked;
 
   if (!email) {
     _errorAcceso('Ingresa tu correo electrónico');
@@ -337,6 +451,7 @@ function registrarConCorreo() {
       config.bizName = name;
       if (typeof sv === 'function') sv('config', config);
     }
+    _recordarAcceso(email, pass, recordar);
     _actualizarGate();
   })
   .catch(function(err) {

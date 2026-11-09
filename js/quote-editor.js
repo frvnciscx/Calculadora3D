@@ -47,6 +47,7 @@ function handleLogoUpload(event) {
     sv('quoteStyle', quoteStyle);
     updateLogoPreview();
     updateQuotePreview();
+    if (typeof updateTopBar === 'function') updateTopBar();   /* el logo también va en la barra */
   };
   reader.readAsDataURL(file);
   event.target.value = '';
@@ -57,6 +58,7 @@ function removeLogo() {
   sv('quoteStyle', quoteStyle);
   updateLogoPreview();
   updateQuotePreview();
+  if (typeof updateTopBar === 'function') updateTopBar();
 }
 
 function onColorChange(field, colorInput) {
@@ -171,13 +173,35 @@ function updateQuotePreview() {
   }
 
   previewEl.innerHTML = buildQuoteHTML(previewData);
+  _ajustarVistaPrevia();
 }
+
+/* En escritorio la vista previa va en la columna derecha de Ajustes › Diseño:
+   se reduce (zoom) para que la hoja quepa a lo ancho, en vez de obligar a
+   desplazarse de lado. En el teléfono se queda como estaba. */
+function _ajustarVistaPrevia() {
+  var cont = document.getElementById('qe-live-preview');
+  var hoja = cont && cont.firstElementChild;
+  if (!hoja) return;
+  hoja.style.zoom = '';
+  if (window.innerWidth < 900) return;
+  var natural = hoja.scrollWidth;
+  var disponible = cont.clientWidth;
+  if (natural > disponible && disponible > 0) {
+    hoja.style.zoom = String(Math.max(0.4, disponible / natural));
+  }
+}
+
+window.addEventListener('resize', function() {
+  if (document.body.dataset.page === 'quote-editor') _ajustarVistaPrevia();
+});
 
 function resetQuoteStyle() {
   m3Confirm('¿Restaurar diseño a valores predeterminados?', function() {
     quoteStyle = { ...DEF_QUOTE_STYLE };
     sv('quoteStyle', quoteStyle);
     loadQuoteEditor();
+    if (typeof updateTopBar === 'function') updateTopBar();
     snack('Diseño restaurado');
   });
 }

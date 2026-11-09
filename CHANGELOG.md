@@ -29,6 +29,52 @@ app y volviendo a entrar.
 
 ---
 
+## 2026-11-09 · caché v108
+
+Cambios de diseño que pidió Francisco (D115–D126). La sincronización y la fórmula de costeo no
+cambian (44 pruebas en verde).
+
+### Añadido
+
+- **Pantalla de entrada:** casilla «Recordar contraseña» y un ojo para mostrar u ocultar la
+  contraseña. La contraseña la guarda el navegador o el teléfono, no la app; la app solo
+  recuerda el correo. Los campos ahora van en un formulario, para que el navegador ofrezca
+  guardarla.
+- **«¿Olvidaste tu contraseña?»:** Firebase manda un correo, en español, para poner una nueva.
+- **Barra lateral:** «Cerrar sesión» abajo, con el correo de la cuenta; un interruptor de modo
+  oscuro debajo de Ajustes; Clientes debajo de Inventario; y el logo de Ajustes › Diseño en el
+  ícono de arriba. Si el logo cambia en otro equipo, la barra se redibuja al momento: una línea
+  en `js/db.js`, en la lista de qué se redibuja cuando llega algo de la nube (D126).
+
+### Cambiado
+
+- **Ajustes › Diseño:** la vista previa de la cotización va a la derecha y se queda a la vista al
+  bajar. En el teléfono sigue debajo.
+- **Ajustes va centrado** en escritorio: encabezado, pestañas y contenido con el mismo ancho.
+- **El tema empieza en automático** (sigue al navegador) y se guarda en cada navegador, no en la
+  cuenta: cambiarlo ya no escribe en la nube ni lo cambia en los otros equipos. Quien había
+  elegido Claro lo conserva; en Ajustes › Otros sigue «Auto» para volver a automático.
+
+### Corregido
+
+- **En escritorio, Ajustes se salía 240 px por la derecha** y cortaba Exportar e Importar: el
+  panel medía toda la ventana aunque empieza después de la barra lateral.
+- **El logo nunca aparecía en la barra** (lateral ni de arriba): se buscaba con otro nombre.
+
+### Qué conviene probar en producción
+
+1. Entrar con la casilla marcada: el navegador ofrece guardar la contraseña. Al cerrar sesión y
+   volver, el correo aparece escrito.
+2. Ajustes › Diseño: cambiar un color y verlo en la vista previa de la derecha; subir el logo y
+   verlo en el ícono de la barra lateral.
+3. «¿Olvidaste tu contraseña?» con tu correo: llega el correo para poner una nueva.
+
+**Comprobado por Francisco el 2026-11-09, en su equipo y antes de publicar:** el navegador ofrece
+guardar la contraseña y, al crear una cuenta, sugiere una segura; el logo aparece en la barra
+lateral. Falta el 3, después de publicar.
+
+---
+
 ## 2026-11-09 · caché v107
 
 La sincronización con la nube ya no pierde registros. La fórmula de costeo no cambia (24 pruebas en verde).
@@ -55,6 +101,10 @@ La sincronización con la nube ya no pierde registros. La fórmula de costeo no 
 
 1. Guardar los gastos fijos, cerrar la app enseguida y volver a abrirla: siguen ahí.
 2. Duplicar una cotización y abrir la app en otro equipo: aparece.
+
+**Después de v107** se agregaron al repo las pruebas de la sincronización, de entrar con cuenta
+y de lo que une las pantallas con la nube y con la caché (`tests/`, D113). `npm test` pasa de 24
+a 43 pruebas. No cambian la app.
 
 ---
 

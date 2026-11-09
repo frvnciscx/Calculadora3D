@@ -8,12 +8,15 @@ Para Javi: qué hay en Firebase, las reglas de seguridad que faltaban y lo pendi
 
 **Cómo se trabaja en este repo:** las decisiones se anotan en el §2 de `reglas-de-negocio.md` (D#), y `main` se publica solo en Vercel. Antes de tocar scripts, ver las reglas de [`CLAUDE.md`](../CLAUDE.md): la lista de `sw.js` debe tener los mismos nombres que pide `index.html` (sin `?v=`), y `CACHE_NAME` sube en cada cambio publicado.
 
+**Antes de subir un cambio, `npm test`** (D113). Incluye las pruebas de la sincronización y de entrar con cuenta, con un Firestore de mentira ([`tests/nube-de-prueba.js`](../tests/nube-de-prueba.js)), sin tocar la nube real. Si cambias a propósito cómo sincroniza `js/db.js`, actualiza la prueba que corresponda, para que siga cuidando que no se pierdan registros.
+
 ---
 
 ## 1. Lo que hay hoy (v106)
 
 - **Proyecto** `calculadora3d-prod`. Inicio de sesión con correo, con Google (ventana emergente) y anónimo («Entrar sin cuenta», que no usa Firestore).
 - **Firestore** con copia en el dispositivo (`enablePersistence`). Estructura de [`modelo-de-datos.md`](modelo-de-datos.md): `usuarios/{uid}` y `negocios/neg_{uid}`, con `miembros`, y adentro `ajustes` (`general` y `documento`), `impresoras`, `materiales`, `rollos`, `clientes`, `productos` y `cotizaciones`.
+- **v108** (2026-11-09) cambió una sola línea de `js/db.js`: cuando llega de la nube el diseño de la cotización, se redibuja la barra con el logo (`_DOCS.quoteStyle.render`, D126). No cambia qué se guarda ni cómo se sincroniza. Lo demás de v108 es diseño.
 - **v107** (2026-11-09) corrigió que se borraran registros: ahora la app junta lo del dispositivo con la nube, en vez de reemplazarlo (ver el comentario de «Sincronización» en `js/db.js`). Cualquier `sv()` sube lo que cambió, y el historial y los favoritos ya están en la nube.
 - **v106** (2026-11-09) corrigió dos cosas de v105:
   - Entrar con cuenta borraba los datos del dispositivo. Ahora se decide antes de escuchar la nube.
@@ -106,4 +109,5 @@ Después, en la app, hacer lo mismo de verdad:
    - $2,000 de gastos fijos.
    - Su nombre cuando no escribe uno ([`js/db.js:121`](../js/db.js)).
 7. **Notion fuera** (D33). `api/notion.js` y `sendToNotion` todavía mandan a Notion las cotizaciones aceptadas.
-8. **Lo de los flujos:** pagos, estados nuevos, anticipo y fecha de entrega ([`flujos.md`](flujos.md) y `modelo-de-datos.md` §4.9 y §4.10).
+8. **Opcional: personalizar el correo de «¿Olvidaste tu contraseña?»** (D119, D127). Ya funciona con la plantilla que Firebase trae. Se cambia en Authentication › Templates › Restablecimiento de contraseña. Si el correo dice «project-…» en vez del nombre del negocio, se corrige en Configuración del proyecto › Nombre público.
+9. **Lo de los flujos:** pagos, estados nuevos, anticipo y fecha de entrega ([`flujos.md`](flujos.md) y `modelo-de-datos.md` §4.9 y §4.10).

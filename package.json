@@ -3,7 +3,7 @@
   "description": "La Casita del Molde — calculadora de costos e impresión 3D",
   "private": true,
   "scripts": {
-    "test": "node --test tests/costing.test.js"
+    "test": "node --test tests/costing.test.js tests/conexiones.test.js tests/sincronizacion.test.js tests/entrar-con-cuenta.test.js"
   },
   "devDependencies": {
     "sharp": "^0.34.5"

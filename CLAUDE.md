@@ -24,7 +24,7 @@ Estos documentos viven en el repo del Asistente y se leen de ahí: no se copian 
 
 | Documento | Qué tiene |
 |---|---|
-| [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) | Ciclo de vida de la cotización, anticipo, entrega, IVA, comisiones, empaque, cuentas, tiendas y qué entra a la primera versión. Es el **único registro de decisiones** (D1–D112 al 2026-11-09), también de las que salen de `flujos.md`, `modelo-de-datos.md` y `competencia.md`. Manda sobre los demás documentos cuando se contradigan |
+| [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) | Ciclo de vida de la cotización, anticipo, entrega, IVA, comisiones, empaque, cuentas, tiendas y qué entra a la primera versión. Es el **único registro de decisiones** (D1–D127 al 2026-11-09), también de las que salen de `flujos.md`, `modelo-de-datos.md` y `competencia.md`. Manda sobre los demás documentos cuando se contradigan |
 | [`docs/flujos.md`](docs/flujos.md) | Los flujos de la primera versión, con diagramas HTML en `docs/flujos/`. **Hechos los 7**, con sus preguntas respondidas, al 2026-11-03 |
 | [`docs/competencia.md`](docs/competencia.md) | Qué ofrecen las apps y plataformas que compiten, qué tienen y no tiene la app, y cómo proceder (2026-10-16) |
 | [`docs/modelo-de-datos.md`](docs/modelo-de-datos.md) | Qué guarda la app en Firebase, organizado por negocio, con su diagrama (2026-11-03). Sus preguntas, respondidas: D89–D98 |
@@ -69,5 +69,8 @@ Derivadas de los documentos de arriba. Si chocan, mandan ellos.
 - **Las reglas de seguridad de Firestore están en `firestore.rules`** (D108). Se cambian ahí y se publican en Firebase como dice `docs/firebase.md`; un cambio en el repo no las publica solo.
 - **Lo que se publica está en `.vercelignore`** como lista de lo que sí sale (D70). Si la app necesita un archivo nuevo en la raíz, hay que agregarlo ahí.
 - **Notion sale del proyecto; los datos y las cuentas van en Firebase** (D33 de `docs/reglas-de-negocio.md`, 2026-10-16). Lo que hoy usa Notion se retira; no se construye nada nuevo sobre él.
-- Si un cambio toca `js/costing.js`, correr `npm test` antes de reportar: las pruebas usan cotizaciones reales.
+- **Antes de reportar o subir un cambio a `js/`, `index.html`, `quote.html` o `sw.js`, también de diseño, correr `npm test`** (D113, confirmado en D114). Tarda unos segundos y no toca la nube real:
+  - `tests/costing.test.js`: la fórmula de costeo, con cotizaciones reales.
+  - `tests/sincronizacion.test.js` y `tests/entrar-con-cuenta.test.js`: que no se pierdan registros, con un Firestore de mentira (`tests/nube-de-prueba.js`).
+  - `tests/conexiones.test.js`: que existan las funciones y las listas que `js/db.js` usa por su nombre, y que la caché de `sw.js` y `.vercelignore` tengan lo que cargan las páginas.
 - La lista de caché de `sw.js` debe coincidir con los `<script>` y `<link>` de `index.html`, y `CACHE_NAME` sube en cada despliegue.

@@ -407,7 +407,10 @@ function showConfigPage(name) {
 
 /* ── Top-bar: nombre e imagen del negocio ───────────────────────── */
 function updateTopBar() {
-  var logoUrl = (typeof quoteStyle !== 'undefined' && quoteStyle && quoteStyle.logoDataUrl) ? quoteStyle.logoDataUrl : '';
+  /* El logo de Ajustes › Diseño se guarda en quoteStyle.logo. Antes se buscaba
+     en logoDataUrl, que nadie llena, y por eso nunca aparecía aquí (D123). */
+  var logoUrl = (typeof quoteStyle !== 'undefined' && quoteStyle)
+    ? (quoteStyle.logo || quoteStyle.logoDataUrl || '') : '';
   var bizName = (config && config.bizName) ? config.bizName : '';
 
   /* Top bar (móvil) */
