@@ -1,6 +1,8 @@
-const CACHE_NAME = 'calc3d-v105';
-/* IMPORTANTE: esta lista debe coincidir con los <script> y <link> de index.html.
-   Si agregas un archivo y olvidas ponerlo aquí, la app se rompe sin conexión.
+const CACHE_NAME = 'calc3d-v106';
+/* IMPORTANTE: esta lista debe coincidir con los <script> y <link> de index.html,
+   con el mismo nombre: `js/auth.js?v=105` no es `js/auth.js` para la caché.
+   La versión ya la da CACHE_NAME. Si agregas un archivo y olvidas ponerlo aquí,
+   la app se rompe sin conexión.
    Verificación rápida:
      grep -oE 'src="js/[^"]+"' index.html   →   compara con las rutas de abajo */
 const ASSETS = [
@@ -35,7 +37,12 @@ const ASSETS = [
   './js/dashboard.js',
   './assets/icon-192.png',
   './assets/icon-512.png',
-  './assets/icon.svg'
+  './assets/icon.svg',
+  /* Firebase viene de otro servidor; sin esto la app no abre sin conexión.
+     gstatic responde con Access-Control-Allow-Origin: *, así que se puede guardar. */
+  'https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js'
 ];
 
 self.addEventListener('install', event => {

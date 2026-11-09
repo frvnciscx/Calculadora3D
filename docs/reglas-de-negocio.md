@@ -4,7 +4,7 @@ Qué regla manda en cada paso de una cotización: qué acción la mueve de estad
 
 Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y la app se publica en las tiendas.
 
-**Actualizado:** 2026-11-03 (D87–D103: arranque de un negocio nuevo, modelo de datos y limpieza del repositorio; van 103 decisiones; las reglas de negocio se cerraron el 2026-10-16 y desde entonces suman las de `flujos.md`, `modelo-de-datos.md` y de publicación)
+**Actualizado:** 2026-11-09 (D104–D106, de la integración de Firebase; antes, D87–D103: arranque de un negocio nuevo, modelo de datos y limpieza del repositorio; van 106 decisiones; las reglas de negocio se cerraron el 2026-10-16 y desde entonces suman las de `flujos.md`, `modelo-de-datos.md` y de publicación)
 
 **Fuentes:** código v100 (`main`, commit `7cc4b14`) revisado el 2026-10-16 · decisiones del cotizador en el repo del Asistente (`docs/projects/cotizador/README.md`, 2026-10-15) · [`AUDITORIA-UX.md`](AUDITORIA-UX.md) · respuestas de Francisco a P1–P65 (2026-10-16) · requisitos de publicación de Apple y Google, y planes de Firebase, revisados el 2026-10-16 (fuentes en §4.10).
 
@@ -142,6 +142,9 @@ Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y l
 | D101 | Los tres `.docx` de documentación de la versión 1 salen de git, y `.gitignore` ignora los `.docx`. Francisco guarda una copia fuera del repo si la quiere | Francisco (P100: a) | 2026-11-03 |
 | D102 | `ordenes/` sale de git y se ignora, como los respaldos: las órdenes de compra son del negocio, no de la app, y se guardan fuera del repo | Francisco (P101: a) | 2026-11-03 |
 | D103 | `deploy.sh` se quita, con su sección del `README.md`: se publica con GitHub Desktop y un Pull Request, y su `git add .` podía subir archivos por error | Francisco (P102: a) | 2026-11-03 |
+| D104 | La integración de Firebase se queda en `main` y publicada («todo se agregó en main y funciona»). **Interpretación:** no se regresa a v102; las correcciones se hacen encima, en `main`. Se confirma en P108. **Confirmado en D105** | Francisco (respuesta a P104) | 2026-11-09 |
+| D105 | Confirma la interpretación de D104: Firebase se queda publicado y se corrige encima | Francisco (P108: «si») | 2026-11-09 |
+| D106 | Claude corrige los dos problemas graves de la integración, después de lo que Javi tenga pendiente. Las correcciones llegan a `main` con un Pull Request desde la carpeta de la sesión, porque la app no deja editar la carpeta principal desde la sesión | Francisco (P109: a) | 2026-11-09 |
 
 ---
 
@@ -941,6 +944,36 @@ Francisco pidió revisar qué no sirve en el repositorio y preguntarle antes de 
 - (a) Sí, con su sección del `README.md`. (b) No.
 - **Respuesta (2026-11-03): (a) → D103.**
 
+### Integración de Firebase (2026-11-09)
+
+Francisco pidió revisar qué cambia entre `main` y la rama `integración-firebase`. Las dos apuntan al mismo commit, `5355271` («🎉 Conexión inicial a firebase», de Javi Gama, 2026-11-06), así que Firebase ya está en `main` y publicado (caché `calc3d-v105`, comprobado el 2026-11-09). Problemas encontrados:
+
+- **Entrar con cuenta puede borrar los datos del dispositivo.** Al crear la cuenta, la app se conecta a la nube vacía antes de ofrecer subir los datos, y reemplaza con «nada» las cotizaciones, clientes, rollos y ajustes del dispositivo ([`js/db.js:148`](../js/db.js), [`:247`](../js/db.js)). En otro dispositivo, con una cuenta que ya existe, ni siquiera ofrece subirlos. Comprobado el 2026-11-09 corriendo `js/db.js` con un Firestore simulado: con la nube respondiendo en 0.3 s, quedaron 0 de 3 cotizaciones y 0 de 2 clientes, se subieron 0, y la app dijo «✓ Tus datos ya están en la nube». No se probó con el Firebase real: eso pide crear cuentas en él.
+- **Sin conexión, la app no abre.** `index.html` pide `js/auth.js?v=105`, `js/db.js?v=105` y `js/onboarding.js?v=105`, que el service worker no tiene guardados con ese nombre, y tampoco guarda la librería de Firebase. Comprobado en la caché de la app publicada el 2026-11-09.
+- **Las reglas de seguridad no están en el repo.** No se sabe si la consola quedó en «modo de prueba».
+
+| # | Pregunta | Recomendado | Estado |
+|---|---|---|---|
+| P103 | ¿Ya entraste con una cuenta en el dispositivo donde tienes tus cotizaciones? | — (era un dato) | Respondida: creó la cuenta en el teléfono y entró en la web; «eso funciona». Falta saber si sus cotizaciones siguen: P107 |
+| P104 | Qué hacer con la versión publicada mientras se corrige | (a) regresar `main` a v102 | Respondida: «todo se agregó en main y funciona» → D104 (con interpretación) |
+| P105 | Cómo quedan las reglas de seguridad | (a) las del §6 de `modelo-de-datos.md`, también en `firestore.rules` | Pendiente: Francisco no sabe cuáles hay |
+| P106 | Quién corrige los dos problemas graves | (b) Javi, con una lista | Francisco preguntó qué problemas hay; se explicó y se vuelve a preguntar en P109 |
+| P107 | ¿Siguen tus cotizaciones de antes? | — (era un dato) | Respondida: «no, se borró lo que tenía» |
+| P108 | ¿Se interpretó bien D104? | (a) sí | Respondida «si» → D105 |
+| P109 | Quién corrige los problemas 1 y 2 | (b) Javi, con una lista | Respondida (a) → D106 |
+
+**Los datos de La Casita del Molde se borraron** al entrar con la cuenta (P107, 2026-11-09): es el problema 1. No hay respaldos `calc3d_backup_*.json` en Descargas, Documentos ni el Escritorio (búsqueda por nombre, 2026-11-09). Queda de dónde recuperar: un dispositivo o navegador donde todavía no se haya entrado con la cuenta, y en Notion, la copia completa que guardaba la sincronización hasta v101 («App State — Calc3D») y las ventas aceptadas («Ventas Costeo»). Se pregunta en P110.
+
+**Corregido en v106** (2026-11-09, en la rama `claude/project-review-e78fd0`, falta el Pull Request):
+
+- **Entrar con cuenta ya no borra lo del dispositivo.** Lo que hay se decide antes de escuchar la nube: en una cuenta nueva se sube solo, ajustes incluidos (D40); en una cuenta que ya existía, la app pregunta si agregar las cotizaciones, los clientes y los rollos del dispositivo, y los ajustes de la cuenta se quedan (D86). Antes de subir, guarda una copia en el dispositivo (`c3d_respaldoAntesDeNube`, con el formato de Ajustes › Exportar). Sube en tandas de 450 (Firestore acepta 500) y sin campos vacíos, que hacían fallar la escritura completa. Comprobado con `js/db.js` y un Firestore simulado en 5 situaciones: con 600 cotizaciones, la cuenta nueva sube las 600 y conserva los gastos de $1,860; la cuenta que ya existía pregunta, y si se cancela no toca nada.
+- **La app abre sin conexión.** `index.html` pide los archivos sin `?v=105`, y el service worker guarda también la librería de Firebase. Comprobado: los 29 archivos que pide `index.html` están en su lista, y los tres de Firebase se guardan en la caché (prueba en el navegador).
+- **Importar un respaldo con sesión** también lo sube a la cuenta: sirve para recuperar datos.
+- **«Otros (sin desglosar)» ya se puede borrar** de los gastos fijos. Volvía porque la app comparaba con el total anterior ($2,000, los de ejemplo que quedaron al borrarse los datos) y creaba «Otros» con la diferencia. Ahora eso pasa solo la primera vez que se desglosa un total escrito a mano.
+- Lo que llega de la nube a Ajustes ya no se vuelve a escribir en ella cada vez que se abre la app.
+
+**Sigue pendiente:** las reglas de seguridad (P105), el folio que da Firebase (D89), bajar solo lo vivo y los últimos 3 meses (D90), y que un taller nuevo empiece sin los datos de La Casita del Molde (D47).
+
 ---
 
 ## 6. Lo que sigue
@@ -950,3 +983,4 @@ Francisco pidió revisar qué no sirve en el repositorio y preguntarle antes de 
 3. **Borrador del aviso de privacidad** (D51), antes de subir la app a Google Play.
 4. **Buscar «Placa 3D» en Marcanet y en Google Play** antes de pagar el dominio y la cuenta de desarrollador (D52, D56). Le toca a Francisco.
 5. ~~**Juntar v101 a `main`** con un Pull Request en GitHub: hasta entonces la app publicada sigue con la sincronización sin contraseña (D71) y con los documentos del repo a la vista (D70). Le toca a Francisco; la rama ya está en GitHub desde el 2026-11-03.~~ Hecho el 2026-11-03 (Pull Request #1, merge `92c5fb8`). Comprobado ese día, solo con códigos de estado: la app responde 200 con la caché `calc3d-v101`, y `/MEJORAS.md`, `/CHANGELOG.md`, `/README.md`, `/docs/AUDITORIA.md`, `/docs/reglas-de-negocio.md`, `/js/sync.js`, `/api/sync/pull` y `/api/sync/push` responden 404.
+6. **Corregir la integración de Firebase:** ~~que entrar con cuenta no borre los datos, que la app abra sin conexión~~ corregido en v106, falta juntarlo a `main`; revisar las reglas de seguridad (P105) y recuperar los datos de La Casita del Molde (P110) (§5, «Integración de Firebase»).

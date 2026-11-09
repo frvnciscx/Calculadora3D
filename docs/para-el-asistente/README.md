@@ -29,5 +29,5 @@ Lo de `forma-de-trabajo.md` ya está en el Asistente: la numeración distinta en
 Mensaje sugerido para la sesión del Asistente:
 
 ```text
-Lee docs/para-el-asistente/README.md del repo del cotizador (en la carpeta que dice «Repo del cotizador en este equipo» de ~/.claude/CLAUDE.md; ya está en main desde el 2026-11-03; si esa carpeta todavía no tiene docs/para-el-asistente/, está en .claude\worktrees\project-review-e78fd0\ dentro de ella) y aplica en este repo sus dos archivos: el README de docs/projects/cotizador y las viñetas para herramientas.md. Antes de agregar, revisa que nada ya esté. Sin commit hasta que lo revise.
+Lee docs/para-el-asistente/README.md del repo del cotizador (en la carpeta que dice «Repo del cotizador en este equipo» de ~/.claude/CLAUDE.md; está en main; si esa carpeta no tiene docs/para-el-asistente/, falta hacer «Pull origin» en GitHub Desktop) y aplica en este repo sus dos archivos: el README de docs/projects/cotizador y las viñetas para herramientas.md. Antes de agregar, revisa que nada ya esté. Sin commit hasta que lo revise.
 ```

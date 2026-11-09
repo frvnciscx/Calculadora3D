@@ -111,7 +111,7 @@ function resolverPerfilYNegocio(user) {
           currentNegocio = { nombre: 'Mi Negocio 3D', miembros: {} };
         }
         _notificarNegocio();
-        iniciarSincronizacionNegocio();
+        _prepararSincronizacion(false);
         return { perfil: currentPerfil, negocio: currentNegocio };
       });
     }
@@ -145,8 +145,7 @@ function resolverPerfilYNegocio(user) {
       currentNegocioId = negocioId;
       currentNegocio   = nuevoNegocio;
       _notificarNegocio();
-      iniciarSincronizacionNegocio();
-      _verificarMigracionInicial();
+      _prepararSincronizacion(true);
       return { perfil: currentPerfil, negocio: currentNegocio };
     });
   }).catch(function(err) {
@@ -230,6 +229,10 @@ function limpiarDatosLocales() {
 function iniciarSincronizacionNegocio() {
   if (!currentNegocioId || !_db) return;
   _detenerSincronizacion();
+
+  /* Desde aquí lo del dispositivo es copia de la nube: la próxima vez que se
+     abra no hay nada propio que ofrecer subir (_prepararSincronizacion). */
+  sv('migrado_' + currentNegocioId, true);
 
   var negRef = _db.collection('negocios').doc(currentNegocioId);
 
@@ -349,7 +352,9 @@ function iniciarSincronizacionNegocio() {
         config.bizName = currentNegocio.nombre;
       }
     }
-    sv('config', config);
+    /* Sin sv(): sv() avisa a dbNotificarEscritura, que volvería a escribir en la
+       nube lo que acaba de llegar de ella, una escritura de más cada vez que se abre. */
+    localStorage.setItem('c3d_config', JSON.stringify(config));
     if (typeof updateTopBar === 'function') updateTopBar();
     if (typeof loadConfig === 'function') loadConfig();
   }, function(err) { console.warn('[DB] Sync ajustes:', err); });
@@ -362,17 +367,23 @@ function iniciarSincronizacionNegocio() {
     } else {
       quoteStyle = { ...DEF_QUOTE_STYLE };
     }
-    sv('quoteStyle', quoteStyle);
+    localStorage.setItem('c3d_quoteStyle', JSON.stringify(quoteStyle));   /* sin sv(), como arriba */
   }, function(err) { console.warn('[DB] Sync estilo cotización:', err); });
   _dbUnsubs.push(unsubStyle);
 }
 
 /* ── Operaciones de Escritura a Firestore ───────────────────────── */
 
+/* Firestore rechaza los campos `undefined`, y uno solo hace fallar toda la
+   escritura. Pasar por JSON los quita (y convierte NaN en null). */
+function _limpio(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
 function dbGuardarCotizacion(q) {
   if (!currentNegocioId || !_db || !q || !q.id) return Promise.resolve();
   return _db.collection('negocios').doc(currentNegocioId)
-    .collection('cotizaciones').doc(String(q.id)).set(q, { merge: true })
+    .collection('cotizaciones').doc(String(q.id)).set(_limpio(q), { merge: true })
     .catch(function(err) { console.error('[DB] Error guardando cotización:', err); });
 }
 
@@ -386,7 +397,7 @@ function dbBorrarCotizacion(quoteId) {
 function dbGuardarRollo(rollo) {
   if (!currentNegocioId || !_db || !rollo || !rollo.id) return Promise.resolve();
   return _db.collection('negocios').doc(currentNegocioId)
-    .collection('rollos').doc(String(rollo.id)).set(rollo, { merge: true })
+    .collection('rollos').doc(String(rollo.id)).set(_limpio(rollo), { merge: true })
     .catch(function(err) { console.error('[DB] Error guardando rollo:', err); });
 }
 
@@ -400,7 +411,7 @@ function dbBorrarRollo(rolloId) {
 function dbGuardarCliente(c) {
   if (!currentNegocioId || !_db || !c || !c.id) return Promise.resolve();
   return _db.collection('negocios').doc(currentNegocioId)
-    .collection('clientes').doc(String(c.id)).set(c, { merge: true })
+    .collection('clientes').doc(String(c.id)).set(_limpio(c), { merge: true })
     .catch(function(err) { console.error('[DB] Error guardando cliente:', err); });
 }
 
@@ -414,7 +425,7 @@ function dbBorrarCliente(clienteId) {
 function dbGuardarImpresora(p) {
   if (!currentNegocioId || !_db || !p || !p.id) return Promise.resolve();
   return _db.collection('negocios').doc(currentNegocioId)
-    .collection('impresoras').doc(String(p.id)).set(p, { merge: true })
+    .collection('impresoras').doc(String(p.id)).set(_limpio(p), { merge: true })
     .catch(function(err) { console.error('[DB] Error guardando impresora:', err); });
 }
 
@@ -428,7 +439,7 @@ function dbBorrarImpresora(printerId) {
 function dbGuardarMaterial(m) {
   if (!currentNegocioId || !_db || !m || !m.id) return Promise.resolve();
   return _db.collection('negocios').doc(currentNegocioId)
-    .collection('materiales').doc(String(m.id)).set(m, { merge: true })
+    .collection('materiales').doc(String(m.id)).set(_limpio(m), { merge: true })
     .catch(function(err) { console.error('[DB] Error guardando material:', err); });
 }
 
@@ -442,7 +453,7 @@ function dbBorrarMaterial(materialId) {
 function dbGuardarProducto(prod) {
   if (!currentNegocioId || !_db || !prod || !prod.id) return Promise.resolve();
   return _db.collection('negocios').doc(currentNegocioId)
-    .collection('productos').doc(String(prod.id)).set(prod, { merge: true })
+    .collection('productos').doc(String(prod.id)).set(_limpio(prod), { merge: true })
     .catch(function(err) { console.error('[DB] Error guardando producto:', err); });
 }
 
@@ -456,14 +467,14 @@ function dbBorrarProducto(prodId) {
 function dbGuardarAjustes(cfg) {
   if (!currentNegocioId || !_db || !cfg) return Promise.resolve();
   return _db.collection('negocios').doc(currentNegocioId)
-    .collection('ajustes').doc('general').set(cfg, { merge: true })
+    .collection('ajustes').doc('general').set(_limpio(cfg), { merge: true })
     .catch(function(err) { console.error('[DB] Error guardando ajustes:', err); });
 }
 
 function dbGuardarEstiloCotizacion(style) {
   if (!currentNegocioId || !_db || !style) return Promise.resolve();
   return _db.collection('negocios').doc(currentNegocioId)
-    .collection('ajustes').doc('documento').set(style, { merge: true })
+    .collection('ajustes').doc('documento').set(_limpio(style), { merge: true })
     .catch(function(err) { console.error('[DB] Error guardando estilo:', err); });
 }
 
@@ -480,97 +491,138 @@ function dbNotificarEscritura(k, v) {
   }
 }
 
-/* ── Migración de datos locales a Firestore (D84, D94) ──────────── */
-function subirDatosLocales() {
+/* ── Lo que ya estaba en el dispositivo (D40, D84, D86, D94) ─────────
+   Se decide ANTES de escuchar la nube. Si se escucha primero, la nube (vacía en
+   una cuenta nueva) reemplaza lo del dispositivo antes de poder subirlo: así se
+   borraron los datos de La Casita del Molde el 2026-11-09. */
+
+/* Los dos clientes de ejemplo de store.js no cuentan como datos */
+function _clientesReales() {
+  return (typeof clients !== 'undefined' ? clients : []).filter(function(c) {
+    return c && c.id !== 'c1' && c.id !== 'c2';
+  });
+}
+
+function _hayDatosLocales() {
+  return (typeof quotes !== 'undefined' && quotes.length > 0) ||
+         _clientesReales().length > 0 ||
+         (typeof inventory !== 'undefined' && inventory.length > 0);
+}
+
+/* Copia de lo del dispositivo antes de tocar nada, con el formato de
+   Ajustes › Exportar. Se guarda una sola vez: si ya hay una, no se reemplaza,
+   porque la primera es la que tiene los datos de antes de la nube. */
+function _guardarRespaldoLocal() {
+  try {
+    if (localStorage.getItem('c3d_respaldoAntesDeNube')) return;
+    var copia = { v: 6, exportDate: new Date().toISOString() };
+    ['printers', 'materials', 'config', 'quoteStyle', 'history', 'quotes',
+     'quoteCounter', 'clients', 'inventory', 'presets', 'catalog'].forEach(function(k) {
+      var v = localStorage.getItem('c3d_' + k);
+      if (v !== null) copia[k] = JSON.parse(v);
+    });
+    localStorage.setItem('c3d_respaldoAntesDeNube', JSON.stringify(copia));
+  } catch (e) {
+    console.warn('[DB] No se pudo guardar el respaldo local:', e);
+  }
+}
+
+function _prepararSincronizacion(esNuevo) {
+  var marca = 'migrado_' + currentNegocioId;
+  var pendiente = _hayDatosLocales() && !ld(marca, false);
+  if (pendiente) _guardarRespaldoLocal();
+
+  /* Cuenta nueva: lo del dispositivo se sube solo, ajustes incluidos (D40) */
+  if (esNuevo) {
+    subirDatosLocales({ incluirAjustes: true })
+      .then(function(n) {
+        if (n.cotizaciones && typeof snack === 'function') {
+          snack('Subí ' + n.cotizaciones + ' cotizaciones a tu cuenta');
+        }
+        iniciarSincronizacionNegocio();
+      })
+      .catch(function(err) {
+        /* No se escucha la nube: así no reemplaza lo que no se pudo subir */
+        console.error('[DB] No se pudieron subir los datos del dispositivo:', err);
+        if (typeof snack === 'function') {
+          snack('No se pudieron subir tus datos: siguen en este dispositivo. Vuelve a entrar con conexión.');
+        }
+      });
+    return;
+  }
+
+  if (!pendiente) {
+    iniciarSincronizacionNegocio();
+    return;
+  }
+
+  /* Cuenta que ya existía y un dispositivo con datos que no están en ella.
+     Los ajustes de la cuenta se quedan (D86); se ofrece agregar las
+     cotizaciones, los clientes y los rollos (D94). Si se cancela, todo sigue
+     en el dispositivo, sin escuchar la nube, y se vuelve a preguntar la
+     próxima vez. */
+  var detalle = 'En este dispositivo hay ' + quotes.length + ' cotizaciones, ' +
+                _clientesReales().length + ' clientes y ' + inventory.length +
+                ' rollos que no están en tu cuenta. Los ajustes de tu cuenta no cambian.';
+  if (typeof m3Confirm !== 'function') return;
+  m3Confirm('¿Agregar a tu cuenta lo de este dispositivo?', function() {
+    if (typeof snack === 'function') snack('Subiendo a tu cuenta…');
+    subirDatosLocales({ incluirAjustes: false })
+      .then(function(n) {
+        if (typeof snack === 'function') snack('Agregué ' + n.cotizaciones + ' cotizaciones a tu cuenta');
+        iniciarSincronizacionNegocio();
+      })
+      .catch(function(err) {
+        console.error('[DB] No se pudieron subir los datos del dispositivo:', err);
+        if (typeof snack === 'function') snack('No se pudieron subir: siguen en este dispositivo.');
+      });
+  }, { confirmLabel: 'Agregar', icon: 'cloud_upload', detail: detalle });
+}
+
+/* Sube lo del dispositivo y devuelve cuántos registros subió.
+   incluirAjustes: también ajustes, impresoras, materiales y productos. */
+function subirDatosLocales(opts) {
+  opts = opts || {};
   if (!currentNegocioId || !_db) {
     return Promise.reject(new Error('No hay sesión o negocio activo para subir datos.'));
   }
 
-  var batch = _db.batch();
   var negRef = _db.collection('negocios').doc(currentNegocioId);
-
-  // 1. Ajustes generales y de documento
-  if (typeof config !== 'undefined') {
-    batch.set(negRef.collection('ajustes').doc('general'), config, { merge: true });
-  }
-  if (typeof quoteStyle !== 'undefined') {
-    batch.set(negRef.collection('ajustes').doc('documento'), quoteStyle, { merge: true });
-  }
-
-  // 2. Impresoras
-  if (typeof printers !== 'undefined' && Array.isArray(printers)) {
-    printers.forEach(function(p) {
-      batch.set(negRef.collection('impresoras').doc(String(p.id)), p, { merge: true });
+  var ops = [];
+  function agregar(coleccion, lista) {
+    if (!Array.isArray(lista)) return 0;
+    lista.forEach(function(x) {
+      if (x && x.id != null) ops.push([negRef.collection(coleccion).doc(String(x.id)), x]);
     });
+    return lista.length;
   }
 
-  // 3. Materiales
-  if (typeof materials !== 'undefined' && Array.isArray(materials)) {
-    materials.forEach(function(m) {
-      batch.set(negRef.collection('materiales').doc(String(m.id)), m, { merge: true });
+  if (opts.incluirAjustes) {
+    if (typeof config !== 'undefined')     ops.push([negRef.collection('ajustes').doc('general'), config]);
+    if (typeof quoteStyle !== 'undefined') ops.push([negRef.collection('ajustes').doc('documento'), quoteStyle]);
+    agregar('impresoras', typeof printers !== 'undefined' ? printers : []);
+    agregar('materiales', typeof materials !== 'undefined' ? materials : []);
+    agregar('productos', typeof catalogItems !== 'undefined' ? catalogItems : []);
+  }
+  var n = {
+    rollos:       agregar('rollos', typeof inventory !== 'undefined' ? inventory : []),
+    clientes:     agregar('clientes', _clientesReales()),
+    cotizaciones: agregar('cotizaciones', typeof quotes !== 'undefined' ? quotes : [])
+  };
+
+  /* Firestore acepta hasta 500 escrituras por tanda */
+  var tandas = [];
+  for (var i = 0; i < ops.length; i += 450) tandas.push(ops.slice(i, i + 450));
+  return tandas.reduce(function(anterior, tanda) {
+    return anterior.then(function() {
+      var batch = _db.batch();
+      tanda.forEach(function(op) { batch.set(op[0], _limpio(op[1]), { merge: true }); });
+      return batch.commit();
     });
-  }
-
-  // 4. Inventario (Rollos)
-  if (typeof inventory !== 'undefined' && Array.isArray(inventory)) {
-    inventory.forEach(function(r) {
-      batch.set(negRef.collection('rollos').doc(String(r.id)), r, { merge: true });
-    });
-  }
-
-  // 5. Clientes
-  if (typeof clients !== 'undefined' && Array.isArray(clients)) {
-    clients.forEach(function(c) {
-      batch.set(negRef.collection('clientes').doc(String(c.id)), c, { merge: true });
-    });
-  }
-
-  // 6. Productos de catálogo
-  if (typeof catalogItems !== 'undefined' && Array.isArray(catalogItems)) {
-    catalogItems.forEach(function(p) {
-      batch.set(negRef.collection('productos').doc(String(p.id)), p, { merge: true });
-    });
-  }
-
-  // 7. Cotizaciones
-  if (typeof quotes !== 'undefined' && Array.isArray(quotes)) {
-    quotes.forEach(function(q) {
-      batch.set(negRef.collection('cotizaciones').doc(String(q.id)), q, { merge: true });
-    });
-  }
-
-  return batch.commit().then(function() {
-    console.log('[DB] Todos los datos locales subidos con éxito a Firestore.');
-    return true;
+  }, Promise.resolve()).then(function() {
+    sv('migrado_' + currentNegocioId, true);
+    return n;
   });
-}
-
-function _verificarMigracionInicial() {
-  if (!currentNegocioId) return;
-  var tieneDatos = (typeof quotes !== 'undefined' && quotes.length > 0);
-  var yaMigrado  = ld('migrado_' + currentNegocioId, false);
-
-  if (tieneDatos && !yaMigrado) {
-    setTimeout(function() {
-      if (typeof m3Confirm === 'function') {
-        m3Confirm('¿Subir tus cotizaciones y catálogos a la nube?', function() {
-          if (typeof snack === 'function') snack('Subiendo datos a tu cuenta…');
-          subirDatosLocales().then(function() {
-            sv('migrado_' + currentNegocioId, true);
-            if (typeof snack === 'function') snack('✓ Tus datos ya están en la nube');
-          }).catch(function() {
-            if (typeof snack === 'function') snack('Error al subir datos a la nube');
-          });
-        }, {
-          confirmLabel: 'Subir a la nube',
-          cancelLabel:  'Más tarde',
-          icon:         'cloud_upload',
-          detail:       'Tienes cotizaciones y catálogos en este dispositivo. ' +
-                        'Al subirlos se guardarán en tu cuenta y podrás verlos en cualquier equipo.'
-        });
-      }
-    }, 1200);
-  }
 }
 
 /* ── Escuchar cambios de Auth para inicializar/limpiar negocio ────── */

@@ -115,11 +115,17 @@ function saveConfig() {
      diferencia se conserva en una fila "Otros" en vez de desaparecer.
 
      Antes: total manual de $2 000 + un ítem de $500 = $500. Se perdían $1 500
-     sin aviso y todas las piezas quedaban subcotizadas. */
-  function _conciliar(items, totalPrevio) {
+     sin aviso y todas las piezas quedaban subcotizadas.
+
+     Solo aplica la primera vez que se desglosa. Si ya había desglose, la suma de
+     las filas es el total: borrar una fila, incluida «Otros», la quita del total.
+     Antes se volvía a crear «Otros» con lo borrado y no había forma de bajar el
+     total (reportado por Francisco el 2026-11-09). */
+  function _conciliar(items, totalPrevio, itemsPrevios) {
     if (items.length === 0) return { items: items, total: null };
     var suma = items.reduce(function(s, it) { return s + it.amount; }, 0);
-    var dif  = (totalPrevio || 0) - suma;
+    var yaHabiaDesglose = Array.isArray(itemsPrevios) && itemsPrevios.length > 0;
+    var dif  = yaHabiaDesglose ? 0 : (totalPrevio || 0) - suma;
     if (dif > 0.5) {
       items = items.concat([{ name: 'Otros (sin desglosar)', amount: +dif.toFixed(2) }]);
       suma  = totalPrevio;
@@ -127,11 +133,11 @@ function saveConfig() {
     return { items: items, total: suma };
   }
 
-  var fci = _conciliar(_readCostItems('fci'), config.fixedMonthlyCost);
+  var fci = _conciliar(_readCostItems('fci'), config.fixedMonthlyCost, config.fixedCostItems);
   if (fci.total !== null) fixed = fci.total;
   config.fixedCostItems = fci.items;
 
-  var ici = _conciliar(_readCostItems('ici'), config.indirectMonthlyCost);
+  var ici = _conciliar(_readCostItems('ici'), config.indirectMonthlyCost, config.indirectCostItems);
   if (ici.total !== null) indirect = ici.total;
   config.indirectCostItems = ici.items;
 
@@ -424,6 +430,15 @@ function _aplicarImportacion(data) {
       if (Array.isArray(data.clients))   { clients   = data.clients;   sv('clients',   clients);   }
       if (Array.isArray(data.inventory)) { inventory = data.inventory; sv('inventory', inventory); }
       if (Array.isArray(data.presets))   { presets   = data.presets;   sv('presets',   presets);   }
+
+      /* Con sesión, lo importado también va a la cuenta. Si no, la nube no se
+         entera y la próxima vez que se abra la app lo reemplaza con lo de antes. */
+      if (typeof subirDatosLocales === 'function' && typeof getCurrentNegocioId === 'function' &&
+          getCurrentNegocioId()) {
+        subirDatosLocales({ incluirAjustes: true })
+          .then(function(n) { snack('Datos importados y subidos a tu cuenta (' + n.cotizaciones + ' cotizaciones)'); })
+          .catch(function() { snack('Datos importados en este dispositivo; no se pudieron subir a tu cuenta'); });
+      }
 
       snack('Datos importados');
       populateSelects();

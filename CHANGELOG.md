@@ -29,6 +29,42 @@ app y volviendo a entrar.
 
 ---
 
+## 2026-11-09 · caché v106
+
+Correcciones a la conexión con Firebase. La fórmula de costeo no cambia (24 pruebas en verde).
+
+### Corregido
+
+- **Entrar con cuenta borraba los datos del dispositivo.** La app escuchaba la nube antes de
+  subir lo que había, y la nube vacía de una cuenta nueva reemplazaba cotizaciones, clientes,
+  rollos y ajustes. Ahora decide primero: en una cuenta nueva lo sube solo; en una cuenta que ya
+  existía pregunta si agregarlo, y los ajustes de la cuenta se quedan. Antes de subir guarda una
+  copia en el dispositivo (`c3d_respaldoAntesDeNube`).
+- **La app no abría sin conexión.** `index.html` pedía `js/auth.js?v=105` y el service worker lo
+  tenía guardado como `js/auth.js`; tampoco guardaba la librería de Firebase. Ahora coinciden, y
+  los tres archivos de Firebase se guardan en la caché.
+- **«Otros (sin desglosar)» volvía** al borrarlo de los gastos fijos. Ahora solo se crea la
+  primera vez que se desglosa un total escrito a mano.
+- Importar un respaldo con sesión también lo sube a la cuenta.
+- Las escrituras a Firestore quitan los campos vacíos (`undefined`), que hacían fallar la
+  escritura completa, y suben en tandas de 450.
+
+### Qué conviene probar en producción
+
+1. Sin conexión: abrir la app una vez con señal, cerrarla, poner modo avión y volver a abrirla.
+2. En un navegador sin datos importantes: entrar con la cuenta y ver que aparezcan los datos de la nube.
+
+---
+
+## 2026-11-06 · caché v105
+
+Conexión inicial a Firebase (Javi Gama, commit `5355271`): inicio de sesión con correo, Google y
+sin cuenta; negocio y persona en Firestore como dice `docs/modelo-de-datos.md`; cotizaciones,
+clientes, rollos, impresoras, materiales, productos y ajustes en la nube, con copia en el
+dispositivo. Anotada el 2026-11-09 en la revisión de `docs/reglas-de-negocio.md` §5.
+
+---
+
 ## 2026-11-04 · caché v102
 
 Cambios de pantalla, sobre todo en escritorio. La fórmula de costeo no cambia (24 pruebas en verde).
