@@ -323,6 +323,8 @@ service cloud.firestore {
 
 Léelo así: *«dentro de un negocio, lee y escribe solo quien está en su lista de miembros»*.
 
+**Desde el 2026-11-09 viven en [`firestore.rules`](../firestore.rules)** (D108), ajustadas a lo que hace `js/db.js`: el negocio se llama `neg_` + uid, solo se crea el propio, y la sesión anónima no entra. Cómo publicarlas y probarlas: [`firebase.md`](firebase.md).
+
 - **Cuesta una lectura por consulta**, no por documento: para revisar la lista, la regla lee el documento del negocio. Por eso ese documento es corto (§4.2).
 - **Cuando haya roles** (D36), la regla de `update` del negocio se cierra para que solo el dueño cambie la lista de miembros.
 - **Nunca se publica con las reglas de prueba** que ofrece Firebase al crear el proyecto (`BASE-DE-DATOS.md` §5).

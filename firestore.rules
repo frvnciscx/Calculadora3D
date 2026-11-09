@@ -1,0 +1,61 @@
+rules_version = '2';
+
+// Reglas de seguridad de Cloud Firestore del cotizador («Placa 3D»).
+//
+// Cada negocio lo ven y lo cambian solo sus miembros (D46 de docs/reglas-de-negocio.md;
+// diseño en docs/modelo-de-datos.md §6). Cómo publicarlas y probarlas: docs/firebase.md.
+//
+// Escritas el 2026-11-09 para lo que hace js/db.js en v106: el negocio se llama
+// 'neg_' + uid, la persona es su único miembro con rol 'dueño', y todo lo demás
+// vive en subcolecciones del negocio.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Sesión con correo o Google. «Entrar sin cuenta» (anónima) no tiene negocio (D39, D84).
+    function conCuenta() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    // Lee el documento del negocio: cuesta una lectura por consulta, no por documento.
+    function esMiembro(negocioId) {
+      return conCuenta()
+        && request.auth.uid in get(/databases/$(database)/documents/negocios/$(negocioId)).data.miembros;
+    }
+
+    // usuarios/{uid}: a qué negocio entra la persona. Solo ella lo lee y lo cambia.
+    match /usuarios/{uid} {
+      allow read, write: if conCuenta() && request.auth.uid == uid;
+    }
+
+    match /negocios/{negocioId} {
+      // Crear: solo el negocio propio, con quien lo crea como único miembro y dueño.
+      allow create: if conCuenta()
+        && negocioId == 'neg_' + request.auth.uid
+        && request.resource.data.miembros.keys().hasOnly([request.auth.uid])
+        && request.resource.data.miembros[request.auth.uid] == 'dueño';
+
+      allow read: if conCuenta() && request.auth.uid in resource.data.miembros;
+
+      // Cambiar el negocio: solo el dueño, sin tocar la lista de miembros.
+      // Cuando haya roles (D36), aquí se abre que el dueño agregue personas.
+      allow update: if conCuenta()
+        && resource.data.miembros[request.auth.uid] == 'dueño'
+        && request.resource.data.miembros == resource.data.miembros;
+
+      // Borrar el negocio: solo el dueño, al borrar su cuenta (D41).
+      allow delete: if conCuenta()
+        && resource.data.miembros[request.auth.uid] == 'dueño';
+
+      // Todo lo de adentro: ajustes, contadores, catálogos, rollos, clientes,
+      // cotizaciones y, cuando lleguen, pagos.
+      match /{coleccion}/{docId} {
+        allow read, write: if esMiembro(negocioId);
+      }
+    }
+
+    // Todo lo demás queda cerrado. Las ligas públicas para que el cliente acepte
+    // (ligas/{token}, D63) se abren cuando se construyan.
+  }
+}

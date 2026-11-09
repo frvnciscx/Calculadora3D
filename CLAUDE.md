@@ -24,10 +24,11 @@ Estos documentos viven en el repo del Asistente y se leen de ahí: no se copian 
 
 | Documento | Qué tiene |
 |---|---|
-| [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) | Ciclo de vida de la cotización, anticipo, entrega, IVA, comisiones, empaque, cuentas, tiendas y qué entra a la primera versión. Es el **único registro de decisiones** (D1–D106 al 2026-11-09), también de las que salen de `flujos.md`, `modelo-de-datos.md` y `competencia.md`. Manda sobre los demás documentos cuando se contradigan |
+| [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) | Ciclo de vida de la cotización, anticipo, entrega, IVA, comisiones, empaque, cuentas, tiendas y qué entra a la primera versión. Es el **único registro de decisiones** (D1–D112 al 2026-11-09), también de las que salen de `flujos.md`, `modelo-de-datos.md` y `competencia.md`. Manda sobre los demás documentos cuando se contradigan |
 | [`docs/flujos.md`](docs/flujos.md) | Los flujos de la primera versión, con diagramas HTML en `docs/flujos/`. **Hechos los 7**, con sus preguntas respondidas, al 2026-11-03 |
 | [`docs/competencia.md`](docs/competencia.md) | Qué ofrecen las apps y plataformas que compiten, qué tienen y no tiene la app, y cómo proceder (2026-10-16) |
 | [`docs/modelo-de-datos.md`](docs/modelo-de-datos.md) | Qué guarda la app en Firebase, organizado por negocio, con su diagrama (2026-11-03). Sus preguntas, respondidas: D89–D98 |
+| [`docs/firebase.md`](docs/firebase.md) | Para Javi: lo que hay en Firebase, cómo publicar y probar las reglas de seguridad, y lo que falta de la integración, en orden (2026-11-09) |
 | [`docs/BASE-DE-DATOS.md`](docs/BASE-DE-DATOS.md) | El diseño anterior (2026-10-05), por persona. Superado en parte por `modelo-de-datos.md`; no se renombra: en Windows sería el mismo archivo que `base-de-datos.md` |
 | [`docs/MAPA-DE-SITIO.md`](docs/MAPA-DE-SITIO.md) | Qué pantallas existen y qué se puede añadir |
 | [`docs/AUDITORIA.md`](docs/AUDITORIA.md) | Revisión del código (2026-10-04) con orden de trabajo |
@@ -61,10 +62,11 @@ Derivadas de los documentos de arriba. Si chocan, mandan ellos.
 
 - **Preguntas en bloques de 10**, con la opción recomendada, al final de la respuesta y numeradas (P#). Cada decisión se anota con fecha y quién la tomó; nada se borra: lo superado se tacha o se marca.
 - **Lo que una respuesta no deja claro** se aplica con la lectura más razonable, se escribe en la decisión como «Interpretación:» y se pregunta en el siguiente bloque; al confirmarse, «Confirmado en Dnnn» (forma de trabajo §3).
-- **Git:** el commit, el push y el merge los hace Francisco con GitHub Desktop. Al cerrar, decir qué archivos cambiaron y proponer el mensaje del commit.
+- **Git:** los cambios suben directo a `main`, sin ramas en GitHub (D109, confirmado en D110). `main` se publica solo en Vercel, así que se prueba antes de subir. El commit y el push los hace Francisco con GitHub Desktop, salvo que pida que los haga Claude. Al cerrar, decir qué archivos cambiaron y proponer el mensaje del commit.
 - **La app publicada es `calculadora3-d-delta.vercel.app`, con guion.** `calculadora3d-delta` (sin guion) es otro producto. ~~El `README.md` todavía apunta ahí~~ (corregido el 2026-11-03).
 - **No capturar datos de prueba en la app publicada** sin permiso. (La sincronización con Notion se quitó en v101, D71.)
 - **En git va solo lo de la app y sus documentos.** La documentación vieja en Word, las órdenes de compra, los respaldos y `node_modules/` están en `.gitignore` (D99–D103). Antes de agregar un archivo nuevo a la raíz, ver si es del negocio y no de la app.
+- **Las reglas de seguridad de Firestore están en `firestore.rules`** (D108). Se cambian ahí y se publican en Firebase como dice `docs/firebase.md`; un cambio en el repo no las publica solo.
 - **Lo que se publica está en `.vercelignore`** como lista de lo que sí sale (D70). Si la app necesita un archivo nuevo en la raíz, hay que agregarlo ahí.
 - **Notion sale del proyecto; los datos y las cuentas van en Firebase** (D33 de `docs/reglas-de-negocio.md`, 2026-10-16). Lo que hoy usa Notion se retira; no se construye nada nuevo sobre él.
 - Si un cambio toca `js/costing.js`, correr `npm test` antes de reportar: las pruebas usan cotizaciones reales.

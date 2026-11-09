@@ -370,6 +370,8 @@ function entrarSinCuenta() {
 
 function cerrarSesion() {
   m3Confirm('¿Cerrar sesión?', function() {
+    /* Los ajustes esperan 0.8 s antes de subir: que suban ya, antes de esperar lo pendiente */
+    if (typeof dbVaciarPendientes === 'function') dbVaciarPendientes();
     var checkWrites = Promise.resolve();
     var db = (typeof getDb === 'function') ? getDb() : null;
     if (db && typeof db.waitForPendingWrites === 'function') {

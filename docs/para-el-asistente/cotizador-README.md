@@ -2,9 +2,9 @@
 
 Qué es el cotizador de impresión 3D, dónde vive cada cosa, qué decidió Francisco y qué sigue. Las decisiones nuevas viven en el repo del cotizador; este README es el índice.
 
-**Actualizado:** 2026-11-03
+**Actualizado:** 2026-11-09
 
-**Fuentes:** la app publicada y su código (revisados el 2026-10-15) · repo `frvnciscx/Calculadora3D`: `docs/reglas-de-negocio.md` (D1–D103), `docs/flujos.md`, `docs/modelo-de-datos.md`, `docs/competencia.md`, `docs/aprendizajes.md` y `CHANGELOG.md` (caché `calc3d-v101`), al 2026-11-03 · preparado desde la sesión del producto, en `docs/para-el-asistente/` de su repo · versión anterior: 2026-10-16.
+**Fuentes:** la app publicada y su código (revisados el 2026-10-15) · repo `frvnciscx/Calculadora3D`: `docs/reglas-de-negocio.md` (D1–D107), `docs/flujos.md`, `docs/modelo-de-datos.md`, `docs/competencia.md`, `docs/aprendizajes.md` y `CHANGELOG.md` (caché `calc3d-v101`), al 2026-11-03 · preparado desde la sesión del producto, en `docs/para-el-asistente/` de su repo · versión anterior: 2026-10-16.
 
 > **No es Teckio.** Es un producto aparte: las reglas 1–5 de [`CLAUDE.md`](../../../CLAUDE.md), `DESIGN.md` e `INSTRUCTIONS.md` no aplican. Sus diagramas usan el estilo neutro de `/diagram-design`.
 
@@ -13,7 +13,7 @@ Qué es el cotizador de impresión 3D, dónde vive cada cosa, qué decidió Fran
 ## 1. Qué es
 
 - **Calculadora de costos y cotizador de impresión 3D** del negocio de Francisco, «La Casita del Molde» (Estudio 3D). Calcula el costo real de una pieza (material, energía, depreciación, gastos fijos e indirectos, mantenimiento, desperdicio, post-procesado y diseño), con impresoras FDM y de resina, multicolor AMS y piezas por placa; arma órdenes de varias partidas y las convierte en cotizaciones (PDF, imagen, WhatsApp, QR); lleva clientes, catálogo, inventario de rollos e impresoras.
-- **Hoy:** una sola página HTML con JavaScript sin framework, publicada en Vercel, con los datos en `localStorage`.
+- **Hoy:** una sola página HTML con JavaScript sin framework, publicada en Vercel. Desde v105 (2026-11-06) hay cuentas y datos en Firebase, con copia en el dispositivo; la conexión la hizo Javi Gama, que colabora en el código. v106 (2026-11-09) corrigió que entrar con cuenta borraba los datos del dispositivo (así se perdieron los de La Casita del Molde, que no se recuperan: D107) y que la app no abría sin conexión.
 - **Hacia dónde va** (decisiones del 2026-10-16 al 2026-11-03 en su repo):
   - Producto para otros talleres de impresión 3D en México, publicado primero en Google Play y después en la App Store, con prueba cerrada antes (D34, D38, D43).
   - Nombre provisional «Placa 3D» (D56). ~~«Quotia»~~ se descartó porque ya existe un QUOTIA en español (D54).
@@ -29,7 +29,7 @@ Qué es el cotizador de impresión 3D, dónde vive cada cosa, qué decidió Fran
 | App publicada | `calculadora3-d-delta.vercel.app` | Con guion. `calculadora3d-delta` (sin guion) es **otro producto** («3D COST PRO»). El README del repo se corrigió el 2026-11-03 |
 | Código | Repo privado `frvnciscx/Calculadora3D`, rama `main` | Las sesiones trabajan en su worktree (`claude/<nombre>`). Francisco hace el commit y publica la rama con GitHub Desktop, y la junta a `main` con un Pull Request en GitHub |
 | Proyecto de Claude Code | Una carpeta por equipo, anotada en su `~/.claude/CLAUDE.md` («Repo del cotizador en este equipo») | Su `CLAUDE.md` escribe `<ASISTENTE>` en lugar de la ruta de este repo desde el 2026-10-19 |
-| Decisiones | `docs/reglas-de-negocio.md` §2 de su repo | Único registro (D1–D103 al 2026-11-03), también de las que salen de `flujos.md` y `competencia.md`. Con fecha y quién la tomó; nada se borra |
+| Decisiones | `docs/reglas-de-negocio.md` §2 de su repo | Único registro (D1–D107 al 2026-11-09), también de las que salen de `flujos.md` y `competencia.md`. Con fecha y quién la tomó; nada se borra |
 | Flujos | `docs/flujos.md` y `docs/flujos/` de su repo | Los 7 de la primera versión, con diagramas de `/diagram-design` y sus preguntas respondidas al 2026-11-03 |
 | Modelo de datos | `docs/modelo-de-datos.md` de su repo | Firebase por negocio, con diagrama, al 2026-11-03. Reemplaza en parte a `BASE-DE-DATOS.md` |
 | Competencia | `docs/competencia.md` de su repo | 12 apps y plataformas revisadas el 2026-10-16; la directa en México es Bugeo App |
@@ -64,6 +64,7 @@ Las del arranque, del 2026-10-15 y 2026-10-16. Desde el 2026-10-16 las decisione
 3. ~~**`base-de-datos.md`:** el modelo organizado por negocio (D46), completo aunque la primera versión no use todo, y al día con v100.~~ Hecho el 2026-11-03 como `modelo-de-datos.md`; sus preguntas se respondieron el mismo día (D89–D98).
 4. **Borrador del aviso de privacidad** (D51), antes de subir la app a Google Play.
 5. ~~**Juntar v101 a `main`:** quita la sincronización sin contraseña y deja de publicar los documentos del repo (D70, D71). La rama está en GitHub desde el 2026-11-03; falta el Pull Request.~~ Hecho el 2026-11-03 (Pull Request #1) y comprobado: los documentos y `/api/sync/` responden 404.
+6. **Reglas de seguridad de Firestore:** desde el 2026-11-09 están en `firestore.rules` del repo, con una guía para Javi en `docs/firebase.md` (D108); falta que él las revise y publique, y es urgente: el 2026-11-09 las reglas de la consola dejaban leer a cualquiera. La misma guía trae lo que falta de la integración. Los registros que se borraban con v106 (cotizaciones, clientes y ajustes) se corrigieron en v107.
 
 ---
 

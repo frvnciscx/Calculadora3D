@@ -11,6 +11,8 @@
        clientes/{id}                -> Directorio de clientes
        productos/{id}               -> Catálogo de productos frecuentes
        cotizaciones/{id}            -> Cotizaciones con partidas
+       calculos/{id}                -> Historial de cálculos, los últimos 100
+       favoritos/{id}               -> Combinaciones guardadas (presets)
    ========================================================================= */
 
 var _db = null;
@@ -82,6 +84,9 @@ function _detenerSincronizacion() {
     try { unsub(); } catch (e) {}
   });
   _dbUnsubs = [];
+  _escuchando = false;
+  Object.keys(_timersDoc).forEach(function(k) { clearTimeout(_timersDoc[k]); });
+  _timersDoc = {};
 }
 
 /* ── Vinculación de Usuario y Negocio (D36, D46) ─────────────────── */
@@ -177,6 +182,7 @@ function limpiarDatosLocales() {
     catalogItems = [];
   }
   history = [];
+  if (typeof presets !== 'undefined') presets = [];
 
   /* 2. Restablecer catálogos base y configuración */
   if (typeof DEF_PRINTERS !== 'undefined') {
@@ -198,9 +204,22 @@ function limpiarDatosLocales() {
   localStorage.removeItem('c3d_clients');
   localStorage.removeItem('c3d_catalog');
   localStorage.removeItem('c3d_history');
+  localStorage.removeItem('c3d_presets');
   localStorage.removeItem('c3d_draftQuote');
   localStorage.removeItem('c3d_quoteCounter');
   try { sessionStorage.removeItem('c3d_lastCalc'); } catch (e) {}
+
+  /* Lo que se recordaba de la nube de esa cuenta. Si se quedara, al volver a
+     entrar los valores de ejemplo de abajo parecerían cambios del dispositivo
+     y se subirían encima de los de la cuenta. */
+  for (var i = localStorage.length - 1; i >= 0; i--) {
+    var clave = localStorage.key(i);
+    if (clave && (clave.indexOf('c3d_nube_') === 0 || clave.indexOf('c3d_migrado_') === 0)) {
+      localStorage.removeItem(clave);
+    }
+  }
+  _base = {};
+  _enviado = {};
 
   localStorage.setItem('c3d_printers', JSON.stringify(printers));
   localStorage.setItem('c3d_materials', JSON.stringify(materials));
@@ -225,151 +244,280 @@ function limpiarDatosLocales() {
   }
 }
 
-/* ── Sincronización en tiempo real con Firestore ─────────────────── */
-function iniciarSincronizacionNegocio() {
+/* ── Sincronización: juntar lo del dispositivo con la nube ─────────────
+   Hasta v106, cada aviso de la nube reemplazaba la lista completa del
+   dispositivo, y se perdía lo que no había alcanzado a subir: cotizaciones,
+   clientes, gastos fijos, gastos indirectos y datos del negocio (reportado
+   por Francisco el 2026-11-09, D111).
+
+   Ahora se juntan los dos lados. De cada registro se recuerda su «firma» tal
+   como llegó la última vez de la nube (la base, en c3d_nube_<negocio>).
+   Cuando llega la nube:
+     - si desde la base solo cambió el dispositivo, gana el dispositivo y se sube;
+     - si cambió la nube, gana la nube;
+     - lo que solo está en el dispositivo y nunca llegó de la nube se conserva y
+       se sube; lo que sí había llegado y ya no está, se borró en otro equipo.
+   Y cada sv() sube lo que cambió, venga de la pantalla que venga. */
+
+var _LISTAS = {
+  quotes:    { col: 'cotizaciones', render: ['renderQuotes', 'renderDashboard'], orden: 'quoteDate' },
+  clients:   { col: 'clientes',     render: ['renderClients'] },
+  inventory: { col: 'rollos',       render: ['renderInventory'] },
+  catalog:   { col: 'productos',    render: ['renderCatalogList'] },
+  printers:  { col: 'impresoras',   render: ['populateSelects', 'renderPrinters'] },
+  materials: { col: 'materiales',   render: ['populateSelects', 'renderMaterials'] },
+  /* Estas dos solo cambian por acciones de la persona (guardar, borrar, limpiar),
+     así que lo que ya no está en el dispositivo se borra también de la nube. */
+  history:   { col: 'calculos',     render: ['renderHistory'], orden: 'date', borrarLoQueFalta: true },
+  presets:   { col: 'favoritos',    render: ['renderPresets'], borrarLoQueFalta: true }
+};
+var _DOCS = {
+  config:     { doc: 'general',   render: ['updateTopBar', 'loadConfig'] },
+  quoteStyle: { doc: 'documento', render: [] }
+};
+
+var _escuchando = false;
+var _base = {};       /* clave -> { id: firma } en las listas, o la firma en los documentos */
+var _enviado = {};    /* lo que ya se mandó y la nube todavía no devuelve */
+var _timersDoc = {};
+var _contadorIds = 0;
+
+function _leerLocal(k) {
+  switch (k) {
+    case 'quotes':     return quotes;
+    case 'clients':    return clients;
+    case 'inventory':  return inventory;
+    case 'catalog':    return typeof catalogItems !== 'undefined' ? catalogItems : [];
+    case 'printers':   return printers;
+    case 'materials':  return materials;
+    case 'history':    return history;
+    case 'presets':    return typeof presets !== 'undefined' ? presets : [];
+    case 'config':     return config;
+    case 'quoteStyle': return quoteStyle;
+  }
+}
+
+function _ponerLocal(k, v) {
+  switch (k) {
+    case 'quotes':     quotes = v; break;
+    case 'clients':    clients = v; break;
+    case 'inventory':  inventory = v; break;
+    case 'catalog':    catalogItems = v; break;
+    case 'printers':   printers = v; break;
+    case 'materials':  materials = v; break;
+    case 'history':    history = v; break;
+    case 'presets':    presets = v; break;
+    case 'config':     config = v; break;
+    case 'quoteStyle': quoteStyle = v; break;
+  }
+  /* Directo a localStorage, sin sv(): sv() volvería a subir lo que acaba de llegar */
+  try { localStorage.setItem('c3d_' + k, JSON.stringify(v)); } catch (e) {}
+}
+
+function _pintar(nombres) {
+  nombres.forEach(function(n) {
+    if (typeof window[n] === 'function') {
+      try { window[n](); } catch (e) { console.warn('[DB] Error pintando ' + n + ':', e); }
+    }
+  });
+}
+
+/* JSON con las llaves en orden: la nube no devuelve los campos en el mismo
+   orden en que se guardaron, y sin esto todo parecería cambiado. */
+function _estable(v) {
+  if (v === null || v === undefined || typeof v !== 'object') {
+    return JSON.stringify(v === undefined ? null : v) || 'null';
+  }
+  if (Array.isArray(v)) return '[' + v.map(_estable).join(',') + ']';
+  return '{' + Object.keys(v).filter(function(c) { return v[c] !== undefined; }).sort()
+    .map(function(c) { return JSON.stringify(c) + ':' + _estable(v[c]); }).join(',') + '}';
+}
+
+function _firma(obj) {
+  var s = _estable(obj), h = 5381;
+  for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36) + '.' + s.length;
+}
+
+/* El historial y los favoritos no traían id; sin id no hay documento */
+function _asignarIds(k, lista) {
+  var asignados = false;
+  (lista || []).forEach(function(x) {
+    if (x && typeof x === 'object' && x.id == null) {
+      x.id = Date.now().toString(36) + '-' + (_contadorIds++).toString(36);
+      asignados = true;
+    }
+  });
+  if (asignados) {
+    try { localStorage.setItem('c3d_' + k, JSON.stringify(lista)); } catch (e) {}
+  }
+}
+
+function _claveBase() { return 'c3d_nube_' + currentNegocioId; }
+
+function _cargarBase() {
+  try { _base = JSON.parse(localStorage.getItem(_claveBase()) || '{}') || {}; }
+  catch (e) { _base = {}; }
+}
+
+function _guardarBase() {
+  if (!currentNegocioId) return;
+  try { localStorage.setItem(_claveBase(), JSON.stringify(_base)); } catch (e) {}
+}
+
+function _refNegocio() {
+  return _db.collection('negocios').doc(currentNegocioId);
+}
+
+function _escribirRegistro(k, x) {
+  if (!currentNegocioId || !_db || !x || x.id == null) return Promise.resolve();
+  var id = String(x.id), f = _firma(x);
+  var enviado = _enviado[k] || (_enviado[k] = {});
+  if (enviado[id] === f || (_base[k] && _base[k][id] === f)) return Promise.resolve();
+  enviado[id] = f;
+  return _refNegocio().collection(_LISTAS[k].col).doc(id).set(_limpio(x))
+    .catch(function(err) { console.error('[DB] Error guardando en ' + _LISTAS[k].col + ':', err); });
+}
+
+function _borrarRegistro(k, id) {
+  if (!currentNegocioId || !_db || id == null) return Promise.resolve();
+  id = String(id);
+  if (_base[k]) { delete _base[k][id]; _guardarBase(); }
+  if (_enviado[k]) delete _enviado[k][id];
+  return _refNegocio().collection(_LISTAS[k].col).doc(id).delete()
+    .catch(function(err) { console.error('[DB] Error borrando de ' + _LISTAS[k].col + ':', err); });
+}
+
+function _escribirDoc(k, v) {
+  if (!currentNegocioId || !_db || !v) return Promise.resolve();
+  var f = _firma(v);
+  if (_enviado[k] === f || _base[k] === f) return Promise.resolve();
+  _enviado[k] = f;
+  return _refNegocio().collection('ajustes').doc(_DOCS[k].doc).set(_limpio(v))
+    .catch(function(err) { console.error('[DB] Error guardando ajustes/' + _DOCS[k].doc + ':', err); });
+}
+
+/* Llega una lista de la nube */
+function _alLlegarLista(k, snap, conservarLocales) {
+  var cfg = _LISTAS[k];
+  var primera = !_base[k];
+  var base = _base[k] || {};
+  var nube = {}, nuevaBase = {};
+  snap.forEach(function(doc) {
+    var d = doc.data();
+    d.id = doc.id;
+    nube[doc.id] = d;
+    nuevaBase[doc.id] = _firma(d);
+  });
+
+  var local = (_leerLocal(k) || []).filter(function(x) { return x && typeof x === 'object'; });
+  _asignarIds(k, local);
+
+  var resultado = [], subir = [], vistos = {};
+  local.forEach(function(l) {
+    var id = String(l.id), n = nube[id];
+    vistos[id] = true;
+    if (n) {
+      /* Desde la última vez solo cambió el dispositivo: gana el dispositivo */
+      if (!primera && _firma(l) !== nuevaBase[id] && base[id] === nuevaBase[id]) {
+        resultado.push(l);
+        subir.push(l);
+      } else {
+        resultado.push(n);
+      }
+    } else if (base[id]) {
+      /* Había llegado de la nube y ya no está: se borró en otro equipo */
+    } else if (primera && !conservarLocales) {
+      /* Primera vez de este dispositivo con esta cuenta: manda la cuenta (D86) */
+    } else {
+      /* Nunca llegó a la nube: se conserva y se sube */
+      resultado.push(l);
+      subir.push(l);
+    }
+  });
+  Object.keys(nube).forEach(function(id) { if (!vistos[id]) resultado.push(nube[id]); });
+
+  /* Sin impresoras ni materiales la calculadora no funciona */
+  if (!resultado.length && (k === 'printers' || k === 'materials')) {
+    var def = k === 'printers'
+      ? (typeof DEF_PRINTERS !== 'undefined' ? DEF_PRINTERS : [])
+      : (typeof DEF_MATERIALS !== 'undefined' ? DEF_MATERIALS : []);
+    resultado = def.map(function(x) { return Object.assign({}, x); });
+    subir = resultado.slice();
+  }
+  if (cfg.orden) {
+    resultado.sort(function(a, b) { return new Date(b[cfg.orden] || 0) - new Date(a[cfg.orden] || 0); });
+  }
+
+  _base[k] = nuevaBase;
+  _guardarBase();
+  _ponerLocal(k, resultado);
+  subir.forEach(function(x) { _escribirRegistro(k, x); });
+  _pintar(cfg.render);
+}
+
+function _defDoc(k) {
+  if (k === 'config') return typeof DEF_CONFIG !== 'undefined' ? DEF_CONFIG : {};
+  return typeof DEF_QUOTE_STYLE !== 'undefined' ? DEF_QUOTE_STYLE : {};
+}
+
+/* Llega un documento de ajustes de la nube */
+function _alLlegarDoc(k, doc) {
+  var local = _leerLocal(k) || {};
+  if (!doc.exists) {
+    /* La cuenta todavía no lo tiene: se sube el del dispositivo */
+    var v = Object.assign({}, _defDoc(k), local);
+    if (k === 'config' && !v.bizName && currentNegocio && currentNegocio.nombre) v.bizName = currentNegocio.nombre;
+    _ponerLocal(k, v);
+    _escribirDoc(k, v);
+    _pintar(_DOCS[k].render);
+    return;
+  }
+  var primera = _base[k] === undefined;
+  var nube = Object.assign({}, _defDoc(k), doc.data());
+  var fn = _firma(nube);
+  /* Los valores de ejemplo nunca se suben encima de los de la cuenta */
+  var deEjemplo = _firma(local) === _firma(Object.assign({}, _defDoc(k)));
+  if (!primera && !deEjemplo && _firma(local) !== fn && _base[k] === fn) {
+    /* Solo cambió el dispositivo (por ejemplo, se cerró la app antes de subir): gana el dispositivo */
+    _escribirDoc(k, local);
+  } else {
+    _ponerLocal(k, nube);
+    _pintar(_DOCS[k].render);
+  }
+  _base[k] = fn;
+  _guardarBase();
+}
+
+function iniciarSincronizacionNegocio(opts) {
   if (!currentNegocioId || !_db) return;
   _detenerSincronizacion();
+
+  /* conservarLocales: el dispositivo ya estaba sincronizado con esta cuenta,
+     así que lo que tenga y no esté en la nube es algo que no alcanzó a subir. */
+  var conservar = Boolean(opts && opts.conservarLocales);
 
   /* Desde aquí lo del dispositivo es copia de la nube: la próxima vez que se
      abra no hay nada propio que ofrecer subir (_prepararSincronizacion). */
   sv('migrado_' + currentNegocioId, true);
 
-  var negRef = _db.collection('negocios').doc(currentNegocioId);
+  _cargarBase();
+  _enviado = {};
+  _escuchando = true;
 
-  /* 1. Cotizaciones */
-  var unsubQuotes = negRef.collection('cotizaciones').onSnapshot(function(snap) {
-    var remoteQuotes = [];
-    snap.forEach(function(doc) {
-      var q = doc.data();
-      q.id = doc.id;
-      remoteQuotes.push(q);
-    });
-    remoteQuotes.sort(function(a, b) {
-      return new Date(b.quoteDate || 0) - new Date(a.quoteDate || 0);
-    });
-    quotes = remoteQuotes;
-    sv('quotes', quotes);
-    if (typeof renderQuotes === 'function') renderQuotes();
-    if (typeof renderDashboard === 'function') renderDashboard();
-  }, function(err) { console.warn('[DB] Sync cotizaciones:', err); });
-  _dbUnsubs.push(unsubQuotes);
-
-  /* 2. Clientes */
-  var unsubClients = negRef.collection('clientes').onSnapshot(function(snap) {
-    var remoteClients = [];
-    snap.forEach(function(doc) {
-      var c = doc.data();
-      c.id = doc.id;
-      remoteClients.push(c);
-    });
-    clients = remoteClients;
-    sv('clients', clients);
-    if (typeof renderClients === 'function') renderClients();
-  }, function(err) { console.warn('[DB] Sync clientes:', err); });
-  _dbUnsubs.push(unsubClients);
-
-  /* 3. Rollos (Inventario) */
-  var unsubRollos = negRef.collection('rollos').onSnapshot(function(snap) {
-    var remoteRollos = [];
-    snap.forEach(function(doc) {
-      var r = doc.data();
-      r.id = doc.id;
-      remoteRollos.push(r);
-    });
-    inventory = remoteRollos;
-    sv('inventory', inventory);
-    if (typeof renderInventory === 'function') renderInventory();
-  }, function(err) { console.warn('[DB] Sync rollos:', err); });
-  _dbUnsubs.push(unsubRollos);
-
-  /* 4. Impresoras */
-  var unsubPrinters = negRef.collection('impresoras').onSnapshot(function(snap) {
-    if (!snap.empty) {
-      var remotePrinters = [];
-      snap.forEach(function(doc) {
-        var p = doc.data();
-        p.id = doc.id;
-        remotePrinters.push(p);
-      });
-      printers = remotePrinters;
-      sv('printers', printers);
-    } else {
-      /* Negocio sin impresoras guardadas aún: usar base estándar */
-      if (typeof DEF_PRINTERS !== 'undefined') {
-        printers = DEF_PRINTERS.map(function(p) { return Object.assign({}, p); });
-        sv('printers', printers);
-      }
-    }
-    if (typeof populateSelects === 'function') populateSelects();
-    if (typeof renderPrinters === 'function') renderPrinters();
-  }, function(err) { console.warn('[DB] Sync impresoras:', err); });
-  _dbUnsubs.push(unsubPrinters);
-
-  /* 5. Materiales */
-  var unsubMaterials = negRef.collection('materiales').onSnapshot(function(snap) {
-    if (!snap.empty) {
-      var remoteMaterials = [];
-      snap.forEach(function(doc) {
-        var m = doc.data();
-        m.id = doc.id;
-        remoteMaterials.push(m);
-      });
-      materials = remoteMaterials;
-      sv('materials', materials);
-    } else {
-      /* Negocio sin materiales guardados aún: usar base estándar */
-      if (typeof DEF_MATERIALS !== 'undefined') {
-        materials = DEF_MATERIALS.map(function(m) { return Object.assign({}, m); });
-        sv('materials', materials);
-      }
-    }
-    if (typeof populateSelects === 'function') populateSelects();
-    if (typeof renderMaterials === 'function') renderMaterials();
-  }, function(err) { console.warn('[DB] Sync materiales:', err); });
-  _dbUnsubs.push(unsubMaterials);
-
-  /* 6. Productos frecuentes */
-  var unsubProducts = negRef.collection('productos').onSnapshot(function(snap) {
-    var remoteProducts = [];
-    snap.forEach(function(doc) {
-      var p = doc.data();
-      p.id = doc.id;
-      remoteProducts.push(p);
-    });
-    catalogItems = remoteProducts;
-    sv('catalog', catalogItems);
-    if (typeof renderCatalogList === 'function') renderCatalogList();
-  }, function(err) { console.warn('[DB] Sync productos:', err); });
-  _dbUnsubs.push(unsubProducts);
-
-  /* 7. Ajustes de costeo */
-  var unsubConfig = negRef.collection('ajustes').doc('general').onSnapshot(function(doc) {
-    if (doc.exists) {
-      config = { ...DEF_CONFIG, ...doc.data() };
-    } else {
-      config = { ...DEF_CONFIG };
-      if (currentNegocio && currentNegocio.nombre) {
-        config.bizName = currentNegocio.nombre;
-      }
-    }
-    /* Sin sv(): sv() avisa a dbNotificarEscritura, que volvería a escribir en la
-       nube lo que acaba de llegar de ella, una escritura de más cada vez que se abre. */
-    localStorage.setItem('c3d_config', JSON.stringify(config));
-    if (typeof updateTopBar === 'function') updateTopBar();
-    if (typeof loadConfig === 'function') loadConfig();
-  }, function(err) { console.warn('[DB] Sync ajustes:', err); });
-  _dbUnsubs.push(unsubConfig);
-
-  /* 8. Estilo de cotización */
-  var unsubStyle = negRef.collection('ajustes').doc('documento').onSnapshot(function(doc) {
-    if (doc.exists) {
-      quoteStyle = { ...DEF_QUOTE_STYLE, ...doc.data() };
-    } else {
-      quoteStyle = { ...DEF_QUOTE_STYLE };
-    }
-    localStorage.setItem('c3d_quoteStyle', JSON.stringify(quoteStyle));   /* sin sv(), como arriba */
-  }, function(err) { console.warn('[DB] Sync estilo cotización:', err); });
-  _dbUnsubs.push(unsubStyle);
+  var negRef = _refNegocio();
+  Object.keys(_LISTAS).forEach(function(k) {
+    _dbUnsubs.push(negRef.collection(_LISTAS[k].col).onSnapshot(
+      function(snap) { _alLlegarLista(k, snap, conservar); },
+      function(err) { console.warn('[DB] Sync ' + _LISTAS[k].col + ':', err); }
+    ));
+  });
+  Object.keys(_DOCS).forEach(function(k) {
+    _dbUnsubs.push(negRef.collection('ajustes').doc(_DOCS[k].doc).onSnapshot(
+      function(doc) { _alLlegarDoc(k, doc); },
+      function(err) { console.warn('[DB] Sync ajustes/' + _DOCS[k].doc + ':', err); }
+    ));
+  });
 }
 
 /* ── Operaciones de Escritura a Firestore ───────────────────────── */
@@ -380,115 +528,76 @@ function _limpio(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
-function dbGuardarCotizacion(q) {
-  if (!currentNegocioId || !_db || !q || !q.id) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('cotizaciones').doc(String(q.id)).set(_limpio(q), { merge: true })
-    .catch(function(err) { console.error('[DB] Error guardando cotización:', err); });
-}
+/* Las llaman las pantallas. Desde v107 también sube cualquier sv() (abajo),
+   así que estas llamadas ya no son las únicas por donde llega algo a la nube. */
+function dbGuardarCotizacion(q)        { return _escribirRegistro('quotes', q); }
+function dbBorrarCotizacion(id)        { return _borrarRegistro('quotes', id); }
+function dbGuardarRollo(rollo)         { return _escribirRegistro('inventory', rollo); }
+function dbBorrarRollo(id)             { return _borrarRegistro('inventory', id); }
+function dbGuardarCliente(c)           { return _escribirRegistro('clients', c); }
+function dbBorrarCliente(id)           { return _borrarRegistro('clients', id); }
+function dbGuardarImpresora(p)         { return _escribirRegistro('printers', p); }
+function dbBorrarImpresora(id)         { return _borrarRegistro('printers', id); }
+function dbGuardarMaterial(m)          { return _escribirRegistro('materials', m); }
+function dbBorrarMaterial(id)          { return _borrarRegistro('materials', id); }
+function dbGuardarProducto(prod)       { return _escribirRegistro('catalog', prod); }
+function dbBorrarProducto(id)          { return _borrarRegistro('catalog', id); }
+function dbGuardarAjustes(cfg)         { return _escribirDoc('config', cfg); }
+function dbGuardarEstiloCotizacion(st) { return _escribirDoc('quoteStyle', st); }
 
-function dbBorrarCotizacion(quoteId) {
-  if (!currentNegocioId || !_db || !quoteId) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('cotizaciones').doc(String(quoteId)).delete()
-    .catch(function(err) { console.error('[DB] Error borrando cotización:', err); });
-}
-
-function dbGuardarRollo(rollo) {
-  if (!currentNegocioId || !_db || !rollo || !rollo.id) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('rollos').doc(String(rollo.id)).set(_limpio(rollo), { merge: true })
-    .catch(function(err) { console.error('[DB] Error guardando rollo:', err); });
-}
-
-function dbBorrarRollo(rolloId) {
-  if (!currentNegocioId || !_db || !rolloId) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('rollos').doc(String(rolloId)).delete()
-    .catch(function(err) { console.error('[DB] Error borrando rollo:', err); });
-}
-
-function dbGuardarCliente(c) {
-  if (!currentNegocioId || !_db || !c || !c.id) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('clientes').doc(String(c.id)).set(_limpio(c), { merge: true })
-    .catch(function(err) { console.error('[DB] Error guardando cliente:', err); });
-}
-
-function dbBorrarCliente(clienteId) {
-  if (!currentNegocioId || !_db || !clienteId) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('clientes').doc(String(clienteId)).delete()
-    .catch(function(err) { console.error('[DB] Error borrando cliente:', err); });
-}
-
-function dbGuardarImpresora(p) {
-  if (!currentNegocioId || !_db || !p || !p.id) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('impresoras').doc(String(p.id)).set(_limpio(p), { merge: true })
-    .catch(function(err) { console.error('[DB] Error guardando impresora:', err); });
-}
-
-function dbBorrarImpresora(printerId) {
-  if (!currentNegocioId || !_db || !printerId) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('impresoras').doc(String(printerId)).delete()
-    .catch(function(err) { console.error('[DB] Error borrando impresora:', err); });
-}
-
-function dbGuardarMaterial(m) {
-  if (!currentNegocioId || !_db || !m || !m.id) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('materiales').doc(String(m.id)).set(_limpio(m), { merge: true })
-    .catch(function(err) { console.error('[DB] Error guardando material:', err); });
-}
-
-function dbBorrarMaterial(materialId) {
-  if (!currentNegocioId || !_db || !materialId) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('materiales').doc(String(materialId)).delete()
-    .catch(function(err) { console.error('[DB] Error borrando material:', err); });
-}
-
-function dbGuardarProducto(prod) {
-  if (!currentNegocioId || !_db || !prod || !prod.id) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('productos').doc(String(prod.id)).set(_limpio(prod), { merge: true })
-    .catch(function(err) { console.error('[DB] Error guardando producto:', err); });
-}
-
-function dbBorrarProducto(prodId) {
-  if (!currentNegocioId || !_db || !prodId) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('productos').doc(String(prodId)).delete()
-    .catch(function(err) { console.error('[DB] Error borrando producto:', err); });
-}
-
-function dbGuardarAjustes(cfg) {
-  if (!currentNegocioId || !_db || !cfg) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('ajustes').doc('general').set(_limpio(cfg), { merge: true })
-    .catch(function(err) { console.error('[DB] Error guardando ajustes:', err); });
-}
-
-function dbGuardarEstiloCotizacion(style) {
-  if (!currentNegocioId || !_db || !style) return Promise.resolve();
-  return _db.collection('negocios').doc(currentNegocioId)
-    .collection('ajustes').doc('documento').set(_limpio(style), { merge: true })
-    .catch(function(err) { console.error('[DB] Error guardando estilo:', err); });
-}
-
-/* Gancho universal para llamadas directas a sv(k, v) */
-var _dbSyncTimers = {};
-function dbNotificarEscritura(k, v) {
-  if (!currentNegocioId || !_db) return;
-  if (k === 'config') {
-    clearTimeout(_dbSyncTimers['config']);
-    _dbSyncTimers['config'] = setTimeout(function() { dbGuardarAjustes(v); }, 800);
-  } else if (k === 'quoteStyle') {
-    clearTimeout(_dbSyncTimers['quoteStyle']);
-    _dbSyncTimers['quoteStyle'] = setTimeout(function() { dbGuardarEstiloCotizacion(v); }, 800);
+/* Sube lo que cambió en una lista. Sin nube todavía no hace nada: se junta
+   cuando llegue (_alLlegarLista). */
+function _alGuardarLista(k, lista) {
+  if (!_escuchando) return;
+  _asignarIds(k, lista);
+  var base = _base[k] || {}, ids = {};
+  (lista || []).forEach(function(x) {
+    if (!x || typeof x !== 'object') return;
+    ids[String(x.id)] = true;
+    _escribirRegistro(k, x);
+  });
+  if (_LISTAS[k].borrarLoQueFalta) {
+    Object.keys(base).forEach(function(id) { if (!ids[id]) _borrarRegistro(k, id); });
   }
+}
+
+function _escribirDocSiCambio(k) {
+  _escribirDoc(k, _leerLocal(k));
+}
+
+/* Los ajustes esperan a que se deje de escribir. Si la app se cierra antes,
+   se suben al ocultarse; y si ni eso alcanza, la próxima vez que se abra
+   _alLlegarDoc ve que solo cambió el dispositivo y los sube. */
+function _alGuardarDoc(k) {
+  if (!_escuchando) return;
+  clearTimeout(_timersDoc[k]);
+  _timersDoc[k] = setTimeout(function() {
+    delete _timersDoc[k];
+    _escribirDocSiCambio(k);
+  }, 800);
+}
+
+function dbVaciarPendientes() {
+  Object.keys(_timersDoc).forEach(function(k) {
+    clearTimeout(_timersDoc[k]);
+    delete _timersDoc[k];
+    if (_escuchando) _escribirDocSiCambio(k);
+  });
+}
+
+if (typeof document !== 'undefined' && document.addEventListener) {
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') dbVaciarPendientes();
+  });
+}
+if (typeof window !== 'undefined' && window.addEventListener) {
+  window.addEventListener('pagehide', dbVaciarPendientes);
+}
+
+/* Gancho de sv(k, v) en store.js: todo lo que se guarda en el dispositivo */
+function dbNotificarEscritura(k, v) {
+  if (_LISTAS[k]) _alGuardarLista(k, v);
+  else if (_DOCS[k]) _alGuardarDoc(k);
 }
 
 /* ── Lo que ya estaba en el dispositivo (D40, D84, D86, D94) ─────────
@@ -539,7 +648,7 @@ function _prepararSincronizacion(esNuevo) {
         if (n.cotizaciones && typeof snack === 'function') {
           snack('Subí ' + n.cotizaciones + ' cotizaciones a tu cuenta');
         }
-        iniciarSincronizacionNegocio();
+        iniciarSincronizacionNegocio({ conservarLocales: false });
       })
       .catch(function(err) {
         /* No se escucha la nube: así no reemplaza lo que no se pudo subir */
@@ -552,7 +661,8 @@ function _prepararSincronizacion(esNuevo) {
   }
 
   if (!pendiente) {
-    iniciarSincronizacionNegocio();
+    /* Si ya se había sincronizado aquí, lo que falte en la nube no alcanzó a subir */
+    iniciarSincronizacionNegocio({ conservarLocales: ld(marca, false) });
     return;
   }
 
@@ -563,14 +673,15 @@ function _prepararSincronizacion(esNuevo) {
      próxima vez. */
   var detalle = 'En este dispositivo hay ' + quotes.length + ' cotizaciones, ' +
                 _clientesReales().length + ' clientes y ' + inventory.length +
-                ' rollos que no están en tu cuenta. Los ajustes de tu cuenta no cambian.';
+                ' rollos que no están en tu cuenta, además del historial de cálculos. ' +
+                'Los ajustes de tu cuenta no cambian.';
   if (typeof m3Confirm !== 'function') return;
   m3Confirm('¿Agregar a tu cuenta lo de este dispositivo?', function() {
     if (typeof snack === 'function') snack('Subiendo a tu cuenta…');
     subirDatosLocales({ incluirAjustes: false })
       .then(function(n) {
         if (typeof snack === 'function') snack('Agregué ' + n.cotizaciones + ' cotizaciones a tu cuenta');
-        iniciarSincronizacionNegocio();
+        iniciarSincronizacionNegocio({ conservarLocales: false });
       })
       .catch(function(err) {
         console.error('[DB] No se pudieron subir los datos del dispositivo:', err);
@@ -603,7 +714,9 @@ function subirDatosLocales(opts) {
     agregar('impresoras', typeof printers !== 'undefined' ? printers : []);
     agregar('materiales', typeof materials !== 'undefined' ? materials : []);
     agregar('productos', typeof catalogItems !== 'undefined' ? catalogItems : []);
+    if (typeof presets !== 'undefined') { _asignarIds('presets', presets); agregar('favoritos', presets); }
   }
+  if (typeof history !== 'undefined') { _asignarIds('history', history); agregar('calculos', history); }
   var n = {
     rollos:       agregar('rollos', typeof inventory !== 'undefined' ? inventory : []),
     clientes:     agregar('clientes', _clientesReales()),
@@ -663,4 +776,5 @@ window.dbBorrarProducto            = dbBorrarProducto;
 window.dbGuardarAjustes            = dbGuardarAjustes;
 window.dbGuardarEstiloCotizacion   = dbGuardarEstiloCotizacion;
 window.dbNotificarEscritura        = dbNotificarEscritura;
+window.dbVaciarPendientes          = dbVaciarPendientes;
 window.subirDatosLocales           = subirDatosLocales;

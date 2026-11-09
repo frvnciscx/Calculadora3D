@@ -29,6 +29,35 @@ app y volviendo a entrar.
 
 ---
 
+## 2026-11-09 · caché v107
+
+La sincronización con la nube ya no pierde registros. La fórmula de costeo no cambia (24 pruebas en verde).
+
+### Corregido
+
+- **Se borraban cotizaciones, clientes, gastos fijos, gastos indirectos y datos del negocio**
+  (reportado por Francisco). Cada aviso de la nube reemplazaba la lista completa del dispositivo,
+  y se perdía lo que no había alcanzado a subir: una cotización duplicada, el cliente creado al
+  guardar una cotización, los gastos guardados justo antes de cerrar la app. Ahora `js/db.js`
+  junta los dos lados: recuerda cómo llegó cada registro la última vez de la nube; si solo cambió
+  el dispositivo, gana el dispositivo y se sube; si cambió la nube, gana la nube; lo que nunca
+  subió se conserva y se sube.
+- **Cualquier cosa que se guarda en el dispositivo sube a la nube**, no solo lo que pasaba por las
+  funciones `dbGuardar*`.
+- **Los ajustes suben al ocultarse la app** o al cerrar sesión, sin esperar los 0.8 s.
+
+### Añadido
+
+- **El historial de cálculos y los favoritos viven en la nube** (`calculos/` y `favoritos/`):
+  se ven en todos los equipos y ya no se pierden al cerrar sesión.
+
+### Qué conviene probar en producción
+
+1. Guardar los gastos fijos, cerrar la app enseguida y volver a abrirla: siguen ahí.
+2. Duplicar una cotización y abrir la app en otro equipo: aparece.
+
+---
+
 ## 2026-11-09 · caché v106
 
 Correcciones a la conexión con Firebase. La fórmula de costeo no cambia (24 pruebas en verde).
@@ -53,6 +82,11 @@ Correcciones a la conexión con Firebase. La fórmula de costeo no cambia (24 pr
 
 1. Sin conexión: abrir la app una vez con señal, cerrarla, poner modo avión y volver a abrirla.
 2. En un navegador sin datos importantes: entrar con la cuenta y ver que aparezcan los datos de la nube.
+
+**Comprobado por Francisco el 2026-11-09:** ya abre sin conexión (antes se quedaba en negro) y la
+configuración se guarda en la cuenta. Se borran los registros que se guardan solo en el dispositivo
+(duplicar una cotización, el cliente creado al guardar una cotización): ver `docs/firebase.md` §3.
+Después de v106 se agregaron al repo las reglas de seguridad (`firestore.rules`); no cambian la app.
 
 ---
 
