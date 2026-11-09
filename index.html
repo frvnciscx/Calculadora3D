@@ -548,7 +548,6 @@
   <!-- PageHeader -->
   <div class="page-header-row" style="padding:28px 20px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
     <div>
-      <div class="micro" style="margin-bottom:8px;letter-spacing:0.16em">Recursos del estudio</div>
       <h1 class="display" id="catalog-heading" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Catálogo</h1>
     </div>
     <div class="page-header-actions" style="display:none;align-items:center;flex-shrink:0">
@@ -597,8 +596,8 @@
   <!-- PageHeader -->
   <div class="page-header-row" style="padding:28px 20px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
     <div>
-      <div class="micro" style="margin-bottom:8px;letter-spacing:0.16em" id="quotes-eyebrow">Cotizaciones</div>
       <h1 class="display" id="quotes-heading" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Cotizaciones</h1>
+      <div class="page-resumen" id="quotes-resumen"></div>
     </div>
     <div class="page-header-actions" style="display:none;align-items:center;flex-shrink:0;gap:8px">
       <button class="page-header-btn" id="phdr-btn-quotes" onclick="showPage('calc')">
@@ -672,7 +671,6 @@
 
   <!-- Heading — mismo patrón que otras sub-páginas -->
   <div style="padding:20px 20px 8px">
-    <div class="micro" style="margin-bottom:6px">Cotizaciones</div>
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Diseño de cotización</h1>
   </div>
 
@@ -691,7 +689,7 @@
       </div>
       <input type="file" id="logo-input" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="handleLogoUpload(event)">
       <div style="margin-top:10px;display:flex;justify-content:flex-end">
-        <button class="btn btn-ghost" onclick="removeLogo()" style="color:var(--danger);width:auto;padding:0 14px;font-size:13px;height:32px">
+        <button class="btn btn-ghost" id="qe-quitar-logo" onclick="removeLogo()" style="color:var(--danger);width:auto;padding:0 14px;font-size:13px;height:32px">
           <span class="material-symbols-rounded" style="font-size:14px">delete</span> Quitar
         </button>
       </div>
@@ -701,17 +699,27 @@
   <!-- Colores de marca -->
   <div style="padding:12px 20px 0">
     <div class="card" style="padding:0 18px">
+      <!-- Paletas: un toque y la cotización queda con colores propios (D128) -->
+      <div class="qe-paletas" role="group" aria-labelledby="qe-paletas-titulo">
+        <div class="qe-paletas-titulo" id="qe-paletas-titulo">Paletas</div>
+        <div class="qe-paletas-fila">
+          <button type="button" class="qe-paleta" data-paleta="esmeralda" aria-pressed="false" onclick="aplicarPaleta('esmeralda')"><span class="qe-paleta-muestras" aria-hidden="true"><span style="background:#0B5D3F"></span><span style="background:#34C38F"></span></span>Esmeralda</button>
+          <button type="button" class="qe-paleta" data-paleta="grafito" aria-pressed="false" onclick="aplicarPaleta('grafito')"><span class="qe-paleta-muestras" aria-hidden="true"><span style="background:#2B2F33"></span><span style="background:#8A939B"></span></span>Grafito</button>
+          <button type="button" class="qe-paleta" data-paleta="terracota" aria-pressed="false" onclick="aplicarPaleta('terracota')"><span class="qe-paleta-muestras" aria-hidden="true"><span style="background:#9A3B1E"></span><span style="background:#E8A27C"></span></span>Terracota</button>
+          <button type="button" class="qe-paleta" data-paleta="azul" aria-pressed="false" onclick="aplicarPaleta('azul')"><span class="qe-paleta-muestras" aria-hidden="true"><span style="background:#1F4E8C"></span><span style="background:#7FB2E5"></span></span>Azul</button>
+        </div>
+      </div>
       <div class="row">
         <div class="row-label">Color primario</div>
-        <div class="color-swatch" id="sw-primary"><input type="color" id="qe-primary" value="#6750A4" oninput="onColorChange('primaryColor',this)"></div>
+        <div class="color-swatch" id="sw-primary"><input type="color" id="qe-primary" value="#0B5D3F" oninput="onColorChange('primaryColor',this)"></div>
       </div>
       <div class="row">
         <div class="row-label">Color acento</div>
-        <div class="color-swatch" id="sw-accent"><input type="color" id="qe-accent" value="#D0BCFF" oninput="onColorChange('accentColor',this)"></div>
+        <div class="color-swatch" id="sw-accent"><input type="color" id="qe-accent" value="#34C38F" oninput="onColorChange('accentColor',this)"></div>
       </div>
       <div class="row">
         <div class="row-label">Color de texto</div>
-        <div class="color-swatch" id="sw-text"><input type="color" id="qe-text" value="#1C1B1F" oninput="onColorChange('textColor',this)"></div>
+        <div class="color-swatch" id="sw-text"><input type="color" id="qe-text" value="#1C2420" oninput="onColorChange('textColor',this)"></div>
       </div>
       <div class="row" style="border-bottom:none">
         <div class="row-label">Color de fondo</div>
@@ -724,28 +732,31 @@
   <div style="padding:12px 20px 0">
     <div class="card" style="padding:0 18px">
       <div class="row">
-        <div class="row-label">Mostrar desglose de costos</div>
-        <label class="m3-switch"><input type="checkbox" id="qe-showDesglose" onchange="onToggleChange('showDesglose',this)"><div class="m3-switch-track"></div></label>
-      </div>
-      <div class="row">
-        <div class="row-label">Mostrar depreciación</div>
-        <label class="m3-switch"><input type="checkbox" id="qe-showDepreciacion" onchange="onToggleChange('showDepreciacion',this)"><div class="m3-switch-track"></div></label>
-      </div>
-      <div class="row">
-        <div class="row-label">Mostrar costos fijos</div>
-        <label class="m3-switch"><input type="checkbox" id="qe-showCostosFijos" onchange="onToggleChange('showCostosFijos',this)"><div class="m3-switch-track"></div></label>
-      </div>
-      <div class="row">
-        <div class="row-label">Mostrar desperdicio</div>
-        <label class="m3-switch"><input type="checkbox" id="qe-showDesperdicio" onchange="onToggleChange('showDesperdicio',this)"><div class="m3-switch-track"></div></label>
-      </div>
-      <div class="row">
-        <div class="row-label">Mostrar tiempo de diseño</div>
-        <label class="m3-switch"><input type="checkbox" id="qe-showDiseno" onchange="onToggleChange('showDiseno',this)"><div class="m3-switch-track"></div></label>
-      </div>
-      <div class="row" style="border-bottom:none">
         <div class="row-label">Mostrar notas</div>
         <label class="m3-switch"><input type="checkbox" id="qe-showNotas" onchange="onToggleChange('showNotas',this)"><div class="m3-switch-track"></div></label>
+      </div>
+      <div class="row">
+        <div class="qe-fila-texto">
+          <div class="row-label">Mostrar desglose de costos</div>
+          <div class="qe-ayuda" id="qe-ayuda-desglose">Le enseña al cliente cuánto te cuesta cada parte, y con eso puede calcular tu ganancia. Apagado, solo ve el precio.</div>
+        </div>
+        <label class="m3-switch"><input type="checkbox" id="qe-showDesglose" aria-describedby="qe-ayuda-desglose" onchange="onToggleChange('showDesglose',this)"><div class="m3-switch-track"></div></label>
+      </div>
+      <div class="row qe-sub">
+        <div class="row-label">Depreciación</div>
+        <label class="m3-switch"><input type="checkbox" id="qe-showDepreciacion" onchange="onToggleChange('showDepreciacion',this)"><div class="m3-switch-track"></div></label>
+      </div>
+      <div class="row qe-sub">
+        <div class="row-label">Fijos, indirectos y mantenimiento</div>
+        <label class="m3-switch"><input type="checkbox" id="qe-showCostosFijos" onchange="onToggleChange('showCostosFijos',this)"><div class="m3-switch-track"></div></label>
+      </div>
+      <div class="row qe-sub">
+        <div class="row-label">Desperdicio</div>
+        <label class="m3-switch"><input type="checkbox" id="qe-showDesperdicio" onchange="onToggleChange('showDesperdicio',this)"><div class="m3-switch-track"></div></label>
+      </div>
+      <div class="row qe-sub" style="border-bottom:none">
+        <div class="row-label">Tiempo de diseño</div>
+        <label class="m3-switch"><input type="checkbox" id="qe-showDiseno" onchange="onToggleChange('showDiseno',this)"><div class="m3-switch-track"></div></label>
       </div>
     </div>
   </div>
@@ -789,7 +800,6 @@
   <!-- ── Encabezado de página: título + acciones (desktop) ─── -->
   <div class="cfg-page-header">
     <div>
-      <div class="micro" style="margin-bottom:8px;letter-spacing:0.16em">Configuración del estudio</div>
       <h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Ajustes</h1>
     </div>
     <!-- Exportar / Importar solo visible en desktop vía CSS -->
@@ -939,7 +949,6 @@
     
   </div>
   <div style="padding:20px 20px 8px">
-    <div class="micro" style="margin-bottom:6px">Negocio</div>
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Datos del negocio</h1>
   </div>
   <div style="padding:12px 20px 24px">
@@ -987,7 +996,6 @@
     
   </div>
   <div style="padding:20px 20px 8px">
-    <div class="micro" style="margin-bottom:6px">Pagos</div>
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Cuenta bancaria</h1>
   </div>
   <div style="padding:12px 20px 12px">
@@ -1032,7 +1040,6 @@
     
   </div>
   <div style="padding:20px 20px 8px">
-    <div class="micro" style="margin-bottom:6px">Costos operativos</div>
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Electricidad y trabajo</h1>
   </div>
   <div style="padding:12px 20px 24px">
@@ -1072,7 +1079,6 @@
     
   </div>
   <div style="padding:20px 20px 8px">
-    <div class="micro" style="margin-bottom:6px">Finanzas</div>
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Gastos fijos</h1>
   </div>
   <div style="padding:12px 20px 12px">
@@ -1130,7 +1136,6 @@
     </button>
   </div>
   <div style="padding:20px 20px 8px">
-    <div class="micro" style="margin-bottom:6px">Finanzas</div>
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Gastos indirectos</h1>
     <div style="font-size:12px;color:var(--ink-3);margin-top:8px;line-height:1.5">
       Consumibles que no son parte de la pieza pero se gastan al producirla: guantes, lijas,
@@ -1194,7 +1199,6 @@
     
   </div>
   <div style="padding:20px 20px 8px">
-    <div class="micro" style="margin-bottom:6px">Preferencias</div>
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Otros parámetros</h1>
   </div>
   <div style="padding:12px 20px 24px">

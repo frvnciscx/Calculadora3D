@@ -4,6 +4,8 @@ function snack(msg) {
   if (old) old.remove();
   const el = document.createElement('div');
   el.className = 'm3-snackbar';
+  el.setAttribute('role', 'status');      /* que el lector de pantalla lo anuncie */
+  el.setAttribute('aria-live', 'polite');
   el.textContent = msg;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 3000);
@@ -92,8 +94,11 @@ function regresarDeCalculadora() {
 }
 
 function showPage(name) {
-  /* ── Al salir de config en desktop: resetear inline styles ─────── */
-  if (window.innerWidth >= 900) _cleanConfigDesktop();
+  /* ── Al salir de config: resetear inline styles ──────────────────
+     Siempre, no solo en escritorio: si la ventana se angostaba con Ajustes
+     abierto, el panel de escritorio se quedaba armado y la página salía
+     corrida 240 px en el teléfono. */
+  _cleanConfigDesktop();
 
   if (name === 'calc') {
     var _desde = document.body.dataset.page;
@@ -281,11 +286,11 @@ function showQuotesTab(tab) {
 
   /* Actualizar título y botón de acción del header */
   var headingEl  = document.getElementById('quotes-heading');
-  var eyebrowEl  = document.getElementById('quotes-eyebrow');
+  var resumenEl  = document.getElementById('quotes-resumen');
   var btnQuotes  = document.getElementById('phdr-btn-quotes');
   var btnClients = document.getElementById('phdr-btn-clients');
   if (headingEl)  headingEl.textContent  = isQuotes ? 'Cotizaciones' : 'Clientes';
-  if (eyebrowEl)  eyebrowEl.textContent  = isQuotes ? 'Cotizaciones' : 'Directorio';
+  if (resumenEl)  resumenEl.style.display = isQuotes ? '' : 'none';
   if (btnQuotes)  btnQuotes.style.display  = isQuotes ? '' : 'none';
   if (btnClients) btnClients.style.display = isQuotes ? 'none' : '';
 

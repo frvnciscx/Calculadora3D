@@ -102,8 +102,8 @@
   border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 .qf-table tbody tr:last-child td { border-bottom: none; }
-.qf-table tbody tr { background: rgba(103, 80, 164, 0.06); }
-.qf-table tbody tr:nth-child(even) { background: rgba(103, 80, 164, 0.03); }
+/* El fondo de las filas lo pone buildQuoteHTML con el color de la cotización:
+   antes era morado fijo y no cambiaba con la paleta. */
 
 /* Totals area */
 .qf-totals {
@@ -177,7 +177,6 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  opacity: 0.75;
 }
 .qf-biz-footer--qr {
   align-items: center;
@@ -188,7 +187,7 @@
   flex-direction: column;
   gap: 2px;
   font-size: 12px;
-  opacity: 0.75;
+  opacity: 0.8;     /* antes 0.75 dos veces (pie y contacto): 4.0:1, no cumplía */
 }
 .qf-qr-block {
   display: flex;

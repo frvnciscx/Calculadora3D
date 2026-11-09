@@ -487,10 +487,59 @@ function addMoreToQuote() {
 }
 
 /* Finalizar y guardar la cotización */
+/* Pide el nombre del negocio una sola vez, encima de lo que esté abierto
+   (el borrador vive en #modal-container, así que esta capa va aparte). */
+function _pedirNombreNegocio(alGuardar) {
+  var previa = document.getElementById('nombre-negocio-capa');
+  if (previa) previa.remove();
+  var capa = document.createElement('div');
+  capa.id = 'nombre-negocio-capa';
+  capa.innerHTML =
+    '<div class="m3-scrim capa-encima"></div>' +
+    '<div class="m3-dialog capa-encima" role="dialog" aria-modal="true" aria-labelledby="nn-titulo" aria-describedby="nn-detalle">' +
+      '<h3 id="nn-titulo" style="font-size:22px;font-weight:600;margin-bottom:8px">¿Cómo se llama tu negocio?</h3>' +
+      '<div id="nn-detalle" style="font-size:13px;color:var(--ink-3);line-height:1.6;margin-bottom:12px">' +
+        'Va en el encabezado de la cotización que recibe tu cliente. Lo puedes cambiar en Ajustes › Negocio.' +
+      '</div>' +
+      '<div class="m3-field" style="text-align:left">' +
+        '<input type="text" id="nn-nombre" placeholder=" " autocomplete="organization">' +
+        '<label for="nn-nombre">Nombre del negocio</label>' +
+      '</div>' +
+      '<div class="m3-dialog-actions">' +
+        '<button class="m3-btn-text" id="nn-cancelar">Cancelar</button>' +
+        '<button class="m3-btn-filled" id="nn-guardar" style="width:auto;padding:0 24px">Guardar y generar</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(capa);
+  var campo = document.getElementById('nn-nombre');
+  function cerrar() { capa.remove(); }
+  function guardar() {
+    var nombre = campo.value.trim();
+    if (!nombre) { campo.focus(); return; }
+    config.bizName = nombre;
+    sv('config', config);
+    var enAjustes = document.getElementById('cfg-biz-name');
+    if (enAjustes) enAjustes.value = nombre;
+    if (typeof updateTopBar === 'function') updateTopBar();
+    cerrar();
+    alGuardar();
+  }
+  capa.querySelector('.m3-scrim').onclick = cerrar;
+  document.getElementById('nn-cancelar').onclick = cerrar;
+  document.getElementById('nn-guardar').onclick = guardar;
+  campo.onkeydown = function(e) {
+    if (e.key === 'Enter') guardar();
+    if (e.key === 'Escape') cerrar();
+  };
+  setTimeout(function() { campo.focus(); }, 50);
+}
+
 function saveQuote() {
   var clientEl = document.getElementById('q-client');
   var client = clientEl ? clientEl.value.trim() : '';
   if (!client) { snack('Ingresa el nombre del cliente'); return; }
+  /* Sin nombre, la cotización salía con «Mi Negocio 3D» (D129) */
+  if (!String(config.bizName || '').trim()) { _pedirNombreNegocio(saveQuote); return; }
 
   var phone       = ((document.getElementById('q-phone')    || {}).value || '').trim();
   var notes       = ((document.getElementById('q-notes')    || {}).value || '').trim();
@@ -611,8 +660,9 @@ function renderQuotes() {
   var now        = new Date();
   var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   var thisMonth  = quotes.filter(function(q) { return new Date(q.quoteDate) >= monthStart; }).length;
-  var eyebrowEl  = document.getElementById('quotes-eyebrow');
-  if (eyebrowEl) eyebrowEl.textContent = quotes.length + ' cotizaciones · ' + thisMonth + ' este mes';
+  var resumenEl  = document.getElementById('quotes-resumen');
+  if (resumenEl) resumenEl.textContent = quotes.length + (quotes.length === 1 ? ' cotización' : ' cotizaciones') +
+                                        ' · ' + thisMonth + ' este mes';
 
   /* Filter chips */
   var chipsEl = document.getElementById('quotes-filter-chips');
@@ -936,6 +986,15 @@ function duplicateQuote(i) {
 }
 
 /* ── HTML de la cotización — sin costos internos ──────────────── */
+/* Color de la cotización con transparencia, para el fondo de las filas.
+   En rgba y no con color-mix: html2canvas (la imagen de la cotización) no lo entiende. */
+function _tinteHex(hex, alfa) {
+  var m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ''));
+  if (!m) return 'transparent';
+  var n = parseInt(m[1], 16);
+  return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + alfa + ')';
+}
+
 function buildQuoteHTML(q, qrDataURL) {
   var s = quoteStyle;
   var cur = config.currency;
@@ -974,10 +1033,10 @@ function buildQuoteHTML(q, qrDataURL) {
   var _hayDatosBancarios = !!(config.bizBank || config.bizAccountHolder || config.bizAccountNumber);
 
   /* Filas de la tabla — sin desglose interno */
-  var itemRows = items.map(function(item) {
+  var itemRows = items.map(function(item, n) {
     var qty = item.qty || 1;
     var subtotal = item.totalCost * qty;
-    return '<tr>' +
+    return '<tr style="background:' + _tinteHex(s.primaryColor, n % 2 ? 0.03 : 0.06) + '">' +
       '<td class="qf-td-left">' + esc(item.desc) +
         '<div class="qf-td-sub">' + esc(item.material) + (item.weight ? ' &middot; ' + item.weight + 'g' : '') + '</div>' +
       '</td>' +
@@ -1113,7 +1172,7 @@ function buildQuoteHTML(q, qrDataURL) {
       (qrDataURL
         ? '<div class="qf-qr-block">' +
             '<img src="' + qrDataURL + '" width="72" height="72" style="display:block;border-radius:4px">' +
-            '<div class="qf-qr-label">Escaneame</div>' +
+            '<div class="qf-qr-label">Escanéame</div>' +
           '</div>'
         : '') +
     '</div>' +

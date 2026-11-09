@@ -289,7 +289,7 @@
   --md-surface-container-highest:#D5DBD6;
 
   --md-on-surface:               var(--ink-900);
-  --md-on-surface-variant:       var(--ink-400);
+  --md-on-surface-variant:       var(--ink-3);    /* antes --ink-400: 4.2:1 sobre bg-sunk */
   --md-outline:                  var(--paper-200);
   --md-outline-variant:          var(--paper-100);
   --md-surface-variant:          var(--paper-100);

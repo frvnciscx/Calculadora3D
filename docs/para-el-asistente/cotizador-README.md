@@ -29,7 +29,7 @@ Qué es el cotizador de impresión 3D, dónde vive cada cosa, qué decidió Fran
 | App publicada | `calculadora3-d-delta.vercel.app` | Con guion. `calculadora3d-delta` (sin guion) es **otro producto** («3D COST PRO»). El README del repo se corrigió el 2026-11-03 |
 | Código | Repo privado `frvnciscx/Calculadora3D`, rama `main` | Las sesiones trabajan en su worktree (`claude/<nombre>`). Francisco hace el commit y publica la rama con GitHub Desktop, y la junta a `main` con un Pull Request en GitHub |
 | Proyecto de Claude Code | Una carpeta por equipo, anotada en su `~/.claude/CLAUDE.md` («Repo del cotizador en este equipo») | Su `CLAUDE.md` escribe `<ASISTENTE>` en lugar de la ruta de este repo desde el 2026-10-19 |
-| Decisiones | `docs/reglas-de-negocio.md` §2 de su repo | Único registro (D1–D127 al 2026-11-09), también de las que salen de `flujos.md` y `competencia.md`. Con fecha y quién la tomó; nada se borra |
+| Decisiones | `docs/reglas-de-negocio.md` §2 de su repo | Único registro (D1–D132 al 2026-11-09), también de las que salen de `flujos.md` y `competencia.md`. Con fecha y quién la tomó; nada se borra |
 | Flujos | `docs/flujos.md` y `docs/flujos/` de su repo | Los 7 de la primera versión, con diagramas de `/diagram-design` y sus preguntas respondidas al 2026-11-03 |
 | Modelo de datos | `docs/modelo-de-datos.md` de su repo | Firebase por negocio, con diagrama, al 2026-11-03. Reemplaza en parte a `BASE-DE-DATOS.md` |
 | Competencia | `docs/competencia.md` de su repo | 12 apps y plataformas revisadas el 2026-10-16; la directa en México es Bugeo App |

@@ -87,7 +87,7 @@ input, textarea, select { font: inherit; color: inherit; }
 /* ── OFFLINE BANNER ─────────────────────────────────────────────── */
 .offline-banner {
   position: sticky; top: 0; z-index: 200;
-  background: var(--danger);
+  background: #B4342C;     /* antes var(--danger): #E0564E en oscuro, 3.7:1 con blanco; así 6:1 */
   color: #fff;
   font-size: 13px; font-weight: 500;
   padding: 10px 20px;
@@ -292,7 +292,6 @@ input, textarea, select { font: inherit; color: inherit; }
   border-top: 0.5px solid var(--line);
   margin: 20px 0;
 }
-.glow-accent { box-shadow: 0 0 40px -8px var(--accent); }
 
 /* Placeholder hatching */
 .ph {

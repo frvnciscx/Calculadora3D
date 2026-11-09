@@ -1621,7 +1621,7 @@ input.draft-item-price::-webkit-inner-spin-button {
 .m3-field textarea {
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--line-strong);   /* --line era 1.1:1; un campo necesita 3:1 (WCAG 1.4.11) */
   border-radius: 0;
   padding: 24px 0 10px;
   color: var(--ink);
@@ -1635,6 +1635,7 @@ input.draft-item-price::-webkit-inner-spin-button {
   background: transparent;
 }
 .m3-field label {
+  left: 0;                 /* alineada con el texto del campo, que no tiene relleno */
   color: var(--ink-3);
   font-family: var(--font-mono);
   font-size: 12px;
@@ -1696,7 +1697,7 @@ input.draft-item-price::-webkit-inner-spin-button {
 .result-card {
   background: var(--accent);
   border-radius: var(--r-m);
-  box-shadow: 0 0 40px -8px var(--accent);
+  box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.45);   /* sombra con desplazamiento; antes un halo de color */
 }
 .result-total, .result-subtitle, .result-base-val,
 .breakdown-chip .val, .breakdown-chip .lbl {
@@ -1833,7 +1834,7 @@ input.draft-item-price::-webkit-inner-spin-button {
   color: var(--on-accent);
   bottom: calc(var(--nav-h) + 16px);
 }
-.m3-fab:hover { filter: brightness(1.1); transform: scale(1.04); box-shadow: 0 0 24px -4px var(--accent); }
+.m3-fab:hover { filter: brightness(1.1); transform: scale(1.04); box-shadow: 0 10px 22px -10px rgba(0, 0, 0, 0.45); }
 
 /* Margin input */
 .margin-num-input {
@@ -2438,3 +2439,46 @@ span.suffix {
     bottom: calc(var(--nav-h) + 84px + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* ══ v109 (D128–D131) ═══════════════════════════════════════════════ */
+
+/* Texto de ejemplo de los campos: antes el gris del navegador (4.1:1) */
+::placeholder { color: var(--ink-3); opacity: 1; }
+
+/* Resumen debajo del título de Cotizaciones (antes iba encima, como etiqueta) */
+.page-resumen { margin-top: 8px; font-size: 13px; color: var(--ink-3); }
+
+/* Diálogo que pide el nombre del negocio, encima del borrador abierto */
+.m3-scrim.capa-encima  { z-index: 210; }
+.m3-dialog.capa-encima { z-index: 211; }
+
+/* Ajustes › Diseño: paletas */
+.qe-paletas { padding: 14px 0; border-bottom: 0.5px solid var(--line); }
+.qe-paletas-titulo { font-size: 14px; color: var(--ink-2); margin-bottom: 10px; }
+.qe-paletas-fila { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.qe-paleta {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 44px; padding: 8px 12px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--bg-sunk); color: var(--ink-2);
+  font: 500 13px var(--font-sans); text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.qe-paleta:hover { border-color: var(--line-strong); color: var(--ink); }
+.qe-paleta[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); box-shadow: inset 0 0 0 1px var(--accent); }
+.qe-paleta:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.qe-paleta-muestras { display: flex; flex-shrink: 0; }
+.qe-paleta-muestras span {
+  width: 16px; height: 16px; border-radius: 50%;
+  box-shadow: 0 0 0 1.5px var(--bg-sunk);
+}
+.qe-paleta-muestras span + span { margin-left: -5px; }
+
+/* Ajustes › Diseño: el desglose y sus partes */
+.qe-fila-texto { flex: 1; min-width: 0; padding: 2px 0; }
+.qe-ayuda { margin-top: 3px; font-size: 12px; line-height: 1.45; color: var(--ink-3); white-space: normal; padding-right: 12px; }
+.qe-sub .row-label { padding-left: 16px; }
+.qe-sub { transition: opacity 0.15s; }
+.qe-sub-apagada { opacity: 0.45; }
+.qe-sub-apagada .m3-switch { pointer-events: none; }

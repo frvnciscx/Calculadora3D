@@ -154,7 +154,7 @@ function renderDashboard() {
             cur + '<span style="font-variant-numeric:tabular-nums">' + formatNum(monthRevenue) + '</span>' +
           '</div>' +
           '<div style="display:flex;gap:16px;margin-top:10px;font-size:12px;color:var(--ink-2)">' +
-            '<span class="num">' + monthAccepted.length + ' cotizaciones</span>' +
+            '<span class="num">' + monthAccepted.length + (monthAccepted.length === 1 ? ' cotización' : ' cotizaciones') + '</span>' +
             (monthMarginPct !== null
               ? '<span><span class="num" style="color:var(--ok)">' + monthMarginPct + '% margen</span></span>'
               : '') +

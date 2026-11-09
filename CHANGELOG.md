@@ -29,6 +29,46 @@ app y volviendo a entrar.
 
 ---
 
+## 2026-11-09 · caché v109
+
+Primera ronda de la revisión de diseño con `/impeccable` (24/40): lo que ve el cliente, contraste y
+detalles (D128–D131). La sincronización y la fórmula de costeo no cambian (44 pruebas en verde).
+
+### Cambiado
+
+- **La cotización de inicio ya no le enseña tus costos al cliente:** el desglose viene apagado y los
+  colores son la paleta Esmeralda, no el morado de Material. Solo para quien nunca guardó su
+  diseño; una cuenta con diseño guardado conserva el suyo.
+- **Ajustes › Diseño:** cuatro paletas de un toque (Esmeralda, Grafito, Terracota, Azul). Las partes
+  del desglose quedan debajo de él y se atenúan si está apagado, con una línea que explica qué ve
+  el cliente. «Mostrar notas» va primero y «Quitar» el logo solo aparece si hay logo.
+- **Las filas de la tabla de la cotización toman su color:** antes eran moradas aunque cambiaras
+  la paleta.
+- **Sin etiquetas chicas encima de los títulos;** en Cotizaciones, el conteo va debajo del título.
+
+### Añadido
+
+- **Si falta el nombre del negocio, se pide al generar la cotización** y se guarda en Ajustes ›
+  Negocio. Antes salía «Mi Negocio 3D».
+
+### Corregido
+
+- **Contraste:** texto de ejemplo de los campos (4.6:1), ayudas en modo claro (4.6:1), línea de
+  los campos (3:1), aviso «Sin conexión» (6:1) y pie de la cotización (8:1). Las etiquetas de los
+  campos quedan alineadas con lo que escribes.
+- **Detalles:** «1 cotización», «Escanéame», los avisos flotantes los anuncia el lector de
+  pantalla, y las sombras de brillo ahora son sombras con desplazamiento.
+- **Al angostar la ventana con Ajustes abierto, la página quedaba corrida 240 px.**
+
+### Qué conviene probar en producción
+
+1. **En tu cuenta, Ajustes › Diseño:** elige una paleta y apaga «Mostrar desglose de costos» si no
+   quieres que tus clientes vean lo que te cuesta cada parte. Tu cuenta conserva su diseño
+   guardado, así que esto no cambia solo.
+2. Generar una cotización y ver la tabla con el color de la paleta.
+
+---
+
 ## 2026-11-09 · caché v108
 
 Cambios de diseño que pidió Francisco (D115–D126). La sincronización y la fórmula de costeo no

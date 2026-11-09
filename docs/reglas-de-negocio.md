@@ -4,7 +4,7 @@ Qué regla manda en cada paso de una cotización: qué acción la mueve de estad
 
 Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y la app se publica en las tiendas.
 
-**Actualizado:** 2026-11-09 (D115–D127, cambios de diseño; D104–D114, de la integración de Firebase; antes, D87–D103: arranque de un negocio nuevo, modelo de datos y limpieza del repositorio; van 127 decisiones; las reglas de negocio se cerraron el 2026-10-16 y desde entonces suman las de `flujos.md`, `modelo-de-datos.md` y de publicación)
+**Actualizado:** 2026-11-09 (D115–D132, cambios de diseño y revisión con /impeccable; D104–D114, de la integración de Firebase; antes, D87–D103: arranque de un negocio nuevo, modelo de datos y limpieza del repositorio; van 132 decisiones; las reglas de negocio se cerraron el 2026-10-16 y desde entonces suman las de `flujos.md`, `modelo-de-datos.md` y de publicación)
 
 **Fuentes:** código v100 (`main`, commit `7cc4b14`) revisado el 2026-10-16 · decisiones del cotizador en el repo del Asistente (`docs/projects/cotizador/README.md`, 2026-10-15) · [`AUDITORIA-UX.md`](AUDITORIA-UX.md) · respuestas de Francisco a P1–P65 (2026-10-16) · requisitos de publicación de Apple y Google, y planes de Firebase, revisados el 2026-10-16 (fuentes en §4.10).
 
@@ -166,6 +166,11 @@ Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y l
 | D125 | «Auto» se queda en Ajustes › Otros, para volver a automático después de usar el interruptor (confirma D122) | Francisco (P120: a) | 2026-11-09 |
 | D126 | Claude agrega en `js/db.js` que la barra se redibuje cuando llega de la nube el diseño de la cotización, para que el logo cambie al momento en los otros equipos: una línea en la lista de qué se redibuja (`_DOCS.quoteStyle.render`). No cambia qué se guarda ni cómo se sincroniza. Con su prueba en `tests/sincronizacion.test.js`, que fallaba antes del cambio | Francisco (P121: a) | 2026-11-09 |
 | D127 | «¿Olvidaste tu contraseña?» se queda solo si no hay que cambiar nada del backend; si hubiera que cambiarlo, lo agrega Javi («solo si no tenemos que modificar nada del back, sino le digo a javi que lo agregue»). No hace falta: usa la plantilla de correo que Firebase ya trae. Si se quiere personalizar el correo (remitente, texto o el nombre que aparece), eso se hace en la consola de Firebase y le toca a Javi | Francisco | 2026-11-09 |
+| D128 | La revisión de diseño con `/impeccable` (24/40, 5 problemas prioritarios) empieza por lo que ve el cliente. La cotización de inicio sale sin el desglose de costos y con la paleta Esmeralda, no con el morado de Material; Ajustes › Diseño trae 4 paletas (Esmeralda, Grafito, Terracota, Azul), y las partes del desglose quedan debajo de él, atenuadas si está apagado, con una línea que explica qué ve el cliente. **Interpretación:** solo cambia para quien nunca guardó su diseño; una cuenta con diseño guardado, como la de La Casita del Molde, conserva el suyo, y apagar el desglose ahí es un interruptor en Ajustes › Diseño. Se confirma en P126 | Francisco (P122: a) | 2026-11-09 |
+| D129 | Si falta el nombre del negocio, la app lo pide al generar la cotización y lo guarda en Ajustes › Negocio; antes salía «Mi Negocio 3D» (parte de P122) | Francisco (P122: a) | 2026-11-09 |
+| D130 | Se afina la apariencia actual, sin cambiar de identidad (colores, letras y estructura se quedan). Con eso se quitan las etiquetas chicas encima de los títulos, que `/impeccable` no admite y en Cotizaciones repetían el título; el conteo de cotizaciones pasa debajo del título | Francisco (P123: a) | 2026-11-09 |
+| D131 | Alcance de la ronda: lo de D128 y D129 más contraste y detalles menores (texto de ejemplo de los campos, ayudas en modo claro, línea de los campos, aviso «Sin conexión», pie de la cotización, «1 cotización», «Escanéame», «Quitar» solo con logo, avisos que el lector de pantalla anuncia, sombras de brillo). Al probar apareció y se corrigió un error que ya existía: al angostar la ventana con Ajustes abierto, la página quedaba corrida 240 px | Francisco (P124: a) | 2026-11-09 |
+| D132 | `/stageshow` se usa para la ficha de Google Play o una página de presentación cuando se publique la app (D34, D38), no dentro de la app | Francisco (P125: a) | 2026-11-09 |
 
 ---
 
@@ -1019,6 +1024,14 @@ Francisco los pidió antes de subir las pruebas de D113: D115–D127, que van en
 | P119 | ¿El tema se guarda en cada navegador (D122) o en la cuenta, igual en todos los equipos? | (a) en cada navegador, como quedó | Respondida (a) → D124 |
 | P120 | ¿«Auto» se queda en Ajustes › Otros para volver a automático, o se quita también ahí? | (a) se queda | Respondida (a) → D125 |
 | P121 | Si el logo cambia en otro equipo, la barra lateral puede no mostrarlo hasta volver a abrir la app. Para que cambie al momento hace falta una línea en `js/db.js`: la lista de qué se redibuja cuando llega algo de la nube; no cambia qué se guarda ni cómo. ¿La agrega Claude o se le deja a Javi? | (a) Claude, con `npm test` | Respondida (a) → D126 |
+| P122 | Por cuál de los 5 problemas de la revisión empezar | (a) lo que ve el cliente | Respondida (a) → D128, D129 |
+| P123 | Qué hacer con la apariencia | (a) afinar la actual | Respondida (a) → D130 |
+| P124 | Hasta dónde llegar en la ronda | (a) lo elegido + contraste | Respondida (a) → D131 |
+| P125 | Para qué usar `/stageshow` | (a) ficha de Google Play | Respondida (a) → D132 |
+| P126 | ¿Se interpretó bien D128: la cotización nueva solo cambia para quien nunca guardó su diseño? | (a) sí | Abierta |
+| P127 | Qué sigue de la revisión | (a) enviar y su estado (problemas 3 y 4) | Abierta |
+
+La revisión completa está en `.impeccable/critique/` (fuera de git). Quedan abiertos los problemas 2 a 5: «margen» con tres significados, ninguna cotización llega a «Enviada», 8 a 10 botones por tarjeta, y el primer uso de un taller nuevo.
 
 ---
 

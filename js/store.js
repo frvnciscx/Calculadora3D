@@ -33,13 +33,16 @@ const DEF_CONFIG = {
   showBankInfo: true
 };
 
+/* Cotización de inicio (D128): paleta Esmeralda y el desglose de costos apagado,
+   para que el cliente vea el precio y no lo que te cuesta. Solo aplica a quien
+   nunca guardó su diseño: una cuenta con diseño guardado conserva el suyo. */
 const DEF_QUOTE_STYLE = {
-  primaryColor: '#6750A4',
-  accentColor: '#D0BCFF',
-  textColor: '#1C1B1F',
+  primaryColor: '#0B5D3F',
+  accentColor: '#34C38F',
+  textColor: '#1C2420',
   bgColor: '#FFFFFF',
   logo: '',
-  showDesglose: true,
+  showDesglose: false,
   showDepreciacion: true,
   showCostosFijos: true,
   showDesperdicio: true,

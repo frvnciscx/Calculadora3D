@@ -24,7 +24,7 @@ Estos documentos viven en el repo del Asistente y se leen de ahí: no se copian 
 
 | Documento | Qué tiene |
 |---|---|
-| [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) | Ciclo de vida de la cotización, anticipo, entrega, IVA, comisiones, empaque, cuentas, tiendas y qué entra a la primera versión. Es el **único registro de decisiones** (D1–D127 al 2026-11-09), también de las que salen de `flujos.md`, `modelo-de-datos.md` y `competencia.md`. Manda sobre los demás documentos cuando se contradigan |
+| [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) | Ciclo de vida de la cotización, anticipo, entrega, IVA, comisiones, empaque, cuentas, tiendas y qué entra a la primera versión. Es el **único registro de decisiones** (D1–D132 al 2026-11-09), también de las que salen de `flujos.md`, `modelo-de-datos.md` y `competencia.md`. Manda sobre los demás documentos cuando se contradigan |
 | [`docs/flujos.md`](docs/flujos.md) | Los flujos de la primera versión, con diagramas HTML en `docs/flujos/`. **Hechos los 7**, con sus preguntas respondidas, al 2026-11-03 |
 | [`docs/competencia.md`](docs/competencia.md) | Qué ofrecen las apps y plataformas que compiten, qué tienen y no tiene la app, y cómo proceder (2026-10-16) |
 | [`docs/modelo-de-datos.md`](docs/modelo-de-datos.md) | Qué guarda la app en Firebase, organizado por negocio, con su diagrama (2026-11-03). Sus preguntas, respondidas: D89–D98 |

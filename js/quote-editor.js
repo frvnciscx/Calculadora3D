@@ -19,6 +19,8 @@ function loadQuoteEditor() {
   document.getElementById('qe-showDesperdicio').checked = s.showDesperdicio;
   document.getElementById('qe-showDiseno').checked = s.showDiseno;
   document.getElementById('qe-showNotas').checked = s.showNotas;
+  _actualizarSubDesglose();
+  _marcarPaleta();
   // Texts
   document.getElementById('qe-terms').value = s.termsText || '';
   document.getElementById('qe-footer').value = s.footerText || '';
@@ -30,6 +32,8 @@ function loadQuoteEditor() {
 
 function updateLogoPreview() {
   const area = document.getElementById('logo-preview-area');
+  const quitar = document.getElementById('qe-quitar-logo');
+  if (quitar) quitar.style.display = quoteStyle.logo ? '' : 'none';
   if (quoteStyle.logo) {
     area.innerHTML = `<img src="${quoteStyle.logo}" alt="Logo"><p>Toca para cambiar</p>`;
   } else {
@@ -69,13 +73,53 @@ function onColorChange(field, colorInput) {
   const sw = document.getElementById(swatchMap[field]);
   if (sw) sw.style.background = val;
   sv('quoteStyle', quoteStyle);
+  _marcarPaleta();
   updateQuotePreview();
 }
 
 function onToggleChange(field, checkbox) {
   quoteStyle[field] = checkbox.checked;
   sv('quoteStyle', quoteStyle);
+  if (field === 'showDesglose') _actualizarSubDesglose();
   updateQuotePreview();
+}
+
+/* Paletas para la cotización: un toque en vez de escoger cuatro colores.
+   Todas dejan el texto blanco del encabezado de la tabla con contraste de 7:1 o más. */
+var PALETAS_COTIZACION = {
+  esmeralda: { primaryColor: '#0B5D3F', accentColor: '#34C38F', textColor: '#1C2420', bgColor: '#FFFFFF' },
+  grafito:   { primaryColor: '#2B2F33', accentColor: '#8A939B', textColor: '#1C1F22', bgColor: '#FFFFFF' },
+  terracota: { primaryColor: '#9A3B1E', accentColor: '#E8A27C', textColor: '#2A1F1A', bgColor: '#FFFFFF' },
+  azul:      { primaryColor: '#1F4E8C', accentColor: '#7FB2E5', textColor: '#1A2230', bgColor: '#FFFFFF' }
+};
+
+function aplicarPaleta(id) {
+  var p = PALETAS_COTIZACION[id];
+  if (!p) return;
+  Object.assign(quoteStyle, p);
+  sv('quoteStyle', quoteStyle);
+  loadQuoteEditor();
+}
+
+/* Marca la paleta que coincide con los colores actuales (ninguna si son a mano) */
+function _marcarPaleta() {
+  document.querySelectorAll('.qe-paleta').forEach(function(b) {
+    var p = PALETAS_COTIZACION[b.dataset.paleta];
+    var activa = !!p && Object.keys(p).every(function(k) {
+      return String(quoteStyle[k] || '').toLowerCase() === p[k].toLowerCase();
+    });
+    b.setAttribute('aria-pressed', activa ? 'true' : 'false');
+  });
+}
+
+/* Depreciación, fijos, desperdicio y diseño solo cuentan dentro del desglose */
+function _actualizarSubDesglose() {
+  var on = !!quoteStyle.showDesglose;
+  document.querySelectorAll('#page-quote-editor .qe-sub').forEach(function(fila) {
+    fila.classList.toggle('qe-sub-apagada', !on);
+    var c = fila.querySelector('input');
+    if (c) c.disabled = !on;
+  });
 }
 
 function onTextChange(field, input) {
