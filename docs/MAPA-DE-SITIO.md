@@ -107,7 +107,9 @@ Panel de métricas del mes en curso.
 
 Cálculo de costo en vivo: escribes y el resultado se actualiza sin botón.
 
-- **Sección 01 — Pieza:** descripción, peso, tiempo, horas de diseño
+- **Sección 01 — Pieza:** descripción, peso, tiempo, horas de diseño. Desde v110, «Leer archivo del slicer»
+  (`js/gcode.js`, D133, D135) los llena desde el `.gcode` o el `.gcode.3mf`, con la impresora y los
+  cambios de color
 - **Sección 02 — Impresora y material:** filtra materiales según el tipo de impresora
   (FDM / Resina)
 - **Bloque Resina** (automático con impresora de resina): % de soportes, lavado IPA,
@@ -124,7 +126,9 @@ Cálculo de costo en vivo: escribes y el resultado se actualiza sin botón.
 `js/quotes.js` · 1154 líneas — **el módulo más grande**
 
 - Orden multi-producto con cantidades por partida
-- Estados: borrador, enviada, aceptada, rechazada — con filtros y contadores
+- Estados: borrador, enviada, aceptada, rechazada — con filtros y contadores. Desde v112 sus reglas
+  viven en `js/estados.js` (D140–D144): WhatsApp y el enlace la pasan a Enviada, y cada tarjeta
+  tiene una acción principal según su estado y el resto en un menú «⋯»
 - Búsqueda por cliente, folio o descripción de pieza
 - Descuento y comisión en porcentaje
 - Exportar a **PDF** (pdf-lib), **imagen** (html2canvas) y **texto plano**
@@ -150,6 +154,13 @@ Productos guardados en dos modalidades:
    extras de diseño y refuerzo
 
 Exporta la lista de precios a Excel (SheetJS).
+
+Desde v115 (D148–D151) se cotizan dentro de la calculadora: «¿Qué cotizas?» arriba de los
+campos elige «Pieza nueva» o un producto. Uno por tamaño cambia la calculadora a modo
+producto (tamaño, diseño, refuerzo y cantidad) y el precio sale en el panel de resultado.
+«Mis productos» (antes «Catálogo de productos») es donde se editan, con los precios en
+tabla y los niveles de diseño y el refuerzo de cada producto. Las cuentas están en
+`js/precios-tamano.js`.
 
 ### Inventario
 `js/inventory.js` · 111 líneas

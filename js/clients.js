@@ -293,7 +293,9 @@ function _renderClientQuoteList(i, tab) {
 
   var cur      = config.currency || '$';
   var filtered = _clientQuotes(c).filter(function(q) {
-    return (q.status || 'pendiente') === tab;
+    /* «Pendientes» son las que siguen abiertas: borradores y enviadas */
+    var e = estadoDe(q);
+    return tab === 'pendiente' ? (e === 'borrador' || e === 'enviada') : e === tab;
   });
 
   if (!filtered.length) {
@@ -339,14 +341,14 @@ function showClientDetail(i) {
     var qi       = quotes.indexOf(q);
     var qDate    = new Date(q.quoteDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
     var qTotal   = q.grandTotal != null ? q.grandTotal : (q.totalWithQty != null ? q.totalWithQty : 0);
-    var status   = q.status || 'pendiente';
+    var status   = estadoDe(q);
     var statusColor = status === 'aceptada' ? 'var(--ok)' : status === 'rechazada' ? 'var(--danger)' : 'var(--ink-3)';
     var nItems   = q.items ? q.items.length : 1;
     return '<button onclick="viewQuote(' + qi + ')" style="width:100%;text-align:left;background:transparent;padding:14px 0;display:flex;align-items:center;gap:12px;border-bottom:0.5px solid var(--line)">' +
       '<div style="flex:1;min-width:0">' +
         '<div style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px">' +
           '<span class="num">' + esc(q.quoteNum || '—') + '</span>' +
-          '<span style="font-size:12px;font-family:var(--font-mono);color:' + statusColor + ';text-transform:uppercase;letter-spacing:0.06em">' + status + '</span>' +
+          '<span style="font-size:12px;font-family:var(--font-mono);color:' + statusColor + ';text-transform:uppercase;letter-spacing:0.06em">' + etiquetaEstado(status) + '</span>' +
         '</div>' +
         '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">' +
           qDate + ' · ' + nItems + ' producto' + (nItems !== 1 ? 's' : '') +

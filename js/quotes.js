@@ -50,7 +50,9 @@ function clearDraftQuote() {
    - Cálculo activo (con o sin draft): "Agregar a orden" + badge */
 function refreshDraftIndicator() {
   var hasDraft = draftQuote && draftQuote.items && draftQuote.items.length > 0;
-  var hasCalc  = !!lastCalc;
+  /* En modo producto siempre hay algo que agregar: el botón no cambia a «Generar» */
+  var enProducto = typeof enModoProducto === 'function' && enModoProducto();
+  var hasCalc  = !!lastCalc || enProducto;
 
   /* Toggle «Costo de la pieza | Orden» del encabezado (escritorio): Orden
      queda deshabilitado hasta que haya al menos un producto */
@@ -58,6 +60,20 @@ function refreshDraftIndicator() {
   var segN     = document.getElementById('calc-seg-orden-n');
   if (segOrden) segOrden.disabled = !hasDraft;
   if (segN)     segN.textContent  = hasDraft ? draftQuote.items.length : '';
+
+  /* La orden a la vista (D151): cuántos productos lleva y cuánto suma */
+  var tira = document.getElementById('orden-tira');
+  if (tira) {
+    tira.classList.toggle('hidden', !hasDraft);
+    if (hasDraft) {
+      var nItems = draftQuote.items.length;
+      var suma = draftQuote.items.reduce(function(s, it) { return s + (it.totalCost || 0) * (it.qty || 1); }, 0);
+      var tiraTexto = document.getElementById('orden-tira-texto');
+      var tiraTotal = document.getElementById('orden-tira-total');
+      if (tiraTexto) tiraTexto.textContent = 'Orden · ' + nItems + (nItems === 1 ? ' producto' : ' productos');
+      if (tiraTotal) tiraTotal.textContent = (config.currency || '$') + suma.toFixed(2);
+    }
+  }
 
   var btn = document.getElementById('btn-cotizar');
   if (!btn) return;
@@ -77,8 +93,19 @@ function refreshDraftIndicator() {
   }
 }
 
+/* Al agregar algo, la tira de la orden se ilumina un momento (D151) */
+function resaltarOrden() {
+  var tira = document.getElementById('orden-tira');
+  if (!tira) return;
+  tira.classList.remove('orden-tira-nueva');
+  void tira.offsetWidth;   /* reinicia la animación si se agrega dos veces seguidas */
+  tira.classList.add('orden-tira-nueva');
+}
+
 /* ── Agregar producto actual al borrador ──────────────────────── */
 function addItemToDraft() {
+  /* Producto por tamaño (D148): lo arma catalog.js con lo elegido */
+  if (typeof enModoProducto === 'function' && enModoProducto()) { agregarProductoTabla(); return; }
   if (!lastCalc) { snack('Primero calcula un costo'); return; }
 
   var newItem = {
@@ -129,8 +156,10 @@ function addItemToDraft() {
   }
 
   var n = draftQuote.items.length;
-  snack(n === 1 ? 'Producto agregado a la orden' : n + ' productos en la orden');
+  var msgAgregado = n === 1 ? 'Producto agregado a la orden' : n + ' productos en la orden';
+  if (typeof snackAccion === 'function') snackAccion(msgAgregado, 'Ver orden', generateQuote); else snack(msgAgregado);
   refreshDraftIndicator();
+  resaltarOrden();
 
   /* Limpiar campos para la siguiente pieza */
   var fields = ['calc-desc', 'calc-weight', 'calc-time', 'calc-design-time'];
@@ -147,6 +176,10 @@ function addItemToDraft() {
   _setFieldState('field-weight', 'helper-weight', 'neutral', 'De toda la placa');
   _setFieldState('field-time', 'helper-time', 'neutral', 'De toda la placa');
   clearLastCalc();
+  /* El resumen del archivo del slicer también se va: era de la pieza que se agregó */
+  if (typeof limpiarLecturaSlicer === 'function') limpiarLecturaSlicer();
+  /* El producto por costo que se estaba cotizando deja de estar marcado */
+  if (typeof alAgregarPieza === 'function') alAgregarPieza();
 
   /* Limpiar post-procesado si estaba activo */
   var ppEnabled = document.getElementById('postproc-enabled');
@@ -163,9 +196,17 @@ function addItemToDraft() {
 }
 
 /* ── Editar cotización existente (no aceptada) ────────────────── */
-function editQuote(i) {
+function editQuote(i, confirmado) {
   var q = quotes[i]; if (!q) return;
-  if (q.status === 'aceptada') { snack('Las cotizaciones aceptadas no se pueden editar'); return; }
+  if (!sePuedeEditar(q)) { snack('Una cotización aceptada no se edita: regrésala un paso desde «⋯»'); return; }
+  /* Editar una enviada la regresa a Borrador al guardar (D9): se avisa antes */
+  if (estadoDe(q) === 'enviada' && !confirmado) {
+    m3Confirm('¿Editar ' + esc(q.quoteNum) + '?', function() { editQuote(i, true); }, {
+      confirmLabel: 'Editar', icon: 'edit',
+      detail: 'Ya la enviaste. Al guardar regresa a Borrador, porque lo que tiene el cliente ya no coincide; después la vuelves a enviar.'
+    });
+    return;
+  }
   saveDraftQuote({
     editIndex:         i,          /* marca el borrador como edición de ésta */
     client:            q.client   || '',
@@ -529,7 +570,8 @@ function _pedirNombreNegocio(alGuardar) {
   document.getElementById('nn-guardar').onclick = guardar;
   campo.onkeydown = function(e) {
     if (e.key === 'Enter') guardar();
-    if (e.key === 'Escape') cerrar();
+    /* preventDefault: que el Esc general (ui.js) no cierre también el panel de abajo */
+    if (e.key === 'Escape') { e.preventDefault(); cerrar(); }
   };
   setTimeout(function() { campo.focus(); }, 50);
 }
@@ -594,17 +636,20 @@ function saveQuote() {
     existing.commissionAmt = commissionAmt;
     existing.grandTotal    = grandTotal;
     existing.totalBaseCost = totalBaseCost;
+    /* Editar una enviada la regresa a Borrador (D9); una vieja «pendiente» se guarda como borrador */
+    existing.status        = estadoAlEditar(existing);
     if (typeof dbGuardarCotizacion === 'function') dbGuardarCotizacion(existing);
     sv('quotes', quotes);
     var editada = _editQuoteIndex;
     _editQuoteIndex = null;
     clearDraftQuote();
     clearLastCalc();
+    if (typeof limpiarLecturaSlicer === 'function') limpiarLecturaSlicer();
     closeModal();
     setCalcMode('calc');
     refreshDraftIndicator();
     if (typeof renderQuotes === 'function') renderQuotes();
-    showSendQuoteModal(editada, true);
+    showSendQuoteModal(editada, 'actualizada');
     return;
   }
 
@@ -623,7 +668,7 @@ function saveQuote() {
     commissionAmt: commissionAmt,
     grandTotal:    grandTotal,
     totalBaseCost: totalBaseCost,
-    status:        'pendiente'
+    status:        'borrador'   /* D6: antes «pendiente» */
   };
 
   quotes.unshift(q);
@@ -631,25 +676,27 @@ function saveQuote() {
   sv('quotes', quotes);
   clearDraftQuote();
   clearLastCalc();
+  if (typeof limpiarLecturaSlicer === 'function') limpiarLecturaSlicer();
   /* No ocultamos calc-result — hero siempre visible en nuevo layout */
   closeModal();
   setCalcMode('calc');
   refreshDraftIndicator();
   if (typeof renderQuotes === 'function') renderQuotes();
-  showSendQuoteModal(0);   /* la nueva qued\u00f3 primera (unshift) */
+  showSendQuoteModal(0, 'nueva');   /* la nueva qued\u00f3 primera (unshift) */
 }
 
 /* Despu\u00e9s de generar: te quedas donde estabas y eliges c\u00f3mo enviarla
    (PDF, imagen, WhatsApp, enlace, texto) o verla. Antes te mandaba a la
    lista de cotizaciones con el visor encima. */
-function showSendQuoteModal(i, actualizada) {
+/* modo: 'nueva', 'actualizada' o 'enviar' (desde la tarjeta) */
+function showSendQuoteModal(i, modo) {
   var q = quotes[i]; if (!q) return;
-  document.getElementById('modal-container').innerHTML = tplSendQuoteModal(q, i, actualizada);
+  document.getElementById('modal-container').innerHTML = tplSendQuoteModal(q, i, modo === true ? 'actualizada' : (modo || 'enviar'));
 }
 
 /* ── Listado de cotizaciones ──────────────────────────────────── */
 var quoteSearchTerm = '';
-var _quoteFilter    = 'all'; /* all | aceptada | enviada | pendiente | rechazada */
+var _quoteFilter    = 'all'; /* all | borrador | enviada | aceptada | rechazada (estados.js) */
 
 function renderQuotes() {
   _sincronizarDock();   /* antes del return: el contenedor puede estar abierto en otra sección */
@@ -669,10 +716,10 @@ function renderQuotes() {
   if (chipsEl) {
     var chipDefs = [
       { id: 'all',       label: 'Todas',      count: quotes.length },
-      { id: 'aceptada',  label: 'Aceptadas',  count: quotes.filter(function(q) { return q.status === 'aceptada'; }).length },
-      { id: 'enviada',   label: 'Enviadas',   count: quotes.filter(function(q) { return q.status === 'enviada'; }).length },
-      { id: 'pendiente', label: 'Borradores', count: quotes.filter(function(q) { return !q.status || q.status === 'pendiente'; }).length },
-      { id: 'rechazada', label: 'Rechazadas', count: quotes.filter(function(q) { return q.status === 'rechazada'; }).length },
+      { id: 'borrador',  label: 'Borradores', count: quotes.filter(function(q) { return estadoDe(q) === 'borrador'; }).length },
+      { id: 'enviada',   label: 'Enviadas',   count: quotes.filter(function(q) { return estadoDe(q) === 'enviada'; }).length },
+      { id: 'aceptada',  label: 'Aceptadas',  count: quotes.filter(function(q) { return estadoDe(q) === 'aceptada'; }).length },
+      { id: 'rechazada', label: 'Rechazadas', count: quotes.filter(function(q) { return estadoDe(q) === 'rechazada'; }).length },
     ];
     chipsEl.innerHTML = chipDefs.map(function(c) {
       var isActive = _quoteFilter === c.id;
@@ -706,8 +753,7 @@ function renderQuotes() {
   /* Filtro por estado */
   if (_quoteFilter !== 'all') {
     filtered = filtered.filter(function(q) {
-      if (_quoteFilter === 'pendiente') return !q.status || q.status === 'pendiente';
-      return q.status === _quoteFilter;
+      return estadoDe(q) === _quoteFilter;
     });
   }
   /* Filtro de búsqueda */
@@ -750,17 +796,14 @@ function onQuoteSearch(input) {
 
 /* ── Etiqueta de estado ───────────────────────────────────────────── */
 function statusLabel(s) {
-  if (s === 'aceptada')  return '✓ Aceptada';
-  if (s === 'rechazada') return '✕ Rechazada';
-  if (s === 'enviada')   return '↗ Enviada';
-  return '⏳ Pendiente';
+  return etiquetaEstado(s);
 }
 
 /* ── Cambiar estado de cotización ────────────────────────────────── */
 function setQuoteStatus(i, status) {
   var q = quotes[i]; if (!q) return;
 
-  /* Aceptar descuenta inventario y sube a Notion. Antes pasaba de un toque,
+  /* Aceptar descuenta inventario (ya no sube a Notion, D144). Antes pasaba de un toque,
      sin preguntar, y no hab\u00eda forma de deshacerlo: regresar el estado a
      pendiente no devolv\u00eda el filamento. */
   if (status === 'aceptada' && q.status !== 'aceptada') {
@@ -800,9 +843,13 @@ function _resumenDescuentoInventario(q) {
   return 'Se va a descontar de tu inventario:<br>\u2022 ' + lineas.join('<br>\u2022 ');
 }
 
-function _aplicarEstado(i, status) {
+/* opts.silencioso: sin aviso, cuando quien llama pone el suyo (por ejemplo, con «Deshacer») */
+function _aplicarEstado(i, status, opts) {
+  opts = opts || {};
   var q = quotes[i]; if (!q) return;
   var prevStatus = q.status;
+  /* De dónde vino, para «Regresar un paso» (D18) */
+  if (estadoDe({ status: status }) !== estadoDe(q)) q.estadoAnterior = estadoDe(q);
   q.status = status;
 
   if (status === 'aceptada' && prevStatus !== 'aceptada') {
@@ -812,7 +859,6 @@ function _aplicarEstado(i, status) {
     q.acceptedAt = new Date().toISOString();
     _deductQuoteInventory(q);
     q.inventarioDescontado = true;
-    if (!q.notionPageId) sendToNotion(i, { silent: true });
   }
 
   /* Salir de "aceptada" devuelve el filamento. Antes se iba y no volv\u00eda. */
@@ -827,9 +873,9 @@ function _aplicarEstado(i, status) {
   renderQuotes();
   renderDashboard();
   if (typeof dbGuardarCotizacion === 'function') dbGuardarCotizacion(q);
-  var labels = { aceptada: 'Cotizaci\u00f3n aceptada \u2713', rechazada: 'Cotizaci\u00f3n rechazada',
-                 enviada: 'Marcada como enviada', pendiente: 'Regresada a borrador' };
-  snack(labels[status] || 'Estado actualizado');
+  var avisos = { aceptada: 'Cotización aceptada', rechazada: 'Cotización rechazada',
+                enviada: 'Marcada como enviada', borrador: 'Regresó a borrador' };
+  if (!opts.silencioso) snack(avisos[estadoDe({ status: status })] || 'Estado actualizado');
 }
 
 /* devolver = true suma en vez de restar, para cuando una cotización deja de
@@ -884,8 +930,10 @@ function whatsappQuote(i) {
   var q = quotes[i]; if (!q) return;
   var cur  = config.currency || '$';
   var biz  = config.bizName || 'Mi Negocio 3D';
-  var phone = (q.phone || config.bizPhone || '').replace(/\D/g, '');
-  if (!phone) { snack('No hay tel\u00e9fono en la cotizaci\u00f3n'); return; }
+  /* El teléfono del cliente, no el del taller: sin teléfono, WhatsApp deja elegir
+     el contacto. Un número de 10 dígitos es de México y lleva la clave 52. */
+  var phone = (q.phone || '').replace(/\D/g, '');
+  if (phone.length === 10) phone = '52' + phone;
 
   var items = q.items || [{ desc: q.desc, material: q.material, qty: q.qty || 1, totalCost: q.totalCost }];
   var grandTotal = q.grandTotal != null ? q.grandTotal : (q.totalWithQty != null ? q.totalWithQty : items[0].totalCost);
@@ -898,7 +946,7 @@ function whatsappQuote(i) {
     var qty = it.qty || 1;
     var sub = it.totalCost * qty;
     txt += '\u2022 *' + it.desc + '*';
-    if (it.material) txt += ' (' + it.material + ')';
+    if (it.material && it.material !== '—') txt += ' (' + it.material + ')';
     txt += '\n  Precio: ' + cur + it.totalCost.toFixed(2);
     if (qty > 1) txt += ' x' + qty + ' = ' + cur + sub.toFixed(2);
     txt += '\n';
@@ -910,6 +958,8 @@ function whatsappQuote(i) {
 
   var url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(txt);
   window.open(url, '_blank');
+  if (document.querySelector('.send-sheet')) closeModal();
+  _marcarEnviada(i, 'Se abrió WhatsApp');
 }
 
 /* ── Link público de cotización ───────────────────────────────── */
@@ -945,10 +995,11 @@ function sharePublicLink(i) {
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(url).then(function() {
-      snack('🔗 Link copiado al portapapeles');
-    }).catch(function() { _copyFallback(url); });
+      _marcarEnviada(i, 'Enlace copiado');
+    }).catch(function() { _copyFallback(url); _marcarEnviada(i, 'Enlace copiado'); });
   } else {
     _copyFallback(url);
+    _marcarEnviada(i, 'Enlace copiado');
   }
 }
 
@@ -974,7 +1025,7 @@ function duplicateQuote(i) {
      una cotización aceptada creaba otra ya "aceptada": el panel sumaba un
      ingreso que nadie había pedido. Y al heredar notionPageId, el botón de
      Notion la daba por sincronizada y nunca subía. */
-  dup.status         = 'pendiente';
+  dup.status         = 'borrador';
   dup.acceptedAt     = null;
   delete dup.notionPageId;
   delete dup.notionSyncedAt;
@@ -1038,7 +1089,8 @@ function buildQuoteHTML(q, qrDataURL) {
     var subtotal = item.totalCost * qty;
     return '<tr style="background:' + _tinteHex(s.primaryColor, n % 2 ? 0.03 : 0.06) + '">' +
       '<td class="qf-td-left">' + esc(item.desc) +
-        '<div class="qf-td-sub">' + esc(item.material) + (item.weight ? ' &middot; ' + item.weight + 'g' : '') + '</div>' +
+        /* Los productos por tamaño no llevan material («—» en los de antes de v115) */
+        '<div class="qf-td-sub">' + (item.material && item.material !== '—' ? esc(item.material) : '') + (item.weight ? ' &middot; ' + item.weight + 'g' : '') + '</div>' +
       '</td>' +
       '<td class="qf-td-center">' + qty + '</td>' +
       '<td class="qf-td-right">' + cur + item.totalCost.toFixed(2) + '</td>' +
@@ -1590,45 +1642,137 @@ function deleteQuote(i) {
   });
 }
 
-/* ── Enviar cotización a Notion ──────────────────────────────── */
-function sendToNotion(i, opts) {
-  opts = opts || {};
-  var q = quotes[i]; if (!q) return;
+/* ══ Estados, envío y menú de la tarjeta (D140–D144) ═════════════════
+   Las reglas viven en js/estados.js; aquí solo se aplican. */
 
-  /* Ya sincronizada \u2014 no duplicar */
-  if (q.notionPageId) {
-    if (!opts.silent) snack('Esta cotizaci\u00f3n ya est\u00e1 en Notion');
-    return;
-  }
-
-  var btn = document.getElementById('notion-btn-' + i);
-  if (btn) { btn.disabled = true; btn.textContent = 'Enviando\u2026'; }
-
-  fetch('/api/notion', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ quote: q, currency: config.currency || '$' })
-  })
-  .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
-  .then(function(r) {
-    if (r.ok) {
-      snack('\u2713 Enviado a Notion: ' + q.quoteNum);
-      /* Guardar el ID de página Notion en la cotización */
-      q.notionPageId = r.data.notionPageId;
-      q.notionSyncedAt = new Date().toISOString();
-      sv('quotes', quotes);
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 100 100" fill="currentColor" style="vertical-align:middle;margin-right:4px"><path d="M8 7c0-2.8 2.2-5 5-5h60l19 19v72c0 2.8-2.2 5-5 5H13c-2.8 0-5-2.2-5-5V7z" fill="none" stroke="currentColor" stroke-width="8"/><path d="M73 2v19h19" fill="none" stroke="currentColor" stroke-width="8"/><line x1="25" y1="40" x2="75" y2="40" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><line x1="25" y1="58" x2="75" y2="58" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><line x1="25" y1="76" x2="55" y2="76" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg>\u2713 Sincronizado';
-        btn.style.color = 'var(--accent-mint)';
-      }
-    } else {
-      snack('Error Notion: ' + (r.data.error || 'Revisa la configuraci\u00f3n'));
-      if (btn) { btn.disabled = false; btn.textContent = 'Notion'; }
-    }
-  })
-  .catch(function(err) {
-    snack('Error de red al conectar con Notion');
-    if (btn) { btn.disabled = false; btn.textContent = 'Notion'; }
+/* WhatsApp o el enlace pasan Borrador → Enviada (D7), con «Deshacer» (D143) */
+function _marcarEnviada(i, mensaje) {
+  var q = quotes[i];
+  if (!q) return;
+  var nuevo = estadoAlCompartir(q);
+  if (!nuevo) { if (mensaje) snack(mensaje); return; }
+  var antes = q.status, id = q.id;
+  _aplicarEstado(i, nuevo, { silencioso: true });
+  snackAccion((mensaje ? mensaje + ' · ' : '') + q.quoteNum + ' quedó como enviada', 'Deshacer', function() {
+    var j = quotes.findIndex(function(x) { return x.id === id; });
+    if (j !== -1) _aplicarEstado(j, antes || 'borrador', { silencioso: true });
+    snack('Regresó a borrador');
   });
+}
+
+/* Para cuando se mandó por otro medio (correo, en persona) */
+function marcarComoEnviada(i) {
+  var q = quotes[i];
+  if (!q || estadoDe(q) !== 'borrador') return;
+  if (document.querySelector('.send-sheet')) closeModal();
+  _aplicarEstado(i, 'enviada');
+}
+
+/* «Regresar un paso» (D18): lo que pasó al avanzar se deshace en _aplicarEstado */
+function regresarUnPaso(i) {
+  var q = quotes[i];
+  var anterior = q && estadoAnterior(q);
+  if (anterior) _aplicarEstado(i, anterior);
+}
+
+/* Tocar la tarjeta la abre, salvo que se toque uno de sus botones */
+function _abrirTarjeta(ev, i) {
+  if (ev.target.closest('button, a, input, select, textarea')) return;
+  viewQuote(i);
+}
+
+var _ACCIONES_COTIZACION = {
+  'ver':            { icono: 'visibility',      etiqueta: 'Ver',                 fn: function(i) { viewQuote(i); } },
+  'editar':         { icono: 'edit',            etiqueta: 'Editar',              fn: function(i) { editQuote(i); } },
+  'enviar':         { icono: 'send',            etiqueta: 'Enviar',              fn: function(i) { showSendQuoteModal(i, 'enviar'); } },
+  'marcar-enviada': { icono: 'mark_email_read', etiqueta: 'Marcar como enviada', fn: function(i) { marcarComoEnviada(i); } },
+  'aceptar':        { icono: 'check_circle',    etiqueta: 'Aceptar',             fn: function(i) { setQuoteStatus(i, 'aceptada'); } },
+  'rechazar':       { icono: 'cancel',          etiqueta: 'Rechazar',            fn: function(i) { setQuoteStatus(i, 'rechazada'); } },
+  'duplicar':       { icono: 'content_copy',    etiqueta: 'Duplicar',            fn: function(i) { duplicateQuote(i); } },
+  'pdf':            { icono: 'picture_as_pdf',  etiqueta: 'Descargar PDF',       fn: function(i) { exportQuotePDF(i); } },
+  'imagen':         { icono: 'image',           etiqueta: 'Guardar imagen',      fn: function(i) { exportQuoteImage(i); } },
+  'texto':          { icono: 'share',           etiqueta: 'Compartir texto',     fn: function(i) { shareQuote(i); } },
+  'regresar':       { icono: 'undo',            etiqueta: 'Regresar un paso',    fn: function(i) { regresarUnPaso(i); } },
+  'borrar':         { icono: 'delete',          etiqueta: 'Borrar',              fn: function(i) { deleteQuote(i); }, peligro: true }
+};
+
+var _menuCotizacion = null;
+
+function cerrarMenuCotizacion(devolverFoco) {
+  var m = _menuCotizacion;
+  if (!m) return;
+  _menuCotizacion = null;
+  m.el.remove();
+  m.boton.setAttribute('aria-expanded', 'false');
+  document.removeEventListener('pointerdown', m.fuera, true);
+  document.removeEventListener('keydown', m.teclas, true);
+  window.removeEventListener('resize', m.cerrar);
+  window.removeEventListener('scroll', m.cerrar, true);
+  if (devolverFoco) m.boton.focus();
+}
+
+function abrirMenuCotizacion(ev, i) {
+  ev.stopPropagation();
+  var boton = ev.currentTarget;
+  if (_menuCotizacion && _menuCotizacion.boton === boton) { cerrarMenuCotizacion(true); return; }
+  cerrarMenuCotizacion();
+  var q = quotes[i];
+  if (!q) return;
+
+  var menu = document.createElement('div');
+  menu.className = 'menu-cotizacion';
+  menu.setAttribute('role', 'menu');
+  menu.setAttribute('aria-label', 'Acciones de ' + q.quoteNum);
+  menu.innerHTML = accionesDelMenu(q).map(function(id) {
+    var a = _ACCIONES_COTIZACION[id];
+    var etiqueta = id === 'regresar' ? 'Regresar a ' + etiquetaEstado(estadoAnterior(q)).toLowerCase() : a.etiqueta;
+    return '<button type="button" role="menuitem" class="menu-cotizacion-item' + (a.peligro ? ' peligro' : '') + '" data-accion="' + id + '">' +
+      '<span class="material-symbols-rounded" aria-hidden="true">' + a.icono + '</span>' + esc(etiqueta) +
+    '</button>';
+  }).join('');
+  document.body.appendChild(menu);
+
+  /* Junto al botón, alineado a su derecha; si no cabe abajo, se abre hacia arriba */
+  var r = boton.getBoundingClientRect();
+  var ancho = menu.offsetWidth, alto = menu.offsetHeight;
+  var left = Math.min(window.innerWidth - ancho - 8, Math.max(8, r.right - ancho));
+  var top = r.bottom + 4;
+  if (top + alto > window.innerHeight - 8) top = Math.max(8, r.top - alto - 4);
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
+  boton.setAttribute('aria-expanded', 'true');
+
+  menu.addEventListener('click', function(e) {
+    var b = e.target.closest('[data-accion]');
+    if (!b) return;
+    var accion = _ACCIONES_COTIZACION[b.dataset.accion];
+    cerrarMenuCotizacion();
+    accion.fn(i);
+  });
+  var items = Array.prototype.slice.call(menu.querySelectorAll('[role="menuitem"]'));
+  var fuera = function(e) {
+    if (!menu.contains(e.target) && !boton.contains(e.target)) cerrarMenuCotizacion();
+  };
+  var teclas = function(e) {
+    if (e.key === 'Escape') { e.preventDefault(); cerrarMenuCotizacion(true); }
+    else if (e.key === 'Tab') { cerrarMenuCotizacion(); }
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      var n = items.indexOf(document.activeElement);
+      n = e.key === 'ArrowDown' ? (n + 1) % items.length : (n - 1 + items.length) % items.length;
+      items[n].focus();
+    }
+  };
+  /* Se cierra si la tarjeta se movió de verdad (scroll o giro de pantalla), no con
+     el último pedacito de un desplazamiento ni con un roce del dedo */
+  var cerrar = function() {
+    var ahora = boton.getBoundingClientRect();
+    if (Math.abs(ahora.top - r.top) > 8 || Math.abs(ahora.left - r.left) > 8) cerrarMenuCotizacion();
+  };
+  document.addEventListener('pointerdown', fuera, true);
+  document.addEventListener('keydown', teclas, true);
+  window.addEventListener('resize', cerrar);
+  window.addEventListener('scroll', cerrar, true);
+  _menuCotizacion = { el: menu, boton: boton, fuera: fuera, teclas: teclas, cerrar: cerrar };
+  if (items[0]) items[0].focus();
 }

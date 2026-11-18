@@ -2,6 +2,8 @@
 
 /* ── Cálculo (modo silencioso para live, modo explícito para validación) ── */
 function calculate(silent) {
+  /* Modo producto (D148): el precio sale de su tabla, no de estos campos */
+  if (typeof enModoProducto === 'function' && enModoProducto()) return;
   var weight   = parseFloat(document.getElementById('calc-weight').value) || 0;
   var timeH    = parseFloat(document.getElementById('calc-time').value) || 0;
   var designH  = parseFloat(document.getElementById('calc-design-time').value) || 0;
@@ -655,6 +657,7 @@ function saveToHistory() {
 
 /* ── Restaurar resultado al volver a la calculadora ──────────── */
 function restoreCalcResult() {
+  if (typeof enModoProducto === 'function' && enModoProducto()) { pintarProducto(); return; }
   if (!lastCalc) return;
   var cur = config.currency;
   document.getElementById('calc-desc').value              = lastCalc.desc !== 'Sin descripción' ? lastCalc.desc : '';

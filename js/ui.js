@@ -11,6 +11,39 @@ function snack(msg) {
   setTimeout(() => el.remove(), 3000);
 }
 
+/* Aviso con una acción, como «Deshacer» o «Actualizar». Dura más que el aviso
+   normal para dar tiempo de tocarla. */
+function snackAccion(msg, etiqueta, alTocar, duracion) {
+  const old = document.querySelector('.m3-snackbar');
+  if (old) old.remove();
+  const el = document.createElement('div');
+  el.className = 'm3-snackbar m3-snackbar-accion';
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  const texto = document.createElement('span');
+  texto.textContent = msg;
+  const boton = document.createElement('button');
+  boton.type = 'button';
+  boton.textContent = etiqueta;
+  boton.onclick = function() { el.remove(); alTocar(); };
+  el.appendChild(texto);
+  el.appendChild(boton);
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), duracion || 6000);
+}
+
+/* La versión que está corriendo, del nombre de la caché del service worker
+   («calc3d-v112» → «Versión 112»). Sirve para saber si ya llegó un cambio. */
+function mostrarVersion() {
+  if (!window.caches) return;
+  caches.keys().then(function(nombres) {
+    var v = nombres.map(function(n) { var m = /^calc3d-v(\d+)$/.exec(n); return m ? +m[1] : 0; })
+      .sort(function(a, b) { return b - a; })[0];
+    if (!v) return;
+    document.querySelectorAll('.app-version').forEach(function(el) { el.textContent = 'Versión ' + v; });
+  }).catch(function() {});
+}
+
 function closeModal() {
   document.getElementById('modal-container').innerHTML = '';
 }
@@ -172,7 +205,7 @@ function showPage(name) {
   if (name === 'config' || name.indexOf('config-') === 0) loadConfig();
   /* setCalcMode('calc'): la calculadora siempre abre en modo calcular; la
      revisión de la cotización (escritorio) solo se abre con «Generar». */
-  if (name === 'calc')         { setCalcMode('calc'); populateSelects(); restoreCalcResult(); refreshDraftIndicator(); initCalcLive(); renderPresets(); _updateResinParamsBlock(); _updateAMSBlock(); _updateSpoolSelector(); }
+  if (name === 'calc')         { setCalcMode('calc'); populateSelects(); if (typeof renderQueCotizas === 'function') renderQueCotizas(); restoreCalcResult(); refreshDraftIndicator(); initCalcLive(); renderPresets(); _updateResinParamsBlock(); _updateAMSBlock(); _updateSpoolSelector(); }
   if (name === 'history')      renderHistory();
   if (name === 'quote-editor') loadQuoteEditor();
 }
@@ -438,3 +471,51 @@ function updateTopBar() {
     else         { sImg.style.display = 'none'; sSvg.style.display = ''; }
   }
 }
+
+/* ── Paneles: Esc cierra, y el foco entra y regresa (D151) ───────────
+   Todo lo que se abre en #modal-container (hojas y diálogos) se anuncia como
+   diálogo, recibe el foco al abrirse y se lo devuelve al botón que lo abrió
+   al cerrarse. Esc hace lo mismo que tocar fuera del panel; si el panel no se
+   cierra al tocar fuera, Esc tampoco lo cierra. */
+(function() {
+  var mc = document.getElementById('modal-container');
+  if (!mc || !('MutationObserver' in window)) return;
+  var ultimoFoco = null, regresarA = null, n = 0;
+
+  document.addEventListener('focusin', function(e) {
+    if (!mc.contains(e.target)) ultimoFoco = e.target;
+  });
+
+  function panelAbierto() { return mc.querySelector('.m3-bottom-sheet, .m3-dialog'); }
+
+  new MutationObserver(function() {
+    var p = panelAbierto();
+    if (!p) {
+      var foco = document.activeElement;
+      if (regresarA && document.contains(regresarA) && (!foco || foco === document.body)) {
+        regresarA.focus({ preventScroll: true });
+      }
+      regresarA = null;
+      return;
+    }
+    if (!regresarA) regresarA = ultimoFoco;
+    if (!p.hasAttribute('role')) p.setAttribute('role', 'dialog');
+    p.setAttribute('aria-modal', 'true');
+    if (!p.hasAttribute('aria-labelledby') && !p.hasAttribute('aria-label')) {
+      var t = p.querySelector('h2, h3');
+      if (t) { if (!t.id) t.id = 'panel-titulo-' + (++n); p.setAttribute('aria-labelledby', t.id); }
+    }
+    /* Al panel mismo, no al primer campo: en el teléfono no abre el teclado */
+    if (!p.contains(document.activeElement)) {
+      p.setAttribute('tabindex', '-1');
+      p.focus({ preventScroll: true });
+    }
+  }).observe(mc, { childList: true });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape' || e.defaultPrevented) return;
+    if (!panelAbierto() || document.querySelector('.capa-encima')) return;
+    var scrim = mc.querySelector('.m3-scrim');
+    if (scrim && scrim.onclick) { e.preventDefault(); scrim.click(); }
+  });
+})();

@@ -86,6 +86,7 @@
     <button class="sidebar-item sidebar-salir" onclick="cerrarSesion()">
       <span class="material-symbols-rounded sidebar-icon">logout</span> Cerrar sesión
     </button>
+    <div class="sidebar-version app-version"></div>
   </div>
 </aside>
 
@@ -171,11 +172,13 @@
   <!-- ── HERO: resultado siempre visible ─── -->
   <div id="calc-result" style="padding:18px 20px 0">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <div class="micro">Costo total sugerido</div>
-      <div class="micro" style="color:var(--ink-4)" id="calc-margin-label">50% margen</div>
+      <div class="micro" id="calc-hero-label">Costo total sugerido</div>
+      <div class="micro solo-pieza" style="color:var(--ink-4)" id="calc-margin-label">50% margen</div>
     </div>
     <div class="display" style="font-size:clamp(48px,12vw,72px);line-height:0.9;letter-spacing:-0.03em" id="result-total">$0.00</div>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:var(--ink-2)">
+    <!-- Modo producto: de qué sale el precio (pintarProducto en catalog.js) -->
+    <div id="result-producto" class="result-producto solo-producto"></div>
+    <div class="solo-pieza" style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:var(--ink-2)">
       <span>Costo base</span>
       <span class="num" style="color:var(--ink)" id="result-base">$0.00</span>
       <span style="color:var(--ink-4)">·</span>
@@ -184,7 +187,7 @@
     </div>
 
     <!-- Barra de composición de costos -->
-    <div id="cost-composition-bar" style="margin-top:14px;height:4px;border-radius:2px;overflow:hidden;display:flex;background:var(--line)">
+    <div id="cost-composition-bar" class="solo-pieza" style="margin-top:14px;height:4px;border-radius:2px;overflow:hidden;display:flex;background:var(--line)">
       <div id="ccb-mat"    style="background:var(--ink);flex:0;transition:flex 0.35s"></div>
       <div id="ccb-energy" style="background:var(--ink-2);flex:0;transition:flex 0.35s"></div>
       <div id="ccb-design" style="background:var(--accent);flex:0;transition:flex 0.35s"></div>
@@ -197,12 +200,12 @@
     </div>
 
     <!-- Toggle desglose -->
-    <button id="btn-breakdown-toggle" onclick="toggleBreakdown()" style="margin-top:12px;width:100%;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border:0.5px solid var(--line);border-radius:10px;font-size:13px;color:var(--ink-2);background:transparent">
+    <button id="btn-breakdown-toggle" class="solo-pieza" onclick="toggleBreakdown()" style="margin-top:12px;width:100%;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border:0.5px solid var(--line);border-radius:10px;font-size:13px;color:var(--ink-2);background:transparent">
       <span id="breakdown-label">Ver desglose · 6 rubros</span>
       <span class="material-symbols-rounded" id="breakdown-chev" style="font-size:16px;transition:transform 0.2s">chevron_right</span>
     </button>
 
-    <div id="breakdown-detail" class="hidden">
+    <div id="breakdown-detail" class="hidden solo-pieza">
       <div class="card" style="padding:4px 16px;margin-top:10px">
         <div class="row" style="padding:11px 0">
           <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--ink)"></span><span style="font-size:13px">Material</span></div>
@@ -273,12 +276,12 @@
   <div id="calc-actions-slot">
   <div class="calc-actions">
     <span class="calc-float-total num" id="calc-float-total" aria-hidden="true">$0</span>
-    <button class="btn btn-ghost" onclick="saveCurrentPreset()">
+    <button class="btn btn-ghost solo-pieza" onclick="saveCurrentPreset()">
       <span class="material-symbols-rounded" style="font-size:16px">star</span> Preset
     </button>
     <!-- Sin este botón, saveToHistory() nunca se llamaba y la pestaña Historial
          no podía tener contenido jamás. -->
-    <button class="btn btn-ghost" onclick="saveToHistory()">
+    <button class="btn btn-ghost solo-pieza" onclick="saveToHistory()">
       <span class="material-symbols-rounded" style="font-size:16px">history</span> Guardar
     </button>
     <button class="btn btn-primary" id="btn-cotizar" onclick="addItemToDraft()">
@@ -287,6 +290,15 @@
     </button>
   </div>
   </div><!-- /calc-actions-slot -->
+  <!-- La orden a la vista (D151): cuántos productos lleva y cuánto suma.
+       La actualiza refreshDraftIndicator (quotes.js). Va fuera del hueco de los
+       botones: si no, la barra flotante del teléfono tardaba en aparecer. -->
+  <button type="button" class="orden-tira hidden" id="orden-tira" onclick="generateQuote()">
+    <span class="material-symbols-rounded" aria-hidden="true">receipt_long</span>
+    <span class="orden-tira-texto" id="orden-tira-texto">Orden</span>
+    <span class="orden-tira-total num" id="orden-tira-total"></span>
+    <span class="orden-tira-ver"><span class="orden-tira-ver-texto">Ver orden</span><span class="material-symbols-rounded" aria-hidden="true">chevron_right</span></span>
+  </button>
 
   <!-- Modo «Orden» (escritorio): vista previa de la cotización tal como la
        verá el cliente. La dibuja _pintarVistaPrevia (quotes.js). -->
@@ -300,18 +312,26 @@
 
   <div class="calc-form">
 
-  <!-- ── Sección 01: Datos de la pieza ─── -->
-  <div class="calc-sec calc-sec-datos" style="padding:28px 20px 0">
-    <div class="rule micro" style="margin-bottom:18px">01 · Datos de la pieza</div>
+  <!-- ── ¿Qué cotizas? (D148): una pieza nueva o un producto guardado.
+       Lo dibuja renderQueCotizas (catalog.js). Un producto por tamaño cambia
+       la calculadora a «modo producto» (#page-calc.modo-producto): se ocultan
+       los campos de la pieza (.solo-pieza) y aparece su panel (.solo-producto). -->
+  <div class="calc-sec calc-sec-que" id="que-cotizas" style="padding:20px 20px 0">
+    <div class="qc-cabeza">
+      <h2 class="qc-titulo" id="que-cotizas-titulo">¿Qué cotizas?</h2>
+      <button type="button" class="qc-mis" onclick="showCatalogModal()">
+        <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>Mis productos
+      </button>
+    </div>
+    <div class="qc-opciones" id="que-cotizas-opciones" role="group" aria-labelledby="que-cotizas-titulo"></div>
+  </div>
 
-    <button class="card" onclick="showCatalogModal()" style="width:100%;padding:14px;display:flex;align-items:center;gap:14px;text-align:left;margin-bottom:16px">
-      <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">category</span>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:500">Catálogo de productos</div>
-        <div style="font-size:12px;color:var(--ink-3);margin-top:2px">Presets de pieza guardados</div>
-      </div>
-      <span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-4)">chevron_right</span>
-    </button>
+  <!-- Modo producto: tamaño, diseño, refuerzo y cantidad (renderPanelProducto) -->
+  <section class="calc-sec calc-producto solo-producto" id="calc-producto" aria-labelledby="pt-titulo" style="padding:24px 20px 0"></section>
+
+  <!-- ── Sección 01: Datos de la pieza ─── -->
+  <div class="calc-sec calc-sec-datos solo-pieza" style="padding:28px 20px 0">
+    <div class="rule micro" style="margin-bottom:18px">01 · Datos de la pieza</div>
 
     <div class="m3-field" style="margin-bottom:16px">
       <input type="text" id="calc-desc" placeholder=" ">
@@ -324,6 +344,20 @@
     Captura lo que te da el slicer para la <strong>placa completa</strong>.
     Si trae varias piezas, dilo en «Piezas» y la app divide.
     </div>
+
+    <!-- Leer el archivo del slicer (D133): llena peso, tiempo y, si son copias, piezas.
+         Sin «accept» a propósito: Android deja en gris los .gcode si se filtran por tipo. -->
+    <!-- Todo el recuadro es la etiqueta del selector: un clic en cualquier parte lo abre.
+         El input queda oculto a la vista pero no al teclado. -->
+    <label class="slicer-lector" id="slicer-lector">
+      <input type="file" id="slicer-archivo" class="slicer-input" onchange="onArchivoSlicer(this)">
+      <span class="slicer-boton">
+        <span class="material-symbols-rounded" aria-hidden="true">upload_file</span>
+        Leer archivo del slicer
+      </span>
+      <span class="slicer-ayuda">.gcode o .gcode.3mf<span class="slicer-ayuda-arrastrar"> · también puedes arrastrarlo aquí</span></span>
+    </label>
+    <div id="slicer-resumen" class="slicer-resumen hidden" aria-live="polite"></div>
 
     <!-- Los cuatro números de la placa. En el teléfono van de dos en dos;
          en escritorio, con espacio, los cuatro en una fila (desktop.css). -->
@@ -361,10 +395,10 @@
     </div>
   </div>
 
-  <div id="calc-presets" style="padding:0 20px"></div>
+  <div id="calc-presets" class="solo-pieza" style="padding:0 20px"></div>
 
   <!-- ── Sección 02: Impresora y material ─── -->
-  <div class="calc-sec calc-sec-impresora" style="padding:28px 20px 0">
+  <div class="calc-sec calc-sec-impresora solo-pieza" style="padding:28px 20px 0">
     <div class="rule micro" style="margin-bottom:18px">02 · Impresora y material</div>
     <div class="m3-card">
       <div class="m3-field">
@@ -464,7 +498,7 @@
   </div>
 
   <!-- ── Sección 03: Post-procesado ─── -->
-  <div class="calc-sec calc-sec-post" style="padding:28px 20px 0">
+  <div class="calc-sec calc-sec-post solo-pieza" style="padding:28px 20px 0">
     <div class="rule micro" style="margin-bottom:18px">03 · Post-procesado</div>
 
     <!-- Pintura -->
@@ -516,7 +550,7 @@
   </div>
 
   <!-- ── Sección 04: Margen de ganancia ─── -->
-  <div class="calc-sec calc-sec-margen" style="padding:28px 20px 0">
+  <div class="calc-sec calc-sec-margen solo-pieza" style="padding:28px 20px 0">
     <div class="rule micro" style="margin-bottom:18px">04 · Margen de ganancia</div>
     <div class="card" style="padding:20px">
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
@@ -935,7 +969,7 @@
 
   <!-- Footer -->
   <div id="cfg-footer-version" style="padding:24px 20px 0;text-align:center">
-    <div class="micro" style="color:var(--ink-4)">v2.2.0 · La Casita del Molde</div>
+    <div class="micro app-version" style="color:var(--ink-4)"></div>
   </div>
 
 </div>
@@ -1364,13 +1398,16 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/db.js"></script>
+<script src="js/estados.js"></script>
 <script src="js/templates.js"></script>
 <script src="js/theme.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/calculator.js"></script>
+<script src="js/gcode.js"></script>
 <script src="js/history.js"></script>
 <script src="js/printers.js"></script>
 <script src="js/materials.js"></script>
+<script src="js/precios-tamano.js"></script>
 <script src="js/catalog.js"></script>
 <script src="js/quotes.js"></script>
 <script src="js/quote-editor.js"></script>
@@ -1389,7 +1426,28 @@ document.addEventListener('DOMContentLoaded', function() {
     populateSelects();
     updateTopBar();
     showPage('dashboard'); /* Siempre inicia en dashboard */
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(function(){});
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').then(function(reg) {
+        /* Cuando baja una versión nueva, avisa para recargar. Antes la app seguía
+           con los archivos viejos hasta cerrarla por completo, y parecía que los
+           cambios no habían llegado. La primera instalación no avisa: no hay
+           «controller» todavía. */
+        reg.addEventListener('updatefound', function() {
+          var nuevo = reg.installing;
+          if (!nuevo) return;
+          nuevo.addEventListener('statechange', function() {
+            if (nuevo.state === 'activated' && navigator.serviceWorker.controller && typeof snackAccion === 'function') {
+              snackAccion('Hay una versión nueva de la app', 'Actualizar', function() { location.reload(); }, 20000);
+            }
+          });
+        });
+      }).catch(function() {});
+    }
+    /* La versión, cuando el service worker ya guardó sus archivos (en la primera
+       carga todavía no los tiene) */
+    if ('serviceWorker' in navigator && typeof mostrarVersion === 'function') {
+      navigator.serviceWorker.ready.then(function() { mostrarVersion(); });
+    }
   } catch(e) {
     console.error('Init error:', e);
     showPage('dashboard'); /* Fallback */

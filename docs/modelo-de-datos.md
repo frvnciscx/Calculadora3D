@@ -140,7 +140,7 @@ Lo que hoy es `quoteStyle`, igual: colores, qué secciones se muestran, `termsTe
 | `impresoras` | Los de hoy: `name`, `type`, `power`, `cost`, `lifeHours`, `multicolor`, `heads`. Más `refId`, si salió de la lista de comunes | v100, D47 | Sí |
 | `materiales` | Los de hoy: `name`, `type`, `costPerKg`, `density` | v100 | Sí |
 | `insumos` | `nombre`, `costoUnitario`. Herrajes, imanes, argollas | D61 | Sí |
-| `productos` | Los de hoy: `name`, `variant`, `type` (`cost` o `table`), `designH`, `defaultWeight`, `defaultTimeH`, `defaultMargin`, `priceTable`. Más `empaque` por pieza | v100, D25 | Sí; `empaque`, después |
+| `productos` | Los de hoy: `name`, `variant`, `type` (`cost` o `table`), `designH`, `defaultWeight`, `defaultTimeH`, `defaultMargin`, `priceTable`. Desde v115, los de tabla también `refuerzoTable` (`{ tamaño: monto }`) y `designLevels` (`[{ label, cost }]`); `priceTable` acepta medios centímetros (`"8.5"`). Más `empaque` por pieza | v100, D25, D149, D150 | Sí; `empaque`, después |
 
 ### 4.7 `rollos/{id}` — el inventario de filamento
 
@@ -192,6 +192,7 @@ Cuántas cotizaciones tiene y cuánto se le ha cotizado se calcula al abrir su f
 | `weight`, `timeH`, `designH`, `pieces`, `margin` | Por pieza, con las piezas de la placa, como hoy. El tiempo se captura en horas y minutos y se guarda en horas | v100, D58 | Sí |
 | Desglose: `matCost`, `energyCost`, `laborCost`, `deprecCost`, `fixedCost`, `indirectCost`, `maintCost`, `postProcCost`, `ipaCost`, `uvCost`, `wasteCost`, `baseCost` | El costo como se calculó ese día. Si mañana sube el PLA, la cotización no cambia | v100 | Sí |
 | `totalCost`, `autoPrice`, `priceManual` | Precio, precio de la fórmula y si se escribió a mano | v100 | Sí |
+| `tipo`, `detalleTabla` | `'tabla'` en los productos por tamaño, con lo elegido: `{ productoId, tamano, nivel, diseno, refuerzo, base }`. Sus rubros de costo van en 0 y `baseCost` vacío | D151 | Sí |
 | `spoolId`, `amsColors`, `amsPurgeGrams` | El rollo, o los rollos por color con sus gramos | v100, D74 | Sí |
 | `archivo` | `{ nombre, placa }` del archivo del slicer del que salió | D57, D72 | Sí |
 | `miniatura` | La imagen de la placa, reducida a unos 10 KB | D57, D91 | Sí |

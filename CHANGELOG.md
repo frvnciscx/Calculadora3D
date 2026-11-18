@@ -29,6 +29,139 @@ app y volviendo a entrar.
 
 ---
 
+## 2026-11-18 · caché v115
+
+El catálogo dentro de la calculadora (D148–D151), tras revisarlo con `/design:design-critique` e
+`/impeccable` (critique y layout). La sincronización y la fórmula de costeo no cambian (69
+pruebas en verde: 7 nuevas de los productos por tamaño).
+
+### Cambiado
+
+- **«¿Qué cotizas?»** arriba de los campos de la calculadora: «Pieza nueva» o un producto
+  guardado. Antes el catálogo era un panel aparte que, con un producto por costo, solo llenaba la
+  descripción, y con un cortador abría otra calculadora encima.
+- **Modo producto:** un cortador cambia la calculadora a tamaño, diseño, refuerzo y cantidad,
+  con el precio y su desglose en el panel de resultado. «Agregar a orden» lo agrega y se queda en
+  el producto para el siguiente tamaño. Ningún tamaño queda elegido de entrada.
+- **La descripción lleva el tamaño:** «Cortador de galletas Solo Cortador · 9 cm · diseño
+  sencillo · con refuerzo». Antes decía «Cortador de galletas Solo Cortador» para todos.
+- **La orden a la vista:** una tira «Orden · 3 productos · $1085.00» abajo del botón, que se
+  ilumina al agregar, y el aviso trae «Ver orden».
+- **«Mis productos»** (antes «Catálogo de productos») con Editar y Cotizar en cada producto.
+- **Precios en tabla** (D149): tamaño, precio y refuerzo por renglón, «Agregar tamaño» y «Llenar
+  varios tamaños de una vez». Acepta 8.5 cm y marca el renglón que no cuadra.
+- **Diseño y refuerzo de cada producto** (D150): los de antes siguen igual hasta que se editan.
+- **En la orden y la cotización:** los productos por tamaño dicen «Precio por tamaño» en lugar de
+  «— · —», ya no muestran «—» como material, y su precio ya no sale como «Material» en el
+  desglose.
+
+### Accesibilidad
+
+- Esc cierra los paneles; el foco entra al abrir y regresa al botón al cerrar.
+- Los interruptores se alcanzan con Tab (antes, ninguno).
+- «(opcional)» se lee (estaba en 2.4–2.9:1) y las etiquetas ya no se parten encima de lo escrito.
+- Las listas vuelven a tener su flecha.
+
+### Qué conviene probar en producción
+
+1. En la calculadora, tocar «Cortador de galletas · Solo Cortador», elegir 9 cm, «Sencillo» y
+   refuerzo: el precio es $60.
+2. «Agregar a orden»: la tira de la orden cambia y el aviso trae «Ver orden».
+3. «Mis productos» › Editar el cortador: los precios están en tabla, con su refuerzo.
+4. En la barra lateral aparece «Versión 115».
+
+---
+
+## 2026-11-18 · caché v114
+
+- **El recuadro del lector del slicer ya no tiene un botón adentro** (D146): el ícono y el texto
+  van sin forma de botón, centrados (D147), y todo el recuadro abre el selector.
+- Probado también el aviso de versión nueva: al pasar de la 112 a la 113 apareció «Hay una
+  versión nueva · Actualizar», y al tocarlo cargó la 113.
+
+---
+
+## 2026-11-18 · caché v112
+
+Enviar y su estado (D140–D145), y lo que Francisco encontró al probar el lector del slicer. La
+sincronización y la fórmula de costeo no cambian (62 pruebas en verde: 5 nuevas de los estados).
+
+### Cambiado
+
+- **«Borrador» en todo:** la tarjeta, el filtro, el Dashboard y el historial del cliente. Las
+  cotizaciones guardadas como «pendiente» se leen igual y no se reescriben (D141).
+- **Enviar cambia el estado (D7):** WhatsApp y el enlace pasan un borrador a Enviada, con un aviso
+  y «Deshacer». El PDF, la imagen y el texto no lo cambian. Para lo que se manda por otro medio
+  está «Marcar como enviada».
+- **Editar una enviada la regresa a Borrador (D9),** y la app lo avisa antes.
+- **Tarjetas de cotización:** se abren al tocarlas y tienen una sola acción principal según su
+  estado; lo demás va en un menú «⋯», con «Regresar un paso» (D18). Antes eran de 8 a 10
+  botones iguales.
+- **Ventana de envío:** WhatsApp arriba como acción principal. Sin teléfono del cliente,
+  WhatsApp deja elegir el contacto (antes usaba el teléfono del taller), y un número de 10
+  dígitos lleva la clave 52.
+
+### Quitado
+
+- **Notion:** el botón de las tarjetas y el envío al aceptar (D144).
+
+### Corregido
+
+- **El resumen del archivo del slicer se quedaba en pantalla** al agregar el producto a la
+  cotización, con la purga por cambio en 0 g para la siguiente pieza. Ahora se quita y el AMS
+  vuelve a como estaba.
+- **Los cambios no llegaban si el navegador tenía la versión anterior.** La app avisa «Hay una
+  versión nueva · Actualizar» y muestra su número en la barra lateral y en Ajustes.
+
+### Qué conviene probar en producción
+
+1. Una cotización nueva: la tarjeta dice Borrador y su acción es «Enviar».
+2. «Enviar» › WhatsApp: se abre WhatsApp y la tarjeta queda Enviada; «Deshacer» la regresa.
+3. En una enviada, «Editar» avisa que regresa a Borrador.
+4. En la barra lateral aparece «Versión 112».
+
+---
+
+## 2026-11-18 · caché v111
+
+La Calculadora lee el archivo del slicer (D133, D135). La sincronización y la fórmula de costeo
+no cambian (57 pruebas en verde: 13 nuevas del lector). La v110 solo se probó en local; la v111
+le suma lo que Francisco encontró en esa prueba.
+
+### Añadido
+
+- **«Leer archivo del slicer»** en la Calculadora, arriba del peso y el tiempo. Todo el recuadro
+  abre el selector, y en escritorio también se puede arrastrar el archivo. Lee el `.gcode` de Bambu Studio, OrcaSlicer,
+  PrusaSlicer, Cura y Simplify3D, y el `.gcode.3mf` de Bambu Studio.
+- **Llena solo:**
+  - la impresora del archivo; con varios colores, una con AMS;
+  - el peso y el tiempo total estimado;
+  - las piezas, si la placa trae copias del mismo objeto;
+  - la descripción, si está vacía, con el nombre del archivo;
+  - el material, si hay uno solo de ese tipo;
+  - con AMS, los gramos de cada color y los cambios de color, con la purga por cambio en 0 g
+    porque el peso del archivo ya la incluye.
+- **Un resumen** con la miniatura de la placa, la impresora del archivo, los gramos de cada color
+  numerados por cabezal y «Deshacer», que deja todo como estaba, impresora incluida.
+- Se lee en el dispositivo, solo el principio y el final del archivo: no se sube a ningún lado y
+  un G-code de 41 MB se lee al instante. Funciona sin conexión.
+
+### No lee
+
+- **Resina** (`.ctb`, `.goo`): Chitubox los cifra. Se captura a mano.
+- **Proyectos `.3mf` sin laminar:** no traen tiempo ni gramos. En Bambu Studio, «Exportar archivo
+  de placa laminada».
+
+### Qué conviene probar en producción
+
+1. En la Calculadora, «Leer archivo del slicer» con un `.gcode.3mf` exportado de Bambu Studio:
+   llena el peso, el tiempo y el material.
+2. Con otra impresora elegida, un archivo de varios colores: cambia a la A1 con AMS, reparte los
+   gramos, llena los cambios de color y la purga por cambio queda en 0 g.
+3. En el teléfono: elegir el archivo desde Descargas o Drive.
+
+---
+
 ## 2026-11-09 · caché v109
 
 Primera ronda de la revisión de diseño con `/impeccable` (24/40): lo que ve el cliente, contraste y

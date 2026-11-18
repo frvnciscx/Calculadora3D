@@ -594,58 +594,33 @@ function tplDeductModal(item, i) {
 
 /* ── QUOTES — card individual ───────────────────────────────────── */
 
+/* Tarjeta de cotización (D143): tocarla la abre, tiene una sola acción principal
+   según su estado y el resto va en el menú «⋯». Antes eran de 8 a 10 botones
+   iguales, incluido el de Notion, que ya salió del proyecto (D33, D144). */
 function tplQuoteCard(q, i, cur) {
   var total     = q.grandTotal != null ? q.grandTotal
                 : (q.totalWithQty != null ? q.totalWithQty : (q.totalCost || 0));
   var itemCount = q.items ? q.items.length : 1;
   var firstItem = q.items ? q.items[0] : q;
-  var status    = q.status || 'pendiente';
+  var estado    = estadoDe(q);
 
   var chipsHTML = itemCount > 1
     ? '<span class="hist-chip">' + itemCount + ' productos</span>' +
-      '<span class="hist-chip">' + esc(firstItem.desc) + '\u2026</span>' +
-      '<span class="hist-chip">' + esc(firstItem.material) + '</span>'
+      '<span class="hist-chip">' + esc(firstItem.desc) + '…</span>' +
+      _chipMaterial(firstItem.material)
     : '<span class="hist-chip">' + esc(firstItem.desc     || q.desc     || '') + '</span>' +
-      '<span class="hist-chip">' + esc(firstItem.material || q.material || '') + '</span>';
+      _chipMaterial(firstItem.material || q.material || '');
 
-  var statusHTML = '<span class="status-badge status-' + status + '">' + statusLabel(status) + '</span>';
+  var statusHTML = '<span class="status-badge status-' + estado + '">' + esc(etiquetaEstado(estado)) + '</span>';
 
-  var waBtn = (q.phone || config.bizPhone)
-    ? '<button class="m3-btn-text m3-btn-sm" style="color:#25D366" onclick="whatsappQuote(' + i + ')">' +
-        tplIcon('chat', 16) + ' WA' +
-      '</button>'
-    : '';
+  var botones = {
+    enviar:   '<button type="button" class="accion-principal" onclick="showSendQuoteModal(' + i + ',\'enviar\')">' + tplIcon('send', 16) + ' Enviar</button>',
+    aceptar:  '<button type="button" class="accion-principal" onclick="setQuoteStatus(' + i + ',\'aceptada\')">' + tplIcon('check_circle', 16) + ' Aceptar</button>',
+    rechazar: '<button type="button" class="accion-secundaria" onclick="setQuoteStatus(' + i + ',\'rechazada\')">' + tplIcon('cancel', 16) + ' Rechazar</button>',
+    ver:      '<button type="button" class="accion-secundaria" onclick="viewQuote(' + i + ')">' + tplIcon('visibility', 16) + ' Ver</button>'
+  };
 
-  var notionBtn = status === 'aceptada'
-    ? '<button class="m3-btn-text m3-btn-sm notion-btn" id="notion-btn-' + i + '" onclick="sendToNotion(' + i + ')" title="Sincronizar con Notion">' +
-        '<svg width="14" height="14" viewBox="0 0 100 100" fill="currentColor" style="vertical-align:middle;margin-right:4px">' +
-          '<path d="M8 7c0-2.8 2.2-5 5-5h60l19 19v72c0 2.8-2.2 5-5 5H13c-2.8 0-5-2.2-5-5V7z" fill="none" stroke="currentColor" stroke-width="8"/>' +
-          '<path d="M73 2v19h19" fill="none" stroke="currentColor" stroke-width="8"/>' +
-          '<line x1="25" y1="40" x2="75" y2="40" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>' +
-          '<line x1="25" y1="58" x2="75" y2="58" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>' +
-          '<line x1="25" y1="76" x2="55" y2="76" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>' +
-        '</svg>Notion' +
-      '</button>'
-    : '';
-
-  var statusBtns = '';
-  if (status !== 'aceptada') {
-    statusBtns += '<button class="m3-btn-text m3-btn-sm" style="color:var(--accent-mint)" onclick="setQuoteStatus(' + i + ',\'aceptada\')">' +
-      tplIcon('check_circle', 16) + ' Aceptar</button>';
-  }
-  if (status !== 'rechazada') {
-    statusBtns += '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="setQuoteStatus(' + i + ',\'rechazada\')">' +
-      tplIcon('cancel', 16) + ' Rechazar</button>';
-  }
-  if (status !== 'pendiente') {
-    statusBtns += '<button class="m3-btn-text m3-btn-sm" onclick="setQuoteStatus(' + i + ',\'pendiente\')">' +
-      tplIcon('schedule', 16) + ' Pendiente</button>';
-  }
-
-  var linkBtn = '<button class="m3-btn-text m3-btn-sm" onclick="sharePublicLink(' + i + ')" title="Link público">' +
-    tplIcon('link', 16) + ' Link</button>';
-
-  return '<div class="hist-item quote-card">' +
+  return '<div class="hist-item quote-card" onclick="_abrirTarjeta(event,' + i + ')">' +
     '<div class="hist-header">' +
       '<div class="quote-card-meta">' +
         '<div style="display:flex;align-items:center;gap:8px;">' +
@@ -660,20 +635,12 @@ function tplQuoteCard(q, i, cur) {
       '<div class="hist-total">' + cur + total.toFixed(2) + '</div>' +
     '</div>' +
     '<div class="hist-chips">' + chipsHTML + '</div>' +
-    '<div class="quote-actions-bar" style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">' +
-      '<button class="m3-btn-text m3-btn-sm" onclick="viewQuote(' + i + ')">' + tplIcon('visibility', 16) + ' Ver</button>' +
-      (status !== 'aceptada'
-        ? '<button class="m3-btn-text m3-btn-sm" onclick="editQuote(' + i + ')">' + tplIcon('edit', 16) + ' Editar</button>'
-        : '') +
-      linkBtn +
-      '<button class="m3-btn-text m3-btn-sm" onclick="shareQuote(' + i + ')">' + tplIcon('share', 16) + ' Compartir</button>' +
-      waBtn +
-      '<button class="m3-btn-text m3-btn-sm" onclick="duplicateQuote(' + i + ')">' + tplIcon('content_copy', 16) + ' Duplicar</button>' +
-      '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteQuote(' + i + ')">' + tplIcon('delete', 16) + '</button>' +
-      notionBtn +
-    '</div>' +
-    '<div class="quote-status-row" style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;border-top:1px solid var(--md-outline);padding-top:8px">' +
-      statusBtns +
+    '<div class="quote-acciones">' +
+      accionesPrincipales(q).map(function(a) { return botones[a]; }).join('') +
+      '<button type="button" class="quote-menu-btn" aria-haspopup="menu" aria-expanded="false" ' +
+              'aria-label="Más acciones de ' + esc(q.quoteNum) + '" onclick="abrirMenuCotizacion(event,' + i + ')">' +
+        tplIcon('more_horiz', 20) +
+      '</button>' +
     '</div>' +
   '</div>';
 }
@@ -707,11 +674,23 @@ function tplDraftItemCalc(item, cur) {
     : txt;
 }
 
+/* Debajo del nombre: con qué se imprime, o «Precio por tamaño» para los
+   productos de tabla (D148; los de antes de v115 traían «—»). */
+function _subLineaItem(item) {
+  if (item.tipo === 'tabla' || item.printer === '—' || (!item.printer && !item.material)) return 'Precio por tamaño';
+  return esc(item.printer) + ' &middot; ' + esc(item.material);
+}
+
+/* La etiqueta del material en la tarjeta: los productos por tamaño no tienen */
+function _chipMaterial(m) {
+  return m && m !== '—' ? '<span class="hist-chip">' + esc(m) + '</span>' : '';
+}
+
 function tplDraftItem(item, i, cur) {
   return '<div class="draft-item">' +
     '<div class="draft-item-info">' +
       '<div class="draft-item-desc">'+ esc(item.desc) + '</div>' +
-      '<div class="draft-item-sub">' + esc(item.printer) + ' &middot; ' + esc(item.material) + '</div>' +
+      '<div class="draft-item-sub">' + _subLineaItem(item) + '</div>' +
       '<div class="draft-item-calc" id="dqc-' + i + '">' + tplDraftItemCalc(item, cur) + '</div>' +
     '</div>' +
     '<div class="draft-item-controls">' +
@@ -827,7 +806,7 @@ function tplReviewRow(item, i, cur) {
   return '<tr>' +
     '<td>' +
       '<div class="draft-item-desc">' + esc(item.desc) + '</div>' +
-      '<div class="draft-item-sub">' + esc(item.printer) + ' &middot; ' + esc(item.material) + '</div>' +
+      '<div class="draft-item-sub">' + _subLineaItem(item) + '</div>' +
       '<div class="draft-item-calc" id="dqc-' + i + '">' + tplDraftItemCalc(item, cur) + '</div>' +
     '</td>' +
     '<td>' +
@@ -858,7 +837,11 @@ function tplReviewRow(item, i, cur) {
    Los id btn-export-pdf-i / btn-export-img-i los usan exportQuotePDF y
    exportQuoteImage para mostrar «Generando…». help-sheet: modal centrado
    en escritorio, panel desde abajo en el teléfono. */
-function tplSendQuoteModal(q, i, actualizada) {
+/* Ventana de envío (D142, D143). WhatsApp va arriba como acción principal: es como
+   se manda casi todo. Con un borrador, avisa que WhatsApp y el enlace la dejan
+   como enviada (D7), y ofrece marcarla si se mandó por otro medio.
+   modo: 'nueva', 'actualizada' o 'enviar' (desde la tarjeta). */
+function tplSendQuoteModal(q, i, modo) {
   var cur = config.currency;
   var opcion = function(id, icon, title, sub, fn) {
     return '<button type="button" class="send-option"' + (id ? ' id="' + id + '"' : '') + ' onclick="' + fn + '">' +
@@ -867,28 +850,38 @@ function tplSendQuoteModal(q, i, actualizada) {
     '</button>';
   };
   var tel = (q.phone || '').replace(/\D/g, '');
+  var borrador = estadoDe(q) === 'borrador';
+  var titulo = modo === 'nueva' ? esc(q.quoteNum) + ' generada'
+             : modo === 'actualizada' ? esc(q.quoteNum) + ' actualizada'
+             : 'Enviar ' + esc(q.quoteNum);
   return '<div class="m3-scrim" onclick="closeModal()"></div>' +
     '<div class="m3-bottom-sheet help-sheet send-sheet" role="dialog" aria-modal="true" aria-labelledby="send-title">' +
       '<div class="m3-drag-handle"></div>' +
       '<div class="send-head">' +
-        '<span class="send-check">' + tplIcon('check', 22) + '</span>' +
+        '<span class="send-check">' + tplIcon(modo === 'enviar' ? 'send' : 'check', 22) + '</span>' +
         '<div>' +
-          '<h2 id="send-title">' + esc(q.quoteNum) + (actualizada ? ' actualizada' : ' generada') + '</h2>' +
+          '<h2 id="send-title">' + titulo + '</h2>' +
           '<p>' + esc(q.client) + ' · ' + cur + (q.grandTotal || 0).toFixed(2) + '</p>' +
         '</div>' +
       '</div>' +
-      '<div class="micro" style="margin:4px 0 10px">Enviar o guardar</div>' +
+      '<button type="button" class="m3-btn-filled send-whatsapp" onclick="whatsappQuote(' + i + ')">' +
+        tplIcon('chat', 22) +
+        '<span class="send-whatsapp-texto"><strong>Enviar por WhatsApp</strong>' +
+          '<small>' + (tel ? 'Al ' + esc(q.phone) : 'Eliges el contacto en WhatsApp') + '</small></span>' +
+      '</button>' +
+      (borrador ? '<p class="send-nota">Al mandarla por WhatsApp o copiar el enlace, queda como enviada.</p>' : '') +
+      '<div class="micro" style="margin:16px 0 10px">Otras formas</div>' +
       '<div class="send-options">' +
+        opcion('', 'link', 'Enlace', 'Página para el cliente', 'sharePublicLink(' + i + ')') +
         opcion('btn-export-pdf-' + i, 'picture_as_pdf', 'PDF', 'Descargar en A4', 'exportQuotePDF(' + i + ')') +
         opcion('btn-export-img-' + i, 'image', 'Imagen', 'Para mandar por chat', 'exportQuoteImage(' + i + ')') +
-        opcion('', 'chat', 'WhatsApp', tel ? 'Al ' + esc(q.phone) : 'Falta el teléfono del cliente', 'whatsappQuote(' + i + ')') +
-        opcion('', 'link', 'Enlace', 'Página para el cliente', 'sharePublicLink(' + i + ')') +
         opcion('', 'share', 'Texto', 'Copiar o compartir', 'shareQuote(' + i + ')') +
         opcion('', 'visibility', 'Ver cotización', 'Como la verá el cliente', 'closeModal();viewQuote(' + i + ')') +
+        (borrador ? opcion('', 'mark_email_read', 'Marcar como enviada', 'Si la mandaste por otro medio', 'marcarComoEnviada(' + i + ')') : '') +
       '</div>' +
       '<div class="m3-sheet-actions">' +
-        '<button class="m3-btn-outlined" onclick="closeModal();showPage(\'quotes\')">Ir a cotizaciones</button>' +
-        '<button class="m3-btn-filled" onclick="closeModal()">Listo</button>' +
+        '<button class="m3-btn-text" onclick="closeModal();showPage(\'quotes\')">Ir a cotizaciones</button>' +
+        '<button class="m3-btn-outlined" onclick="closeModal()">Listo</button>' +
       '</div>' +
     '</div>';
 }

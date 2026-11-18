@@ -123,9 +123,9 @@ function renderDashboard() {
     ? '<div style="padding:20px;text-align:center;font-size:13px;color:var(--ink-3)">Sin cotizaciones aún</div>'
     : recent.map(function(q) {
         var total  = q.grandTotal != null ? q.grandTotal : (q.totalWithQty || 0);
-        var status = q.status || 'pendiente';
+        var status = estadoDe(q);
         var statusColor = status === 'aceptada' ? 'var(--ok)' : status === 'rechazada' ? 'var(--danger)' : status === 'enviada' ? 'var(--accent)' : 'var(--ink-4)';
-        var statusDot   = '● ' + (status === 'aceptada' ? 'aceptada' : status === 'rechazada' ? 'rechazada' : status === 'enviada' ? 'enviada' : 'borrador');
+        var statusDot   = '● ' + etiquetaEstado(status).toLowerCase();
         var num = q.quoteNum ? q.quoteNum.replace('COT-','') : '?';
         return '<div class="row" style="padding:14px 0;cursor:pointer" onclick="showPage(\'quotes\')">' +
           '<div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">' +

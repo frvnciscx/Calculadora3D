@@ -296,6 +296,12 @@
     display: none !important;
   }
 
+  /* «Mis productos» y su editor: el encabezado y el cuerpo con el mismo margen */
+  .m3-bottom-sheet.catalogo-sheet,
+  .m3-bottom-sheet.editor-producto { padding: 0 !important; width: 480px !important; }
+  .catalogo-sheet .catalogo-cuerpo,
+  .editor-producto .catalogo-cuerpo { padding: 0 28px 32px; }
+
   /* ── Drawer header: padding top + fila con botón cerrar ─────────── */
   .m3-bottom-sheet .sheet-header-row,
   .client-modal-wrap .sheet-header-row {
@@ -767,6 +773,10 @@
   }
   /* En el panel, «Generar cotización» con su contador no cabe en media fila */
   .calc-summary .calc-actions { flex-wrap: wrap; }
+  /* La tira de la orden (D151) va abajo de los botones, dentro del panel */
+  .calc-summary #calc-actions-slot:has(+ .orden-tira:not(.hidden)) { padding-bottom: 0; }
+  .calc-summary .orden-tira { flex: none; margin: 10px 20px 20px; }
+  .calc-summary .orden-tira-ver-texto { display: none; }   /* en el panel no cabe en un renglón */
   .calc-summary #btn-cotizar  { flex: 1 0 100%; }
 
   /* Modo «Orden»: la vista previa a la derecha, un poco más ancha (es una
@@ -799,7 +809,7 @@
   }
   .calc-form > * { flex: 1 1 100%; min-width: 0; }
   .calc-form .calc-sec { padding-top: 24px !important; }
-  .calc-form .calc-sec-datos { padding-top: 4px !important; }
+  .calc-form .calc-sec-que { padding-top: 4px !important; }
 
   @container (min-width: 620px) {
     /* Peso, Tiempo, Piezas y Diseño en una fila. display: contents hace
@@ -838,6 +848,7 @@
   #page-calc[data-mode="review"] .calc-summary #calc-result,
   #page-calc[data-mode="review"] .calc-summary #calc-actions-slot { display: none !important; }
   #page-calc[data-mode="review"] #calc-review-main { display: flex; }
+  #page-calc[data-mode="review"] .orden-tira { display: none !important; }
 
   .calc-review-main {
     container-type: inline-size;

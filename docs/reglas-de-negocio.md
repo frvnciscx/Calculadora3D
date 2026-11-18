@@ -4,7 +4,7 @@ Qué regla manda en cada paso de una cotización: qué acción la mueve de estad
 
 Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y la app se publica en las tiendas.
 
-**Actualizado:** 2026-11-09 (D115–D132, cambios de diseño y revisión con /impeccable; D104–D114, de la integración de Firebase; antes, D87–D103: arranque de un negocio nuevo, modelo de datos y limpieza del repositorio; van 132 decisiones; las reglas de negocio se cerraron el 2026-10-16 y desde entonces suman las de `flujos.md`, `modelo-de-datos.md` y de publicación)
+**Actualizado:** 2026-11-18 (D148–D151, el catálogo dentro de la calculadora; D140–D147, enviar y su estado; D133–D139, lectura de archivos del slicer y confirmaciones; D115–D132, cambios de diseño y revisión con /impeccable; D104–D114, de la integración de Firebase; antes, D87–D103: arranque de un negocio nuevo, modelo de datos y limpieza del repositorio; van 151 decisiones; las reglas de negocio se cerraron el 2026-10-16 y desde entonces suman las de `flujos.md`, `modelo-de-datos.md` y de publicación)
 
 **Fuentes:** código v100 (`main`, commit `7cc4b14`) revisado el 2026-10-16 · decisiones del cotizador en el repo del Asistente (`docs/projects/cotizador/README.md`, 2026-10-15) · [`AUDITORIA-UX.md`](AUDITORIA-UX.md) · respuestas de Francisco a P1–P65 (2026-10-16) · requisitos de publicación de Apple y Google, y planes de Firebase, revisados el 2026-10-16 (fuentes en §4.10).
 
@@ -44,7 +44,7 @@ Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y l
 | D3 | Firebase (Firestore) para empezar; algo más robusto si el proyecto crece | Francisco | 2026-10-15 |
 | ~~D4~~ | ~~La sincronización con Notion queda pendiente: debía conectarse con lo que ya lleva en «Ventas» y creó una base aparte~~ Superada por D33 (2026-10-16): Notion sale del proyecto | Francisco | 2026-10-15 |
 | D5 | Las reglas de negocio se escriben en `docs/` de este repo. Antes la planeación iba en `docs/projects/cotizador/` del Asistente | Francisco («Empezamos por docs/reglas-de-negocio.md») | 2026-10-16 |
-| D6 | El primer estado se llama «Borrador» en todo; al abrir la app, `pendiente` se migra a `borrador` | Francisco (P1: a) | 2026-10-16 |
+| D6 | El primer estado se llama «Borrador» en todo; ~~al abrir la app, `pendiente` se migra a `borrador`~~ (afinado en D141: se lee como Borrador y no se reescribe) | Francisco (P1: a) | 2026-10-16 |
 | D7 | Borrador → Enviada: automático al tocar WhatsApp o Link, y un botón «Marcar como enviada». El PDF y la imagen no cambian el estado | Francisco (P2: c) | 2026-10-16 |
 | D8 | Se puede aceptar o rechazar un borrador sin pasar por Enviada | Francisco (P3: a) | 2026-10-16 |
 | D9 | Editar una cotización enviada la regresa a Borrador hasta que se reenvía | Francisco (P4: b) | 2026-10-16 |
@@ -166,11 +166,30 @@ Desde D33, Notion sale del proyecto: los datos y las cuentas van en Firebase y l
 | D125 | «Auto» se queda en Ajustes › Otros, para volver a automático después de usar el interruptor (confirma D122) | Francisco (P120: a) | 2026-11-09 |
 | D126 | Claude agrega en `js/db.js` que la barra se redibuje cuando llega de la nube el diseño de la cotización, para que el logo cambie al momento en los otros equipos: una línea en la lista de qué se redibuja (`_DOCS.quoteStyle.render`). No cambia qué se guarda ni cómo se sincroniza. Con su prueba en `tests/sincronizacion.test.js`, que fallaba antes del cambio | Francisco (P121: a) | 2026-11-09 |
 | D127 | «¿Olvidaste tu contraseña?» se queda solo si no hay que cambiar nada del backend; si hubiera que cambiarlo, lo agrega Javi («solo si no tenemos que modificar nada del back, sino le digo a javi que lo agregue»). No hace falta: usa la plantilla de correo que Firebase ya trae. Si se quiere personalizar el correo (remitente, texto o el nombre que aparece), eso se hace en la consola de Firebase y le toca a Javi | Francisco | 2026-11-09 |
-| D128 | La revisión de diseño con `/impeccable` (24/40, 5 problemas prioritarios) empieza por lo que ve el cliente. La cotización de inicio sale sin el desglose de costos y con la paleta Esmeralda, no con el morado de Material; Ajustes › Diseño trae 4 paletas (Esmeralda, Grafito, Terracota, Azul), y las partes del desglose quedan debajo de él, atenuadas si está apagado, con una línea que explica qué ve el cliente. **Interpretación:** solo cambia para quien nunca guardó su diseño; una cuenta con diseño guardado, como la de La Casita del Molde, conserva el suyo, y apagar el desglose ahí es un interruptor en Ajustes › Diseño. Se confirma en P126 | Francisco (P122: a) | 2026-11-09 |
+| D128 | La revisión de diseño con `/impeccable` (24/40, 5 problemas prioritarios) empieza por lo que ve el cliente. La cotización de inicio sale sin el desglose de costos y con la paleta Esmeralda, no con el morado de Material; Ajustes › Diseño trae 4 paletas (Esmeralda, Grafito, Terracota, Azul), y las partes del desglose quedan debajo de él, atenuadas si está apagado, con una línea que explica qué ve el cliente. **Interpretación:** solo cambia para quien nunca guardó su diseño; una cuenta con diseño guardado, como la de La Casita del Molde, conserva el suyo, y apagar el desglose ahí es un interruptor en Ajustes › Diseño. Se confirma en P126. **Confirmado en D138** | Francisco (P122: a) | 2026-11-09 |
 | D129 | Si falta el nombre del negocio, la app lo pide al generar la cotización y lo guarda en Ajustes › Negocio; antes salía «Mi Negocio 3D» (parte de P122) | Francisco (P122: a) | 2026-11-09 |
 | D130 | Se afina la apariencia actual, sin cambiar de identidad (colores, letras y estructura se quedan). Con eso se quitan las etiquetas chicas encima de los títulos, que `/impeccable` no admite y en Cotizaciones repetían el título; el conteo de cotizaciones pasa debajo del título | Francisco (P123: a) | 2026-11-09 |
 | D131 | Alcance de la ronda: lo de D128 y D129 más contraste y detalles menores (texto de ejemplo de los campos, ayudas en modo claro, línea de los campos, aviso «Sin conexión», pie de la cotización, «1 cotización», «Escanéame», «Quitar» solo con logo, avisos que el lector de pantalla anuncia, sombras de brillo). Al probar apareció y se corrigió un error que ya existía: al angostar la ventana con Ajustes abierto, la página quedaba corrida 240 px | Francisco (P124: a) | 2026-11-09 |
 | D132 | `/stageshow` se usa para la ficha de Google Play o una página de presentación cuando se publique la app (D34, D38), no dentro de la app | Francisco (P125: a) | 2026-11-09 |
+| D133 | La Calculadora lee el archivo del slicer («quiero agregar la lectura de gcodes para que el cálculo del tiempo, los gramos, etc. sean automáticos»): `.gcode` de Bambu Studio, OrcaSlicer, PrusaSlicer, Cura y Simplify3D, y el `.gcode.3mf` de Bambu Studio. Llena el peso, el tiempo total estimado, las piezas si la placa trae copias del mismo objeto, la descripción si está vacía (con el nombre del archivo), el material si hay uno solo de ese tipo y, con AMS, los gramos de cada color con la purga por cambio en 0 g, porque el peso del archivo ya la incluye: en la daga de 4 colores, 272 g, de los que unos 95 g son purga. Muestra un resumen con la miniatura de la placa y «Deshacer». Se lee en el dispositivo, solo el principio y el final del archivo; no se sube a ningún lado. La resina queda a mano: los `.ctb` de Chitubox vienen cifrados. **Interpretación:** Francisco mandó el archivo de 4 colores (P134) sin contestar P128–P133; se aplicó lo recomendado de cada una. Se confirma en P135. **Confirmado en D137** | Francisco | 2026-11-18 |
+| D134 | El archivo de prueba multicolor es «SGAEYL PUNTA DAGA 4 COLORES», laminado en Bambu Studio 2.9 para la A1 con AMS lite. Su ficha y la de «Sin título» quedan como muestras en `tests/muestras/`, sin el G-code completo | Francisco (P134: a) | 2026-11-18 |
+| D135 | Correcciones tras la prueba de Francisco («no se cambian las configuraciones de la impresora, el material y el cambio de color… El contenedor para leer el archivo, debe ser clicleable en todo lugar»): el archivo elige la impresora (por el modelo del archivo; con varios colores, una con AMS, y si no está el modelo, la única con AMS), luego el material, y llena los cambios de color con el último «; toolchange #» del G-code (1,217 en la daga). Todo el recuadro abre el selector de archivo. «Deshacer» también regresa la impresora y los cambios. **Interpretación:** los rollos de cada cabezal no se eligen solos, porque el inventario guarda el color con nombre («Negro») y el archivo con código (#545454); el resumen numera cada color por cabezal para elegirlo a mano. Se confirma en P136. **Confirmado en D136** | Francisco | 2026-11-18 |
+| D136 | Los rollos de cada cabezal se eligen a mano; el resumen del archivo numera cada color por su cabezal (confirma D135) | Francisco (P136: a) | 2026-11-18 |
+| D137 | Confirma la interpretación de D133: se queda lo recomendado de P128 a P133 | Francisco (P135: a) | 2026-11-18 |
+| D138 | Confirma la interpretación de D128: la cotización nueva solo cambia para quien nunca guardó su diseño | Francisco (P126: a) | 2026-11-18 |
+| D139 | De la revisión de diseño sigue «enviar y su estado» (problemas 3 y 4): que enviar marque la cotización como enviada y que cada tarjeta tenga una acción principal | Francisco (P127: a) | 2026-11-18 |
+| D140 | Claude programa la parte de «enviar y su estado» (Borrador, Enviada, Aceptada y Rechazada) y le deja anotado a Javi en `docs/firebase.md` que ya está; En producción, Entregada, Cancelada y pagos siguen en su lista | Francisco (P137: a) | 2026-11-18 |
+| D141 | Afina D6: `pendiente` se lee como Borrador y no se reescriben las cotizaciones guardadas; las nuevas se guardan como `borrador`, y las viejas cambian solas cuando se editan o cambian de estado. Así no se reescriben de golpe todas las cotizaciones en la nube | Francisco (P138: a) | 2026-11-18 |
+| D142 | Cuando WhatsApp o el enlace pasan una cotización a Enviada, la app lo avisa con «Deshacer» | Francisco (P140: a) | 2026-11-18 |
+| D143 | La tarjeta de cotización se abre al tocarla y tiene una sola acción principal según su estado: Borrador → «Enviar»; Enviada → «Aceptar» y «Rechazar»; Aceptada o Rechazada → «Ver». Lo demás va en el menú «⋯» (Editar, Duplicar, PDF, imagen, texto, Aceptar en mostrador, Marcar como enviada, Regresar un paso y Borrar). La ventana de envío pone WhatsApp arriba como acción principal y «Listo» como secundario | Francisco (P139: a) | 2026-11-18 |
+| D144 | Notion sale de la app: se quitan el botón de las tarjetas y el envío al aceptar (D33). `api/notion.js` queda para que Javi lo retire del servidor | Francisco (P141: a) | 2026-11-18 |
+| D145 | Tras la prueba de Francisco («siempre se queda el mismo archivo en la vista… lo agregué a la cotización y se mantuvo. Tampoco se hizo el cambio del botón»): al agregar el producto a la cotización se quita el resumen del archivo y el AMS vuelve a como estaba, porque la siguiente pieza heredaba la purga por cambio en 0 g. La app avisa «Hay una versión nueva · Actualizar» cuando el service worker baja archivos nuevos, y muestra su versión en la barra lateral y en Ajustes. **Interpretación:** el recuadro no cambió porque el navegador seguía con la versión anterior; borrar «imágenes y archivos en caché» no borra lo que guarda el service worker. Se confirma en P142 | Francisco | 2026-11-18 |
+| D146 | El recuadro del lector del slicer no lleva un botón adentro: el ícono y «Leer archivo del slicer» van como texto, y el botón es todo el recuadro («Elimina los estilos css del btn btn-ghost slicer-boton») | Francisco | 2026-11-18 |
+| D147 | El contenido del recuadro del lector va centrado («centra en contenido del botón de leer el archivo del slicer») | Francisco | 2026-11-18 |
+| D148 | El catálogo se cotiza dentro de la calculadora: «¿Qué cotizas?» arriba de los campos elige entre «Pieza nueva» y los productos guardados. Un producto por tamaño cambia la calculadora a modo producto (tamaño, diseño, refuerzo y cantidad, sin peso ni tiempo): el precio sale en el panel de resultado con su desglose, «Agregar a orden» lo agrega y se queda en el producto para el siguiente. La descripción lleva el tamaño y lo elegido («· 8 cm · diseño sencillo · con refuerzo»). Un producto por costo llena los campos de la pieza; si no trae peso y tiempo, se respeta lo que ya está (por ejemplo, lo leído del slicer). El panel «Catálogo de productos» pasa a «Mis productos»: editar, nuevo, exportar y «Cotizar». Ninguna medida queda elegida de entrada, para que el precio no salga del tamaño más chico por descuido. Las cuentas viven en `js/precios-tamano.js`, con sus pruebas en `tests/precios-tamano.test.js` | Francisco (P143: «En la calculadora») | 2026-11-18 |
+| D149 | Los precios por tamaño se capturan en una tabla (tamaño, precio y refuerzo por renglón) con «Agregar tamaño», quitar renglón y «Llenar varios tamaños de una vez» (de 4 a 20 cm, el primero $15 y +$3 por cm), que cambia el precio de esos tamaños y conserva su refuerzo. Acepta medios centímetros (8.5) y marca cada renglón que no cuadra con su error, en vez de descartarlo sin avisar como el texto «tamaño:precio», que convertía 8.5 en 8 y tiraba «9 : $30». Un producto se puede guardar sin precios; avisa que le faltan | Francisco (P144: «Tabla editable») | 2026-11-18 |
+| D150 | Los niveles de diseño y el refuerzo son de cada producto (`designLevels` y `refuerzoTable` en su documento de `productos`). Los productos de antes siguen con los de siempre (Sin diseño $0, Muy simple $15, Sencillo $20, Medio $25, Complejo $35; refuerzo de 4–5 cm $5, de 9–14 cm $10 y de 15 cm en adelante $15) hasta que se editan: su editor ya los trae escritos. Siempre queda un nivel sin costo. La lista de precios en Excel lleva el refuerzo y los niveles de cada producto. Son campos nuevos en un documento que la app ya guarda: no cambian `firestore.rules` ni `js/db.js` | Francisco (P145: «Editables por producto») | 2026-11-18 |
+| D151 | Con todo lo anterior, y con accesibilidad: la orden se ve (una tira «Orden · n productos · total» abajo del botón, que se ilumina al agregar, y un aviso con «Ver orden»). Un producto por tamaño se guarda con sus rubros de costo en 0, `baseCost` vacío y lo elegido en `detalleTabla`: antes su precio salía como «Material» y el refuerzo como «Desperdicio» en el desglose. En la orden dice «Precio por tamaño» en lugar de «— · —», y la cotización ya no muestra «—» como material. Accesibilidad de paneles y campos: Esc cierra los paneles, el foco entra al abrir y regresa al botón al cerrar, y se anuncian como diálogo; los interruptores se alcanzan con Tab; «(opcional)» sin transparencia (estaba en 2.4–2.9:1) y las etiquetas en un renglón, porque al partirse tapaban lo escrito; las listas vuelven a tener flecha | Francisco (P146: «Todo + accesibilidad») | 2026-11-18 |
 
 ---
 
@@ -1028,10 +1047,50 @@ Francisco los pidió antes de subir las pruebas de D113: D115–D127, que van en
 | P123 | Qué hacer con la apariencia | (a) afinar la actual | Respondida (a) → D130 |
 | P124 | Hasta dónde llegar en la ronda | (a) lo elegido + contraste | Respondida (a) → D131 |
 | P125 | Para qué usar `/stageshow` | (a) ficha de Google Play | Respondida (a) → D132 |
-| P126 | ¿Se interpretó bien D128: la cotización nueva solo cambia para quien nunca guardó su diseño? | (a) sí | Abierta |
-| P127 | Qué sigue de la revisión | (a) enviar y su estado (problemas 3 y 4) | Abierta |
+| P126 | ¿Se interpretó bien D128: la cotización nueva solo cambia para quien nunca guardó su diseño? | (a) sí | Respondida (a) → D138 |
+| P127 | Qué sigue de la revisión | (a) enviar y su estado (problemas 3 y 4) | Respondida (a) → D139 |
 
 La revisión completa está en `.impeccable/critique/` (fuera de git). Quedan abiertos los problemas 2 a 5: «margen» con tres significados, ninguna cotización llega a «Enviada», 8 a 10 botones por tarjeta, y el primer uso de un taller nuevo.
+
+### Lectura de archivos del slicer (2026-11-18)
+
+Probado con los archivos reales de Francisco: «Sin título» (9.23 g, 39 min 55 s) y la daga de 4 colores (272.04 g, 33 h 7 min), en `.gcode.3mf` y en `.gcode` suelto de 41 MB (se lee en 5 ms). El peso que reporta Bambu ya incluye la purga: modelo ~127 g, torre ~51 g y purga en los cambios de color ~95 g.
+
+| # | Pregunta | Recomendado | Estado |
+|---|---|---|---|
+| P128 | Qué archivos lee | (a) `.gcode` de Bambu, Orca, Prusa y Cura, más el `.gcode.3mf` | Sin respuesta: se aplicó (a) → D133 |
+| P129 | Qué tiempo usa | (a) el total estimado | Sin respuesta: se aplicó (a) → D133 |
+| P130 | Piezas | (a) solo si son copias del mismo objeto | Sin respuesta: se aplicó (a) → D133 |
+| P131 | Purga en multicolor | (a) gramos por color y la purga aparte en 0 | Sin respuesta: se aplicó (a), comprobado con el archivo de 4 colores → D133 |
+| P132 | Material | (a) por tipo, si hay uno solo | Sin respuesta: se aplicó (a) → D133 |
+| P133 | Resina | (a) a mano | Sin respuesta: se aplicó (a) → D133 |
+| P134 | Archivo multicolor de prueba | (a) lo exporta Francisco | Respondida: mandó la daga de 4 colores → D134 |
+| P135 | ¿Se interpretó bien D133? | (a) sí | Respondida (a) → D137 |
+| P136 | ¿Los rollos de cada cabezal se eligen a mano (D135) o el inventario guarda el código de color para elegirlos solos? | (a) a mano por ahora | Respondida (a) → D136 |
+
+### Enviar y su estado (2026-11-18)
+
+Primera parte del ciclo de vida de §4.1, con D6–D9 y D18 como estaban decididos desde el 2026-10-16. Las reglas viven en `js/estados.js`, con sus pruebas en `tests/estados.test.js`. Probado en el navegador con cotizaciones de ejemplo, en escritorio y en teléfono, sin abrir WhatsApp ni copiar al portapapeles.
+
+| # | Pregunta | Recomendado | Estado |
+|---|---|---|---|
+| P137 | Quién hace «enviar y su estado» | (a) Claude, y se le avisa a Javi | Respondida (a) → D140 |
+| P138 | Cómo se cambia `pendiente` a `borrador` | (a) sin reescribir las guardadas | Respondida (a) → D141 |
+| P139 | Acción principal de cada tarjeta | (a) la de la tabla, con el resto en «⋯» | Respondida (a) → D143 |
+| P140 | Aviso al marcar Enviada por compartir | (a) con «Deshacer» | Respondida (a) → D142 |
+| P141 | Notion | (a) quitar el botón y el envío al aceptar | Respondida (a) → D144 |
+| P142 | Después de actualizar a la versión 112, ¿ya ves el recuadro clicable y el resumen se va al agregar el producto? | (a) sí | Abierta |
+
+### Catálogo dentro de la calculadora (2026-11-18)
+
+Francisco: «al seleccionar el catálogo de productos se muestra un drawer con los productos pero no modifica nada en la cotización, es poco intuitivo como se agregan las medidas de los cortadores de galletas». Revisado con `/design:design-critique` e `/impeccable` critique y layout (17/40, cuatro problemas graves: lo agregado no se veía, el tamaño se perdía, dos calculadoras encimadas y la captura de precios frágil). Probado en el navegador en escritorio y teléfono, en claro y oscuro, con los datos de la pestaña respaldados y devueltos.
+
+| # | Pregunta | Recomendado | Estado |
+|---|---|---|---|
+| P143 | Dónde se configura el producto | En la calculadora | Respondida → D148 |
+| P144 | Cómo se capturan los precios por tamaño | Tabla editable | Respondida → D149 |
+| P145 | Niveles de diseño y refuerzo | Editables por producto | Respondida → D150 |
+| P146 | Alcance | Todo + accesibilidad | Respondida → D151 |
 
 ---
 

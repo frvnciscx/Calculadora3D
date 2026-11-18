@@ -108,6 +108,6 @@ Después, en la app, hacer lo mismo de verdad:
    - Sus impresoras y materiales.
    - $2,000 de gastos fijos.
    - Su nombre cuando no escribe uno ([`js/db.js:121`](../js/db.js)).
-7. **Notion fuera** (D33). `api/notion.js` y `sendToNotion` todavía mandan a Notion las cotizaciones aceptadas.
+7. **Notion fuera** (D33). ~~`api/notion.js` y `sendToNotion` todavía mandan a Notion las cotizaciones aceptadas.~~ Desde v112 la app ya no llama a Notion (D144); falta retirar `api/notion.js` del servidor y sus variables de entorno en Vercel.
 8. **Opcional: personalizar el correo de «¿Olvidaste tu contraseña?»** (D119, D127). Ya funciona con la plantilla que Firebase trae. Se cambia en Authentication › Templates › Restablecimiento de contraseña. Si el correo dice «project-…» en vez del nombre del negocio, se corrige en Configuración del proyecto › Nombre público.
-9. **Lo de los flujos:** pagos, estados nuevos, anticipo y fecha de entrega ([`flujos.md`](flujos.md) y `modelo-de-datos.md` §4.9 y §4.10).
+9. **Lo de los flujos:** desde v115 los productos por tamaño guardan además `refuerzoTable` y `designLevels` en `productos`, y las partidas de la cotización `tipo` y `detalleTabla` (D149–D151). Son campos nuevos en documentos que la app ya escribe: no hace falta cambiar `firestore.rules` ni `js/db.js`. Desde v112 ya están Borrador, Enviada, Aceptada y Rechazada con sus reglas en `js/estados.js` (D140–D144): las nuevas se guardan como `borrador`, y `pendiente` se lee igual (D141). Faltan En producción, Entregada y Cancelada, pagos, anticipo y fecha de entrega ([`flujos.md`](flujos.md) y `modelo-de-datos.md` §4.9 y §4.10).
