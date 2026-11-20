@@ -63,7 +63,7 @@ Ninguna plataforma menciona pesos mexicanos ni CFDI, y de las plataformas web so
 | Pedidos | Borrador, enviada, aceptada y rechazada; al aceptar descuenta inventario | En producción, entregada y cancelada, pagos y saldo (D11, D12, D16) |
 | Clientes | Alta, autocompletado, historial por cliente y WhatsApp | Datos fiscales (D22), recomendador (D31) |
 | Inventario | Rollos con gramos restantes, alerta al 20 %, descuento automático | Descuento al producir (D13) |
-| Catálogo | Productos con costo calculado o tabla de precios por tamaño; Excel | — |
+| Catálogo | Productos con costo calculado o tabla de precios por tamaño; ~~Excel~~ (se quitó en v121, D160) | — |
 | Reportes | Panel del mes: ingresos, ganancia, margen, tasa de aceptación, horas y capacidad; 6 meses | Ingreso por pago, por cobrar, IVA cobrado (D19, D44), Excel para el contador (D45) |
 | Plataforma | Web instalable, sin conexión, versión de escritorio, tema claro y oscuro, respaldo JSON | Cuentas, Android, invitado, borrar cuenta (D33–D41) |
 | Datos del slicer | Se teclean a mano; el tiempo, en horas con decimales | — |

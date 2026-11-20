@@ -75,6 +75,7 @@ function calculate(silent) {
   document.getElementById('r-waste').textContent    = cur + wasteCost.toFixed(2);
   document.getElementById('result-base').textContent  = cur + baseCost.toFixed(2);
   document.getElementById('result-total').textContent = cur + totalCost.toFixed(0);
+  _pintarNotaRedondeo(baseCost * (1 + margin / 100), totalCost, cur);
 
   /* ── Ganancia ── */
   var profitAmt = totalCost - baseCost;
@@ -692,6 +693,7 @@ function restoreCalcResult() {
   document.getElementById('r-waste').textContent          = cur + lastCalc.wasteCost.toFixed(2);
   document.getElementById('result-base').textContent      = cur + lastCalc.baseCost.toFixed(2);
   document.getElementById('result-total').textContent     = cur + lastCalc.totalCost.toFixed(0);
+  _pintarNotaRedondeo((lastCalc.baseCost || 0) * (1 + (lastCalc.margin || 0) / 100), lastCalc.totalCost, cur);
   /* Ganancia */
   var profitAmt = lastCalc.totalCost - lastCalc.baseCost;
   var profitStr = (profitAmt >= 0 ? '+' : '') + cur + profitAmt.toFixed(2);
@@ -968,4 +970,115 @@ function _setFieldState(fieldId, helperId, state, msg) {
   if (state === 'error') field.classList.add('m3-field-error');
   if (state === 'valid') field.classList.add('m3-field-valid');
   if (helper && msg !== undefined) helper.textContent = msg;
+}
+
+/* ── Editar una pieza de la orden (D152) ──────────────────────────
+   Vuelve a llenar la calculadora con lo que se capturó. Las piezas agregadas
+   desde v116 lo traen tal cual (item.entrada). Las de antes se reconstruyen:
+   lo guardado es por pieza y se multiplica por las piezas de la placa, y la
+   impresora y el material se buscan por su nombre. Devuelve lo que hay que
+   revisar. */
+function llenarCalculadoraConPieza(item) {
+  if (typeof enModoProducto === 'function' && enModoProducto()) elegirQueCotizas('pieza');
+  if (typeof limpiarLecturaSlicer === 'function') limpiarLecturaSlicer();
+
+  var e = item.entrada || null;
+  var avisos = [];
+  var piezas = Math.max(1, Math.round((e && e.pieces) || item.pieces || 1));
+  var r3 = function(n) { return Math.round((Number(n) || 0) * 1000) / 1000; };
+  var poner = function(id, v, evento) {
+    var el = document.getElementById(id); if (!el) return;
+    el.value = v == null ? '' : String(v);
+    el.dispatchEvent(new Event(evento || 'input', { bubbles: true }));
+  };
+
+  var imp = e && e.printerId ? printers.find(function(p) { return p.id === e.printerId; }) : null;
+  if (!imp) imp = printers.find(function(p) { return p.name === item.printer; });
+  var mat = e && e.materialId ? materials.find(function(m) { return m.id === e.materialId; }) : null;
+  if (!mat) mat = materials.find(function(m) { return m.name === item.material; });
+  if (!imp && item.printer) avisos.push('la impresora: «' + item.printer + '» ya no está');
+
+  /* Primero la impresora: filtra los materiales y prende o apaga el AMS */
+  if (imp) poner('calc-printer', imp.id, 'change');
+  if (mat) poner('calc-material', mat.id, 'change');
+  var matEl = document.getElementById('calc-material');
+  if (item.material && (!mat || (matEl && matEl.value !== mat.id))) avisos.push('el material: «' + item.material + '» ya no está para esta impresora');
+  var rolloEl = document.getElementById('calc-spool');
+  if (rolloEl) { rolloEl.value = (e && e.spoolId) || item.spoolId || ''; _updateSpoolSelector(); }
+
+  var desc = document.getElementById('calc-desc');
+  if (desc) desc.value = item.desc && item.desc !== 'Sin descripción' ? item.desc : '';
+  poner('calc-weight', e ? e.plateWeight : r3(item.weight * piezas));
+  poner('calc-time',   e ? e.plateTimeH  : r3(item.timeH  * piezas));
+  poner('calc-pieces', piezas);
+  poner('calc-design-time', e ? (e.plateDesignH || '') : (item.designH ? r3(item.designH * piezas) : ''));
+
+  /* El margen con el que se calculó. Si después se escribió el precio a
+     mano, item.margin es el que resultó de ese precio: se usa el de la fórmula. */
+  var margen = e && e.margin != null ? e.margin
+    : (item.priceManual && item.baseCost > 0 && item.autoPrice
+        ? Math.round((item.autoPrice / item.baseCost - 1) * 100)
+        : Math.round(Number(item.margin) || 0));
+  poner('calc-margin-num', margen);
+
+  /* AMS: los gramos de cada cabezal (de la placa), la purga y los cambios */
+  var bloqueAms = document.getElementById('calc-ams-block');
+  if (bloqueAms && !bloqueAms.classList.contains('hidden')) {
+    var datos = e && e.ams ? e.ams.slots
+      : (item.amsColors || []).map(function(c) { return { spoolId: c.spoolId || '', gramos: r3((c.weight || 0) * piezas) }; });
+    document.querySelectorAll('#ams-color-slots .ams-slot').forEach(function(s, k) {
+      var d = datos[k] || {};
+      var sel = s.querySelector('.ams-spool-sel'), inp = s.querySelector('.ams-weight-inp');
+      if (sel) sel.value = d.spoolId || '';
+      if (inp) inp.value = d.gramos ? d.gramos : '';
+    });
+    if (e && e.ams) { poner('ams-purge-grams', e.ams.purga); poner('ams-color-changes', e.ams.cambios); }
+    else if (item.amsColors && item.amsColors.length) avisos.push('la purga y los cambios de color del AMS');
+  }
+
+  /* Post-procesado. Las piezas de antes solo guardaron el total: entra como
+     una sola línea, para que el precio no cambie. */
+  var pp = e ? e.postProc : null;
+  if (!e && item.postProcCost > 0) {
+    pp = { paints: [{ name: 'Post-procesado guardado', cost: r3(item.postProcCost * piezas) }] };
+    avisos.push('el post-procesado: quedó en una sola línea');
+  }
+  var cb = document.getElementById('postproc-enabled');
+  var lista = document.getElementById('paint-colors-list');
+  if (cb && lista) {
+    lista.innerHTML = '';
+    cb.checked = !!pp;
+    var campos = document.getElementById('postproc-fields');
+    if (campos) campos.classList.toggle('hidden', !pp);
+    var v = function(id, n) { var el = document.getElementById(id); if (el) el.value = n ? n : ''; };
+    if (pp) {
+      (pp.paints || []).forEach(function(p) {
+        addPaintColor();
+        var fila = lista.lastElementChild;
+        fila.querySelector('.paint-color-name').value = p.name || '';
+        fila.querySelector('.paint-color-cost').value = p.cost || '';
+      });
+      if (!lista.children.length) addPaintColor();
+    }
+    v('postproc-primer', pp && pp.primerCost); v('postproc-varnish', pp && pp.varnishCost); v('postproc-time', pp && pp.paintingTimeH);
+  }
+
+  calculate(true);
+  return avisos;
+}
+
+/* ── El redondeo, a la vista (D161) ───────────────────────────────
+   El precio sugerido se redondea hacia arriba de 5 en 5 (roundUpToFive en
+   costing.js): siempre termina en 5 o en 0. Debajo del precio se dice, con
+   el número antes de redondear cuando cambió. Sin cálculo, solo la regla. */
+function _pintarNotaRedondeo(sinRedondear, precio, cur) {
+  var el = document.getElementById('nota-redondeo-texto');
+  if (!el) return;
+  cur = cur || (typeof config !== 'undefined' && config.currency) || '$';
+  if (sinRedondear != null && precio > 0 && Math.abs(sinRedondear - precio) > 0.005) {
+    el.textContent = 'Redondeado hacia arriba de ' + cur + '5 en ' + cur + '5: ' +
+      cur + sinRedondear.toFixed(2) + ' → ' + cur + precio.toFixed(0) + '.';
+  } else {
+    el.textContent = 'El precio se redondea hacia arriba de ' + cur + '5 en ' + cur + '5: siempre termina en 5 o en 0.';
+  }
 }

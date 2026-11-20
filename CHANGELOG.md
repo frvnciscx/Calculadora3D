@@ -29,6 +29,70 @@ app y volviendo a entrar.
 
 ---
 
+## 2026-11-20 · caché v122
+
+La v121 no llegó a subirse: lo de aquí la incluye.
+
+- **Las tarjetas de «¿Qué cotizas?» ocupan todo el ancho** (D163); antes quedaba un hueco a la
+  derecha.
+- **Sin «Exportar precios» a Excel** en «Mis productos» (D160).
+- **El redondeo, a la vista** (D161): debajo del precio sugerido dice que se redondea hacia arriba
+  de $5 en $5 (siempre termina en 5 o en 0) y, cuando cambió, de cuánto a cuánto: «$75.90 → $80».
+- **El lector del slicer solo acepta .gcode y .3mf** (D162). En la computadora, el explorador de
+  archivos solo muestra esos; en el teléfono no se filtra (Android deja en gris los .gcode), y
+  cualquier otro archivo muestra «Ese archivo no es del slicer: elige un .gcode o un .3mf».
+
+---
+
+## 2026-11-20 · caché v120
+
+Las v117 a v119 no llegaron a subirse: lo de aquí las incluye.
+
+- **El pie de la orden en escritorio** (D156, D157): Subtotal, Descuento, Comisión y Total uno
+  debajo de otro, cada renglón a todo el ancho con el valor a la derecha, sin la línea de arriba
+  del subtotal. Abajo, «Cancelar» y «Actualizar» (o «Generar cotización») a la derecha. Antes el
+  botón iba solo en una columna de 220 px, a la altura del total.
+- **La vista previa de la orden llega hasta abajo** de la ventana (D158); antes terminaba 16 px
+  antes del borde.
+- **La hoja de la vista previa ocupa todo el alto del panel** (D159), como una página: el total y
+  el pie quedan abajo. El PDF, la imagen y el visor del cliente no cambian.
+- **«Cancelar»** sale de la orden sin guardar: editando, la cotización se queda como estaba y
+  vuelve a Cotizaciones; una orden nueva se descarta. Si hay cambios, pregunta antes.
+
+---
+
+## 2026-11-20 · caché v116
+
+Editar los productos de la orden (D152) y una sola vista previa al editar (D153). La
+sincronización y la fórmula de costeo no cambian (69 pruebas en verde).
+
+### Cambiado
+
+- **«Editar» en cada producto de la orden**, en el teléfono y en escritorio. Lleva el producto
+  de regreso a la calculadora con lo que se capturó; arriba aparece «Editando un producto de la
+  orden» y el botón dice «Guardar cambios». Al guardar, el producto se reemplaza en su mismo
+  lugar y se vuelve a la orden; «Cancelar» lo deja como estaba.
+- **Un cortador** abre en modo producto con su tamaño, diseño, refuerzo y cantidad.
+- **Cada pieza nueva guarda lo que se capturó** (la placa, el AMS y el post-procesado), para
+  editarla igual. Las de cotizaciones anteriores se reconstruyen con lo guardado, con el mismo
+  precio, y la app dice qué revisar.
+- **Si tenía un precio escrito a mano**, al guardar queda el calculado y el aviso muestra los dos
+  (confirmado en D154).
+
+### Quitado
+
+- **La cotización repetida a la derecha al editar** (D153): el contenedor de «Ver cotización» se
+  cierra al abrir la orden, que ya tiene su vista previa.
+
+### Qué conviene probar en producción
+
+1. Abrir una cotización, «Editar»: solo aparece la vista previa de la orden.
+2. En un producto, «Editar»: la calculadora trae sus datos; cambiar el peso y «Guardar cambios».
+   El producto cambia en su lugar.
+3. En la barra lateral aparece «Versión 116».
+
+---
+
 ## 2026-11-18 · caché v115
 
 El catálogo dentro de la calculadora (D148–D151), tras revisarlo con `/design:design-critique` e

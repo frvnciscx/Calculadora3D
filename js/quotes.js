@@ -75,8 +75,24 @@ function refreshDraftIndicator() {
     }
   }
 
+  /* Editando un producto de la orden (D152): aviso arriba y el botón guarda */
+  var iEd = _indiceEnEdicion();
+  var aviso = document.getElementById('calc-editando');
+  if (aviso) {
+    aviso.classList.toggle('hidden', iEd == null);
+    var avisoTxt = document.getElementById('calc-editando-texto');
+    if (avisoTxt && iEd != null) avisoTxt.textContent = draftQuote.items[iEd].desc || ('Producto ' + (iEd + 1));
+  }
+
   var btn = document.getElementById('btn-cotizar');
   if (!btn) return;
+
+  if (iEd != null) {
+    btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px">check</span> Guardar cambios';
+    btn.onclick = addItemToDraft;
+    btn.className = 'btn btn-primary';
+    return;
+  }
 
   if (hasDraft && !hasCalc) {
     /* Modo: hay productos en borrador pero nada nuevo que agregar → ir a cotizar */
@@ -145,22 +161,24 @@ function addItemToDraft() {
     postProcCost:  lastCalc.postProcCost  || 0,
     ipaCost:       lastCalc.ipaCost       || 0,
     uvCost:        lastCalc.uvCost        || 0,
+    /* Lo que se capturó, tal cual, para poder editar la pieza después (D152) */
+    entrada:    _entradaDePieza(),
     qty:        1
   };
 
-  if (!draftQuote) {
-    saveDraftQuote({ editIndex: null, client: '', phone: '', notes: '', items: [newItem] });
-  } else {
-    draftQuote.items.push(newItem);
-    saveDraftQuote(draftQuote);
-  }
+  var puesto = _ponerEnOrden(newItem);
+  _limpiarCalculadora();
+  if (puesto.editado) { _terminarEdicion(puesto); return; }
 
   var n = draftQuote.items.length;
   var msgAgregado = n === 1 ? 'Producto agregado a la orden' : n + ' productos en la orden';
   if (typeof snackAccion === 'function') snackAccion(msgAgregado, 'Ver orden', generateQuote); else snack(msgAgregado);
   refreshDraftIndicator();
   resaltarOrden();
+}
 
+/* Deja la calculadora lista para la siguiente pieza */
+function _limpiarCalculadora() {
   /* Limpiar campos para la siguiente pieza */
   var fields = ['calc-desc', 'calc-weight', 'calc-time', 'calc-design-time'];
   fields.forEach(function(id) {
@@ -232,6 +250,10 @@ function _conPrecioAuto(items) {
 
 /* ── Abrir modal de cotización ────────────────────────────────── */
 function generateQuote() {
+  if (_indiceEnEdicion() != null) {
+    cancelarEdicionProducto(true);
+    snack('No se guardaron los cambios del producto');
+  }
   if (!draftQuote || !draftQuote.items.length) {
     snack('Agrega al menos un producto a la orden primero'); return;
   }
@@ -278,6 +300,9 @@ function setCalcMode(mode) {
   var main  = document.getElementById('calc-review-main');
   var prev  = document.getElementById('calc-review-preview');
   if (mode === 'review') {
+    /* La vista previa ya está en la orden: el contenedor de la cotización
+       (viewQuote) la repetía a la derecha (D153) */
+    if (typeof closeQuoteDock === 'function') closeQuoteDock();
     if (title) title.textContent = _draftLabels().title;
     if (main)  main.innerHTML = tplReviewMain(draftQuote, config.currency);
     pageEl.scrollTop = 0;
@@ -509,6 +534,43 @@ function removeDraftItem(i) {
   saveDraftQuote(draftQuote);
   renderDraftModal();
   refreshDraftIndicator();   /* el contador «Orden · n» del encabezado */
+}
+
+/* «Cancelar» en la orden (D156): sale sin guardar. Editando una cotización,
+   la deja como estaba y regresa a Cotizaciones; una orden nueva se descarta.
+   Si hay algo que perder, pregunta antes. */
+function cancelarOrden(confirmado) {
+  guardarDatosDraft();
+  var q = _editQuoteIndex != null ? quotes[_editQuoteIndex] : null;
+  if (!confirmado && _ordenConCambios(q)) {
+    var n = draftQuote.items.length;
+    m3Confirm(q ? '¿Salir sin guardar los cambios de ' + esc(q.quoteNum) + '?' : '¿Descartar esta orden?',
+      function() { cancelarOrden(true); }, {
+        confirmLabel: q ? 'Salir sin guardar' : 'Descartar',
+        icon: q ? 'edit_off' : 'delete',
+        detail: q ? 'La cotización se queda como estaba.'
+                  : 'Se quitan ' + (n === 1 ? 'el producto' : 'los ' + n + ' productos') + ' y lo que escribiste del cliente.'
+      });
+    return;
+  }
+  clearDraftQuote();
+  closeModal();
+  refreshDraftIndicator();
+  setCalcMode('calc');
+  if (q) { showPage('quotes'); snack(q.quoteNum + ' se quedó como estaba'); }
+  else snack('Orden descartada');
+}
+
+/* ¿Hay algo que se perdería? En una edición, si la orden ya no es igual a la cotización */
+function _ordenConCambios(q) {
+  if (!draftQuote) return false;
+  if (!q) return draftQuote.items.length > 0 || !!(draftQuote.client || draftQuote.phone || draftQuote.notes);
+  var foto = function(o, comision) {
+    return JSON.stringify([String(o.client || ''), String(o.phone || ''), String(o.notes || ''),
+      Number(o.discount) || 0, Number(comision) || 0,
+      (o.items || []).map(function(it) { return [it.desc, Number(it.qty) || 1, Math.round((Number(it.totalCost) || 0) * 100)]; })]);
+  };
+  return foto(draftQuote, draftQuote.commissionEnabled ? draftQuote.commission : 0) !== foto(q, q.commission);
 }
 
 /* Ir a la calculadora a calcular otro producto */
@@ -1775,4 +1837,131 @@ function abrirMenuCotizacion(ev, i) {
   window.addEventListener('scroll', cerrar, true);
   _menuCotizacion = { el: menu, boton: boton, fuera: fuera, teclas: teclas, cerrar: cerrar };
   if (items[0]) items[0].focus();
+}
+
+/* ══ Editar un producto de la orden (D152) ═══════════════════════════
+   «Editar» en la orden lleva el producto de regreso a la calculadora con lo
+   que se capturó. «Guardar cambios» lo reemplaza en su mismo lugar y vuelve
+   a la orden; «Cancelar» lo deja como estaba. El índice vive en el borrador
+   (draftQuote.editandoItem), así que sobrevive a recargar, igual que la orden. */
+function _indiceEnEdicion() {
+  if (!draftQuote || draftQuote.editandoItem == null) return null;
+  return draftQuote.items[draftQuote.editandoItem] ? draftQuote.editandoItem : null;
+}
+
+/* Agrega a la orden, o reemplaza el producto que se está editando */
+function _ponerEnOrden(item) {
+  var i = _indiceEnEdicion();
+  if (i != null) {
+    var viejo = draftQuote.items[i];
+    /* La cantidad de una pieza se cambia en la orden; la de un producto por
+       tamaño, en su panel */
+    if (item.tipo !== 'tabla') item.qty = viejo.qty || 1;
+    draftQuote.items[i] = item;
+    delete draftQuote.editandoItem;
+    saveDraftQuote(draftQuote);
+    return { editado: true, indice: i, viejo: viejo, nuevo: item };
+  }
+  if (!draftQuote) {
+    saveDraftQuote({ editIndex: null, client: '', phone: '', notes: '', items: [item] });
+  } else {
+    draftQuote.items.push(item);
+    saveDraftQuote(draftQuote);
+  }
+  return { editado: false };
+}
+
+/* Lo que se capturó en la calculadora, tal cual: la placa, no la pieza.
+   Sin esto, editar una pieza tenía que adivinar el AMS y el post-procesado. */
+function _entradaDePieza() {
+  if (!lastCalc) return null;
+  var val = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+  var ams = null;
+  var bloque = document.getElementById('calc-ams-block');
+  if (bloque && !bloque.classList.contains('hidden')) {
+    ams = {
+      slots: Array.prototype.map.call(document.querySelectorAll('#ams-color-slots .ams-slot'), function(s) {
+        var sel = s.querySelector('.ams-spool-sel'), inp = s.querySelector('.ams-weight-inp');
+        return { spoolId: sel ? sel.value : '', gramos: inp ? inp.value : '' };
+      }),
+      purga:   val('ams-purge-grams'),
+      cambios: val('ams-color-changes')
+    };
+  }
+  var pp = lastCalc.postProc;
+  return {
+    printerId:    lastCalc.printerId  || '',
+    materialId:   lastCalc.materialId || '',
+    spoolId:      lastCalc.spoolId    || '',
+    plateWeight:  lastCalc.plateWeight  != null ? lastCalc.plateWeight  : lastCalc.weight,
+    plateTimeH:   lastCalc.plateTimeH   != null ? lastCalc.plateTimeH   : lastCalc.timeH,
+    plateDesignH: lastCalc.plateDesignH || 0,
+    pieces:       lastCalc.pieces || 1,
+    margin:       lastCalc.margin,
+    ams:          ams,
+    postProc:     pp ? { paints: pp.paints || [], primerCost: pp.primerCost || 0,
+                         varnishCost: pp.varnishCost || 0, paintingTimeH: pp.paintingTimeH || 0 } : null
+  };
+}
+
+function editarProductoDeOrden(i) {
+  if (!draftQuote) return;
+  var item = draftQuote.items[i]; if (!item) return;
+  /* Lo escrito del cliente y las notas no se pierde al ir y volver */
+  guardarDatosDraft();
+
+  var porTamano = item.tipo === 'tabla' || item.printer === '—';
+  var producto = porTamano && typeof productoDeItem === 'function' ? productoDeItem(item) : null;
+  if (porTamano && !producto) {
+    snack('Este producto ya no está en «Mis productos»: aquí puedes cambiar su cantidad y su precio');
+    return;
+  }
+
+  draftQuote.editandoItem = i;
+  saveDraftQuote(draftQuote);
+
+  /* A la calculadora. En escritorio la orden vive dentro de ella. */
+  if (_mqEscritorio.matches && document.body.dataset.page === 'calc') setCalcMode('calc');
+  else { closeModal(); showPage('calc'); }
+
+  var avisos = porTamano ? cargarProductoTablaDeOrden(item, producto) : llenarCalculadoraConPieza(item);
+  refreshDraftIndicator();
+  var arriba = document.getElementById('calc-editando');
+  /* Al centro: arriba quedaba tapado por la barra fija del teléfono */
+  if (arriba && arriba.scrollIntoView) arriba.scrollIntoView({ block: 'center' });
+  if (avisos && avisos.length) snack('Revisa ' + avisos.join(', '));
+}
+
+/* Cancelar: el producto se queda como estaba y se vuelve a la orden */
+function cancelarEdicionProducto(sinVolver) {
+  if (!draftQuote || draftQuote.editandoItem == null) return;
+  delete draftQuote.editandoItem;
+  saveDraftQuote(draftQuote);
+  if (typeof enModoProducto === 'function' && enModoProducto()) elegirQueCotizas('pieza');
+  _limpiarCalculadora();
+  _limpiarAMS();
+  refreshDraftIndicator();
+  if (!sinVolver) renderDraftModal();
+}
+
+/* Los gramos y cambios del AMS eran del producto que se editó */
+function _limpiarAMS() {
+  document.querySelectorAll('#ams-color-slots .ams-weight-inp').forEach(function(inp) { inp.value = ''; });
+  var cambios = document.getElementById('ams-color-changes');
+  if (cambios) cambios.value = '';
+}
+
+/* Guardado: avisa y regresa a la orden, para ver el producto en su lugar */
+function _terminarEdicion(puesto) {
+  _limpiarAMS();
+  refreshDraftIndicator();
+  var cur = config.currency || '$';
+  var msg = 'Producto actualizado';
+  var antes = puesto.viejo, ahora = puesto.nuevo;
+  if (antes && antes.priceManual && Math.abs((antes.totalCost || 0) - (ahora.totalCost || 0)) > 0.005) {
+    msg += '. Tenía un precio escrito a mano (' + cur + (antes.totalCost || 0).toFixed(2) +
+           '); ahora es el calculado, ' + cur + (ahora.totalCost || 0).toFixed(2);
+  }
+  renderDraftModal();
+  snack(msg);
 }

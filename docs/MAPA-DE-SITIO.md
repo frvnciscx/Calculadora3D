@@ -153,7 +153,7 @@ Productos guardados en dos modalidades:
 2. **Por tabla de precios:** precio fijo por tamaño (el caso de los cortadores), con
    extras de diseño y refuerzo
 
-Exporta la lista de precios a Excel (SheetJS).
+~~Exporta la lista de precios a Excel (SheetJS).~~ Se quitó en v121 (D160).
 
 Desde v115 (D148–D151) se cotizan dentro de la calculadora: «¿Qué cotizas?» arriba de los
 campos elige «Pieza nueva» o un producto. Uno por tamaño cambia la calculadora a modo

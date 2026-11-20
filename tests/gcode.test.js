@@ -168,3 +168,11 @@ test('Tiempos, descripciones y duraciones', () => {
   assert.strictEqual(g.formatoDuracion(119235), '33 h 7 min');
   assert.strictEqual(g.formatoDuracion(3600), '1 h');
 });
+
+test('Solo se aceptan archivos del slicer: .gcode y .3mf (D162)', () => {
+  ['placa.gcode', 'PLACA.GCODE', 'llavero.gcode.3mf', 'proyecto.3mf', 'pieza.gco', 'cnc.nc', 'x.g']
+    .forEach((n) => assert.ok(g.esArchivoSlicer(n), n + ' se debe aceptar'));
+  ['foto.png', 'cotizacion.pdf', 'modelo.stl', 'gcode.txt', 'placa.gcode.zip', '', null]
+    .forEach((n) => assert.ok(!g.esArchivoSlicer(n), String(n) + ' no se debe aceptar'));
+  assert.strictEqual(g.ACEPTA_SLICER, '.gcode,.gco,.3mf');
+});

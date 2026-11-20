@@ -349,6 +349,14 @@ async function _leerGcode(archivo, opts) {
 }
 
 /* Punto de entrada: un File (o Blob con name) → { slicer, placas, avisos } */
+/* Los que lee la app: G-code en texto (.gcode, y sus variantes .gco, .g y
+   .nc) y .3mf (el .gcode.3mf de Bambu y Orca termina en .3mf). D162. */
+function esArchivoSlicer(nombre) {
+  return /\.(gcode|gco|g|nc|3mf)$/i.test(String(nombre || '').trim());
+}
+/* Lo que se le pone al selector de la computadora para que solo muestre esos */
+var ACEPTA_SLICER = '.gcode,.gco,.3mf';
+
 async function leerArchivoSlicer(archivo, opts) {
   var nombre = String(archivo && archivo.name || '').toLowerCase();
   if (/\.(ctb|goo|cbddlp|photon|photons|pwmx|pwma|pws|pw0|prz|jxs|zip)$/.test(nombre)) throw _errorSlicer('resina');
@@ -420,6 +428,7 @@ if (typeof module !== 'undefined' && module.exports) {
     analizarSliceInfo: analizarSliceInfo, piezasDeObjetos: piezasDeObjetos,
     cambiosDeColor: cambiosDeColor, impresoraDelArchivo: impresoraDelArchivo,
     descripcionDeArchivo: descripcionDeArchivo, formatoDuracion: formatoDuracion,
+    esArchivoSlicer: esArchivoSlicer, ACEPTA_SLICER: ACEPTA_SLICER,
     _segundosDeTexto: _segundosDeTexto
   };
 }
@@ -436,7 +445,7 @@ var _MENSAJES_SLICER = {
   'sin-laminar': 'Este .3mf es un proyecto sin laminar: no trae tiempo ni gramos. En Bambu Studio lamínalo y usa «Exportar archivo de placa laminada».',
   'sin-datos': 'No encontré el tiempo ni los gramos en este archivo. Captúralos a mano.',
   'sin-descompresor': 'Este navegador no puede abrir el .3mf. Exporta el G-code (.gcode) desde el slicer y vuelve a intentarlo.',
-  'formato': 'Ese archivo no es un G-code ni un .gcode.3mf.'
+  'formato': 'Ese archivo no es del slicer: elige un .gcode o un .3mf.'
 };
 
 function _escSlicer(s) {
@@ -471,6 +480,12 @@ function _capturarCampos() {
 }
 
 async function procesarArchivoSlicer(archivo) {
+  /* Otro tipo de archivo no se intenta leer (D162). Los de resina y el
+     .bgcode sí pasan: leerArchivoSlicer explica por qué no se pueden. */
+  if (!esArchivoSlicer(archivo.name) && !/\.(bgcode|ctb|goo|cbddlp|photon|photons|pwmx|pwma|pws|pw0|prz|jxs)$/i.test(archivo.name)) {
+    _pintarResumenSlicer({ error: _MENSAJES_SLICER.formato, nombre: archivo.name });
+    return;
+  }
   /* Si se estaba cotizando un producto por tamaño, el archivo es de una pieza */
   if (typeof enModoProducto === 'function' && enModoProducto()) elegirQueCotizas('pieza');
   _pintarResumenSlicer({ cargando: true, nombre: archivo.name });
@@ -667,6 +682,19 @@ function _pintarResumenSlicer(estado) {
     '</div>' +
     '<button type="button" class="btn btn-ghost slicer-deshacer" onclick="deshacerLecturaSlicer()">Deshacer</button>';
 }
+
+/* En la computadora, el explorador de archivos solo muestra .gcode y .3mf
+   (D162). En el teléfono no: Android deja en gris los .gcode si se filtran
+   por tipo, porque no les conoce un tipo MIME. Ahí la app revisa al elegir. */
+(function _filtrarSelectorSlicer() {
+  if (typeof document === 'undefined') return;
+  var input = document.getElementById('slicer-archivo');
+  if (!input) return;
+  var ua = navigator.userAgent || '';
+  var telefono = /Android|iPhone|iPad|iPod/i.test(ua) ||
+                 (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);   /* iPad que se presenta como Mac */
+  if (!telefono) input.setAttribute('accept', ACEPTA_SLICER);
+})();
 
 /* Arrastrar el archivo a la calculadora (escritorio) */
 (function _arrastrarSlicer() {

@@ -223,6 +223,7 @@ function _reiniciarResultado() {
   if (gan) gan.textContent = '+' + cur + '0.00';
   var rp = document.getElementById('result-producto');
   if (rp) rp.innerHTML = '';
+  if (typeof _pintarNotaRedondeo === 'function') _pintarNotaRedondeo(null);
 }
 
 function renderPanelProducto() {
@@ -332,7 +333,7 @@ function _actualizarPanelProducto() {
   }
 
   var desc = document.getElementById('pt-desc');
-  if (desc && !m.descManual) desc.value = m.size != null ? descripcionProductoTabla(p, m) : '';
+  if (desc) desc.value = m.descManual ? m.desc : (m.size != null ? descripcionProductoTabla(p, m) : '');
   var auto = document.getElementById('pt-desc-auto');
   if (auto) auto.classList.toggle('hidden', !m.descManual);
 
@@ -444,11 +445,13 @@ function agregarProductoTabla() {
     }
   };
 
-  if (!draftQuote) {
-    saveDraftQuote({ editIndex: null, client: '', phone: '', notes: '', items: [item] });
-  } else {
-    draftQuote.items.push(item);
-    saveDraftQuote(draftQuote);
+  var puesto = _ponerEnOrden(item);
+  if (puesto.editado) {
+    /* Terminó la edición: la calculadora regresa a la pieza y se vuelve a la orden */
+    salirModoProducto();
+    renderQueCotizas();
+    _terminarEdicion(puesto);
+    return;
   }
 
   /* Agregar y seguir: se queda el producto con su tamaño, para el siguiente.
@@ -489,10 +492,8 @@ function showCatalogModal() {
       '<div class="catalogo-cuerpo">' +
         '<p class="catalogo-ayuda">Los productos que vendes seguido. Para cotizar uno, tócalo en «¿Qué cotizas?» o usa «Cotizar».</p>' +
         '<div id="catalog-list">' + _htmlListaCatalogo() + '</div>' +
+        /* Sin «Exportar precios» a Excel (D160) */
         '<div class="m3-sheet-actions catalogo-acciones">' +
-          '<button type="button" class="m3-btn-outlined" onclick="exportPriceList()">' +
-            '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">table_view</span> Exportar precios' +
-          '</button>' +
           '<button type="button" class="m3-btn-filled" onclick="showAddCatalogModal()">' +
             '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">add</span> Nuevo producto' +
           '</button>' +
@@ -893,98 +894,48 @@ function esc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-/* ── Cargar SheetJS desde CDN (lazy) ─────────────────────────── */
-function loadSheetJS() {
-  return new Promise(function(resolve, reject) {
-    if (window.XLSX) { resolve(window.XLSX); return; }
-    var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-    s.onload  = function() { resolve(window.XLSX); };
-    s.onerror = function() { reject(new Error('Excel no disponible sin conexión')); };
-    document.head.appendChild(s);
+/* ══ Editar un producto por tamaño de la orden (D152) ═══════════════ */
+
+/* El producto de «Mis productos» del que salió. Los agregados desde v115
+   traen su id; los de antes se buscan por el nombre al inicio de la
+   descripción («Cortador de galletas Solo Cortador…»). */
+function productoDeItem(item) {
+  var dt = item && item.detalleTabla;
+  if (dt && dt.productoId != null) {
+    var p = _productoPorId(dt.productoId);
+    if (p && p.type === 'table') return p;
+  }
+  var d = String((item && item.desc) || ''), mejor = null, largo = 0;
+  catalogItems.forEach(function(p) {
+    if (p.type !== 'table') return;
+    var n = p.name + (p.variant ? ' ' + p.variant : '');
+    if (d.indexOf(n) === 0 && n.length > largo) { mejor = p; largo = n.length; }
   });
+  return mejor;
 }
 
-/* ── Exportar lista de precios como .xlsx ────────────────────── */
-function exportPriceList() {
-  snack('Generando lista de precios…');
-  loadSheetJS().then(function(XLSX) {
-    var cur = config.currency || '$';
-    var wb  = XLSX.utils.book_new();
+/* Abre el producto en la calculadora con lo que se eligió. Devuelve lo que
+   hay que revisar (un tamaño o un nivel de diseño que ya no existen). */
+function cargarProductoTablaDeOrden(item, p) {
+  var dt = item.detalleTabla || {};
+  var avisos = [];
+  var niveles = nivelesDiseno(p), di = 0;
+  niveles.forEach(function(n, k) { if (n.label === dt.nivel) di = k; });
+  if (dt.nivel && niveles[di].label !== dt.nivel) avisos.push('el diseño: «' + dt.nivel + '» ya no está');
+  var size = dt.tamano != null && tamanosDe(p).indexOf(Number(dt.tamano)) !== -1 ? Number(dt.tamano) : null;
+  if (dt.tamano != null && size == null) avisos.push('el tamaño: ' + formatoTamano(dt.tamano) + ' cm ya no tiene precio');
+  if (!item.detalleTabla) avisos.push('el tamaño: este producto es de antes y no lo guardó');
 
-    /* ── Hoja 1: precios por tamaño, con el refuerzo de cada producto ── */
-    var tableProds = catalogItems.filter(function(p) { return p.type === 'table' && tamanosDe(p).length; });
+  var sel = { size: size, designIdx: di, refuerzo: Number(dt.refuerzo) > 0 };
+  var auto = size != null ? descripcionProductoTabla(p, sel) : '';
+  /* Una descripción escrita a mano se conserva; la automática se vuelve a armar */
+  var manual = !!item.detalleTabla && !!item.desc && item.desc !== auto;
 
-    var allSizes = [];
-    tableProds.forEach(function(p) {
-      tamanosDe(p).forEach(function(n) { if (allSizes.indexOf(n) === -1) allSizes.push(n); });
-    });
-    allSizes.sort(function(a,b){return a-b;});
-
-    if (allSizes.length) {
-      var hdrs = ['Tamaño (cm)'];
-      tableProds.forEach(function(p) {
-        var nombre = p.name + (p.variant ? ' — ' + p.variant : '');
-        hdrs.push(nombre, nombre + ' · refuerzo');
-      });
-      var rows = [hdrs];
-
-      allSizes.forEach(function(size) {
-        var row = [formatoTamano(size) + ' cm'];
-        tableProds.forEach(function(p) {
-          var tiene = tamanosDe(p).indexOf(size) !== -1;
-          var ref = tiene ? refuerzoDe(p, size) : 0;
-          row.push(tiene ? cur + precioDeTamano(p, size).toFixed(2) : '—');
-          row.push(tiene && ref > 0 ? '+' + cur + ref.toFixed(2) : '—');
-        });
-        rows.push(row);
-      });
-
-      var wsCort = XLSX.utils.aoa_to_sheet(rows);
-      wsCort['!cols'] = [{ wch: 14 }].concat(tableProds.reduce(function(a) { return a.concat([{ wch: 22 }, { wch: 14 }]); }, []));
-      XLSX.utils.book_append_sheet(wb, wsCort, 'Por tamaño');
-    }
-
-    /* ── Hoja 2: niveles de diseño de cada producto ──────────── */
-    var dRows = [];
-    tableProds.forEach(function(p) {
-      if (dRows.length) dRows.push(['', '']);
-      dRows.push([(p.name + (p.variant ? ' — ' + p.variant : '')).toUpperCase(), '']);
-      dRows.push(['Nivel de diseño', 'Costo']);
-      nivelesDiseno(p).forEach(function(n) { dRows.push([n.label, cur + (Number(n.cost) || 0).toFixed(2)]); });
-    });
-    if (dRows.length) {
-      var wsExtras = XLSX.utils.aoa_to_sheet(dRows);
-      wsExtras['!cols'] = [{ wch: 28 }, { wch: 14 }];
-      XLSX.utils.book_append_sheet(wb, wsExtras, 'Diseño');
-    }
-
-    /* ── Hoja 3: Historial de cotizaciones ───────────────────── */
-    if (quotes && quotes.length) {
-      var qRows = [['Num. Cotización', 'Fecha', 'Cliente', 'Teléfono', 'Total']];
-      quotes.slice().reverse().forEach(function(q) {
-        var total = q.grandTotal != null ? q.grandTotal : (q.totalWithQty != null ? q.totalWithQty : (q.items && q.items[0] ? q.items[0].totalCost : 0));
-        qRows.push([
-          q.quoteNum || '',
-          q.quoteDate ? new Date(q.quoteDate).toLocaleDateString('es-MX') : '',
-          q.client || '',
-          q.phone  || '',
-          cur + (total || 0).toFixed(2)
-        ]);
-      });
-      var wsQuotes = XLSX.utils.aoa_to_sheet(qRows);
-      wsQuotes['!cols'] = [{wch:18},{wch:14},{wch:24},{wch:16},{wch:12}];
-      XLSX.utils.book_append_sheet(wb, wsQuotes, 'Cotizaciones');
-    }
-
-    if (!wb.SheetNames.length) { snack('Todavía no hay precios que exportar'); return; }
-
-    /* ── Descargar ───────────────────────────────────────────── */
-    var biz   = (config.bizName || 'Lista').replace(/\s+/g,'_');
-    var fecha = new Date().toISOString().slice(0,10);
-    XLSX.writeFile(wb, biz + '_precios_' + fecha + '.xlsx');
-    snack('Lista de precios descargada');
-  }).catch(function(err) {
-    snack(err.message || 'Error al exportar');
-  });
+  _productoCostoId = null;
+  _modoProducto = { id: p.id, size: size, designIdx: di, refuerzo: sel.refuerzo,
+                    qty: item.qty || 1, desc: manual ? item.desc : '', descManual: manual };
+  var pagina = document.getElementById('page-calc');
+  if (pagina) pagina.classList.add('modo-producto');
+  renderQueCotizas();
+  return avisos;
 }

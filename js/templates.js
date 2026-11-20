@@ -692,6 +692,9 @@ function tplDraftItem(item, i, cur) {
       '<div class="draft-item-desc">'+ esc(item.desc) + '</div>' +
       '<div class="draft-item-sub">' + _subLineaItem(item) + '</div>' +
       '<div class="draft-item-calc" id="dqc-' + i + '">' + tplDraftItemCalc(item, cur) + '</div>' +
+      '<button type="button" class="draft-item-editar" onclick="editarProductoDeOrden(' + i + ')" aria-label="Editar ' + esc(item.desc) + '">' +
+        tplIcon('edit', 16) + ' Editar' +
+      '</button>' +
     '</div>' +
     '<div class="draft-item-controls">' +
       '<button class="draft-qty-btn" onclick="draftItemQty(' + i + ',-1)" aria-label="Quitar uno">&#8722;</button>' +
@@ -771,9 +774,13 @@ function tplReviewMain(draft, cur) {
   return tplReviewItems(draft, cur) +
     '<div class="review-footer">' +
       '<div class="review-footer-totals">' + tplDraftTotals(draft, cur) + '</div>' +
-      '<button class="m3-btn-filled review-generate" onclick="saveQuote()">' +
-        tplIcon('send', 18) + ' ' + l.save +
-      '</button>' +
+      /* Cancelar sale sin guardar (D156); cancelarOrden en quotes.js */
+      '<div class="review-footer-acciones">' +
+        '<button type="button" class="m3-btn-outlined review-cancelar" onclick="cancelarOrden()">Cancelar</button>' +
+        '<button type="button" class="m3-btn-filled review-generate" onclick="saveQuote()">' +
+          tplIcon('send', 18) + ' ' + l.save +
+        '</button>' +
+      '</div>' +
     '</div>';
 }
 
@@ -808,6 +815,9 @@ function tplReviewRow(item, i, cur) {
       '<div class="draft-item-desc">' + esc(item.desc) + '</div>' +
       '<div class="draft-item-sub">' + _subLineaItem(item) + '</div>' +
       '<div class="draft-item-calc" id="dqc-' + i + '">' + tplDraftItemCalc(item, cur) + '</div>' +
+      '<button type="button" class="draft-item-editar" onclick="editarProductoDeOrden(' + i + ')" aria-label="Editar ' + esc(item.desc) + '">' +
+        tplIcon('edit', 16) + ' Editar' +
+      '</button>' +
     '</td>' +
     '<td>' +
       '<div class="review-qty">' +

@@ -169,6 +169,17 @@
   <div class="calc-layout">
   <aside class="calc-summary">
 
+  <!-- Editando un producto de la orden (D152): lo muestra refreshDraftIndicator.
+       «Guardar cambios» lo reemplaza en la orden; «Cancelar» lo deja como estaba. -->
+  <div id="calc-editando" class="calc-editando hidden" role="status">
+    <span class="material-symbols-rounded" aria-hidden="true">edit_note</span>
+    <div class="calc-editando-cuerpo">
+      <span class="calc-editando-titulo">Editando un producto de la orden</span>
+      <span class="calc-editando-texto" id="calc-editando-texto"></span>
+    </div>
+    <button type="button" class="calc-editando-cancelar" onclick="cancelarEdicionProducto()">Cancelar</button>
+  </div>
+
   <!-- ── HERO: resultado siempre visible ─── -->
   <div id="calc-result" style="padding:18px 20px 0">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -184,6 +195,12 @@
       <span style="color:var(--ink-4)">·</span>
       <span>Ganancia</span>
       <span class="num" style="color:var(--ok)" id="result-profit">+$0.00</span>
+    </div>
+    <!-- El precio sugerido se redondea hacia arriba de 5 en 5 (D161, roundUpToFive en
+         costing.js). Lo escribe _pintarNotaRedondeo (calculator.js). -->
+    <div class="nota-redondeo solo-pieza">
+      <span class="material-symbols-rounded" aria-hidden="true">info</span>
+      <span id="nota-redondeo-texto">El precio se redondea hacia arriba de $5 en $5: siempre termina en 5 o en 0.</span>
     </div>
 
     <!-- Barra de composición de costos -->
@@ -346,7 +363,9 @@
     </div>
 
     <!-- Leer el archivo del slicer (D133): llena peso, tiempo y, si son copias, piezas.
-         Sin «accept» a propósito: Android deja en gris los .gcode si se filtran por tipo. -->
+         Solo .gcode y .3mf (D162). En la computadora el selector solo muestra esos
+         (gcode.js le pone «accept»); en el teléfono no se filtra, porque Android deja en
+         gris los .gcode si se filtran por tipo, y la app revisa el archivo al elegirlo. -->
     <!-- Todo el recuadro es la etiqueta del selector: un clic en cualquier parte lo abre.
          El input queda oculto a la vista pero no al teclado. -->
     <label class="slicer-lector" id="slicer-lector">
@@ -355,7 +374,7 @@
         <span class="material-symbols-rounded" aria-hidden="true">upload_file</span>
         Leer archivo del slicer
       </span>
-      <span class="slicer-ayuda">.gcode o .gcode.3mf<span class="slicer-ayuda-arrastrar"> · también puedes arrastrarlo aquí</span></span>
+      <span class="slicer-ayuda">.gcode o .3mf<span class="slicer-ayuda-arrastrar"> · también puedes arrastrarlo aquí</span></span>
     </label>
     <div id="slicer-resumen" class="slicer-resumen hidden" aria-live="polite"></div>
 

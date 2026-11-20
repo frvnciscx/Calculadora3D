@@ -192,6 +192,7 @@ Cuántas cotizaciones tiene y cuánto se le ha cotizado se calcula al abrir su f
 | `weight`, `timeH`, `designH`, `pieces`, `margin` | Por pieza, con las piezas de la placa, como hoy. El tiempo se captura en horas y minutos y se guarda en horas | v100, D58 | Sí |
 | Desglose: `matCost`, `energyCost`, `laborCost`, `deprecCost`, `fixedCost`, `indirectCost`, `maintCost`, `postProcCost`, `ipaCost`, `uvCost`, `wasteCost`, `baseCost` | El costo como se calculó ese día. Si mañana sube el PLA, la cotización no cambia | v100 | Sí |
 | `totalCost`, `autoPrice`, `priceManual` | Precio, precio de la fórmula y si se escribió a mano | v100 | Sí |
+| `entrada` | Lo que se capturó en la calculadora, tal cual, para poder editar la pieza: `{ printerId, materialId, spoolId, plateWeight, plateTimeH, plateDesignH, pieces, margin, ams: { slots, purga, cambios }, postProc: { paints, primerCost, varnishCost, paintingTimeH } }`. Las piezas de antes de v116 no lo traen | D152 | Sí |
 | `tipo`, `detalleTabla` | `'tabla'` en los productos por tamaño, con lo elegido: `{ productoId, tamano, nivel, diseno, refuerzo, base }`. Sus rubros de costo van en 0 y `baseCost` vacío | D151 | Sí |
 | `spoolId`, `amsColors`, `amsPurgeGrams` | El rollo, o los rollos por color con sus gramos | v100, D74 | Sí |
 | `archivo` | `{ nombre, placa }` del archivo del slicer del que salió | D57, D72 | Sí |

@@ -2673,8 +2673,10 @@ span.suffix {
 
 .qc-opciones {
   display: grid;
-  /* Dos por renglón en el teléfono; más, si caben */
-  grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr));
+  /* Dos por renglón en el teléfono; más, si caben. auto-fit (no auto-fill)
+     para que las tarjetas se estiren y ocupen todo el ancho (D163): con
+     auto-fill quedaban columnas vacías a la derecha. */
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
   gap: 8px;
 }
 .qc-opcion {
@@ -2889,3 +2891,44 @@ span.suffix {
 }
 .pe-rango-campos input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .pe-eliminar { display: inline-flex; align-items: center; gap: 6px; margin-top: 22px; color: var(--danger); }
+
+/* ══ v116: editar un producto de la orden (D152) ═════════════════════ */
+.calc-editando {
+  display: flex; align-items: center; gap: 12px;
+  margin: 16px 20px 0; padding: 12px 14px;
+  background: var(--accent-tint); color: var(--ink);
+  border: 1px solid var(--accent); border-radius: 12px;
+}
+.calc-editando.hidden { display: none; }
+.calc-editando > .material-symbols-rounded { font-size: 22px; color: var(--accent); flex-shrink: 0; }
+.calc-editando-cuerpo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.calc-editando-titulo { font: 600 13px/1.3 var(--font-sans); }
+.calc-editando-texto {
+  margin-top: 2px; font-size: 12px; line-height: 1.3; color: var(--ink-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.calc-editando-cancelar {
+  flex-shrink: 0; min-height: 40px; padding: 0 14px;
+  background: none; border: 1px solid var(--line-strong); border-radius: 999px;
+  font: 500 13px var(--font-sans); color: var(--ink); cursor: pointer;
+}
+.calc-editando-cancelar:hover { border-color: var(--ink-3); }
+.calc-editando-cancelar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* «Editar» en cada producto de la orden */
+.draft-item-editar {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 36px; margin-top: 2px; padding: 0 2px;
+  background: none; border: 0; cursor: pointer;
+  font: 500 13px var(--font-sans); color: var(--ink-2);
+}
+.draft-item-editar:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.draft-item-editar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+/* ══ v121: el redondeo, a la vista (D161) ════════════════════════════ */
+.nota-redondeo {
+  display: flex; align-items: flex-start; gap: 6px;
+  margin-top: 8px;
+  font-size: 12px; line-height: 1.45; color: var(--ink-2);
+}
+.nota-redondeo .material-symbols-rounded { font-size: 16px; color: var(--ink-3); flex-shrink: 0; margin-top: 1px; }

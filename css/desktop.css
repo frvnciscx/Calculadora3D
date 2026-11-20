@@ -785,6 +785,16 @@
   #page-calc[data-mode="review"] .calc-layout {
     grid-template-columns: minmax(0, 1fr) clamp(300px, 34vw, 500px);
   }
+  /* La vista previa llega hasta abajo de la ventana (D158), como un panel de
+     orilla: se come el margen inferior de la página con un margen negativo,
+     así la página no crece ni se desplaza. La orden, a la izquierda,
+     conserva su margen. */
+  #page-calc[data-mode="review"] .calc-summary {
+    height: calc(var(--calc-panel-h) + var(--calc-gap));
+    margin-bottom: calc(-1 * var(--calc-gap));
+    border-bottom: 0;
+    border-radius: var(--r-m) var(--r-m) 0 0;
+  }
   } /* /@container calcpage */
 
   /* Página angosta (p. ej. el contenedor lateral abierto en una pantalla
@@ -938,33 +948,43 @@
 
   /* Resumen y botón, abajo de la tabla. Con espacio, el botón va a un lado
      de los totales en lugar de debajo. */
+  /* D156, afinado en D157: Subtotal, Descuento, Comisión y Total uno debajo
+     de otro, cada renglón a todo el ancho (la etiqueta a la izquierda y el
+     valor a la derecha), y abajo «Cancelar» y el botón de guardar. Antes el
+     botón iba solo en una columna de 220 px a la altura del total. Los
+     renglones de tplDraftTotals se acomodan directo en la rejilla
+     (display: contents). */
   .review-footer {
     flex: none;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-    padding: 12px 20px 16px;
+    grid-template-areas: "sub" "desc" "com" "total" "acciones";
+    padding: 14px 20px 16px;
     background: var(--bg-elev);
     border: 0.5px solid var(--line);
     border-radius: var(--r-m);
   }
-  .review-footer .draft-subtotal-row { margin-top: 0; }
+  .review-footer-totals { display: contents; }
+  /* Sin la línea de arriba del subtotal (D156) */
+  .review-footer .draft-subtotal-row { grid-area: sub; margin-top: 0; border-top: 0; }
+  .review-footer-totals > .draft-discount-row:nth-child(2) { grid-area: desc; }
+  .review-footer-totals > .draft-discount-row:nth-child(3) { grid-area: com; }
+  .review-footer .draft-total-row { grid-area: total; }
+  .review-footer-acciones { grid-area: acciones; display: flex; gap: 10px; margin-top: 8px; }
+  .review-footer-acciones > * { flex: 1 1 0; min-width: 0; }
   .review-footer .draft-discount-row .material-symbols-rounded { display: none; }
   .review-footer .discount-input  { width: 44px; }
   .review-footer .discount-amount { min-width: 64px; }
   .review-generate {
-    width: 100%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
   }
+  /* Con espacio, los botones van a la derecha con su ancho, no estirados */
   @container (min-width: 560px) {
-    .review-footer {
-      grid-template-columns: minmax(0, 1fr) 220px;
-      column-gap: 28px;
-      align-items: end;
-    }
+    .review-footer-acciones { justify-content: flex-end; }
+    .review-footer-acciones > * { flex: 0 0 auto; width: auto; min-width: 180px; padding: 0 24px; }
   }
 
   /* Derecha: vista previa, con la hoja centrada y desplazable por dentro */
@@ -990,6 +1010,15 @@
     background: var(--bg-sunk);
   }
   .preview-paper { max-width: 460px; margin: 0 auto; }
+
+  /* La hoja ocupa todo el alto del panel, como una página (D159): el total,
+     las notas y el pie bajan al fondo, y el espacio queda entre la tabla y el
+     total. Con muchos productos crece y el panel se desplaza. Solo aquí: el
+     PDF, la imagen y el visor del cliente no cambian. */
+  .calc-review-preview .preview-body { display: flex; flex-direction: column; }
+  .calc-review-preview .preview-paper { flex: 1 0 auto; display: flex; flex-direction: column; width: 100%; }
+  .calc-review-preview .preview-paper > .qf { flex: 1 0 auto; display: flex; flex-direction: column; }
+  .calc-review-preview .preview-paper > .qf > .qf-totals { margin-top: auto; padding-top: 16px; }
 
   /* ── Contenedor lateral de la cotización (tipo VS Code) ──
      Es un hijo más de la fila del body: aparece a la derecha y la página
