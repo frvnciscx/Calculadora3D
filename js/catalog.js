@@ -17,10 +17,10 @@ var SOLO_CORTADOR_TABLE = {
 var DEFAULT_CATALOG = [
   {
     id: 'cat-1',
-    name: 'Topper Cake',
-    type: 'cost',
-    designH: 1,
-    defaultWeight: '', defaultTimeH: '', defaultMargin: ''
+    name: 'Cake Topper',
+    type: 'table',      /* por tamaño (D169): los precios los captura cada negocio */
+    priceTable: {},
+    refuerzoTable: {}   /* sin refuerzo: la regla de los cortadores no aplica */
   },
   {
     id: 'cat-cortador-solo',
@@ -40,7 +40,45 @@ var DEFAULT_CATALOG = [
 
 var catalogItems = ld('catalog', DEFAULT_CATALOG);
 
+/* «Topper Cake» ahora se llama «Cake Topper» (D166). Los negocios que ya lo
+   tenían guardado lo traen con el nombre de antes: se cambia aquí y cuando
+   llegan los productos de la nube (renderCatalogList), y se guarda como
+   cualquier edición. Solo el nombre exacto: otro nombre no se toca. Las
+   cotizaciones ya hechas conservan su descripción. */
+function _renombrarCakeTopper() {
+  var cambiados = catalogItems.filter(function(p) { return p && p.name === 'Topper Cake'; });
+  if (!cambiados.length) return;
+  cambiados.forEach(function(p) { p.name = 'Cake Topper'; });
+  saveCatalog();
+  if (typeof dbGuardarProducto === 'function') cambiados.forEach(function(p) { dbGuardarProducto(p); });
+}
+
+/* «Cake Topper» se cotiza por tamaño (D169). El que ya estaba guardado por
+   peso y tiempo pasa a «Por tamaño», sin precios (se capturan en «Mis
+   productos › Editar») y sin refuerzo. Una vez por equipo: si después lo
+   regresas a peso y tiempo, aquí ya no se vuelve a cambiar. */
+function _cakeTopperPorTamano() {
+  var marca = 'c3d_cakeTopperPorTamano';
+  try { if (localStorage.getItem(marca)) return; } catch (e) {}
+  var topper = catalogItems.filter(function(p) { return p && p.name === 'Cake Topper'; });
+  if (!topper.length) return;   /* todavía no llegan los productos: se intenta después */
+  var cambiados = topper.filter(function(p) { return p.type !== 'table'; });
+  cambiados.forEach(function(p) {
+    p.type = 'table';
+    p.priceTable = {};
+    p.refuerzoTable = {};
+    delete p.designH; delete p.defaultWeight; delete p.defaultTimeH; delete p.defaultMargin;
+  });
+  if (cambiados.length) {
+    saveCatalog();
+    if (typeof dbGuardarProducto === 'function') cambiados.forEach(function(p) { dbGuardarProducto(p); });
+  }
+  try { localStorage.setItem(marca, '1'); } catch (e) {}
+}
+
 function saveCatalog() { sv('catalog', catalogItems); }
+_renombrarCakeTopper();
+_cakeTopperPorTamano();
 
 function _productoPorId(id) {
   for (var k = 0; k < catalogItems.length; k++) {
@@ -91,18 +129,18 @@ function renderQueCotizas() {
   if (!el) return;
   var activo = _modoProducto ? _modoProducto.id : _productoCostoId;
 
-  function opcion(id, icono, nombre, sub, on) {
+  /* Sin ícono (D165): el nombre y su línea de abajo dicen lo que es */
+  function opcion(id, nombre, sub, on) {
     return '<button type="button" class="qc-opcion" data-id="' + esc(id) + '" aria-pressed="' + (on ? 'true' : 'false') + '" ' +
              'onclick="elegirQueCotizas(this.dataset.id)">' +
-      '<span class="material-symbols-rounded qc-icono" aria-hidden="true">' + icono + '</span>' +
       '<span class="qc-texto"><span class="qc-nombre">' + esc(nombre) + '</span>' +
       '<span class="qc-sub">' + esc(sub) + '</span></span>' +
     '</button>';
   }
 
-  el.innerHTML = opcion('pieza', 'view_in_ar', 'Pieza nueva', 'Con el peso y el tiempo', !activo) +
+  el.innerHTML = opcion('pieza', 'Pieza nueva', 'Con el peso y el tiempo', !activo) +
     catalogItems.map(function(p) {
-      return opcion(p.id, p.type === 'table' ? 'straighten' : 'category', p.name, _subtituloProducto(p), String(activo) === String(p.id));
+      return opcion(p.id, p.name, _subtituloProducto(p), String(activo) === String(p.id));
     }).join('');
 
   if (enModoProducto()) renderPanelProducto();
@@ -235,6 +273,9 @@ function renderPanelProducto() {
   if (m.size != null && tams.indexOf(Number(m.size)) === -1) m.size = null;
   var niveles = nivelesDiseno(p);
   if (m.designIdx >= niveles.length) m.designIdx = 0;
+  /* La fila de Refuerzo solo aparece si algún tamaño lo lleva (D169) */
+  var conRefuerzo = tams.some(function(s) { return refuerzoDe(p, s) > 0; });
+  if (!conRefuerzo) m.refuerzo = false;
 
   var cabeza =
     '<div class="pt-cabeza">' +
@@ -284,15 +325,17 @@ function renderPanelProducto() {
       '<legend class="pt-legend">Diseño</legend>' +
       '<div class="pt-opciones pt-disenos">' + disenos + '</div>' +
     '</fieldset>' +
-    '<div class="pt-fila">' +
-      '<label class="m3-switch pt-switch">' +
-        '<span class="pt-switch-texto"><span class="pt-switch-titulo">Refuerzo</span>' +
-          '<span class="pt-switch-ayuda" id="pt-ref-ayuda"></span></span>' +
-        '<input type="checkbox" id="pt-refuerzo" aria-describedby="pt-ref-ayuda"' + (m.refuerzo ? ' checked' : '') +
-          ' onchange="ptElegir(\'refuerzo\', this.checked)">' +
-        '<div class="m3-switch-track"></div>' +
-      '</label>' +
-    '</div>' +
+    (conRefuerzo
+      ? '<div class="pt-fila">' +
+          '<label class="m3-switch pt-switch">' +
+            '<span class="pt-switch-texto"><span class="pt-switch-titulo">Refuerzo</span>' +
+              '<span class="pt-switch-ayuda" id="pt-ref-ayuda"></span></span>' +
+            '<input type="checkbox" id="pt-refuerzo" aria-describedby="pt-ref-ayuda"' + (m.refuerzo ? ' checked' : '') +
+              ' onchange="ptElegir(\'refuerzo\', this.checked)">' +
+            '<div class="m3-switch-track"></div>' +
+          '</label>' +
+        '</div>'
+      : '') +
     '<div class="pt-fila">' +
       '<span class="pt-switch-titulo" id="pt-cant-label">Cantidad</span>' +
       '<div class="pt-stepper" role="group" aria-labelledby="pt-cant-label">' +
@@ -505,6 +548,8 @@ function showCatalogModal() {
 /* db.js la llama cuando los productos cambian en otro equipo: redibuja la
    lista abierta y las opciones de «¿Qué cotizas?». Devuelve el HTML. */
 function renderCatalogList() {
+  _renombrarCakeTopper();
+  _cakeTopperPorTamano();
   var html = _htmlListaCatalogo();
   var lista = document.getElementById('catalog-list');
   if (lista) lista.innerHTML = html;

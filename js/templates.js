@@ -760,7 +760,9 @@ function tplDraftModal(draft, cur) {
       '</div>' +
       tplDraftTotals(draft, cur) +
       '<div class="m3-sheet-actions">' +
-        '<button class="m3-btn-outlined" onclick="closeModal()">Cancelar</button>' +
+        /* «Cancelar» sale sin guardar, igual que en escritorio (D164); la ✕ de arriba
+           y tocar fuera cierran el panel y conservan la orden */
+        '<button class="m3-btn-outlined" onclick="cancelarOrden()">Cancelar</button>' +
         '<button class="m3-btn-filled" onclick="saveQuote()">' + l.save + '</button>' +
       '</div>' +
     '</div>';

@@ -70,7 +70,9 @@ function refreshDraftIndicator() {
       var suma = draftQuote.items.reduce(function(s, it) { return s + (it.totalCost || 0) * (it.qty || 1); }, 0);
       var tiraTexto = document.getElementById('orden-tira-texto');
       var tiraTotal = document.getElementById('orden-tira-total');
-      if (tiraTexto) tiraTexto.textContent = 'Orden · ' + nItems + (nItems === 1 ? ' producto' : ' productos');
+      /* Si es la edición de una cotización guardada, lo dice (D167) */
+      var qEd = _editQuoteIndex != null && typeof quotes !== 'undefined' ? quotes[_editQuoteIndex] : null;
+      if (tiraTexto) tiraTexto.textContent = (qEd ? 'Editando ' + qEd.quoteNum : 'Orden') + ' · ' + nItems + (nItems === 1 ? ' producto' : ' productos');
       if (tiraTotal) tiraTotal.textContent = (config.currency || '$') + suma.toFixed(2);
     }
   }
@@ -536,7 +538,7 @@ function removeDraftItem(i) {
   refreshDraftIndicator();   /* el contador «Orden · n» del encabezado */
 }
 
-/* «Cancelar» en la orden (D156): sale sin guardar. Editando una cotización,
+/* «Cancelar» en la orden (D156, D164: también en el teléfono): sale sin guardar. Editando una cotización,
    la deja como estaba y regresa a Cotizaciones; una orden nueva se descarta.
    Si hay algo que perder, pregunta antes. */
 function cancelarOrden(confirmado) {
@@ -549,7 +551,9 @@ function cancelarOrden(confirmado) {
         confirmLabel: q ? 'Salir sin guardar' : 'Descartar',
         icon: q ? 'edit_off' : 'delete',
         detail: q ? 'La cotización se queda como estaba.'
-                  : 'Se quitan ' + (n === 1 ? 'el producto' : 'los ' + n + ' productos') + ' y lo que escribiste del cliente.'
+                  : 'Se quitan ' + (n === 1 ? 'el producto' : 'los ' + n + ' productos') + ' y lo que escribiste del cliente.',
+        /* En el teléfono la orden es un panel: si no se confirma, se vuelve a él */
+        alCancelar: _mqEscritorio.matches ? null : renderDraftModal
       });
     return;
   }
@@ -559,6 +563,32 @@ function cancelarOrden(confirmado) {
   setCalcMode('calc');
   if (q) { showPage('quotes'); snack(q.quoteNum + ' se quedó como estaba'); }
   else snack('Orden descartada');
+}
+
+/* «Nueva cotización» (D167): empieza con la orden vacía. Antes solo abría la
+   calculadora, y si había quedado una orden a medias, o la edición de una
+   cotización que no se guardó ni se canceló, aparecía con sus productos (y
+   lo que se agregara después iba a dar a esa cotización). Si hay algo que
+   perder, pregunta; una edición sin cambios se suelta sin preguntar. */
+function nuevaCotizacion(confirmado) {
+  var q = _editQuoteIndex != null ? quotes[_editQuoteIndex] : null;
+  var n = draftQuote && draftQuote.items ? draftQuote.items.length : 0;
+  if (n && !confirmado && (q ? _ordenConCambios(q) : true)) {
+    m3Confirm(q ? 'Hay cambios sin guardar en ' + esc(q.quoteNum) : 'Tienes una orden sin terminar',
+      function() { nuevaCotizacion(true); }, {
+        confirmLabel: 'Empezar de cero',
+        cancelLabel:  q ? 'Seguir editando' : 'Seguir con esa orden',
+        icon: q ? 'edit_off' : 'receipt_long',
+        detail: q ? 'Si empiezas una nueva, esos cambios se pierden y ' + esc(q.quoteNum) + ' se queda como estaba.'
+                  : 'Lleva ' + (n === 1 ? '1 producto' : n + ' productos') + '. Si empiezas una nueva, se descarta.',
+        alCancelar: function() { showPage('calc'); if (q) renderDraftModal(); }
+      });
+    return;
+  }
+  if (draftQuote) clearDraftQuote();
+  if (typeof enModoProducto === 'function' && enModoProducto()) elegirQueCotizas('pieza');
+  showPage('calc');
+  refreshDraftIndicator();
 }
 
 /* ¿Hay algo que se perdería? En una edición, si la orden ya no es igual a la cotización */
@@ -807,7 +837,7 @@ function renderQuotes() {
     el.innerHTML = tplEmptyState('receipt_long',
       'Sin cotizaciones',
       'Calcula el costo de una pieza, agr\u00e9gala a la orden y gen\u00e9rala desde ah\u00ed.',
-      { label: 'Nueva cotizaci\u00f3n', onclick: "showPage('calc')", icon: 'add' });
+      { label: 'Nueva cotizaci\u00f3n', onclick: "nuevaCotizacion()", icon: 'add' });
     return;
   }
 

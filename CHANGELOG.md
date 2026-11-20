@@ -29,6 +29,41 @@ app y volviendo a entrar.
 
 ---
 
+## 2026-11-20 · caché v127
+
+La v126 no llegó a subirse: lo de aquí la incluye.
+
+- **«Cake Topper» se cotiza por tamaño** (D169): queda sin precios hasta que los captures en «Mis
+  productos › Editar», y sin refuerzo. El que tenías por peso y tiempo se cambia solo.
+- **La fila de Refuerzo** solo aparece en los productos que lo llevan.
+- **Las medidas de la pieza salen del archivo del slicer** (D168, D170): ancho × largo × alto, en
+  el resumen («Mide 15.7 × 13.6 × 0.4 cm»); no van a la descripción. Del .gcode.3mf de Bambu y
+  Orca, y del G-code de Cura; del de PrusaSlicer, todavía no. Probado con un cake topper real
+  (P1S, dos colores), que queda como muestra recortada en `tests/muestras/bambu-topper.gcode.3mf`.
+
+---
+
+## 2026-11-20 · caché v125
+
+La v124 no llegó a subirse: lo de aquí la incluye.
+
+- **«Nueva cotización» empieza vacía** (D167). Antes traía la orden que hubiera quedado, también la
+  edición de una cotización que no se guardó ni se canceló. Si hay algo que perder, pregunta
+  («Seguir editando» o «Empezar de cero»). La tira de la orden dice «Editando COT-…» cuando es
+  una edición.
+- **Tarjetas de «¿Qué cotizas?» sin ícono** (D165).
+- **«Topper Cake» ahora es «Cake Topper»** (D166), también en los negocios que ya lo tenían.
+
+---
+
+## 2026-11-20 · caché v123
+
+- **«Cancelar» en el teléfono** (D164): el panel de la orden sale sin guardar, igual que en
+  escritorio, y pregunta antes si hay algo que perder; si no confirmas, regresas al panel. La ✕
+  y tocar fuera cierran el panel y conservan la orden.
+
+---
+
 ## 2026-11-20 · caché v122
 
 La v121 no llegó a subirse: lo de aquí la incluye.

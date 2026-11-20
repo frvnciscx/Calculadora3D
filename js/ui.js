@@ -52,7 +52,9 @@ function closeModal() {
    opts (opcional): { confirmLabel, icon, detail }
      confirmLabel — texto del botón de acción (default 'Eliminar')
      icon         — símbolo de Material (default 'warning')
-     detail       — línea secundaria con el detalle de lo que va a pasar */
+     detail       — línea secundaria con el detalle de lo que va a pasar
+     cancelLabel  — texto del botón de no confirmar (default 'Cancelar')
+     alCancelar   — qué hacer si no se confirma */
 function m3Confirm(message, onConfirm, opts) {
   opts = opts || {};
   var label  = opts.confirmLabel || 'Eliminar';
@@ -68,11 +70,18 @@ function m3Confirm(message, onConfirm, opts) {
         ? '<div style="font-size:13px;color:var(--ink-3);line-height:1.6;margin-bottom:16px;text-align:left">' + detail + '</div>'
         : '') +
       '<div class="m3-dialog-actions">' +
-        '<button class="m3-btn-text" onclick="closeModal()">Cancelar</button>' +
+        '<button class="m3-btn-text" onclick="closeModal()">' + (opts.cancelLabel || 'Cancelar') + '</button>' +
         '<button class="m3-btn-filled" style="background:var(--md-error);color:var(--md-on-error);width:auto;padding:0 24px" id="m3-confirm-btn">' + label + '</button>' +
       '</div>' +
     '</div>';
   document.getElementById('m3-confirm-btn').onclick = function() { closeModal(); onConfirm(); };
+  /* opts.alCancelar: qué hacer si no se confirma (por ejemplo, volver al panel de antes) */
+  if (opts.alCancelar) {
+    var mc = document.getElementById('modal-container');
+    var noConfirmar = function() { closeModal(); opts.alCancelar(); };
+    mc.querySelector('.m3-scrim').onclick = noConfirmar;
+    mc.querySelector('.m3-dialog-actions .m3-btn-text').onclick = noConfirmar;
+  }
 }
 
 /* Sub-páginas de config + quote-editor como sub-página virtual */

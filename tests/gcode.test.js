@@ -176,3 +176,31 @@ test('Solo se aceptan archivos del slicer: .gcode y .3mf (D162)', () => {
     .forEach((n) => assert.ok(!g.esArchivoSlicer(n), String(n) + ' no se debe aceptar'));
   assert.strictEqual(g.ACEPTA_SLICER, '.gcode,.gco,.3mf');
 });
+
+/* bambu-topper.gcode.3mf sale de un cake topper real de Francisco (P1S, dos
+   colores), recortado como los demás y con el nombre del objeto cambiado. */
+test('Las medidas de la pieza salen del archivo (D168)', async () => {
+  const p = (await leer('bambu-topper.gcode.3mf')).placas[0];
+  assert.strictEqual(p.tiempoS, 4625);
+  assert.strictEqual(p.gramos, 21.47);
+  assert.strictEqual(p.impresora, 'Bambu Lab P1S');
+  assert.strictEqual(p.cambios, 20);
+  assert.deepStrictEqual(p.medidas, { ancho: 157.4, largo: 135.5, alto: 4 }, 'sin la torre de purga');
+  assert.strictEqual(g.formatoMedidas(p.medidas), '15.7 × 13.6 × 0.4 cm');
+});
+
+test('Medidas: copias se miden una vez; Cura trae el contorno; el alto solo', () => {
+  const copias = JSON.stringify({ bbox_objects: [
+    { name: 'llavero.stl', bbox: [0, 0, 40, 20] }, { name: 'llavero.stl', bbox: [50, 0, 90, 20] },
+    { name: 'wipe_tower', bbox: [100, 100, 130, 130] }] });
+  assert.deepStrictEqual(g.medidasDePlacaJson(copias), { ancho: 40, largo: 20, alto: null });
+  const distintos = JSON.stringify({ bbox_objects: [
+    { name: 'cabeza.stl', bbox: [0, 0, 40, 20] }, { name: 'cuerpo.stl', bbox: [50, 10, 90, 30] }] });
+  assert.deepStrictEqual(g.medidasDePlacaJson(distintos), { ancho: 90, largo: 30, alto: null });
+  assert.deepStrictEqual(g.medidasDeGcode(';MINX:10\n;MINY:20\n;MINZ:0.2\n;MAXX:60\n;MAXY:50\n;MAXZ:12.4\n'),
+                         { ancho: 50, largo: 30, alto: 12.4 });
+  assert.strictEqual(g.formatoMedidas({ ancho: null, largo: null, alto: 80 }), '8 cm de alto');
+  assert.strictEqual(g.medidasDeGcode('; sin medidas'), null);
+  assert.strictEqual(g.medidasDePlacaJson('no es json'), null);
+});
+

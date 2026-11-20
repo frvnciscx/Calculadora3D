@@ -140,9 +140,63 @@ function analizarGcodeTexto(cabeza, cola, opts) {
       objetos: objetos,
       impresora: String(_valor(t, /;\s*printer_model\s*=\s*([^\n]+)/i) || '').replace(/^"|"$/g, '').trim(),
       cambios: cambiosDeColor(t),
+      medidas: medidasDeGcode(t),
       miniatura: null
     }]
   };
+}
+
+/* ── Medidas de la pieza (D168), en mm: { ancho, largo, alto } ─────
+   Cada slicer las deja en otro lado; la que no venga se queda en null. */
+function _mm1(n) { return Math.round(n * 10) / 10; }
+
+/* Bambu Studio y Orca: Metadata/plate_N.json trae el contorno de cada objeto
+   (bbox: x mín, y mín, x máx, y máx). La torre de purga no cuenta. Si son
+   copias del mismo objeto se mide una; si son distintos, todo lo de la placa. */
+function medidasDePlacaJson(texto) {
+  var j;
+  try { j = JSON.parse(String(texto || '')); } catch (e) { return null; }
+  var objs = ((j && j.bbox_objects) || []).filter(function(o) {
+    return o && o.bbox && o.bbox.length === 4 && !/wipe_tower|prime_tower/i.test(o.name || '');
+  });
+  if (!objs.length) return null;
+  var copias = objs.every(function(o) { return o.name === objs[0].name; });
+  var cajas = copias ? [objs[0].bbox] : objs.map(function(o) { return o.bbox; });
+  var col = function(k, fn) { return fn.apply(null, cajas.map(function(c) { return Number(c[k]); })); };
+  return { ancho: _mm1(col(2, Math.max) - col(0, Math.min)), largo: _mm1(col(3, Math.max) - col(1, Math.min)), alto: null };
+}
+
+/* Del texto del G-code: el alto («; max_z_height: 4.00» de Bambu y Orca) y,
+   en Cura, el contorno completo (;MINX: … ;MAXZ:). */
+function medidasDeGcode(texto) {
+  var t = String(texto || '');
+  var n = function(re) { var v = _valor(t, re); return v == null ? NaN : parseFloat(v); };
+  var m = { ancho: null, largo: null, alto: null };
+  var minX = n(/^;MINX:\s*(-?[\d.]+)/m), maxX = n(/^;MAXX:\s*(-?[\d.]+)/m);
+  var minY = n(/^;MINY:\s*(-?[\d.]+)/m), maxY = n(/^;MAXY:\s*(-?[\d.]+)/m);
+  var maxZ = n(/^;MAXZ:\s*(-?[\d.]+)/m), zBambu = n(/;\s*max_z_height\s*:\s*([\d.]+)/i);
+  if (!isNaN(minX) && !isNaN(maxX)) m.ancho = _mm1(maxX - minX);
+  if (!isNaN(minY) && !isNaN(maxY)) m.largo = _mm1(maxY - minY);
+  if (!isNaN(zBambu)) m.alto = _mm1(zBambu);
+  else if (!isNaN(maxZ)) m.alto = _mm1(maxZ);
+  return m.ancho == null && m.largo == null && m.alto == null ? null : m;
+}
+
+/* Junta lo que se sepa de dos lados */
+function _juntarMedidas(a, b) {
+  if (!a) return b || null;
+  if (!b) return a;
+  return { ancho: a.ancho != null ? a.ancho : b.ancho, largo: a.largo != null ? a.largo : b.largo, alto: a.alto != null ? a.alto : b.alto };
+}
+
+/* 157.4 × 135.5 × 4 mm → «15.7 × 13.6 × 0.4 cm» */
+function formatoMedidas(m) {
+  if (!m) return '';
+  var cm = function(mm) { return String(Math.round(mm) / 10); };
+  if (m.ancho != null && m.largo != null) {
+    return cm(m.ancho) + ' × ' + cm(m.largo) + (m.alto != null ? ' × ' + cm(m.alto) : '') + ' cm';
+  }
+  return m.alto != null ? cm(m.alto) + ' cm de alto' : '';
 }
 
 /* Cambios de color: Bambu, Orca y Prusa numeran cada uno («; toolchange #1217»),
@@ -330,6 +384,14 @@ async function _leer3mf(archivo) {
     var placa = resultado.placas[i];
     var png = await zip.leer('Metadata/plate_' + placa.indice + '.png');
     placa.miniatura = png && png.length ? png : null;
+    /* Medidas (D168): el contorno de la placa y el alto del encabezado del G-code */
+    try {
+      var bbox = await zip.leer('Metadata/plate_' + placa.indice + '.json');
+      var deLaPlaca = bbox ? medidasDePlacaJson(deco.decode(bbox)) : null;
+      var cabezaG = await zip.leerInicio('Metadata/plate_' + placa.indice + '.gcode', 16384);
+      var delGcode = cabezaG ? medidasDeGcode(deco.decode(cabezaG)) : null;
+      placa.medidas = _juntarMedidas(_juntarMedidas(deLaPlaca, delGcode), placa.medidas);
+    } catch (e) { /* sin medidas: no pasa nada */ }
     /* Multicolor: los cambios de color están al final del G-code de la placa */
     if (placa.filamentos.length > 1 && placa.cambios == null) {
       try {
@@ -429,6 +491,7 @@ if (typeof module !== 'undefined' && module.exports) {
     cambiosDeColor: cambiosDeColor, impresoraDelArchivo: impresoraDelArchivo,
     descripcionDeArchivo: descripcionDeArchivo, formatoDuracion: formatoDuracion,
     esArchivoSlicer: esArchivoSlicer, ACEPTA_SLICER: ACEPTA_SLICER,
+    medidasDePlacaJson: medidasDePlacaJson, medidasDeGcode: medidasDeGcode, formatoMedidas: formatoMedidas,
     _segundosDeTexto: _segundosDeTexto
   };
 }
@@ -524,6 +587,7 @@ function aplicarPlacaSlicer(i) {
     var d = descripcionDeArchivo(r.nombre);
     if (d) _poner('calc-desc', d);
   }
+  /* La medida se ve en el resumen, pero no va a la descripción (D170) */
 
   /* Impresora (D135): la del archivo; con varios colores, una con AMS. Va antes
      del material porque al cambiar de impresora se vuelve a armar la lista de
@@ -667,6 +731,7 @@ function _pintarResumenSlicer(estado) {
       '<div class="slicer-resumen-datos num">' + p.gramos.toFixed(2) + ' g · ' + formatoDuracion(p.tiempoS) +
         (colores ? ' · ' + _escSlicer(colores) : '') +
         (p.filamentos.length > 1 && p.cambios != null ? ' · ' + p.cambios.toLocaleString('es-MX') + ' cambios' : '') + '</div>' +
+      (formatoMedidas(p.medidas) ? '<div class="slicer-resumen-medidas">Mide ' + _escSlicer(formatoMedidas(p.medidas)) + '</div>' : '') +
       (p.impresora ? '<div class="slicer-resumen-titulo">' + _escSlicer(p.impresora) + '</div>' : '') +
       (p.filamentos.length > 1
         ? '<div class="slicer-filamentos">' + p.filamentos.map(function(f, n) {

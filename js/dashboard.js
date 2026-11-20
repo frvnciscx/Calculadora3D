@@ -168,7 +168,7 @@ function renderDashboard() {
     '<div style="padding:24px 20px 0">' +
       '<div class="micro" style="margin-bottom:10px">Accesos rápidos</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
-        '<button onclick="showPage(\'calc\')" class="card" style="padding:16px;text-align:left;display:flex;flex-direction:column;gap:10px;min-height:96px">' +
+        '<button onclick="nuevaCotizacion()" class="card" style="padding:16px;text-align:left;display:flex;flex-direction:column;gap:10px;min-height:96px">' +
           '<span class="material-symbols-rounded" style="font-size:22px;color:var(--accent)">calculate</span>' +
           '<div>' +
             '<div style="font-size:14px;font-weight:500;letter-spacing:-0.01em">Nueva cotización</div>' +
