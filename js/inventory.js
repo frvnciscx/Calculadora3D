@@ -5,8 +5,9 @@ function renderInventory() {
   if (!el) return;
 
   marcarListaVacia('inventory', !inventory.length);
+  var uso = _tarjetaUsoMaterial();
   if (!inventory.length) {
-    el.innerHTML = tplEmptyState('inventory_2',
+    el.innerHTML = uso + tplEmptyState('inventory_2',
       'Sin rollos registrados',
       'Lleva el control de cuánto filamento te queda. Al aceptar una cotización se descuenta solo.',
       { label: 'Agregar filamento', onclick: 'showInventoryModal()', icon: 'add' });
@@ -15,9 +16,27 @@ function renderInventory() {
 
   var cur = config.currency || '$';
 
-  el.innerHTML = inventory.map(function(item, i) {
+  el.innerHTML = uso + inventory.map(function(item, i) {
     return tplInventoryCard(item, i, cur);
   }).join('');
+}
+
+/* ── Material usado en el mes (D180) ─────────────────────────────── */
+/* El nombre vigente: el material del rollo en el AMS, si no el de la pieza */
+function _nombreParaUso(item, color) {
+  if (color && color.spoolId) {
+    var rollo = inventory.find(function(r) { return r.id === color.spoolId; });
+    if (rollo) return nombreMaterialDeRollo(rollo);
+  }
+  var id = item.entrada && item.entrada.materialId;
+  var m = id ? materials.find(function(x) { return x.id === id; }) : null;
+  return m ? m.name : item.material;
+}
+
+function _tarjetaUsoMaterial() {
+  if (typeof usoDeMaterial !== 'function') return '';
+  var u = usoDeMaterial(quotes, new Date(), _nombreParaUso);
+  return u.hayDatos ? tplUsoMaterial(u) : '';
 }
 
 /* ── Modal alta/edición ──────────────────────────────────────────── */
@@ -51,6 +70,7 @@ function saveInventory(editIndex) {
 
   var brand    = (document.getElementById('inv-brand')   || {}).value || '';
   var color    = (document.getElementById('inv-color')   || {}).value || '';
+  var colorHex = ((document.getElementById('inv-color-hex') || {}).value || '').trim();
   var costPerKg= parseFloat((document.getElementById('inv-cost') || {}).value) || 0;
 
   var entry = {
@@ -59,6 +79,8 @@ function saveInventory(editIndex) {
     material:   matObj.name,       /* copia legible, respaldo si se borra */
     brand:      brand.trim(),
     color:      color.trim(),
+    /* El color elegido (D185), como lo escribe el slicer: #RRGGBB (D74) */
+    colorHex:   /^#[0-9a-f]{6}$/i.test(colorHex) ? colorHex.toUpperCase() : null,
     totalG:     totalG,
     remainingG: remainingG,
     costPerKg:  costPerKg || null
@@ -77,6 +99,47 @@ function saveInventory(editIndex) {
   if (typeof dbGuardarRollo === 'function') dbGuardarRollo(entry);
   closeModal();
   renderInventory();
+}
+
+/* ── Color del rollo (D185) ──────────────────────────────────────── */
+function elegirColorRollo(btn) {
+  var yaEra = btn.classList.contains('elegido');
+  _marcarColorRollo(yaEra ? '' : btn.getAttribute('data-hex'));
+  /* El nombre: se llena si está vacío o si era el de otra muestra; se borra
+     al quitar el color, si era el de la muestra */
+  var campo = document.getElementById('inv-color');
+  if (!campo) return;
+  var escrito = campo.value.trim().toLowerCase();
+  var esDeLista = COLORES_FILAMENTO.some(function(c) { return c.nombre.toLowerCase() === escrito; });
+  if (yaEra) { if (esDeLista) campo.value = ''; return; }
+  if (!escrito || esDeLista) campo.value = btn.getAttribute('data-nombre');
+}
+
+function elegirColorPropio(input) {
+  _marcarColorRollo(input.value);
+  /* Un color propio ya no es «Rojo» ni «Azul»: el nombre de la muestra se borra */
+  var campo = document.getElementById('inv-color');
+  var escrito = campo ? campo.value.trim().toLowerCase() : '';
+  if (escrito && COLORES_FILAMENTO.some(function(c) { return c.nombre.toLowerCase() === escrito; })) campo.value = '';
+}
+
+function _marcarColorRollo(hex) {
+  hex = (hex || '').toUpperCase();
+  var guardado = document.getElementById('inv-color-hex');
+  if (guardado) guardado.value = hex;
+  var deLista = false;
+  document.querySelectorAll('.inv-colores .inv-color-muestra[data-hex]').forEach(function(b) {
+    var es = !!hex && b.getAttribute('data-hex').toUpperCase() === hex;
+    if (es) deLista = true;
+    b.classList.toggle('elegido', es);
+    b.setAttribute('aria-pressed', es ? 'true' : 'false');
+  });
+  var otro = document.querySelector('.inv-colores .inv-color-otro');
+  if (otro) {
+    var propio = !!hex && !deLista;
+    otro.classList.toggle('elegido', propio);
+    if (propio) otro.style.setProperty('--muestra', hex); else otro.style.removeProperty('--muestra');
+  }
 }
 
 /* ── Modal descontar gramos ──────────────────────────────────────── */

@@ -1373,7 +1373,8 @@ function viewQuote(i, desdeCliente) {
   });
 }
 
-/* El contenedor sigue abierto al cambiar de sección, pero sus botones
+/* El contenedor sigue abierto entre Cotizaciones y Clientes (al ir a otra
+   página se cierra, D183), pero sus botones
    (PDF, Imagen, WhatsApp) usan la posición i en la lista, y esa posición
    cambia al generar, duplicar o eliminar. Por eso se recuerda el folio, que
    no cambia, y renderQuotes() vuelve a pintar el contenedor con la

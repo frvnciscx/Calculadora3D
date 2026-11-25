@@ -29,6 +29,104 @@ app y volviendo a entrar.
 
 ---
 
+## 2026-11-25 · caché v134
+
+El color del rollo (D185). Las v130 a v133 no llegaron a subirse: este commit lleva las cinco.
+
+- **Selector de color al agregar o editar un rollo:** 10 muestras y «Otro», que abre el selector
+  del sistema. La muestra llena el nombre del color si está vacío.
+- **El color se ve en la tarjeta del rollo**, como un punto junto al nombre, y en la Calculadora,
+  la lista de Materiales y el Dashboard. Los rollos de antes llamados «Blanco», «Negro», etc. ya
+  salen con su color.
+
+### Corregido
+
+- «Costo por kg (opcional) (opcional)» y «Color (opcional)», que no cabía, en el editor del rollo.
+
+### Qué conviene probar en producción
+
+1. Inventario › + Filamento: elegir «Rojo»; el nombre se llena y la tarjeta sale con el punto rojo.
+2. Editar ese rollo: el rojo sigue elegido. Con «Otro», un color propio.
+3. En la barra lateral aparece «Versión 134».
+
+---
+
+## 2026-11-25 · caché v133
+
+El panel de la cotización se cierra al salir de Cotizaciones (D183). Las v130 a v132 no llegaron
+a subirse: este commit lleva las cuatro.
+
+### Corregido
+
+- **La cotización se quedaba abierta en la Calculadora:** al abrir una cotización en el panel de
+  la derecha y no cerrarlo, seguía abierta en cualquier página. Ahora se cierra al ir a otra
+  página; entre Cotizaciones y Clientes sigue abierta.
+
+### Qué conviene probar en producción
+
+1. Cotizaciones › abrir una › Calculadora: el panel ya no está.
+2. Cotizaciones › abrir una › Clientes: el panel sigue abierto.
+3. En la barra lateral aparece «Versión 133».
+
+---
+
+## 2026-11-25 · caché v132
+
+Filamento y materiales en el Dashboard (D182). Las v130 y v131 no llegaron a subirse: este
+commit lleva las tres.
+
+- **«Material usado · Nov»:** la misma tarjeta de Inventario, con los gramos del mes por material.
+- **«Filamento»:** lo que queda en todos los rollos, cuántos son y cuánto valen, y los 4 rollos con
+  menos porcentaje, con su barra y el aviso cuando les queda 20 % o menos. «Ver inventario →».
+- En escritorio van lado a lado, debajo de recientes y salud; los títulos de cada fila quedan a la
+  misma altura.
+
+### Qué conviene probar en producción
+
+1. Dashboard: abajo, «Material usado · Nov» y «Filamento», con los rollos que tienes.
+2. «Ver inventario →» lleva a Inventario.
+3. En la barra lateral aparece «Versión 132».
+
+---
+
+## 2026-11-25 · caché v131
+
+Materiales en Ajustes (D179) y la tarjeta «Material usado» en Inventario (D180). La v130 no
+llegó a subirse: este commit lleva las dos.
+
+- **Materiales pasa a Ajustes**, como pestaña entre Electricidad y Gastos fijos (en el teléfono,
+  una fila más de Ajustes). Sale de la barra lateral y del catálogo, que queda con Impresoras e
+  Inventario. El «Agregar material» del Dashboard abre Ajustes › Materiales.
+- **«Material usado» en Inventario:** los gramos de las cotizaciones aceptadas del mes, el cambio
+  contra el mes anterior, una barra partida por material y la lista con porcentaje y gramos.
+  Son los mismos gramos que se descuentan de los rollos al aceptar. Sin acordeón.
+- 7 pruebas nuevas (`tests/uso-material.test.js`): 79 en total.
+
+### Qué conviene probar en producción
+
+1. La barra lateral ya no tiene «Materiales»; Ajustes tiene la pestaña «Materiales» con «+ Material».
+2. Editar un material: el panel se abre a la derecha y Ajustes se angosta.
+3. Inventario: arriba, «Material usado» con los gramos del mes (si hay cotizaciones aceptadas).
+4. En la barra lateral aparece «Versión 131».
+
+---
+
+## 2026-11-25 · caché v130
+
+Ajustes en escritorio (D178).
+
+- **Sin barra de desplazamiento en las pestañas:** salía una barra vertical junto a «Diseño». En
+  pantallas de 900 a 1099 px las pestañas van sin ícono para que quepan las siete.
+- **Banco:** «Mostrar en cotizaciones y PDF» y su interruptor van junto a «Número de cuenta».
+
+### Qué conviene probar en producción
+
+1. Ajustes: junto a «Diseño» ya no hay flechas de desplazamiento.
+2. Ajustes › Banco: el interruptor está a la derecha del número de cuenta.
+3. En la barra lateral aparece «Versión 130».
+
+---
+
 ## 2026-11-25 · caché v129
 
 Lo que quedaba de la crítica (D175–D177). La v128 no llegó a subirse: este commit lleva las dos.

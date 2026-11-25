@@ -39,7 +39,7 @@ lista de lo que se puede añadir.
 
 **Barra lateral** (solo en escritorio; al día con v108, D118, D122, D123): arriba, el logo de
 Ajustes › Diseño y el nombre del negocio · Negocio (Dashboard, Calculadora, Cotizaciones,
-Historial) · Catálogo (Impresoras, Materiales, Inventario, Clientes) · Cuenta (Ajustes, y
+Historial) · Catálogo (Impresoras, Inventario, Clientes; Materiales está en Ajustes desde v131, D179) · Cuenta (Ajustes, y
 debajo el interruptor de modo oscuro) · abajo, la cuenta y «Cerrar sesión». En el teléfono no
 hay barra lateral: el tema y «Cerrar sesión» están en Ajustes › Otros. El tema se guarda en
 cada navegador y empieza en automático.
@@ -100,6 +100,8 @@ Panel de métricas del mes en curso.
 | Piezas impresas | Conteo de partidas *(tiene un error, ver auditoría)* |
 | Horas de impresión + % de capacidad | Suma de `timeH × qty`, contra `monthlyPrintHours` |
 | Cotizaciones recientes | Las 4 más nuevas |
+| Material usado del mes (D182) | La misma tarjeta de Inventario (D180, `js/uso-material.js`) |
+| Filamento (D182) | Lo que queda en los rollos, su valor y los 4 con menos porcentaje |
 | Pantalla de bienvenida | Se muestra si no hay impresoras o materiales |
 
 ### Calculadora
@@ -168,6 +170,9 @@ tabla y los niveles de diseño y el refuerzo de cada producto. Las cuentas está
 Rollos de filamento con material, marca, color, peso total y restante. Barra de progreso
 con alerta cuando queda ≤ 20 %. Botón para descontar gramos a mano.
 
+Arriba, la tarjeta «Material usado» del mes (D180, `js/uso-material.js`): gramos de las
+cotizaciones aceptadas por material, con su porcentaje y el cambio contra el mes anterior.
+
 ### Historial
 `js/history.js` · 59 líneas
 
@@ -177,12 +182,12 @@ con alerta cuando queda ≤ 20 %. Botón para descontar gramos a mano.
 `js/printers.js` · 53 líneas · `js/materials.js` · 45 líneas
 
 CRUD simple. Impresora: nombre, watts, tipo, costo, vida útil, multicolor, cabezales.
-Material: nombre, tipo, costo por kilo, densidad.
+Material: nombre, tipo, costo por kilo, densidad. Materiales se abre desde Ajustes (D179).
 
 ### Ajustes
-`js/config.js` · 351 líneas — siete sub-pantallas
+`js/config.js` · 351 líneas — ocho sub-pantallas
 
-Negocio · Banco · Electricidad y trabajo · Gastos fijos · Gastos indirectos ·
+Negocio · Banco · Electricidad y trabajo · Materiales (D179) · Gastos fijos · Gastos indirectos ·
 Otros parámetros · Diseño de cotización. Más exportar e importar respaldo en JSON.
 En escritorio va centrado, y Diseño de cotización lleva la vista previa a la derecha (D116, D117).
 

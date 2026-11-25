@@ -401,7 +401,7 @@ Los datos de La Casita del Molde están en el navegador de cada dispositivo de F
 | `c3d_config` | `ajustes/general` y el `nombre` del negocio | `bizName` pasa al negocio; `theme`, `lastPrinterId` y `lastMaterialId` se quedan en el teléfono |
 | `c3d_quoteStyle` | `ajustes/documento` | El logo se reduce (D91) |
 | `c3d_printers`, `c3d_materials` | `impresoras`, `materiales` | Nada |
-| `c3d_inventory` | `rollos` | `colorHex` queda vacío hasta que se edite el rollo |
+| `c3d_inventory` | `rollos` | `colorHex` queda vacío hasta que se edite el rollo; desde v134 se elige al agregarlo o editarlo (D185) |
 | `c3d_clients` | `clientes` | Sin los dos clientes de ejemplo, si siguen sin cambios (D47) |
 | `c3d_quotes` | `cotizaciones` | `pendiente` pasa a `borrador` (D6); `clienteId` se busca por el nombre, como hoy; `acceptedAt` pasa a `aceptadaEn`; el `historial` se arma con las fechas que hay; se quitan los campos de Notion (D33). Las aceptadas pasan como Entregadas y pagadas, con un pago «migrado» por el total en la fecha de aceptación, o en la de la cotización si no la tienen; las que sigan en curso se regresan un paso y se borra su pago (D94) |
 | `c3d_quoteCounter` | `contadores/cotizaciones` | Nada |

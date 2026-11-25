@@ -358,8 +358,9 @@ function _updateSpoolSelector() {
     '</button>';
 
   matching.forEach(function(it) {
-    var dot   = it.colorHex
-      ? 'background:' + it.colorHex + ';border:none'
+    var hexRollo = colorDeRollo(it);
+    var dot   = hexRollo
+      ? 'background:' + hexRollo + ';border:1px solid rgba(127,127,127,.45)'
       : 'background:var(--bg-sunk);border:1px solid var(--line)';
     var label = (it.color || nombreMaterialDeRollo(it));
     var remain= (it.remainingG || 0);

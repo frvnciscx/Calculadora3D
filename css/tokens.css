@@ -317,3 +317,21 @@
   --accent-mint-tint:      rgba(10, 122, 88, 0.08);
   --accent-mint-border:    rgba(10, 122, 88, 0.18);
 }
+
+/* Colores de las series de las gráficas (D180). Paleta probada para daltonismo
+   (validate_palette: separación entre vecinos y contraste) contra --bg-elev de
+   cada tema; un paso por tema, no el mismo color. «Otros» va en gris. */
+:root {
+  --serie-1: #3987e5;
+  --serie-2: #d95926;
+  --serie-3: #199e70;
+  --serie-4: #c98500;
+  --serie-otros: #5F6963;
+}
+:root[data-theme="light"] {
+  --serie-1: #2a78d6;
+  --serie-2: #eb6834;
+  --serie-3: #1baf7a;
+  --serie-4: #eda100;
+  --serie-otros: #8B968F;
+}

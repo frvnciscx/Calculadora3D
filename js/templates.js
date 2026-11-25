@@ -184,8 +184,9 @@ function tplMaterialItem(m, cur, invItems) {
   if (invItems && invItems.length) {
     colorChips = '<div class="mat-color-chips">' +
       invItems.map(function(it) {
-        var dot = it.colorHex
-          ? 'background:' + it.colorHex + ';border:none'
+        var hexRollo = colorDeRollo(it);
+        var dot = hexRollo
+          ? 'background:' + hexRollo + ';border:1px solid rgba(127,127,127,.45)'
           : 'background:var(--bg-sunk);border:0.5px solid var(--line)';
         var label = it.color || 'Sin color';
         var remain = (it.remainingG || 0);
@@ -407,10 +408,13 @@ function tplInventoryCard(item, i, cur) {
     ? '<span class="material-symbols-rounded" style="color:var(--md-error);font-size:16px;margin-left:4px" title="Stock bajo">warning</span>'
     : '';
 
+  var hexRollo = colorDeRollo(item);   /* D185 */
   return '<div class="inv-card">' +
     '<div class="inv-header">' +
       '<div class="inv-info">' +
-        '<div class="inv-name">' + esc(nombreMaterialDeRollo(item)) + alertIcon + '</div>' +
+        '<div class="inv-name">' +
+          (hexRollo ? '<span class="inv-color-punto" style="background:' + hexRollo + '"></span>' : '') +
+          esc(nombreMaterialDeRollo(item)) + alertIcon + '</div>' +
         '<div class="inv-sub">' + esc(item.brand || '') +
           (item.color ? ' &middot; ' + esc(item.color) : '') +
         '</div>' +
@@ -455,11 +459,12 @@ function tplInventoryModal(item, editIndex, matOptions) {
           '<select id="inv-material">' + matOptions + '</select>' +
           '<label for="inv-material">Material</label>' +
         '</div>' +
-        '<div class="m3-field optional" style="flex:1">' +
+        '<div class="m3-field" style="flex:1">' +
           '<input type="text" id="inv-color" placeholder=" " value="' + esc(item ? item.color || '' : '') + '">' +
           '<label for="inv-color">Color</label>' +
         '</div>' +
       '</div>' +
+      tplColoresRollo(item) +
       '<div class="m3-field optional">' +
         '<input type="text" id="inv-brand" placeholder=" " value="' + esc(item ? item.brand || '' : '') + '">' +
         '<label for="inv-brand">Marca</label>' +
@@ -479,10 +484,35 @@ function tplInventoryModal(item, editIndex, matOptions) {
       '<div class="m3-field optional">' +
         '<input type="number" id="inv-cost" placeholder=" " inputmode="decimal" min="0" step="1" value="' +
           (item ? item.costPerKg || '' : '') + '">' +
-        '<label for="inv-cost">Costo por kg (opcional)</label>' +
+        '<label for="inv-cost">Costo por kg</label>' +
       '</div>' +
       tplSheetActions('closeModal()', saveFn) +
     '</div>';
+}
+
+/* Selector del color del rollo (D185): las muestras de COLORES_FILAMENTO y
+   «Otro», que abre el selector de color del sistema. El elegido va en
+   #inv-color-hex; tocar otra vez el elegido lo quita. */
+function tplColoresRollo(item) {
+  var actual = item ? colorDeRollo(item).toUpperCase() : '';
+  var deLista = COLORES_FILAMENTO.some(function(c) { return c.hex.toUpperCase() === actual; });
+  var propio = actual && !deLista ? actual : '';
+  return '<div class="inv-colores" role="group" aria-label="Color del rollo">' +
+    '<input type="hidden" id="inv-color-hex" value="' + actual + '">' +
+    COLORES_FILAMENTO.map(function(c) {
+      var sel = c.hex.toUpperCase() === actual;
+      return '<button type="button" class="inv-color-muestra' + (sel ? ' elegido' : '') + '"' +
+        ' aria-pressed="' + sel + '" aria-label="' + c.nombre + '" title="' + c.nombre + '"' +
+        ' data-hex="' + c.hex + '" data-nombre="' + c.nombre + '"' +
+        ' style="--muestra:' + c.hex + '" onclick="elegirColorRollo(this)"></button>';
+    }).join('') +
+    '<label class="inv-color-muestra inv-color-otro' + (propio ? ' elegido' : '') + '" title="Otro color"' +
+      (propio ? ' style="--muestra:' + propio + '"' : '') + '>' +
+      '<input type="color" id="inv-color-propio" value="' + (propio && propio.length === 7 ? propio.toLowerCase() : '#888888') + '"' +
+        ' aria-label="Otro color" oninput="elegirColorPropio(this)">' +
+      '<span class="material-symbols-rounded" aria-hidden="true">colorize</span>' +
+    '</label>' +
+  '</div>';
 }
 
 function tplDeductModal(item, i) {
@@ -905,4 +935,50 @@ function tplDraftTotals(draft, cur) {
         '<span>TOTAL</span>' +
         '<span id="draft-grand-total">' + cur + grandTotal.toFixed(2) + '</span>' +
       '</div>';
+}
+
+/* ── Material usado en el mes (D180) ──────────────────────────────
+   La barra partida en el color de cada material y la lista con el porcentaje y
+   los gramos. Los 4 colores (--serie-1 a --serie-4) pasaron la prueba de
+   daltonismo en claro y oscuro; «Otros» va en gris. Siempre abierta, sin
+   acordeón. opts.sinTitulo: el Dashboard le pone su título afuera (D182). */
+function tplUsoMaterial(u, opts) {
+  var sinTitulo = !!(opts && opts.sinTitulo);
+  var anterior = MESES_CORTOS[(u.mes + 11) % 12];
+  var color = function(p, i) { return p.otros ? 'var(--serie-otros)' : 'var(--serie-' + (i + 1) + ')'; };
+  var cambio = u.cambio == null ? '' :
+    '<span class="uso-material-cambio">' + (u.cambio > 0 ? '+' : u.cambio < 0 ? '\u2212' : '') +
+      Math.abs(u.cambio) + '%</span><span class="uso-material-vs">vs ' + anterior + '</span>';
+  var resumen = u.partes.map(function(p) {
+    return p.nombre + ' ' + p.pct + '%, ' + formatoGramos(p.gramos);
+  }).join('; ');
+  var cuerpo = u.partes.length
+    ? '<div class="uso-material-barra" role="img" aria-label="' + esc(resumen) + '">' +
+        u.partes.map(function(p, i) {
+          return '<span style="flex-grow:' + p.gramos.toFixed(1) + ';background:' + color(p, i) + '" title="' +
+            esc(p.nombre + ' \u00b7 ' + formatoGramos(p.gramos) + ' \u00b7 ' + p.pct + '%') + '"></span>';
+        }).join('') +
+      '</div>' +
+      '<ul class="uso-material-lista">' +
+        u.partes.map(function(p, i) {
+          return '<li>' +
+            '<span class="uso-material-punto" style="background:' + color(p, i) + '"></span>' +
+            '<span class="uso-material-nombre">' + esc(p.nombre) + '</span>' +
+            '<span class="uso-material-pct">' + p.pct + '%</span>' +
+            '<span class="uso-material-gramos">' + formatoGramos(p.gramos) + '</span>' +
+          '</li>';
+        }).join('') +
+      '</ul>'
+    : '<p class="uso-material-vacio">Sin cotizaciones aceptadas en ' + MESES_LARGOS[u.mes] + '.</p>';
+
+  return '<section class="uso-material"' +
+      (sinTitulo ? ' aria-label="Material usado"' : ' aria-labelledby="uso-material-titulo"') + '>' +
+    (sinTitulo ? '' :
+      '<h2 class="uso-material-titulo" id="uso-material-titulo">Material usado ' +
+        '<span>\u00b7 ' + MESES_CORTOS[u.mes] + ' ' + u.anio + '</span></h2>') +
+    '<div class="uso-material-cifra">' +
+      '<span class="uso-material-total">' + formatoGramos(u.total) + '</span>' + cambio +
+    '</div>' +
+    cuerpo +
+  '</section>';
 }

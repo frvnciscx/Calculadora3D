@@ -138,6 +138,10 @@ function regresarDeCalculadora() {
 function showPage(name) {
   /* Cambiar de página cierra el editor que estaba abierto a un lado (D177) */
   if (document.body.classList.contains('panel-abierto')) closeModal();
+  /* El panel de la cotización es de Cotizaciones y Clientes: al ir a otra
+     página se cierra (D183). Antes se quedaba abierto, también en la Calculadora. */
+  if (name !== 'quotes' && name !== 'clients' && document.body.classList.contains('dock-open') &&
+      typeof closeQuoteDock === 'function') closeQuoteDock();
   /* ── Al salir de config: resetear inline styles ──────────────────
      Siempre, no solo en escritorio: si la ventana se angostaba con Ajustes
      abierto, el panel de escritorio se quedaba armado y la página salía
@@ -150,8 +154,10 @@ function showPage(name) {
   }
 
   /* ── Catálogo: sub-páginas antiguas → catálogo unificado ───────── */
-  if (name === 'printers' || name === 'materials' || name === 'inventory') {
-    var catTab = name === 'printers' ? 'printers' : name === 'materials' ? 'materials' : 'inventory';
+  /* Materiales vive en Ajustes (D179) */
+  if (name === 'materials') { showConfigPage('materiales'); return; }
+  if (name === 'printers' || name === 'inventory') {
+    var catTab = name === 'printers' ? 'printers' : 'inventory';
     showPage('catalog');
     showCatalogTab(catTab);
     return;
@@ -200,6 +206,7 @@ function showPage(name) {
     'config-negocio':  'config',
     'config-banco':    'config',
     'config-electrico':'config',
+    'config-materiales':'config',
     'config-gastos':   'config',
     'config-otros':    'config',
   };
@@ -214,6 +221,7 @@ function showPage(name) {
   if (name === 'catalog')      { showCatalogTab(_activeCatalogTab || 'printers'); }
   if (name === 'quotes')       { renderQuotes(); showQuotesTab('quotes'); }
   if (name === 'config' || name.indexOf('config-') === 0) loadConfig();
+  if (name === 'config-materiales') renderMaterials();
   /* setCalcMode('calc'): la calculadora siempre abre en modo calcular; la
      revisión de la cotización (escritorio) solo se abre con «Generar». */
   if (name === 'calc')         { setCalcMode('calc'); populateSelects(); if (typeof renderQueCotizas === 'function') renderQueCotizas(); restoreCalcResult(); refreshDraftIndicator(); initCalcLive(); renderPresets(); _updateResinParamsBlock(); _updateAMSBlock(); _updateSpoolSelector(); }
@@ -271,9 +279,11 @@ var _activeCatalogTab = 'printers';
 var _catalogAddLabels  = { printers: 'Impresora',  materials: 'Material',   inventory: 'Filamento'  };
 var _catalogHeadings   = { printers: 'Impresoras', materials: 'Materiales', inventory: 'Inventario' };
 function showCatalogTab(tab) {
+  /* Materiales salió del catálogo a Ajustes (D179) */
+  if (tab === 'materials') { showConfigPage('materiales'); return; }
   _activeCatalogTab = tab;
-  var panels = { printers: 'printer-list', materials: 'material-list', inventory: 'inventory-list' };
-  var tabs   = { printers: 'cat-tab-printers', materials: 'cat-tab-materials', inventory: 'cat-tab-inventory' };
+  var panels = { printers: 'printer-list', inventory: 'inventory-list' };
+  var tabs   = { printers: 'cat-tab-printers', inventory: 'cat-tab-inventory' };
   Object.keys(panels).forEach(function(key) {
     var panelEl = document.getElementById(panels[key]);
     var tabEl   = document.getElementById(tabs[key]);
@@ -293,19 +303,17 @@ function showCatalogTab(tab) {
   /* ── Sidebar: resaltar solo el ítem del tab activo ─── */
   document.querySelectorAll('.sidebar-item[data-tab],.sidebar-item[data-page="inventory"]')
     .forEach(function(b) { b.classList.remove('active'); });
-  var sidebarTabMap = { printers: '[data-tab="printers"]', materials: '[data-tab="materials"]', inventory: '[data-page="inventory"]' };
+  var sidebarTabMap = { printers: '[data-tab="printers"]', inventory: '[data-page="inventory"]' };
   var activeBtn = document.querySelector('.sidebar-item' + (sidebarTabMap[tab] || ''));
   if (activeBtn) activeBtn.classList.add('active');
   /* ── Render ─── */
   if (tab === 'printers')  renderPrinters();
-  if (tab === 'materials') renderMaterials();
   if (tab === 'inventory') renderInventory();
 }
 
 /* ── Catálogo — botón + del encabezado ─── */
 function catalogAdd() {
   if (_activeCatalogTab === 'printers')  { showPrinterModal(); return; }
-  if (_activeCatalogTab === 'materials') { showMaterialModal(); return; }
   if (_activeCatalogTab === 'inventory') { showInventoryModal(); return; }
 }
 
@@ -448,6 +456,7 @@ function showConfigPage(name) {
     if (qaBar) qaBar.style.display = 'none';
 
     if (name === 'quote-editor') loadQuoteEditor(); else loadConfig();
+    if (name === 'materiales') renderMaterials();
   } else {
     /* ── Mobile: flujo genérico ── */
     if (name === 'quote-editor') showPage('quote-editor'); else showPage('config-' + name);

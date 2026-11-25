@@ -506,7 +506,9 @@
     display: flex;
     padding: 0 16px;
     gap: 0;
-    overflow-x: auto;
+    /* Sin barra de desplazamiento (v130): por medio píxel de alto el navegador
+       ponía una barra vertical junto a «Diseño» */
+    overflow: hidden;
     width: 100%;
     max-width: var(--cfg-ancho);
     margin: 0 auto;
@@ -538,6 +540,7 @@
   body[data-page="config-negocio"]   #cfg-nav-negocio,
   body[data-page="config-banco"]     #cfg-nav-banco,
   body[data-page="config-electrico"] #cfg-nav-electrico,
+  body[data-page="config-materiales"] #cfg-nav-materiales,
   body[data-page="config-gastos"]    #cfg-nav-gastos,
   body[data-page="config-indirectos"] #cfg-nav-indirectos,
   body[data-page="config-otros"]     #cfg-nav-otros,
@@ -1249,10 +1252,9 @@
   .cfg-formulario > .row > div:not(.row-label) input { flex: 1; width: 100% !important; text-align: left !important; }
   .cfg-formulario > .row > input:focus,
   .cfg-formulario > .row > div:not(.row-label):focus-within { border-color: var(--accent) !important; }
-  .cfg-formulario > .row:has(.m3-switch) {
-    grid-column: 1 / -1;
-    flex-direction: row; align-items: center !important; justify-content: space-between;
-  }
+  /* El interruptor va en su columna, como un campo más: «Mostrar en cotizaciones
+     y PDF» junto al número de cuenta (v130) */
+  .cfg-formulario > .row > .m3-switch { height: 40px; padding: 0; align-self: flex-start; }
   .cfg-formulario > .row:last-child:nth-child(odd):not(:has(.m3-switch)) { grid-column: 1 / -1; }
 
   /* Editores como paneles laterales sin velo (D177): la página se angosta y se ve */
@@ -1268,3 +1270,44 @@
 /* Editor de cliente (D176) */
 .cliente-editor-origen { margin: 4px 0 16px; }
 .cliente-editor-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Pestañas de Ajustes en escritorio angosto (v130): sin íconos para que quepan
+   las siete sin barra de desplazamiento */
+@media (min-width: 900px) and (max-width: 1099px) {
+  .cfg-tab { padding: 10px 11px; }
+  .cfg-tab .material-symbols-rounded { display: none; }
+}
+
+/* ══ v131: Materiales en Ajustes (D179) y Material usado (D180) ════ */
+@media (min-width: 900px) {
+  /* Ocho pestañas en Ajustes: un poco menos de aire para que quepan */
+  .cfg-tab { padding: 10px 12px; }
+  /* El editor de material se abre a la derecha: Ajustes se angosta, no queda debajo */
+  body.panel-abierto #page-config { right: 440px !important; }
+  body.panel-abierto .cfg-tab .material-symbols-rounded { display: none; }
+  /* Su último bloque es la lista, no la fila del «Guardar» que las demás
+     secciones alinean a la derecha */
+  #cfg-subpage-container #page-config-materiales > div:last-child { display: block !important; }
+
+  /* Material usado: a todo el ancho de la rejilla; cifra a la izquierda y
+     barra con su lista a la derecha */
+  #inventory-list > .uso-material {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(200px, 280px) minmax(0, 640px);
+    grid-template-areas: "titulo barra" "cifra lista";
+    column-gap: 48px;
+    align-items: start;
+    padding: 20px 24px;
+  }
+  .uso-material-titulo { grid-area: titulo; }
+  .uso-material-cifra  { grid-area: cifra; margin-bottom: 0; }
+  .uso-material-barra  { grid-area: barra; align-self: center; margin: 0; }
+  .uso-material-lista,
+  .uso-material-vacio  { grid-area: lista; margin-top: 10px; }
+}
+
+/* Ocho pestañas entre 900 y 1099 px: sin íconos (v130) y con menos aire (v131) */
+@media (min-width: 900px) and (max-width: 1099px) {
+  .cfg-tab { padding: 10px 9px; }
+}

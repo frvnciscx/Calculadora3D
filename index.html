@@ -58,9 +58,6 @@
     <button class="sidebar-item" data-page="catalog" data-tab="printers" onclick="showPage('catalog');showCatalogTab('printers')">
       <span class="material-symbols-rounded sidebar-icon">print</span> Impresoras
     </button>
-    <button class="sidebar-item" data-page="catalog" data-tab="materials" onclick="showPage('catalog');showCatalogTab('materials')">
-      <span class="material-symbols-rounded sidebar-icon">category</span> Materiales
-    </button>
     <button class="sidebar-item" data-page="inventory" onclick="showPage('inventory')">
       <span class="material-symbols-rounded sidebar-icon">inventory_2</span> Inventario
     </button>
@@ -596,14 +593,12 @@
   <div id="catalog-seg-tabs" style="padding:0 20px 16px">
     <div class="seg" style="width:100%;display:flex">
       <button class="active" id="cat-tab-printers"  onclick="showCatalogTab('printers')"  style="flex:1">Impresoras</button>
-      <button id="cat-tab-materials" onclick="showCatalogTab('materials')" style="flex:1">Materiales</button>
       <button id="cat-tab-inventory" onclick="showCatalogTab('inventory')" style="flex:1">Inventario</button>
     </div>
   </div>
 
   <!-- Panels (only active one is visible) -->
   <div id="printer-list"  style="padding:0 20px 120px"></div>
-  <div id="material-list" style="padding:0 20px 120px;display:none"></div>
   <div id="inventory-list" style="padding:0 20px 120px;display:none"></div>
 </div>
 
@@ -859,6 +854,9 @@
     <button id="cfg-nav-electrico" class="cfg-tab" onclick="showConfigPage('electrico')">
       <span class="material-symbols-rounded" style="font-size:17px">bolt</span> Electricidad
     </button>
+    <button id="cfg-nav-materiales" class="cfg-tab" onclick="showConfigPage('materiales')">
+      <span class="material-symbols-rounded" style="font-size:17px">category</span> Materiales
+    </button>
     <button id="cfg-nav-gastos" class="cfg-tab" onclick="showConfigPage('gastos')">
       <span class="material-symbols-rounded" style="font-size:17px">receipt</span> Gastos fijos
     </button>
@@ -915,6 +913,15 @@
           <div class="cfg-nav-text">
             <div class="cfg-nav-label">Electricidad y trabajo</div>
             <div class="cfg-nav-sub">Costo kWh, hora de diseño</div>
+          </div>
+          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        </button>
+
+        <button class="cfg-nav-row" onclick="showConfigPage('materiales')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
+          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">category</span>
+          <div class="cfg-nav-text">
+            <div class="cfg-nav-label">Materiales</div>
+            <div class="cfg-nav-sub">Filamento y resina, precio por kilo</div>
           </div>
           <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
         </button>
@@ -1109,6 +1116,28 @@
     <button class="btn btn-primary cfg-guardar" style="width:100%" onclick="saveConfig()">
       <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
     </button>
+  </div>
+</div>
+
+<!-- ══ SUB-PÁGINA: Materiales (D179) ═══════════════════════════════
+     Antes era una pestaña del catálogo. Son precios por kilo, como el kWh:
+     se capturan una vez y se cambian cuando cambia el precio. -->
+<div id="page-config-materiales" class="page" style="padding-top:0">
+  <div class="cfg-sub-header">
+    <button class="back-btn" onclick="showPage('config')">
+      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+    </button>
+  </div>
+  <div class="cfg-sub-titulo" style="padding:20px 20px 8px">
+    <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Materiales</h1>
+  </div>
+  <div style="padding:12px 20px 32px">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button class="link-btn" onclick="showMaterialModal()" style="font-size:12px;color:var(--accent);display:inline-flex;align-items:center;gap:4px">
+        <span class="material-symbols-rounded" style="font-size:14px">add</span> Material
+      </button>
+    </div>
+    <div id="material-list"></div>
   </div>
 </div>
 
@@ -1405,6 +1434,7 @@
 <script src="js/quotes.js"></script>
 <script src="js/quote-editor.js"></script>
 <script src="js/clients.js"></script>
+<script src="js/uso-material.js"></script>
 <script src="js/inventory.js"></script>
 <script src="js/config.js"></script>
 <script src="js/dashboard.js"></script>

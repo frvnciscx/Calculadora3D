@@ -166,6 +166,32 @@ function nombreMaterialDeRollo(rollo) {
   }
   return rollo.material || '';
 }
+
+/* Colores para elegir al agregar un rollo (D185). Elegir uno llena el campo
+   «Color» con su nombre si está vacío. «Otro» abre el selector del sistema. */
+var COLORES_FILAMENTO = [
+  { nombre: 'Blanco',   hex: '#F4F4F2' },
+  { nombre: 'Negro',    hex: '#1E1E1E' },
+  { nombre: 'Gris',     hex: '#8C918E' },
+  { nombre: 'Rojo',     hex: '#D23A33' },
+  { nombre: 'Naranja',  hex: '#F07A22' },
+  { nombre: 'Amarillo', hex: '#F4C430' },
+  { nombre: 'Verde',    hex: '#2E9A4B' },
+  { nombre: 'Azul',     hex: '#2563C9' },
+  { nombre: 'Morado',   hex: '#7A45B8' },
+  { nombre: 'Rosa',     hex: '#E8679E' }
+];
+
+/* El color con que se pinta un rollo: el que se eligió o, en los rollos de
+   antes, el de la lista si su nombre coincide («Blanco»). Solo devuelve un hex
+   válido, porque va dentro de un style. Sin color, ''. */
+function colorDeRollo(rollo) {
+  if (!rollo) return '';
+  if (rollo.colorHex && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(rollo.colorHex)) return rollo.colorHex;
+  var nombre = String(rollo.color || '').trim().toLowerCase();
+  var c = nombre ? COLORES_FILAMENTO.find(function(x) { return x.nombre.toLowerCase() === nombre; }) : null;
+  return c ? c.hex : '';
+}
 /* lastCalc persists during the browser session — survives page navigation */
 let lastCalc = (function() {
   try { var v = sessionStorage.getItem('c3d_lastCalc'); return v ? JSON.parse(v) : null; }

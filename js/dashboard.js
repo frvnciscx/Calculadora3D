@@ -196,7 +196,7 @@ function renderDashboard() {
 
     /* 4. Salud del negocio */
     '<div style="padding:24px 20px 0">' +
-      '<div class="micro" style="margin-bottom:10px">Salud del negocio</div>' +
+      '<div class="micro" style="margin-bottom:10px;min-height:44px;display:flex;align-items:center">Salud del negocio</div>' +
       '<div class="card" style="padding:0 16px">' +
         '<div class="row" style="padding:14px 0">' +
           '<div class="row-label">Ganancia del mes</div>' +
@@ -224,6 +224,23 @@ function renderDashboard() {
       '</div>' +
     '</div>' +
 
+    /* 5. Material usado en el mes (D182, la misma tarjeta de Inventario, D180) */
+    '<div style="padding:24px 20px 0">' +
+      '<div class="micro" style="margin-bottom:10px;min-height:44px;display:flex;align-items:center">Material usado · ' + _MES_ES[now.getMonth()] + '</div>' +
+      (typeof usoDeMaterial === 'function'
+        ? tplUsoMaterial(usoDeMaterial(quotes, now, _nombreParaUso), { sinTitulo: true })
+        : '') +
+    '</div>' +
+
+    /* 6. Filamento: lo que queda y los rollos más vacíos (D182) */
+    '<div style="padding:24px 20px 0">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+        '<div class="micro">Filamento</div>' +
+        '<button class="link-btn" onclick="showPage(\'inventory\')" style="font-size:12px;color:var(--ink-2)">Ver inventario →</button>' +
+      '</div>' +
+      _tplFilamentoDashboard(cur) +
+    '</div>' +
+
     /* Espaciado final para no quedar tapado por la nav bar */
     '<div class="dash-espacio" style="height:100px"></div>';
 }
@@ -233,4 +250,62 @@ function formatNum(n) {
     return n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   }
   return n.toFixed(2);
+}
+
+/* ── Filamento en el Dashboard (D182) ────────────────────────────────
+   Cuánto queda en todos los rollos y los 4 con menos porcentaje, con su barra.
+   Los colores de la barra son los del Inventario: verde, ámbar y rojo; con
+   20 % o menos lleva además el ícono de aviso, para no depender del color. */
+function _tplFilamentoDashboard(cur) {
+  if (!inventory.length) {
+    return '<div class="card dash-filamento">' +
+      '<div class="dash-filamento-vacio">Sin rollos registrados</div>' +
+      '<button class="link-btn" onclick="showPage(\'inventory\');showInventoryModal()" style="font-size:12px;color:var(--accent)">' +
+        '<span class="material-symbols-rounded" style="font-size:14px">add</span> Filamento' +
+      '</button>' +
+    '</div>';
+  }
+
+  var gramos = 0, valor = 0;
+  var filas = inventory.map(function(r) {
+    var total = parseFloat(r.totalG) || 0;
+    var resto = Math.max(0, parseFloat(r.remainingG) || 0);
+    if (total > 0 && resto > total) resto = total;
+    var mat = r.materialId ? materials.find(function(m) { return m.id === r.materialId; }) : null;
+    var precioKg = parseFloat(r.costPerKg) || (mat ? parseFloat(mat.costPerKg) || 0 : 0);
+    gramos += resto;
+    valor += resto / 1000 * precioKg;
+    return { r: r, resto: resto, pct: total > 0 ? Math.round(resto / total * 100) : 0 };
+  }).sort(function(a, b) { return a.pct - b.pct; });
+
+  var renglones = filas.slice(0, 4).map(function(f) {
+    var r = f.r;
+    var color = f.pct > 50 ? 'var(--ok)' : f.pct > 20 ? 'var(--warn)' : 'var(--danger)';
+    var hexRollo = colorDeRollo(r);
+    var muestra = hexRollo
+      ? 'background:' + hexRollo + ';box-shadow:inset 0 0 0 1px rgba(127,127,127,.45)'
+      : 'background:var(--bg-sunk);box-shadow:inset 0 0 0 0.5px var(--line-strong)';
+    var aviso = f.pct <= 20
+      ? '<span class="material-symbols-rounded dash-rollo-aviso" title="Por acabarse">warning</span>'
+      : '';
+    return '<div class="dash-rollo">' +
+      '<span class="dash-rollo-muestra" style="' + muestra + '"></span>' +
+      '<div class="dash-rollo-info">' +
+        '<div class="dash-rollo-nombre">' + esc(nombreMaterialDeRollo(r)) +
+          (r.color ? ' <span>\u00b7 ' + esc(r.color) + '</span>' : '') + aviso + '</div>' +
+        '<div class="dash-rollo-barra"><span style="width:' + f.pct + '%;background:' + color + '"></span></div>' +
+      '</div>' +
+      '<div class="dash-rollo-gramos">' + formatoGramos(f.resto) + '<span>' + f.pct + '%</span></div>' +
+    '</div>';
+  }).join('');
+
+  var n = inventory.length;
+  return '<div class="card dash-filamento">' +
+    '<div class="dash-filamento-cifra">' +
+      '<span class="dash-filamento-total">' + formatoGramos(gramos) + '</span>' +
+      '<span class="dash-filamento-sub">en ' + n + (n === 1 ? ' rollo' : ' rollos') +
+        (valor > 0 ? ' \u00b7 ' + cur + formatNum(valor) : '') + '</span>' +
+    '</div>' +
+    renglones +
+  '</div>';
 }
