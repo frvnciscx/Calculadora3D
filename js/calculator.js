@@ -18,8 +18,8 @@ function calculate(silent) {
     /* Modo live — solo calcula si hay datos válidos, sin errores visuales */
     if (weight <= 0 || timeH <= 0 || !printer || !material) return;
     /* Actualizar estados valid en tiempo real */
-    _setFieldState('field-weight', 'helper-weight', weight > 0 ? 'valid' : 'neutral', weight > 0 ? '' : 'De toda la placa');
-    _setFieldState('field-time',   'helper-time',   timeH  > 0 ? 'valid' : 'neutral', timeH  > 0 ? '' : 'De toda la placa');
+    _setFieldState('field-weight', 'helper-weight', weight > 0 ? 'valid' : 'neutral', '');
+    _setFieldState('field-time',   'helper-time',   timeH  > 0 ? 'valid' : 'neutral', '');
   } else {
     /* Modo explícito — muestra errores */
     var hasError = false;
@@ -1075,10 +1075,8 @@ function _pintarNotaRedondeo(sinRedondear, precio, cur) {
   var el = document.getElementById('nota-redondeo-texto');
   if (!el) return;
   cur = cur || (typeof config !== 'undefined' && config.currency) || '$';
-  if (sinRedondear != null && precio > 0 && Math.abs(sinRedondear - precio) > 0.005) {
-    el.textContent = 'Redondeado hacia arriba de ' + cur + '5 en ' + cur + '5: ' +
-      cur + sinRedondear.toFixed(2) + ' → ' + cur + precio.toFixed(0) + '.';
-  } else {
-    el.textContent = 'El precio se redondea hacia arriba de ' + cur + '5 en ' + cur + '5: siempre termina en 5 o en 0.';
-  }
+  /* Solo cuando el redondeo cambió el precio (afinado en D171) */
+  var cambio = sinRedondear != null && precio > 0 && Math.abs(sinRedondear - precio) > 0.005;
+  if (el.parentElement) el.parentElement.classList.toggle('hidden', !cambio);
+  el.textContent = cambio ? 'Redondeado de ' + cur + sinRedondear.toFixed(2) + ' (de ' + cur + '5 en ' + cur + '5)' : '';
 }

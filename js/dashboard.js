@@ -164,8 +164,8 @@ function renderDashboard() {
       '</div>' +
     '</div>' +
 
-    /* 2. Accesos rápidos */
-    '<div style="padding:24px 20px 0">' +
+    /* 2. Accesos rápidos: en escritorio los da la barra lateral (D171) */
+    '<div class="solo-movil" style="padding:24px 20px 0">' +
       '<div class="micro" style="margin-bottom:10px">Accesos rápidos</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
         '<button onclick="nuevaCotizacion()" class="card" style="padding:16px;text-align:left;display:flex;flex-direction:column;gap:10px;min-height:96px">' +
@@ -199,10 +199,6 @@ function renderDashboard() {
       '<div class="micro" style="margin-bottom:10px">Salud del negocio</div>' +
       '<div class="card" style="padding:0 16px">' +
         '<div class="row" style="padding:14px 0">' +
-          '<div class="row-label">Margen promedio</div>' +
-          '<div class="row-value">' + (monthMarginPct !== null ? monthMarginPct + '%' : '—') + '</div>' +
-        '</div>' +
-        '<div class="row" style="padding:14px 0">' +
           '<div class="row-label">Ganancia del mes</div>' +
           '<div class="row-value">' + (hasMarginData ? cur + formatNum(monthProfit) : '—') + '</div>' +
         '</div>' +
@@ -229,7 +225,7 @@ function renderDashboard() {
     '</div>' +
 
     /* Espaciado final para no quedar tapado por la nav bar */
-    '<div style="height:100px"></div>';
+    '<div class="dash-espacio" style="height:100px"></div>';
 }
 
 function formatNum(n) {

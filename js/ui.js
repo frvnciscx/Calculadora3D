@@ -136,6 +136,8 @@ function regresarDeCalculadora() {
 }
 
 function showPage(name) {
+  /* Cambiar de página cierra el editor que estaba abierto a un lado (D177) */
+  if (document.body.classList.contains('panel-abierto')) closeModal();
   /* ── Al salir de config: resetear inline styles ──────────────────
      Siempre, no solo en escritorio: si la ventana se angostaba con Ajustes
      abierto, el panel de escritorio se quedaba armado y la página salía
@@ -498,6 +500,9 @@ function updateTopBar() {
   function panelAbierto() { return mc.querySelector('.m3-bottom-sheet, .m3-dialog'); }
 
   new MutationObserver(function() {
+    /* Escritorio (D177): un editor abierto es un panel a la derecha, sin velo;
+       la página se angosta y se sigue viendo (desktop.css, body.panel-abierto) */
+    document.body.classList.toggle('panel-abierto', window.innerWidth >= 900 && !!mc.querySelector('.m3-bottom-sheet:not(.help-sheet)'));
     var p = panelAbierto();
     if (!p) {
       var foco = document.activeElement;
@@ -528,3 +533,37 @@ function updateTopBar() {
     if (scrim && scrim.onclick) { e.preventDefault(); scrim.click(); }
   });
 })();
+
+/* ── Ayudas detrás de un «?» (D171) ──────────────────────────────────
+   Lo que antes era un párrafo fijo en pantalla y solo sirve la primera vez.
+   La de la purga del AMS ya tenía la suya (showPurgeHelp). */
+var AYUDAS = {
+  indirectos: {
+    titulo: 'Gastos indirectos',
+    texto: 'Consumibles que no son parte de la pieza pero se gastan al producirla: guantes, lijas, ' +
+           'alcohol, cinta, adhesivo, bolsas y empaque. Se reparten por hora de impresión, con las ' +
+           'mismas horas al mes de Gastos fijos.'
+  },
+  mantenimiento: {
+    titulo: 'Mantenimiento y refacciones',
+    texto: 'Boquillas, bandas, PEI/FEP y refacciones. El porcentaje se suma sobre material, energía, ' +
+           'depreciación y gastos fijos.'
+  }
+};
+
+function mostrarAyuda(clave) {
+  var a = AYUDAS[clave];
+  if (!a) return;
+  document.getElementById('modal-container').innerHTML =
+    '<div class="m3-scrim" onclick="closeModal()"></div>' +
+    '<div class="m3-bottom-sheet help-sheet" role="dialog" aria-modal="true" aria-labelledby="ayuda-titulo">' +
+      '<div class="m3-drag-handle"></div>' +
+      '<div class="sheet-header-row">' +
+        '<h2 id="ayuda-titulo">' + a.titulo + '</h2>' +
+        '<button type="button" class="sheet-close-btn" onclick="closeModal()" aria-label="Cerrar">' +
+          '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:20px">close</span>' +
+        '</button>' +
+      '</div>' +
+      '<p class="ayuda-texto">' + a.texto + '</p>' +
+    '</div>';
+}

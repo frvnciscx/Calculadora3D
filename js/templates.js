@@ -326,17 +326,18 @@ function tplClientQuoteRow(q, qi, cur) {
   '</div>';
 }
 
+/* Editor de cliente (D176): un panel como el de los demás editores. Antes era
+   una página a pantalla completa con «‹ Clientes», un título de 34 px, un
+   avatar de 84 px y una «vista previa en tu lista». */
 function tplClientModal(c, editIndex) {
-  var isEdit   = (c != null);
-  var saveFn   = 'saveClient(' + (editIndex != null ? editIndex : 'null') + ')';
-  var eyebrow  = isEdit ? 'Editar' : 'Nuevo';
-  var heading  = isEdit ? 'Editar cliente' : 'Agregar cliente';
-  var name     = esc(c ? c.name    || '' : '');
-  var phone    = esc(c ? c.phone   || '' : '');
-  var email    = esc(c ? c.email   || '' : '');
-  var social   = esc(c ? c.social  || '' : '');
-  var notes    = esc(c ? c.notes   || '' : '');
-  var source   = c ? (c.source || 'instagram') : 'instagram';
+  var isEdit = (c != null);
+  var saveFn = 'saveClient(' + (editIndex != null ? editIndex : 'null') + ')';
+  var name   = esc(c ? c.name   || '' : '');
+  var phone  = esc(c ? c.phone  || '' : '');
+  var email  = esc(c ? c.email  || '' : '');
+  var social = esc(c ? c.social || '' : '');
+  var notes  = esc(c ? c.notes  || '' : '');
+  var source = c ? (c.source || 'instagram') : 'instagram';
 
   var sourceOpts = [
     { id: 'instagram',   label: 'Instagram' },
@@ -344,145 +345,53 @@ function tplClientModal(c, editIndex) {
     { id: 'recomendado', label: 'Recomendado' },
     { id: 'feria',       label: 'Feria / Bazar' },
     { id: 'web',         label: 'Web' },
-    { id: 'otro',        label: 'Otro' },
+    { id: 'otro',        label: 'Otro' }
   ];
-
   function chipSrc(o) {
     var active = source === o.id;
     return '<button type="button" id="cli-src-' + o.id + '" onclick="_cliSetSource(\'' + o.id + '\')" style="' +
-      'padding:7px 13px;border-radius:999px;font-size:12px;white-space:nowrap;' +
+      'padding:6px 12px;border-radius:999px;font-size:12px;white-space:nowrap;cursor:pointer;' +
       'border:0.5px solid ' + (active ? 'var(--ink)' : 'var(--line)') + ';' +
       'background:' + (active ? 'var(--ink)' : 'transparent') + ';' +
-      'color:' + (active ? 'var(--bg)' : 'var(--ink-2)') + ';' +
-      'transition:background 0.15s,color 0.15s">' + o.label + '</button>';
+      'color:' + (active ? 'var(--bg)' : 'var(--ink-2)') + '">' + o.label + '</button>';
   }
 
-  return (
-    /* Scrim (desktop: visible blur; mobile: hidden behind full-screen modal) */
-    '<div class="m3-scrim" onclick="closeModal()"></div>' +
-    /* Overlay full-screen (mobile) / centered dialog (desktop via CSS) */
-    '<div class="client-modal-wrap" style="' +
-      'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
-      'width:min(440px,100%);height:100dvh;' +
-      'background:var(--bg);z-index:200;' +
-      'overflow-y:auto;-webkit-overflow-scrolling:touch;' +
-      'animation:pageIn 0.25s cubic-bezier(0.2,0.8,0.2,1)">' +
-
-      /* Mini header */
-      '<div style="padding:calc(env(safe-area-inset-top,0px) + 16px) 20px 8px;display:flex;align-items:center">' +
-        '<button type="button" onclick="closeModal()" style="display:flex;align-items:center;gap:6px;color:var(--ink-3);font-size:13px">' +
-          '<span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Clientes' +
-        '</button>' +
-      '</div>' +
-
-      /* PageHeader */
-      '<div style="padding:4px 20px 20px">' +
-        '<div class="micro" style="margin-bottom:8px">' + eyebrow + '</div>' +
-        '<h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">' + heading + '</h1>' +
-      '</div>' +
-
-      /* Avatar + nombre hero */
-      '<div style="padding:0 20px 24px;display:flex;flex-direction:column;align-items:center;gap:16px">' +
-        '<div id="cli-avatar" style="' +
-          'width:84px;height:84px;border-radius:50%;' +
-          'background:' + (name ? 'var(--ink)' : 'var(--bg-sunk)') + ';' +
-          'color:' + (name ? 'var(--bg)' : 'var(--ink-4)') + ';' +
-          'border:0.5px solid var(--line);' +
-          'display:flex;align-items:center;justify-content:center;' +
-          'font-size:28px;font-weight:600;letter-spacing:-0.02em;' +
-          'transition:background 0.2s,color 0.2s">' +
-          (name ? _cliInitials(name) : '—') +
+  return '<div class="m3-scrim" onclick="closeModal()"></div>' +
+    '<div class="m3-bottom-sheet catalogo-sheet cliente-editor">' +
+      tplSheetHeader(isEdit ? 'Editar cliente' : 'Nuevo cliente') +
+      '<div class="catalogo-cuerpo">' +
+        '<div class="m3-field">' +
+          '<input type="text" id="cli-name" placeholder=" " value="' + name + '" autocomplete="off">' +
+          '<label for="cli-name">Nombre</label>' +
         '</div>' +
-        '<div style="width:100%;text-align:center">' +
-          '<input type="text" id="cli-name" value="' + name + '" placeholder="Nombre y apellido"' +
-            ' oninput="_cliUpdatePreview()"' +
-            ' style="width:100%;text-align:center;font-family:var(--font-sans);' +
-              'font-size:26px;font-weight:600;letter-spacing:-0.02em;' +
-              'background:transparent;border:none;outline:none;color:var(--ink);padding:4px 0">' +
-          '<div style="height:1px;background:var(--line);margin:4px auto 0;max-width:220px"></div>' +
-          '<div class="micro" style="margin-top:8px">Nombre del cliente</div>' +
-        '</div>' +
-      '</div>' +
-
-      /* Contacto */
-      '<div style="padding:0 20px 20px">' +
-        '<div class="micro" style="margin-bottom:10px">Contacto</div>' +
-        '<div class="card" style="padding:0 16px">' +
-          /* Teléfono */
-          '<div style="padding:14px 0;border-bottom:0.5px solid var(--line)">' +
-            '<div style="font-size:12px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">WhatsApp / Teléfono</div>' +
-            '<input type="tel" id="cli-phone" value="' + phone + '" placeholder="+52 55 0000 0000" inputmode="tel"' +
-              ' style="width:100%;background:transparent;border:none;outline:none;font-size:15px;color:var(--ink);font-family:var(--font-sans)">' +
+        '<div class="flex-row">' +
+          '<div class="m3-field">' +
+            '<input type="tel" id="cli-phone" placeholder=" " value="' + phone + '" inputmode="tel">' +
+            '<label for="cli-phone">WhatsApp</label>' +
           '</div>' +
-          /* Email */
-          '<div style="padding:14px 0;border-bottom:0.5px solid var(--line)">' +
-            '<div style="font-size:12px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Correo electrónico</div>' +
-            '<input type="email" id="cli-email" value="' + email + '" placeholder="ejemplo@correo.com" inputmode="email"' +
-              ' style="width:100%;background:transparent;border:none;outline:none;font-size:15px;color:var(--ink);font-family:var(--font-sans)">' +
-          '</div>' +
-          /* Red social */
-          '<div style="padding:14px 0">' +
-            '<div style="font-size:12px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Red social / @usuario</div>' +
-            '<input type="text" id="cli-social" value="' + social + '" placeholder="@cliente"' +
-              ' style="width:100%;background:transparent;border:none;outline:none;font-size:15px;color:var(--ink);font-family:var(--font-sans)">' +
+          '<div class="m3-field">' +
+            '<input type="email" id="cli-email" placeholder=" " value="' + email + '" inputmode="email">' +
+            '<label for="cli-email">Correo</label>' +
           '</div>' +
         '</div>' +
-      '</div>' +
-
-      /* Origen */
-      '<div style="padding:0 20px 20px">' +
-        '<div class="micro" style="margin-bottom:10px">¿Cómo te conoció?</div>' +
-        '<div style="display:flex;gap:6px;flex-wrap:wrap" id="cli-source-group">' +
-          sourceOpts.map(chipSrc).join('') +
+        '<div class="m3-field optional">' +
+          '<input type="text" id="cli-social" placeholder=" " value="' + social + '">' +
+          '<label for="cli-social">Red social</label>' +
+        '</div>' +
+        '<div class="cliente-editor-origen">' +
+          '<div class="pt-legend">¿Cómo te conoció?</div>' +
+          '<div id="cli-source-group" class="cliente-editor-chips">' + sourceOpts.map(chipSrc).join('') + '</div>' +
+        '</div>' +
+        '<div class="m3-field optional">' +
+          '<textarea id="cli-notes" placeholder=" " rows="3">' + notes + '</textarea>' +
+          '<label for="cli-notes">Notas internas</label>' +
+        '</div>' +
+        '<div class="m3-sheet-actions">' +
+          '<button type="button" class="m3-btn-outlined" onclick="closeModal()">Cancelar</button>' +
+          '<button type="button" class="m3-btn-filled" onclick="' + saveFn + '">Guardar</button>' +
         '</div>' +
       '</div>' +
-
-      /* Notas */
-      '<div style="padding:0 20px 20px">' +
-        '<div class="micro" style="margin-bottom:10px">Notas internas</div>' +
-        '<div class="card" style="padding:16px">' +
-          '<textarea id="cli-notes" rows="4" placeholder="Preferencias, direcciones de entrega, alergias a materiales, historial…"' +
-            ' style="width:100%;resize:none;background:transparent;border:none;outline:none;' +
-              'font-family:var(--font-sans);font-size:13px;color:var(--ink);line-height:1.5">' + notes + '</textarea>' +
-        '</div>' +
-      '</div>' +
-
-      /* Vista previa */
-      '<div style="padding:0 20px 120px">' +
-        '<div class="micro" style="margin-bottom:10px">Vista previa en tu lista</div>' +
-        '<div class="card" style="padding:0 16px">' +
-          '<div id="cli-preview-row" style="display:flex;align-items:center;gap:12px;padding:14px 0;' +
-            'opacity:' + (name ? '1' : '0.45') + ';transition:opacity 0.2s">' +
-            '<div id="cli-preview-avatar" style="width:38px;height:38px;border-radius:50%;background:var(--bg-sunk);border:0.5px solid var(--line);' +
-              'display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0;color:var(--ink-2)">' +
-              (name ? _cliInitials(name) : '—') +
-            '</div>' +
-            '<div style="flex:1;min-width:0">' +
-              '<div id="cli-preview-name" style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
-                (name || 'Nombre del cliente') +
-              '</div>' +
-              '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">' +
-                '<span class="num">0</span> cotizaciones' +
-              '</div>' +
-            '</div>' +
-            '<div class="num" style="font-size:13px;color:var(--ink-3)">' + (config ? config.currency : '$') + '0</div>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-
-      /* CTA sticky */
-      '<div style="' +
-        'position:sticky;bottom:0;left:0;right:0;padding:14px 20px;' +
-        'background:color-mix(in oklab,var(--bg) 90%,transparent);' +
-        'backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);' +
-        'border-top:0.5px solid var(--line);display:flex;gap:10px;z-index:10">' +
-        '<button type="button" class="btn btn-primary" style="flex:1" onclick="' + saveFn + '">' +
-          '<span class="material-symbols-rounded" style="font-size:16px">check</span> Guardar cliente' +
-        '</button>' +
-      '</div>' +
-
-    '</div>' /* .client-modal-wrap */
-  );
+    '</div>';
 }
 
 /* ── INVENTORY ──────────────────────────────────────────────────── */
@@ -905,7 +814,6 @@ function tplSendQuoteModal(q, i, modo) {
 function tplQuoteDock(q, i, quoteHTML) {
   return '<div class="dock-head">' +
       '<div>' +
-        '<div class="micro">Cotización</div>' +
         '<div class="dock-title">' + esc(q.quoteNum) + ' · ' + esc(q.client || '') + '</div>' +
       '</div>' +
       '<button class="sheet-close-btn" onclick="closeQuoteDock()" aria-label="Cerrar">' + tplIcon('close', 20) + '</button>' +

@@ -36,7 +36,6 @@
     </span>
     <div>
       <div class="sidebar-brand-name" id="sidebar-biz-name">La Casita del Molde</div>
-      <div class="sidebar-brand-sub">Estudio 3D</div>
     </div>
   </div>
 
@@ -133,7 +132,7 @@
        toggle «Costo de la pieza | Orden» (setCalcMode en quotes.js). «Orden»
        se habilita con el primer producto (refreshDraftIndicator). -->
   <div class="calc-header">
-    <button class="back-btn calc-back" onclick="regresarDeCalculadora()">
+    <button class="back-btn calc-back solo-movil" onclick="regresarDeCalculadora()">
       <span class="material-symbols-rounded" style="font-size:18px">arrow_back_ios</span>Regresar
     </button>
     <h1 class="calc-header-title" id="calc-header-title">Calculadora</h1>
@@ -149,7 +148,7 @@
         <span class="calc-seg-count" id="calc-seg-orden-n"></span>
       </button>
     </div>
-    <div class="calc-header-end">
+    <div class="calc-header-end solo-movil">
       <!-- El historial es un destino, no un modo. El segmentado "Cotizar |
            Historial" prometía cambiar de vista y lo que hacía era navegar.
            Queda solo el acceso: en móvil no existe en ningún otro lado. -->
@@ -184,7 +183,6 @@
   <div id="calc-result" style="padding:18px 20px 0">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
       <div class="micro" id="calc-hero-label">Costo total sugerido</div>
-      <div class="micro solo-pieza" style="color:var(--ink-4)" id="calc-margin-label">50% margen</div>
     </div>
     <div class="display" style="font-size:clamp(48px,12vw,72px);line-height:0.9;letter-spacing:-0.03em" id="result-total">$0.00</div>
     <!-- Modo producto: de qué sale el precio (pintarProducto en catalog.js) -->
@@ -198,9 +196,9 @@
     </div>
     <!-- El precio sugerido se redondea hacia arriba de 5 en 5 (D161, roundUpToFive en
          costing.js). Lo escribe _pintarNotaRedondeo (calculator.js). -->
-    <div class="nota-redondeo solo-pieza">
+    <div class="nota-redondeo solo-pieza hidden">
       <span class="material-symbols-rounded" aria-hidden="true">info</span>
-      <span id="nota-redondeo-texto">El precio se redondea hacia arriba de $5 en $5: siempre termina en 5 o en 0.</span>
+      <span id="nota-redondeo-texto"></span>
     </div>
 
     <!-- Barra de composición de costos -->
@@ -348,19 +346,14 @@
 
   <!-- ── Sección 01: Datos de la pieza ─── -->
   <div class="calc-sec calc-sec-datos solo-pieza" style="padding:28px 20px 0">
-    <div class="rule micro" style="margin-bottom:18px">01 · Datos de la pieza</div>
+    <div class="rule micro" style="margin-bottom:18px">Pieza</div>
 
     <div class="m3-field" style="margin-bottom:16px">
       <input type="text" id="calc-desc" placeholder=" ">
       <label for="calc-desc">Descripción</label>
     </div>
-    <!-- Lo que se captura es la placa, no la pieza. El slicer reporta el peso
-         y el tiempo de la corrida completa; sin decir cuántas piezas salen de
-         ahí, una placa de 30 llaveros se cotizaba como un llavero de 900 g. -->
-    <div class="hint" style="margin-bottom:14px">
-    Captura lo que te da el slicer para la <strong>placa completa</strong>.
-    Si trae varias piezas, dilo en «Piezas» y la app divide.
-    </div>
+    <!-- Lo que se captura es la placa, no la pieza: ahora lo dicen las etiquetas
+         («Peso de placa», «Piezas en la placa»), en lugar de un párrafo (D171). -->
 
     <!-- Leer el archivo del slicer (D133): llena peso, tiempo y, si son copias, piezas.
          Solo .gcode y .3mf (D162). En la computadora el selector solo muestra esos
@@ -374,7 +367,7 @@
         <span class="material-symbols-rounded" aria-hidden="true">upload_file</span>
         Leer archivo del slicer
       </span>
-      <span class="slicer-ayuda">.gcode o .3mf<span class="slicer-ayuda-arrastrar"> · también puedes arrastrarlo aquí</span></span>
+      <span class="slicer-ayuda">.gcode o .3mf</span>
     </label>
     <div id="slicer-resumen" class="slicer-resumen hidden" aria-live="polite"></div>
 
@@ -382,27 +375,26 @@
          en escritorio, con espacio, los cuatro en una fila (desktop.css). -->
     <div class="calc-datos-nums">
     <div class="flex-row" style="margin-bottom:16px">
-      <div class="m3-field helper-on-rest" id="field-weight">
+      <div class="m3-field" id="field-weight">
         <input type="number" id="calc-weight" placeholder=" " min="0" step="0.1" inputmode="decimal">
-        <label for="calc-weight">Peso (g)</label>
-        <span class="m3-helper" id="helper-weight">De toda la placa</span>
+        <label for="calc-weight">Peso de placa (g)</label>
+        <span class="m3-helper" id="helper-weight"></span>
       </div>
-      <div class="m3-field helper-on-rest" id="field-time">
+      <div class="m3-field" id="field-time">
         <input type="number" id="calc-time" placeholder=" " min="0" step="0.01" inputmode="decimal">
-        <label for="calc-time">Tiempo (hrs)</label>
-        <span class="m3-helper" id="helper-time">De toda la placa</span>
+        <label for="calc-time">Tiempo de placa (h)</label>
+        <span class="m3-helper" id="helper-time"></span>
       </div>
     </div>
     <div class="flex-row" style="margin-bottom:16px">
       <div class="m3-field" id="field-pieces">
         <input type="number" id="calc-pieces" placeholder=" " min="1" step="1" inputmode="numeric" value="1">
-        <label for="calc-pieces">Piezas</label>
-        <span class="m3-helper" id="helper-pieces">En esa placa</span>
+        <label for="calc-pieces">Piezas en la placa</label>
+        <span class="m3-helper" id="helper-pieces"></span>
       </div>
-      <div class="m3-field optional helper-on-rest">
+      <div class="m3-field">
         <input type="number" id="calc-design-time" placeholder=" " min="0" step="0.1" inputmode="decimal">
-        <label for="calc-design-time">Diseño (hrs)</label>
-        <span class="m3-helper">Se reparte entre las piezas</span>
+        <label for="calc-design-time">Diseño (h)</label>
       </div>
     </div>
     </div><!-- /calc-datos-nums -->
@@ -418,7 +410,7 @@
 
   <!-- ── Sección 02: Impresora y material ─── -->
   <div class="calc-sec calc-sec-impresora solo-pieza" style="padding:28px 20px 0">
-    <div class="rule micro" style="margin-bottom:18px">02 · Impresora y material</div>
+    <div class="rule micro" style="margin-bottom:18px">Impresora y material</div>
     <div class="m3-card">
       <div class="m3-field">
         <select id="calc-printer"></select>
@@ -447,7 +439,6 @@
         <span class="material-symbols-rounded" style="font-size:18px;color:var(--accent)">water_drop</span>
         <span class="m3-card-title" style="margin:0">Post-proceso Resina</span>
       </div>
-      <p class="resin-params-hint">Elegoo Mercury Plus · lavado IPA + curado UV</p>
       <div class="flex-row">
         <div class="m3-field">
           <input type="number" id="cfg-resin-support-pct" step="1" min="0" max="100" placeholder=" " inputmode="decimal" oninput="saveResinParams()">
@@ -473,7 +464,6 @@
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
           <span class="material-symbols-rounded" style="font-size:18px;color:var(--accent)">palette</span>
           <span style="font-size:13px;font-weight:600;letter-spacing:-0.01em">Multicolor AMS</span>
-          <span class="micro" style="color:var(--ink-3);margin-left:auto">hasta 4 colores</span>
         </div>
         <div id="ams-color-slots">
           <!-- Los slots se renderizan dinámicamente -->
@@ -518,7 +508,7 @@
 
   <!-- ── Sección 03: Post-procesado ─── -->
   <div class="calc-sec calc-sec-post solo-pieza" style="padding:28px 20px 0">
-    <div class="rule micro" style="margin-bottom:18px">03 · Post-procesado</div>
+    <div class="rule micro" style="margin-bottom:18px">Post-procesado</div>
 
     <!-- Pintura -->
     <div class="card" style="padding:16px;margin-bottom:10px" id="calc-postproc-card">
@@ -527,7 +517,6 @@
           <span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-2)">palette</span>
           <div>
             <div style="font-size:14px;font-weight:500">Pintura</div>
-            <div style="font-size:12px;color:var(--ink-3);margin-top:2px">Primer, color, barniz</div>
           </div>
         </div>
         <label class="m3-switch" onclick="event.stopPropagation()">
@@ -536,12 +525,8 @@
         </label>
       </div>
       <div id="postproc-fields" class="hidden" style="margin-top:14px">
-                <!-- Como el peso y el tiempo, la pintura se divide entre las piezas de la
-             placa (MEJORAS #12): si se captura la de una sola pieza, sale N veces bajo. -->
-        <div class="hint">
-        Captura la pintura y el tiempo de <strong>toda la placa</strong>,
-        no de una pieza: la app también los divide entre las piezas.
-        </div>
+        <!-- Como el peso y el tiempo, la pintura es de la placa y se divide entre
+             las piezas (MEJORAS #12); lo dice la etiqueta del tiempo (D171). -->
 
         <div class="postproc-section-label">Colores de pintura</div>
         <div id="paint-colors-list"></div>
@@ -562,7 +547,7 @@
         </div>
         <div class="m3-field">
           <input type="number" id="postproc-time" placeholder=" " min="0" step="0.1" inputmode="decimal" oninput="calculate(true)">
-          <label for="postproc-time">Tiempo de pintado (hrs)</label>
+          <label for="postproc-time">Tiempo de pintado de la placa (h)</label>
         </div>
       </div>
     </div>
@@ -570,15 +555,11 @@
 
   <!-- ── Sección 04: Margen de ganancia ─── -->
   <div class="calc-sec calc-sec-margen solo-pieza" style="padding:28px 20px 0">
-    <div class="rule micro" style="margin-bottom:18px">04 · Margen de ganancia</div>
+    <div class="rule micro" style="margin-bottom:18px">Margen</div>
     <div class="card" style="padding:20px">
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
         <div class="display" style="font-size:44px">
           <span id="calc-margin-display2">50</span><span style="font-size:22px;color:var(--ink-3)">%</span>
-        </div>
-        <div style="text-align:right;font-size:12px;color:var(--ink-3)">
-          <div>Ganancia</div>
-          <div class="num" style="font-size:15px;color:var(--ok);font-weight:500" id="result-margin-gain">+$0.00</div>
         </div>
       </div>
       <input class="slider" type="range" id="calc-margin" min="0" max="200" value="50">
@@ -634,7 +615,7 @@
 <!-- ===== PAGE: HISTORY ===== -->
 <div id="page-history" class="page">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-    <button class="m3-btn-text" onclick="showPage('calc')" style="width:auto;padding:0 8px">
+    <button class="m3-btn-text solo-movil" onclick="showPage('calc')" style="width:auto;padding:0 8px" aria-label="Regresar a la calculadora">
       <span class="material-symbols-rounded">arrow_back</span>
     </button>
     <h2 class="page-heading">Historial de cálculos</h2>
@@ -723,7 +704,7 @@
   </div>
 
   <!-- Heading — mismo patrón que otras sub-páginas -->
-  <div style="padding:20px 20px 8px">
+  <div class="cfg-sub-titulo" style="padding:20px 20px 8px">
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Diseño de cotización</h1>
   </div>
 
@@ -791,7 +772,7 @@
       <div class="row">
         <div class="qe-fila-texto">
           <div class="row-label">Mostrar desglose de costos</div>
-          <div class="qe-ayuda" id="qe-ayuda-desglose">Le enseña al cliente cuánto te cuesta cada parte, y con eso puede calcular tu ganancia. Apagado, solo ve el precio.</div>
+          <div class="qe-ayuda" id="qe-ayuda-desglose">El cliente verá lo que te cuesta cada parte.</div>
         </div>
         <label class="m3-switch"><input type="checkbox" id="qe-showDesglose" aria-describedby="qe-ayuda-desglose" onchange="onToggleChange('showDesglose',this)"><div class="m3-switch-track"></div></label>
       </div>
@@ -894,6 +875,17 @@
 
   <!-- ── Panel de contenido desktop (sub-páginas se mueven aquí via JS) ─── -->
   <div id="cfg-subpage-container" style="display:none"></div>
+
+  <!-- Un solo «Guardar» para todas las pestañas en escritorio (D175). Aparece al
+       cambiar algo; lo escrito se conserva al pasar de una pestaña a otra. -->
+  <div id="cfg-barra-guardar" class="cfg-barra-guardar hidden" role="status" aria-live="polite">
+    <span class="material-symbols-rounded" aria-hidden="true">edit_note</span>
+    <span class="cfg-barra-texto">Cambios sin guardar</span>
+    <button type="button" class="btn btn-ghost" onclick="descartarAjustes()">Descartar</button>
+    <button type="button" class="btn btn-primary" onclick="guardarAjustes()">
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">save</span> Guardar
+    </button>
+  </div>
 
   <!-- ── Nav lista (solo mobile) ─── -->
   <div class="cfg-mobile-nav">
@@ -1001,11 +993,11 @@
     </button>
     
   </div>
-  <div style="padding:20px 20px 8px">
+  <div class="cfg-sub-titulo" style="padding:20px 20px 8px">
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Datos del negocio</h1>
   </div>
   <div style="padding:12px 20px 24px">
-    <div class="card" style="padding:0 18px">
+    <div class="card cfg-formulario" style="padding:0 18px">
       <div class="row">
         <div class="row-label">Nombre del estudio</div>
         <input type="text" id="cfg-biz-name" placeholder="Mi Negocio 3D"
@@ -1034,7 +1026,7 @@
     </div>
   </div>
   <div style="padding:0 20px 32px">
-    <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">
+    <button class="btn btn-primary cfg-guardar" style="width:100%" onclick="saveConfig()">
       <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
     </button>
   </div>
@@ -1048,11 +1040,11 @@
     </button>
     
   </div>
-  <div style="padding:20px 20px 8px">
+  <div class="cfg-sub-titulo" style="padding:20px 20px 8px">
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Cuenta bancaria</h1>
   </div>
   <div style="padding:12px 20px 12px">
-    <div class="card" style="padding:0 18px">
+    <div class="card cfg-formulario" style="padding:0 18px">
       <div class="row">
         <div class="row-label">Banco</div>
         <input type="text" id="cfg-biz-bank" placeholder="Ej: BBVA, Banorte…" maxlength="40"
@@ -1069,16 +1061,13 @@
                style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-mono);flex:1;min-width:0;letter-spacing:0.06em">
       </div>
       <div class="row" style="border-bottom:none">
-        <div class="row-label">Mostrar en cotizaciones</div>
+        <div class="row-label">Mostrar en cotizaciones y PDF</div>
         <label class="m3-switch"><input type="checkbox" id="cfg-show-bank-info"><div class="m3-switch-track"></div></label>
       </div>
     </div>
-    <div style="font-size:12px;color:var(--ink-4);margin-top:8px;padding:0 4px">
-      Aparece en el PDF y en la vista de la cotización para facilitar el pago.
-    </div>
   </div>
   <div style="padding:0 20px 32px">
-    <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">
+    <button class="btn btn-primary cfg-guardar" style="width:100%" onclick="saveConfig()">
       <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
     </button>
   </div>
@@ -1092,11 +1081,11 @@
     </button>
     
   </div>
-  <div style="padding:20px 20px 8px">
+  <div class="cfg-sub-titulo" style="padding:20px 20px 8px">
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Electricidad y trabajo</h1>
   </div>
   <div style="padding:12px 20px 24px">
-    <div class="card" style="padding:0 18px">
+    <div class="card cfg-formulario" style="padding:0 18px">
       <div class="row">
         <div class="row-label">Costo del kWh</div>
         <div style="display:flex;align-items:center;gap:4px">
@@ -1117,7 +1106,7 @@
     </div>
   </div>
   <div style="padding:0 20px 32px">
-    <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">
+    <button class="btn btn-primary cfg-guardar" style="width:100%" onclick="saveConfig()">
       <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
     </button>
   </div>
@@ -1131,12 +1120,12 @@
     </button>
     
   </div>
-  <div style="padding:20px 20px 8px">
+  <div class="cfg-sub-titulo" style="padding:20px 20px 8px">
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Gastos fijos</h1>
   </div>
   <div style="padding:12px 20px 12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="font-size:12px;color:var(--ink-3)">Categorías de gasto mensual</div>
+      <span></span>
       <button class="link-btn" onclick="addFixedCostItem()" style="font-size:12px;color:var(--accent);display:inline-flex;align-items:center;gap:4px">
         <span class="material-symbols-rounded" style="font-size:14px">add</span> Categoría
       </button>
@@ -1175,7 +1164,7 @@
     </div>
   </div>
   <div style="padding:0 20px 32px">
-    <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">
+    <button class="btn btn-primary cfg-guardar" style="width:100%" onclick="saveConfig()">
       <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
     </button>
   </div>
@@ -1188,17 +1177,12 @@
       <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
     </button>
   </div>
-  <div style="padding:20px 20px 8px">
+  <div class="cfg-sub-titulo" style="padding:20px 20px 8px">
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Gastos indirectos</h1>
-    <div style="font-size:12px;color:var(--ink-3);margin-top:8px;line-height:1.5">
-      Consumibles que no son parte de la pieza pero se gastan al producirla: guantes, lijas,
-      alcohol, cinta, adhesivo, bolsas y empaque. Se prorratean por hora de impresión, igual
-      que los gastos fijos.
-    </div>
   </div>
   <div style="padding:12px 20px 12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="font-size:12px;color:var(--ink-3)">Categorías de gasto mensual</div>
+      <button type="button" class="ayuda-btn ayuda-btn-texto" onclick="mostrarAyuda('indirectos')"><span class="material-symbols-rounded" aria-hidden="true">help</span>¿Qué va aquí?</button>
       <button class="link-btn" onclick="addIndirectCostItem()" style="font-size:12px;color:var(--accent);display:inline-flex;align-items:center;gap:4px">
         <span class="material-symbols-rounded" style="font-size:14px">add</span> Categoría
       </button>
@@ -1230,14 +1214,11 @@
           <div style="font-size:12px;color:var(--ink-3)" id="cfg-indirect-hours-ref">—</div>
         </div>
       </div>
-      <div style="font-size:12px;color:var(--ink-3);margin-top:12px;line-height:1.5">
-        Las horas de impresión / mes se configuran en <strong>Gastos fijos</strong> — el mismo
-        valor se usa para prorratear ambos rubros.
-      </div>
+      <button type="button" class="link-btn" onclick="showConfigPage('gastos')" style="margin-top:12px;font-size:12px;color:var(--accent)">Las horas se cambian en Gastos fijos</button>
     </div>
   </div>
   <div style="padding:0 20px 32px">
-    <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">
+    <button class="btn btn-primary cfg-guardar" style="width:100%" onclick="saveConfig()">
       <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
     </button>
   </div>
@@ -1251,7 +1232,7 @@
     </button>
     
   </div>
-  <div style="padding:20px 20px 8px">
+  <div class="cfg-sub-titulo" style="padding:20px 20px 8px">
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Otros parámetros</h1>
   </div>
   <div style="padding:12px 20px 24px">
@@ -1287,25 +1268,18 @@
       <!-- Mantenimiento y refacciones -->
       <div style="padding:14px 0;border-bottom:0.5px solid var(--line)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <div style="font-size:13px;color:var(--ink-2)">Mantenimiento y refacciones</div>
+          <div style="font-size:13px;color:var(--ink-2);display:flex;align-items:center;gap:2px">Mantenimiento y refacciones <button type="button" class="ayuda-btn" onclick="mostrarAyuda('mantenimiento')" aria-label="Qué cubre mantenimiento"><span class="material-symbols-rounded" aria-hidden="true">help</span></button></div>
           <div class="num" style="font-size:20px;font-weight:600">
             <span id="cfg-maint-display">5</span><span style="font-size:12px;color:var(--ink-3)"> %</span>
           </div>
         </div>
-        <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px">Boquillas, bandas, PEI/FEP, refacciones · se aplica sobre material + energía + depreciación + fijos</div>
         <input class="slider" type="range" id="cfg-maint" min="0" max="20" step="1" value="5"
                oninput="document.getElementById('cfg-maint-display').textContent=this.value">
       </div>
 
       <!-- AMS Purga -->
       <div style="padding:14px 0;border-bottom:0.5px solid var(--line)">
-        <div style="font-size:13px;color:var(--ink-2);margin-bottom:4px">Purga AMS por cambio de color</div>
-        <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px;line-height:1.6">
-          Valor por defecto de la calculadora. Para medirlo: rebana en Bambu Studio, abre
-          <strong>Resultado del corte</strong> y en el renglón Total divide
-          <em>Expulsado + Torre</em> entre «Tiempos de cambio en el filamento».<br>
-          Referencia PLA: 0,25 g entre tonos parecidos · 0,7 g típico · 0,9 g de oscuro a claro.
-        </div>
+        <div style="font-size:13px;color:var(--ink-2);margin-bottom:4px;display:flex;align-items:center;gap:2px">Purga AMS por cambio de color <button type="button" class="ayuda-btn" onclick="showPurgeHelp()" aria-label="Cómo medir la purga"><span class="material-symbols-rounded" aria-hidden="true">help</span></button></div>
         <div class="row" style="padding:0;border:none">
           <input type="number" id="cfg-ams-purge" min="0" max="20" step="0.1" inputmode="decimal"
                  style="background:transparent;border:none;outline:none;font-size:28px;font-weight:600;
@@ -1317,12 +1291,12 @@
       <!-- Cuenta -->
       <div style="padding:14px 0;border-bottom:0.5px solid var(--line)">
         <div style="font-size:13px;color:var(--ink-2);margin-bottom:4px">Cuenta</div>
-        <div style="font-size:12px;color:var(--ink-3);margin-bottom:12px" id="cfg-cuenta-info">—</div>
+        <div class="solo-movil" style="font-size:12px;color:var(--ink-3);margin-bottom:12px" id="cfg-cuenta-info">—</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn btn-ghost" style="flex:1;min-width:150px" onclick="verOnboardingDeNuevo()">
             <span class="material-symbols-rounded" style="font-size:16px">school</span> Ver introducción
           </button>
-          <button class="btn btn-ghost" style="flex:1;min-width:150px" onclick="cerrarSesion()">
+          <button class="btn btn-ghost solo-movil" style="flex:1;min-width:150px" onclick="cerrarSesion()">
             <span class="material-symbols-rounded" style="font-size:16px">logout</span> Cerrar sesión
           </button>
         </div>
@@ -1345,7 +1319,7 @@
     </div>
   </div>
   <div style="padding:0 20px 32px">
-    <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">
+    <button class="btn btn-primary cfg-guardar" style="width:100%" onclick="saveConfig()">
       <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
     </button>
   </div>

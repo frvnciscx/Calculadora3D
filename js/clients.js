@@ -165,6 +165,11 @@ function saveClient(editIndex) {
   if (typeof dbGuardarCliente === 'function') dbGuardarCliente(c);
   closeModal();
   renderClients();
+  /* El panel lateral del cliente (D174) se actualiza; uno nuevo recorre los índices */
+  if (_panelCliente != null && document.body.classList.contains('dock-open')) {
+    if (editIndex == null) _panelCliente += 1;
+    showClientDetail(_panelCliente);
+  }
 }
 
 /* ── Eliminar cliente ────────────────────────────────────────────── */
@@ -344,7 +349,7 @@ function showClientDetail(i) {
     var status   = estadoDe(q);
     var statusColor = status === 'aceptada' ? 'var(--ok)' : status === 'rechazada' ? 'var(--danger)' : 'var(--ink-3)';
     var nItems   = q.items ? q.items.length : 1;
-    return '<button onclick="viewQuote(' + qi + ')" style="width:100%;text-align:left;background:transparent;padding:14px 0;display:flex;align-items:center;gap:12px;border-bottom:0.5px solid var(--line)">' +
+    return '<button onclick="verCotizacionDeCliente(' + qi + ',' + i + ')" style="width:100%;text-align:left;background:transparent;padding:14px 0;display:flex;align-items:center;gap:12px;border-bottom:0.5px solid var(--line)">' +
       '<div style="flex:1;min-width:0">' +
         '<div style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px">' +
           '<span class="num">' + esc(q.quoteNum || '—') + '</span>' +
@@ -361,6 +366,14 @@ function showClientDetail(i) {
     '</button>';
   }).join('') :
     '<div style="padding:20px 0;text-align:center;font-size:13px;color:var(--ink-3)">Sin cotizaciones registradas</div>';
+
+  /* Escritorio (D174): en el panel lateral, como la cotización. A pantalla
+     completa tapaba la barra lateral, y la cotización que se abría desde
+     aquí quedaba debajo, sin verse. */
+  if (typeof _mqEscritorio !== 'undefined' && _mqEscritorio.matches) {
+    _pintarClienteEnPanel(i, c, cur, cQuotes, totalSpent, avgOrder, lastDate, quotesHTML);
+    return;
+  }
 
   document.getElementById('modal-container').innerHTML =
     '<div style="position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;display:flex;flex-direction:column">' +
@@ -414,6 +427,44 @@ function showClientDetail(i) {
       '</div>' +
 
     '</div>';
+}
+
+/* El detalle del cliente en el panel lateral de escritorio */
+var _panelCliente = null;
+function _pintarClienteEnPanel(i, c, cur, cQuotes, totalSpent, avgOrder, lastDate, quotesHTML) {
+  var dock = document.getElementById('quote-dock');
+  if (!dock) return;
+  if (typeof _dockQuoteNum !== 'undefined') _dockQuoteNum = null;   /* ya no muestra una cotización */
+  _panelCliente = i;
+  dock.innerHTML =
+    '<div class="dock-head">' +
+      '<div style="min-width:0">' +
+        '<div class="dock-title">' + esc(c.name) + '</div>' +
+        (c.phone || c.email ? '<div class="dock-sub">' + esc([c.phone, c.email].filter(Boolean).join(' · ')) + '</div>' : '') +
+      '</div>' +
+      '<div style="display:flex;gap:4px;flex-shrink:0">' +
+        '<button type="button" class="sheet-close-btn" onclick="showClientModal(' + i + ')" aria-label="Editar ' + esc(c.name) + '">' + tplIcon('edit', 18) + '</button>' +
+        '<button type="button" class="sheet-close-btn" onclick="closeQuoteDock()" aria-label="Cerrar">' + tplIcon('close', 20) + '</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="dock-body cliente-panel">' +
+      '<div class="cliente-panel-datos">' +
+        _statCell(String(cQuotes.length), 'cotizaciones') +
+        _statCell(totalSpent > 0 ? cur + totalSpent.toFixed(0) : '—', 'total') +
+        _statCell(avgOrder > 0 ? cur + avgOrder.toFixed(0) : '—', 'promedio') +
+      '</div>' +
+      (c.social ? '<div class="cliente-panel-social">' + esc(c.social) + '</div>' : '') +
+      '<div class="cliente-panel-lista">' +
+        '<div class="cliente-panel-cabeza"><span>Cotizaciones</span><span>Última: ' + lastDate + '</span></div>' +
+        quotesHTML +
+      '</div>' +
+    '</div>';
+  document.body.classList.add('dock-open');
+}
+
+/* Desde el detalle del cliente: abre la cotización y deja cómo regresar */
+function verCotizacionDeCliente(qi, ci) {
+  viewQuote(qi, ci);
 }
 
 function _statCell(value, label) {

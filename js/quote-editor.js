@@ -35,7 +35,7 @@ function updateLogoPreview() {
   const quitar = document.getElementById('qe-quitar-logo');
   if (quitar) quitar.style.display = quoteStyle.logo ? '' : 'none';
   if (quoteStyle.logo) {
-    area.innerHTML = `<img src="${quoteStyle.logo}" alt="Logo"><p>Toca para cambiar</p>`;
+    area.innerHTML = `<img src="${quoteStyle.logo}" alt="Logo"><p>Cambiar logo</p>`;
   } else {
     area.innerHTML = `<span class="material-symbols-rounded" style="font-size:32px;opacity:0.4">add_photo_alternate</span><p>Subir logo</p>`;
   }

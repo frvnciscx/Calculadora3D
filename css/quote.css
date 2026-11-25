@@ -10,7 +10,7 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   margin: 16px 0;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;   /* Roboto no se carga: en Windows salía en Arial (D171) */
 }
 
 /* Decorative edge bars — pegadas al borde, no invaden el contenido */

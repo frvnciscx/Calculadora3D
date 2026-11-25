@@ -134,11 +134,11 @@ function renderQueCotizas() {
     return '<button type="button" class="qc-opcion" data-id="' + esc(id) + '" aria-pressed="' + (on ? 'true' : 'false') + '" ' +
              'onclick="elegirQueCotizas(this.dataset.id)">' +
       '<span class="qc-texto"><span class="qc-nombre">' + esc(nombre) + '</span>' +
-      '<span class="qc-sub">' + esc(sub) + '</span></span>' +
+      (sub ? '<span class="qc-sub">' + esc(sub) + '</span>' : '') + '</span>' +
     '</button>';
   }
 
-  el.innerHTML = opcion('pieza', 'Pieza nueva', 'Con el peso y el tiempo', !activo) +
+  el.innerHTML = opcion('pieza', 'Pieza nueva', '', !activo) +
     catalogItems.map(function(p) {
       return opcion(p.id, p.name, _subtituloProducto(p), String(activo) === String(p.id));
     }).join('');
@@ -533,7 +533,6 @@ function showCatalogModal() {
         '</button>' +
       '</div>' +
       '<div class="catalogo-cuerpo">' +
-        '<p class="catalogo-ayuda">Los productos que vendes seguido. Para cotizar uno, tócalo en «¿Qué cotizas?» o usa «Cotizar».</p>' +
         '<div id="catalog-list">' + _htmlListaCatalogo() + '</div>' +
         /* Sin «Exportar precios» a Excel (D160) */
         '<div class="m3-sheet-actions catalogo-acciones">' +
@@ -608,7 +607,7 @@ function _filaPrecioHTML(f) {
     '<div class="pe-celdas">' +
       '<input type="text" class="pe-tam" inputmode="decimal" autocomplete="off" placeholder="cm" value="' + esc(f.tamano != null ? String(f.tamano) : '') + '" aria-label="Tamaño en cm">' +
       '<input type="text" class="pe-precio" inputmode="decimal" autocomplete="off" placeholder="$" value="' + esc(f.precio != null ? String(f.precio) : '') + '" aria-label="Precio">' +
-      '<input type="text" class="pe-ref" inputmode="decimal" autocomplete="off" placeholder="—" value="' + esc(f.refuerzo != null && Number(f.refuerzo) !== 0 ? String(f.refuerzo) : '') + '" aria-label="Refuerzo">' +
+      '<input type="text" class="pe-ref" inputmode="decimal" autocomplete="off" placeholder="opcional" value="' + esc(f.refuerzo != null && Number(f.refuerzo) !== 0 ? String(f.refuerzo) : '') + '" aria-label="Refuerzo">' +
       '<button type="button" class="pe-quitar" onclick="editorQuitarFila(this)" aria-label="Quitar este tamaño">' +
         '<span class="material-symbols-rounded" aria-hidden="true">close</span></button>' +
     '</div>' +
@@ -673,7 +672,6 @@ function showAddCatalogModal(editIndex, desde) {
 
         '<div id="cp-table-fields">' +
           '<h3 class="pe-subtitulo">Precios por tamaño</h3>' +
-          '<p class="pe-ayuda">El refuerzo es lo que suma en ese tamaño; déjalo vacío si no aplica. Puedes usar medios centímetros, como 8.5.</p>' +
           '<div class="pe-encabezados" aria-hidden="true"><span>Tamaño (cm)</span><span>Precio</span><span>Refuerzo</span><span></span></div>' +
           '<div id="pe-precios">' + filas.map(_filaPrecioHTML).join('') + '</div>' +
           '<div class="pe-botones">' +
@@ -689,11 +687,9 @@ function showAddCatalogModal(editIndex, desde) {
               '<label>y sube $<input type="text" id="pe-sube" inputmode="decimal" placeholder="3"> por cm</label>' +
             '</div>' +
             '<button type="button" class="m3-btn-tonal m3-btn-sm" onclick="editorLlenarRango()">Llenar</button>' +
-            '<p class="pe-ayuda">Cambia el precio de esos tamaños y conserva su refuerzo.</p>' +
           '</details>' +
 
           '<h3 class="pe-subtitulo">Niveles de diseño</h3>' +
-          '<p class="pe-ayuda">Lo que suma el diseño según qué tan complicado es. Siempre queda uno sin costo.</p>' +
           '<div class="pe-encabezados pe-encabezados-nivel" aria-hidden="true"><span>Nivel</span><span>Costo</span><span></span></div>' +
           '<div id="pe-niveles">' + niveles.map(_filaNivelHTML).join('') + '</div>' +
           '<div class="pe-botones">' +

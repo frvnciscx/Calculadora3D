@@ -192,9 +192,8 @@ function _limpiarCalculadora() {
   if (piezasEl) piezasEl.value = 1;
   var ppEl = document.getElementById('calc-per-piece');
   if (ppEl) ppEl.classList.add('hidden');
-  /* Los mismos textos de ayuda de index.html (helper-on-rest) */
-  _setFieldState('field-weight', 'helper-weight', 'neutral', 'De toda la placa');
-  _setFieldState('field-time', 'helper-time', 'neutral', 'De toda la placa');
+  _setFieldState('field-weight', 'helper-weight', 'neutral', '');
+  _setFieldState('field-time', 'helper-time', 'neutral', '');
   clearLastCalc();
   /* El resumen del archivo del slicer también se va: era de la pieza que se agregó */
   if (typeof limpiarLecturaSlicer === 'function') limpiarLecturaSlicer();
@@ -339,8 +338,7 @@ function _pintarVistaPrevia() {
     getQRDataURL().then(function(qr) { _vistaPreviaQR = qr; _pintarVistaPrevia(); });
   }
   prev.innerHTML =
-    '<div class="preview-head"><span class="micro">Vista previa</span>' +
-      '<span class="preview-note">Así la verá el cliente</span></div>' +
+    '<div class="preview-head"><span class="micro">Vista previa</span></div>' +
     '<div class="preview-body"><div class="preview-paper">' +
       buildQuoteHTML(_cotizacionDelBorrador(), _vistaPreviaQR) +
     '</div></div>';
@@ -871,9 +869,14 @@ function renderQuotes() {
     return;
   }
 
-  el.innerHTML = filtered.map(function(q) {
-    return tplQuoteCard(q, quotes.indexOf(q), cur);
-  }).join('');
+  /* En escritorio las tarjetas se ven como renglones de una tabla (D173);
+     este encabezado solo aparece ahí */
+  el.innerHTML = '<div class="quote-tabla-cabeza" aria-hidden="true">' +
+      '<span>Folio</span><span>Cliente</span><span>Productos</span><span>Fecha</span><span>Total</span><span></span>' +
+    '</div>' +
+    filtered.map(function(q) {
+      return tplQuoteCard(q, quotes.indexOf(q), cur);
+    }).join('');
 }
 
 function _setQuoteFilter(f) {
@@ -1325,8 +1328,11 @@ function buildQuoteHTML(q, qrDataURL) {
 }
 
 /* ── Ver cotización ───────────────────────────────────────────── */
-function viewQuote(i) {
+var _volverACliente = null;   /* índice del cliente desde el que se abrió (D174) */
+function viewQuote(i, desdeCliente) {
   var q = quotes[i]; if (!q) return;
+  _volverACliente = desdeCliente != null ? desdeCliente : null;
+  if (typeof _panelCliente !== 'undefined') _panelCliente = null;
   var imgBtnLabel = btnImgLabel();
 
   /* Escritorio: en el contenedor de la derecha (tipo VS Code), sin
@@ -1337,6 +1343,12 @@ function viewQuote(i) {
       var dock = document.getElementById('quote-dock');
       if (!dock) return;
       dock.innerHTML = tplQuoteDock(q, i, buildQuoteHTML(q, qrDataURL));
+      if (_volverACliente != null && clients[_volverACliente]) {
+        var head = dock.querySelector('.dock-head > div');
+        if (head) head.insertAdjacentHTML('afterbegin',
+          '<button type="button" class="dock-volver" onclick="showClientDetail(' + _volverACliente + ')">' +
+            tplIcon('chevron_left', 18) + esc(clients[_volverACliente].name) + '</button>');
+      }
       document.body.classList.add('dock-open');
     });
     return;
@@ -1378,6 +1390,8 @@ function _sincronizarDock() {
 
 function closeQuoteDock() {
   _dockQuoteNum = null;
+  _volverACliente = null;
+  if (typeof _panelCliente !== 'undefined') _panelCliente = null;
   var dock = document.getElementById('quote-dock');
   if (dock) dock.innerHTML = '';
   document.body.classList.remove('dock-open');
@@ -1499,7 +1513,7 @@ function exportQuoteImage(i) {
     'background:#f8f7fc',          /* fondo neutro exterior */
     'padding:' + PADDING + 'px',
     'box-sizing:border-box',
-    'font-family:Inter,sans-serif'
+    'font-family:"Plus Jakarta Sans",system-ui,sans-serif'
   ].join(';');
   document.body.appendChild(wrapper);
 
@@ -1641,7 +1655,7 @@ function exportQuotePDF(i) {
     'background:#ffffff',
     'padding:32px',
     'box-sizing:border-box',
-    'font-family:Inter,sans-serif'
+    'font-family:"Plus Jakarta Sans",system-ui,sans-serif'
   ].join(';');
   document.body.appendChild(wrapper);
 

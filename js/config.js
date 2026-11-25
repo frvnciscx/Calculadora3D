@@ -13,6 +13,9 @@ function setCurrencyUI(cur, btnId) {
 }
 
 function loadConfig() {
+  /* Con cambios sin guardar no se pisa lo escrito: ni al cambiar de pestaña
+     ni cuando llega una actualización de la nube (D175) */
+  if (_ajustesSinGuardar) return;
   document.getElementById('cfg-kwh').value = config.kwhCost;
   document.getElementById('cfg-labor').value = config.laborCostPerHour;
   document.getElementById('cfg-currency').value = config.currency;
@@ -21,7 +24,7 @@ function loadConfig() {
   var wasteEl = document.getElementById('cfg-waste');
   if (wasteEl) wasteEl.value = config.wastePercent || 0;
   var wasteDisplayEl = document.getElementById('cfg-waste-display');
-  if (wasteDisplayEl) wasteDisplayEl.textContent = (config.wastePercent || 0) + '%';
+  if (wasteDisplayEl) wasteDisplayEl.textContent = (config.wastePercent || 0);
   var maintEl = document.getElementById('cfg-maint');
   if (maintEl) maintEl.value = config.maintenancePercent || 0;
   var maintDisplayEl = document.getElementById('cfg-maint-display');
@@ -175,6 +178,8 @@ function saveConfig() {
   sv('config', config);
   updateTopBar();
   snack('Configuración guardada ✓');
+  _limpiarAjustesSinGuardar();
+  return true;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -447,3 +452,42 @@ function _aplicarImportacion(data) {
       showPage('calc');
     } catch(err) { snack('Error al importar: archivo inválido'); }
 }
+
+/* ── Un solo «Guardar» para Ajustes en escritorio (D175) ─────────────
+   Antes cada pestaña tenía su botón, y al cambiar de pestaña se volvían a
+   cargar los valores guardados: lo escrito en otra pestaña se perdía. */
+var _ajustesSinGuardar = false;
+
+function _marcarAjustesSinGuardar() {
+  _ajustesSinGuardar = true;
+  var barra = document.getElementById('cfg-barra-guardar');
+  if (barra) barra.classList.remove('hidden');
+}
+
+function _limpiarAjustesSinGuardar() {
+  _ajustesSinGuardar = false;
+  var barra = document.getElementById('cfg-barra-guardar');
+  if (barra) barra.classList.add('hidden');
+}
+
+function guardarAjustes() { saveConfig(); }   /* si guarda, saveConfig quita la barra */
+
+function descartarAjustes() {
+  _limpiarAjustesSinGuardar();
+  loadConfig();
+  snack('Se descartaron los cambios');
+}
+
+(function _vigilarAjustes() {
+  if (typeof document === 'undefined' || !document.addEventListener) return;
+  var marcar = function(e) {
+    var cont = document.getElementById('cfg-subpage-container');
+    if (!cont || !e.target || !cont.contains(e.target)) return;
+    if (e.target.closest && e.target.closest('#page-quote-editor')) return;   /* Diseño se guarda solo */
+    if (e.type === 'click' && !(e.target.closest && e.target.closest('[onclick*="setCurrencyUI"], [onclick*="CostItem"]'))) return;
+    _marcarAjustesSinGuardar();
+  };
+  document.addEventListener('input', marcar, true);
+  document.addEventListener('change', marcar, true);
+  document.addEventListener('click', marcar, true);
+})();

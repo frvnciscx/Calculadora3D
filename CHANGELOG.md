@@ -29,6 +29,62 @@ app y volviendo a entrar.
 
 ---
 
+## 2026-11-25 · caché v129
+
+Lo que quedaba de la crítica (D175–D177). La v128 no llegó a subirse: este commit lleva las dos.
+
+- **Ajustes:** Negocio, Banco y Electricidad en dos columnas, con campos con borde; un solo
+  «Guardar» en una barra abajo que aparece al cambiar algo, con «Descartar». Lo escrito ya no se
+  pierde al cambiar de pestaña.
+- **Editor de cliente compacto:** un panel con los campos y Cancelar/Guardar, sin la página a
+  pantalla completa, el avatar grande ni la vista previa.
+- **Editores sin velo oscuro en escritorio:** Impresora, Material, Filamento, Mis productos,
+  producto y cliente se abren a la derecha y la página se angosta. Un clic fuera ya no los cierra.
+
+### Qué conviene probar en producción
+
+1. Ajustes › Negocio: cambiar un dato, pasar a Banco y regresar: el dato sigue; «Guardar» abajo.
+2. Impresoras › editar una: el panel se abre a la derecha sin oscurecer la lista.
+3. Clientes › editar uno: panel compacto; al guardar, el panel del cliente se actualiza.
+4. En la barra lateral aparece «Versión 129».
+
+---
+
+## 2026-11-25 · caché v128
+
+Escritorio de verdad y menos textos (D171–D174), tras una crítica con /impeccable sobre producción.
+La sincronización y la fórmula de costeo no cambian (72 pruebas en verde).
+
+### Cambiado
+
+- **Menos textos:** fuera el párrafo de la placa (lo dicen las etiquetas: «Peso de placa»,
+  «Tiempo de placa», «Piezas en la placa»), las ayudas bajo los campos, la numeración de las
+  secciones, el margen y la ganancia repetidos, los títulos de Ajustes en escritorio y una
+  docena de textos más. Las ayudas que sí sirven quedan detrás de un «?».
+- **El redondeo** solo se avisa cuando cambió el precio: «Redondeado de $75.90 (de $5 en $5)».
+- **Cotizaciones como tabla** en escritorio; Impresoras, Materiales e Inventario en rejilla; el
+  Dashboard en dos columnas y sin «Accesos rápidos».
+- **El cliente se abre en el panel lateral** en escritorio, y sus cotizaciones también, con
+  «‹ Cliente» para regresar. Antes iba a pantalla completa y tapaba la cotización.
+- **Botones de 40 px con ratón** (antes 52); en el teléfono no cambian.
+- **La cotización usa Plus Jakarta Sans** en la vista previa, el PDF y la imagen: pedía fuentes
+  que no se cargaban y en Windows salía en Arial.
+
+### Corregido
+
+- «10% %» en Ajustes › Otros.
+- «Toca para cambiar» en el logo de la cotización.
+
+### Qué conviene probar en producción
+
+1. Cotizaciones en escritorio: se ve como tabla; al abrir una, la tabla se angosta.
+2. Clientes › un cliente: se abre a la derecha; sus cotizaciones también, con «‹ Cliente».
+3. La Calculadora: sin el párrafo de la placa; la nota del redondeo aparece al calcular.
+4. Un PDF de una cotización: revisar que la letra se vea bien.
+5. En la barra lateral aparece «Versión 128».
+
+---
+
 ## 2026-11-20 · caché v127
 
 La v126 no llegó a subirse: lo de aquí la incluye.

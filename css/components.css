@@ -2933,3 +2933,24 @@ span.suffix {
 
 /* ══ v126: las medidas de la pieza (D168) ════════════════════════════ */
 .slicer-resumen-medidas { margin-top: 2px; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+/* ══ v128: menos textos y ayudas detrás de un «?» (D171) ═════════════ */
+.m3-helper:empty { display: none; }
+.ayuda-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; padding: 0; flex-shrink: 0;
+  background: none; border: 0; border-radius: 50%;
+  color: var(--accent); cursor: pointer;
+}
+.ayuda-btn .material-symbols-rounded { font-size: 18px; }
+.ayuda-btn:hover { background: var(--accent-tint); }
+.ayuda-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ayuda-texto { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink-2); }
+.ayuda-btn-texto { width: auto; gap: 4px; padding: 0 8px 0 4px; border-radius: 999px; font: 500 12px var(--font-sans); }
+
+/* Lo que solo hace falta en el teléfono (en escritorio lo da la barra lateral) */
+@media (min-width: 900px) {
+  .solo-movil { display: none !important; }
+  .cfg-sub-titulo { display: none; }
+  .help-sheet .sheet-header-row { padding: 0 !important; margin-bottom: 12px !important; }
+}
