@@ -86,6 +86,17 @@ pinta. Cambiar un texto, una ilustración o el orden es editar ese arreglo.
 
 Desde **Ajustes → Otros parámetros** se puede volver a ver la introducción y cerrar sesión.
 
+**Recorrido guiado** (D198, v138) — al terminar o saltar la introducción, Driver.js señala en
+la pantalla Impresoras, Inventario, Ajustes, Cotizar y Cotizaciones. Se baja de jsDelivr solo
+en ese momento. Los pasos están en `_pasosRecorrido()` de `onboarding.js`.
+
+### Ayuda
+`index.html` (`#page-ayuda`) · `js/onboarding.js` (`verRecorrido`, `filtrarAyuda`)
+
+Desde v139 (D200): en la barra lateral, debajo de Ajustes; en el teléfono, en la lista de
+Ajustes. «Ver el recorrido», «Ver la introducción», un buscador y 8 preguntas frecuentes. Las
+preguntas están escritas en `index.html`: para cambiar una, se edita ahí.
+
 ### Inicio (Dashboard)
 `js/dashboard.js` · 234 líneas
 

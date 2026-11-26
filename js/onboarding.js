@@ -585,6 +585,100 @@ function terminarOnboarding() {
   sv(ONBOARDING_KEY, true);
   _actualizarGate();
   if (typeof renderDashboard === 'function') renderDashboard();
+  /* Después de la introducción, el recorrido por la pantalla de verdad (D198).
+     También si se saltó: «Saltar» se salta las explicaciones, no dónde está cada cosa. */
+  setTimeout(iniciarRecorrido, 350);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Recorrido guiado (D198)
+
+   Señala en la pantalla real dónde está cada cosa: impresoras, ajustes,
+   la calculadora y las cotizaciones. Usa Driver.js (licencia MIT, gratuito,
+   sin dependencias, parecido a TourGuide.js). Se baja del CDN solo cuando
+   se va a mostrar, con la versión fija: quien ya lo vio no lo descarga, y
+   sin conexión simplemente no aparece.
+   ══════════════════════════════════════════════════════════════════ */
+var DRIVER_VERSION  = '1.3.1';
+var _driverCargando = null;
+
+function _cargarDriver() {
+  if (window.driver && window.driver.js) return Promise.resolve(window.driver.js.driver);
+  if (_driverCargando) return _driverCargando;
+  var base = 'https://cdn.jsdelivr.net/npm/driver.js@' + DRIVER_VERSION + '/dist/';
+  _driverCargando = new Promise(function(resolve, reject) {
+    var css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = base + 'driver.css';
+    document.head.appendChild(css);
+    var js = document.createElement('script');
+    js.src = base + 'driver.js.iife.js';
+    js.onload = function() {
+      if (window.driver && window.driver.js) resolve(window.driver.js.driver);
+      else reject(new Error('Driver.js no se cargó'));
+    };
+    js.onerror = function() { _driverCargando = null; reject(new Error('Sin conexión al CDN')); };
+    document.head.appendChild(js);
+  });
+  return _driverCargando;
+}
+
+/* Los pasos, con lo que se ve: la barra lateral en escritorio, la barra de
+   abajo en el teléfono. Un paso cuyo elemento no está a la vista se omite. */
+function _pasosRecorrido() {
+  var escritorio = window.innerWidth >= 900;
+  var q = function(escr, movil) { return document.querySelector(escritorio ? escr : movil); };
+  var pasos = [
+    { element: q('.sidebar-item[data-tab="printers"]', '.nav-item[data-page="catalog"]'),
+      popover: { title: escritorio ? 'Tus impresoras' : 'Impresoras y rollos',
+                 description: 'Empieza aquí: cada impresora con su consumo y lo que costó. Puedes elegirlas de una lista.' } },
+    { element: escritorio ? document.querySelector('.sidebar-item[data-page="inventory"]') : null,
+      popover: { title: 'Inventario',
+                 description: 'Tus rollos de filamento. Se descuentan solos al aceptar una cotización.' } },
+    { element: q('.sidebar-item[data-page="config"]', '.nav-item[data-page="config"]'),
+      popover: { title: 'Ajustes',
+                 description: 'Tus materiales y tus gastos fijos e indirectos. Con eso sale el costo real de cada pieza.' } },
+    { element: q('.sidebar-item[data-page="calc"]', '#dash-content button[onclick="nuevaCotizacion()"]'),
+      popover: { title: 'Cotizar',
+                 description: 'Escribe el peso y el tiempo del slicer, o lee su archivo, y te da el precio.' } },
+    { element: q('.sidebar-item[data-page="quotes"]', '.nav-item[data-page="quotes"]'),
+      popover: { title: 'Tus cotizaciones',
+                 description: 'Las mandas por WhatsApp o PDF y les cambias el estado cuando te contestan.' } },
+    { element: escritorio ? document.querySelector('.sidebar-item[data-page="ayuda"]') : null,
+      popover: { title: 'Ayuda',
+                 description: 'Este recorrido y las preguntas de siempre, para cuando los necesites.' } }
+  ];
+  return pasos.filter(function(p) { return p.element && p.element.offsetParent !== null; })
+    .map(function(p) {
+      p.popover.side  = escritorio ? 'right' : 'top';
+      p.popover.align = escritorio ? 'center' : 'end';
+      return p;
+    });
+}
+
+function iniciarRecorrido() {
+  /* Solo con la app a la vista: no encima de la pantalla de acceso */
+  var gate = document.getElementById('auth-gate');
+  if (gate && !gate.classList.contains('hidden')) return;
+  _cargarDriver().then(function(driver) {
+    var pasos = _pasosRecorrido();
+    if (!pasos.length) return;
+    driver({
+      steps: pasos,
+      showProgress: true,
+      progressText: '{{current}} de {{total}}',
+      nextBtnText: 'Siguiente',
+      prevBtnText: 'Atrás',
+      doneBtnText: 'Listo',
+      popoverClass: 'recorrido',
+      overlayOpacity: 0.6,
+      stagePadding: 4,
+      stageRadius: 10,
+      allowClose: true
+    }).drive();
+  }).catch(function(err) {
+    console.warn('[Recorrido] No se mostró:', err && err.message);
+  });
 }
 
 /** Permite volver a ver la introducción desde Ajustes. */
@@ -607,3 +701,33 @@ document.addEventListener('DOMContentLoaded', function() {
     _actualizarGate();
   }
 });
+
+/* ══════════════════════════════════════════════════════════════════
+   Página de Ayuda (D200)
+   ══════════════════════════════════════════════════════════════════ */
+
+/* El recorrido empieza en el inicio: en el teléfono, «Cotizar» es un botón de ahí */
+function verRecorrido() {
+  if (typeof showPage === 'function') showPage('dashboard');
+  setTimeout(iniciarRecorrido, 350);
+}
+
+/* Sin acentos ni mayúsculas, para que «envio» encuentre «envío» */
+function _normalizarAyuda(t) {
+  return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function filtrarAyuda(texto) {
+  var buscado = _normalizarAyuda(texto).trim();
+  var visibles = 0;
+  document.querySelectorAll('#ayuda-temas .ayuda-tema').forEach(function(t) {
+    var si = !buscado || _normalizarAyuda(t.textContent).indexOf(buscado) !== -1;
+    t.classList.toggle('hidden', !si);
+    if (si) visibles++;
+  });
+  var nada = document.getElementById('ayuda-nada');
+  if (nada) {
+    nada.classList.toggle('hidden', visibles > 0);
+    nada.textContent = visibles ? '' : 'Nada coincide con «' + String(texto).trim() + '».';
+  }
+}

@@ -30,7 +30,7 @@ test('Bambu Studio, un color (.gcode.3mf): tiempo, gramos, filamento, objeto y m
   assert.strictEqual(r.slicer, 'Bambu Studio');
   assert.strictEqual(p.tiempoS, 2395, 'el total estimado (39 min 55 s), no solo el del modelo (P129)');
   assert.strictEqual(p.gramos, 9.23);
-  assert.deepStrictEqual(p.filamentos, [{ tipo: 'PLA', color: '#FFFFFF', gramos: 9.23, metros: 3.05 }]);
+  assert.deepStrictEqual(p.filamentos, [{ id: '1', tipo: 'PLA', color: '#FFFFFF', gramos: 9.23, metros: 3.05 }]);
   assert.deepStrictEqual(p.objetos, ['Cuerpo604.stl']);
   assert.ok(p.miniatura && p.miniatura.length > 0, 'trae la miniatura de la placa');
 });
@@ -204,3 +204,22 @@ test('Medidas: copias se miden una vez; Cura trae el contorno; el alto solo', ()
   assert.strictEqual(g.medidasDePlacaJson('no es json'), null);
 });
 
+
+test('Varias placas, «Todas juntas»: suma gramos, tiempo y cambios, y junta los colores por cabezal (D201)', () => {
+  const placas = [
+    { indice: 1, tiempoS: 3600, gramos: 100, impresora: 'Bambu Lab P1S', cambios: null, objetos: ['casco'],
+      filamentos: [{ id: '1', tipo: 'PLA', color: '#FFFFFF', gramos: 100, metros: 30 }] },
+    { indice: 2, tiempoS: 1800, gramos: 60, impresora: 'Bambu Lab P1S', cambios: 98, objetos: ['visera'],
+      filamentos: [{ id: '1', tipo: 'PLA', color: '#FFFFFF', gramos: 40, metros: 12 },
+                   { id: '4', tipo: 'PLA', color: '#FFCC00', gramos: 20, metros: 6 }] }
+  ];
+  const t = g.juntarPlacas(placas);
+  assert.strictEqual(t.gramos, 160);
+  assert.strictEqual(t.tiempoS, 5400);
+  assert.strictEqual(t.cambios, 98);
+  assert.strictEqual(t.cuantas, 2);
+  assert.strictEqual(t.todas, true);
+  assert.deepStrictEqual(t.filamentos.map((f) => [f.id, f.gramos, f.metros]), [['1', 140, 42], ['4', 20, 6]]);
+  assert.deepStrictEqual(t.objetos, [], 'las partes no se cuentan como copias');
+  assert.strictEqual(g.piezasDeObjetos(t.objetos), null);
+});

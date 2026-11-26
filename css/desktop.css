@@ -1317,3 +1317,13 @@
 @media (min-width: 900px) {
   #cfg-subpage-container .empty-state .btn.btn-primary { margin-left: auto; margin-right: auto; }
 }
+
+/* ══ v139: Ayuda en escritorio (D200): las preguntas en rejilla ══ */
+@media (min-width: 900px) {
+  #ayuda-temas {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 12px; align-items: start;
+  }
+  #ayuda-temas .ayuda-tema { margin: 0; }
+  .ayuda-buscar { max-width: 520px; }
+}

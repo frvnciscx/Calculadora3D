@@ -29,6 +29,52 @@ app y volviendo a entrar.
 
 ---
 
+## 2026-11-26 · caché v139
+
+La Ayuda (D200) y los archivos de varias placas (D201). La v138 no llegó a subirse: este commit
+lleva las dos.
+
+### Nuevo
+
+- **Ayuda** en la barra lateral (en el teléfono, en Ajustes): «Ver el recorrido», «Ver la
+  introducción», un buscador y 8 preguntas frecuentes con su respuesta corta.
+
+### Corregido
+
+- **Un `.3mf` con varias placas usaba solo la primera.** Ahora el resumen dice cuántas son y, de
+  inicio, las suma todas como una pieza (el casco NFL: 8 placas, 672.5 g y 25 h 47 min). En el
+  mismo selector se elige una placa.
+- 1 prueba nueva en `tests/gcode.test.js`: 83 en total.
+
+### Qué conviene probar en producción
+
+1. Barra lateral › Ayuda: el buscador con «inventario» deja dos preguntas.
+2. Calculadora › Leer archivo del slicer con el casco: «8 placas · Todas juntas», 672.48 g.
+3. En el selector, «Placa 2»: 63.93 g.
+4. En la barra lateral aparece «Versión 139».
+
+---
+
+## 2026-11-26 · caché v138
+
+Estado vacío de indirectos (D197) y recorrido guiado (D198).
+
+### Nuevo
+
+- **«Sin gastos indirectos»** en Ajustes › Gastos indirectos, con «Agregar gasto».
+- **Recorrido guiado** al entrar por primera vez, con Driver.js (gratuita, licencia MIT): al
+  terminar o saltar la introducción, señala Impresoras, Inventario, Ajustes, Cotizar y
+  Cotizaciones. En el teléfono, la barra de abajo. Se baja del CDN solo cuando se muestra.
+
+### Qué conviene probar en producción
+
+1. Con una cuenta nueva: la introducción y, al terminarla, el recorrido.
+2. Ajustes › Otros › «Ver introducción»: al terminarla, otra vez el recorrido.
+3. Ajustes › Gastos indirectos vacío: «Sin gastos indirectos».
+4. En la barra lateral aparece «Versión 138».
+
+---
+
 ## 2026-11-26 · caché v137
 
 Agregar los comunes (D195) y la introducción por cuenta (D196). Las v135 y v136 no llegaron a

@@ -3074,3 +3074,61 @@ span.suffix {
 .comunes-texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .comunes-nombre { font-size: 15px; font-weight: 600; color: var(--ink); }
 .comunes-sub { font-size: 12px; color: var(--ink-3); }
+
+/* ══ v138: estado vacío de indirectos (D197) y recorrido guiado (D198) ══ */
+#indirect-cost-vacio { padding: 28px 8px 20px; }
+
+/* Driver.js con los colores de la app, en claro y oscuro. Las flechas son
+   bordes: el lado que apunta lleva el color del fondo del globo. */
+.driver-popover.recorrido {
+  background: var(--bg-elev); color: var(--ink);
+  border: 1px solid var(--line-strong); border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-sans); max-width: 300px; padding: 18px 18px 14px;
+}
+.driver-popover.recorrido .driver-popover-title { font: 600 16px/1.3 var(--font-sans); color: var(--ink); }
+.driver-popover.recorrido .driver-popover-description { font-size: 14px; line-height: 1.45; color: var(--ink-2); }
+.driver-popover.recorrido .driver-popover-progress-text { font-size: 12px; color: var(--ink-3); }
+.driver-popover.recorrido .driver-popover-close-btn { color: var(--ink-3); }
+.driver-popover.recorrido .driver-popover-close-btn:hover { color: var(--ink); }
+.driver-popover.recorrido .driver-popover-footer button {
+  padding: 7px 14px; border-radius: 8px; text-shadow: none;
+  font: 500 13px var(--font-sans);
+  background: var(--bg); color: var(--ink); border: 1px solid var(--line-strong);
+}
+.driver-popover.recorrido .driver-popover-footer button:disabled,
+.driver-popover.recorrido .driver-popover-footer .driver-popover-btn-disabled { display: none; }   /* «Atrás» en el primer paso */
+.driver-popover.recorrido .driver-popover-footer .driver-popover-next-btn {
+  background: var(--accent); color: var(--on-accent); border-color: var(--accent);
+}
+.driver-popover.recorrido .driver-popover-arrow-side-left.driver-popover-arrow   { border-left-color: var(--bg-elev); }
+.driver-popover.recorrido .driver-popover-arrow-side-right.driver-popover-arrow  { border-right-color: var(--bg-elev); }
+.driver-popover.recorrido .driver-popover-arrow-side-top.driver-popover-arrow    { border-top-color: var(--bg-elev); }
+.driver-popover.recorrido .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: var(--bg-elev); }
+
+/* ══ v139: página de Ayuda (D200) ══════════════════════════════════ */
+.ayuda-acciones { display: flex; flex-wrap: wrap; gap: 10px; }
+.ayuda-acciones .btn { width: auto; }
+.ayuda-buscar { position: relative; }
+.ayuda-buscar .material-symbols-rounded {
+  position: absolute; left: 34px; top: 12px; font-size: 20px; color: var(--ink-3); pointer-events: none;
+}
+.ayuda-buscar input {
+  box-sizing: border-box; width: 100%; height: 44px; padding: 0 14px 0 44px;
+  background: var(--bg-elev); color: var(--ink);
+  border: 1px solid var(--line-strong); border-radius: 10px;
+  font: 15px var(--font-sans);
+}
+.ayuda-buscar input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+.ayuda-tema { padding: 18px 20px; margin-bottom: 12px; }
+.ayuda-tema h2 { margin: 0 0 6px; font: 600 16px/1.3 var(--font-sans); color: var(--ink); letter-spacing: -0.01em; }
+.ayuda-tema p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
+.ayuda-nada { padding: 8px 20px; font-size: 14px; color: var(--ink-3); }
+
+/* ══ v139: varias placas en un archivo (D201) ═══════════════════════ */
+.slicer-placas {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px;
+  margin: 6px 0 4px; font-size: 13px; color: var(--ink);
+}
+.slicer-placas > span { font-weight: 600; }
+.slicer-placas .slicer-placa { padding: 4px 6px; border-radius: 8px; background: var(--bg); }

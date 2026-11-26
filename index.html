@@ -69,6 +69,9 @@
     <button class="sidebar-item" data-page="config" onclick="showPage('config')">
       <span class="material-symbols-rounded sidebar-icon">settings</span> Ajustes
     </button>
+    <button class="sidebar-item" data-page="ayuda" onclick="showPage('ayuda')">
+      <span class="material-symbols-rounded sidebar-icon">help</span> Ayuda
+    </button>
     <!-- Tema: interruptor de claro y oscuro (D122). applyTheme() pone aria-checked -->
     <button class="sidebar-item tema-switch-fila" role="switch" aria-checked="false" onclick="toggleTheme()">
       <span class="material-symbols-rounded sidebar-icon">dark_mode</span>
@@ -622,6 +625,68 @@
 <div id="page-materials" class="page" style="display:none!important"></div>
 <div id="page-inventory" class="page" style="display:none!important"></div>
 
+<!-- ===== PAGE: AYUDA (D200) =====
+     Las preguntas de siempre, el recorrido y la introducción. En escritorio se
+     abre desde la barra lateral; en el teléfono, desde Ajustes. Sin acordeón:
+     las respuestas son cortas y se ven todas; el buscador filtra. -->
+<div id="page-ayuda" class="page" style="padding-top:0">
+  <div class="ayuda-cabeza" style="padding:28px 20px 18px">
+    <button class="back-btn solo-movil" onclick="showPage('config')" style="margin-bottom:12px">
+      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+    </button>
+    <h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98;margin:0">Ayuda</h1>
+  </div>
+  <div class="ayuda-acciones" style="padding:0 20px 18px">
+    <button type="button" class="btn btn-primary" onclick="verRecorrido()">
+      <span class="material-symbols-rounded" style="font-size:18px" aria-hidden="true">tour</span> Ver el recorrido
+    </button>
+    <button type="button" class="btn btn-ghost" onclick="verOnboardingDeNuevo()">
+      <span class="material-symbols-rounded" style="font-size:18px" aria-hidden="true">school</span> Ver la introducción
+    </button>
+  </div>
+  <div class="ayuda-buscar" style="padding:0 20px 16px">
+    <span class="material-symbols-rounded" aria-hidden="true">search</span>
+    <input type="search" id="ayuda-buscar" placeholder="Buscar en la ayuda" autocomplete="off"
+           aria-label="Buscar en la ayuda" oninput="filtrarAyuda(this.value)">
+  </div>
+  <div id="ayuda-temas" class="ayuda-temas" style="padding:0 20px">
+      <article class="card ayuda-tema">
+        <h2>¿Cómo sale el precio?</h2>
+        <p>Suma el material, la luz, el desgaste de la impresora, las horas de diseño y una parte de tus gastos fijos e indirectos por cada hora de impresión. Encima van el mantenimiento y el desperdicio, y después tu margen. El precio se redondea hacia arriba de $5 en $5.</p>
+      </article>
+      <article class="card ayuda-tema">
+        <h2>¿Qué necesito antes de cotizar?</h2>
+        <p>Una impresora (Catálogo › Impresoras) y un material (Ajustes › Materiales). En Ajustes van también tus gastos fijos, los indirectos y las horas que imprimes al mes: sin ellos, el precio sale más bajo de lo que te cuesta.</p>
+      </article>
+      <article class="card ayuda-tema">
+        <h2>¿Qué peso y tiempo escribo?</h2>
+        <p>Los de la placa completa, como te los da el slicer, y en «Piezas en la placa» cuántas salen de ella: la app divide. O toca «Leer archivo del slicer» y elige el .gcode o el .3mf.</p>
+      </article>
+      <article class="card ayuda-tema">
+        <h2>¿Cómo cotizo varias piezas juntas?</h2>
+        <p>Calcula cada pieza y toca «Agregar a orden». Cuando estén todas, «Generar cotización»: el cliente, el descuento y la comisión. Después la mandas por WhatsApp, en PDF o como imagen.</p>
+      </article>
+      <article class="card ayuda-tema">
+        <h2>¿Cómo cotizo un cortador o un kit?</h2>
+        <p>Arriba de la calculadora, en «¿Qué cotizas?», elige el producto. Los cortadores van por tamaño, con su tabla de precios. Un kit va a precio fijo: la app te dice cuánto te cuesta y cuánto ganas. Se crean en «Mis productos».</p>
+      </article>
+      <article class="card ayuda-tema">
+        <h2>¿Qué significa cada estado?</h2>
+        <p>Borrador: todavía no la mandas. Enviada: ya la tiene el cliente. Aceptada: va a producción y descuenta los rollos que elegiste. Rechazada: no se hizo. Si te equivocas, en el menú «⋯» está «Regresar a…», y el filamento vuelve al inventario.</p>
+      </article>
+      <article class="card ayuda-tema">
+        <h2>¿Cómo funciona el inventario?</h2>
+        <p>Registra tus rollos con su peso. En la calculadora elige el rollo con que imprimes; al aceptar la cotización se descuentan sus gramos. Arriba del inventario, «Material usado» te dice qué gastas más en el mes.</p>
+      </article>
+      <article class="card ayuda-tema">
+        <h2>¿Dónde se guardan mis datos?</h2>
+        <p>Con cuenta, en la nube: los ves en cualquier equipo donde entres. Sin cuenta, solo en este equipo. En Ajustes, «Exportar» guarda un respaldo en un archivo.</p>
+      </article>
+  </div>
+  <p id="ayuda-nada" class="ayuda-nada hidden" role="status"></p>
+  <div class="dash-espacio" style="height:110px"></div>
+</div>
+
 <!-- ===== PAGE: HISTORY ===== -->
 <div id="page-history" class="page">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
@@ -968,11 +1033,21 @@
           <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
         </button>
 
-        <button class="cfg-nav-row" onclick="showPage('quote-editor')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;background:none;cursor:pointer">
+        <button class="cfg-nav-row" onclick="showPage('quote-editor')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
           <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">palette</span>
           <div class="cfg-nav-text">
             <div class="cfg-nav-label">Diseño de cotización</div>
             <div class="cfg-nav-sub">Logo, colores, campos visibles, textos</div>
+          </div>
+          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+        </button>
+
+        <!-- Ayuda (D200): en escritorio está en la barra lateral -->
+        <button class="cfg-nav-row solo-movil" onclick="showPage('ayuda')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;background:none;cursor:pointer">
+          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">help</span>
+          <div class="cfg-nav-text">
+            <div class="cfg-nav-label">Ayuda</div>
+            <div class="cfg-nav-sub">Recorrido, introducción y preguntas</div>
           </div>
           <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
         </button>
@@ -1236,11 +1311,20 @@
   <div style="padding:12px 20px 12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <button type="button" class="ayuda-btn ayuda-btn-texto" onclick="mostrarAyuda('indirectos')"><span class="material-symbols-rounded" aria-hidden="true">help</span>¿Qué va aquí?</button>
-      <button class="link-btn" onclick="addIndirectCostItem()" style="font-size:12px;color:var(--accent);display:inline-flex;align-items:center;gap:4px">
+      <button class="link-btn" id="indirect-cost-agregar" onclick="addIndirectCostItem()" style="font-size:12px;color:var(--accent);display:inline-flex;align-items:center;gap:4px">
         <span class="material-symbols-rounded" style="font-size:14px">add</span> Categoría
       </button>
     </div>
     <div class="card" style="padding:0 18px;margin-bottom:12px">
+      <!-- Sin gastos indirectos (D197). Lo muestra _pintarVacioCostos (config.js) -->
+      <div id="indirect-cost-vacio" class="empty-state hidden">
+        <div class="empty-state-icon"><span class="material-symbols-rounded">inventory_2</span></div>
+        <h3 class="empty-state-title">Sin gastos indirectos</h3>
+        <p>Guantes, lijas, alcohol, empaque: lo que se gasta poco a poco al imprimir.</p>
+        <button type="button" class="btn btn-primary empty-state-action" onclick="addIndirectCostItem()">
+          <span class="material-symbols-rounded" style="font-size:18px">add</span> Agregar gasto
+        </button>
+      </div>
       <div id="indirect-cost-items-list"></div>
       <div class="row" style="border-top:0.5px solid var(--line);margin-top:4px;border-bottom:none">
         <div style="font-size:13px;font-weight:600">Total mensual</div>

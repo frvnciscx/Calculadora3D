@@ -238,13 +238,19 @@ function _renderCostItems(prefix, items) {
 
 /* Estado vacío de los gastos fijos (D194): sin categorías y sin total. Con él
    visible, «+ Categoría» de arriba se esconde: un solo botón para lo mismo. */
+var _VACIOS_COSTOS = {
+  fci: { caja: 'fixed-cost-vacio',    agregar: 'fixed-cost-agregar' },
+  ici: { caja: 'indirect-cost-vacio', agregar: 'indirect-cost-agregar' }   /* D197 */
+};
+
 function _pintarVacioCostos(prefix) {
-  if (prefix !== 'fci') return;
-  var total = document.getElementById('cfg-fixed-monthly');
-  var filas = document.querySelectorAll('#fixed-cost-items-list .fci-row').length;
+  var v = _VACIOS_COSTOS[prefix], g = _COST_GROUPS[prefix];
+  if (!v || !g) return;
+  var total = document.getElementById(g.totalId);
+  var filas = document.querySelectorAll('#' + g.listId + ' .' + prefix + '-row').length;
   var vacio = !filas && !(parseFloat(total && total.value) > 0);
-  var caja = document.getElementById('fixed-cost-vacio');
-  var agregar = document.getElementById('fixed-cost-agregar');
+  var caja = document.getElementById(v.caja);
+  var agregar = document.getElementById(v.agregar);
   if (caja) caja.classList.toggle('hidden', !vacio);
   if (agregar) agregar.classList.toggle('hidden', vacio);
 }
@@ -305,7 +311,7 @@ function updateFixedCostTotal(manualEdit)   { _updateCostTotal('fci', manualEdit
 
 function renderIndirectCostItems()          { _renderCostItems('ici', config.indirectCostItems); }
 function addIndirectCostItem()              { _addCostItem('ici'); }
-function updateIndirectCostTotal(manualEdit){ _updateCostTotal('ici', manualEdit); _updateIndirectPerHourDisplay(); }
+function updateIndirectCostTotal(manualEdit){ _updateCostTotal('ici', manualEdit); _updateIndirectPerHourDisplay(); _pintarVacioCostos('ici'); }
 
 /* Costo indirecto por hora — usa las mismas horas/mes que los gastos fijos */
 function _updateIndirectPerHourDisplay() {

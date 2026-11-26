@@ -236,6 +236,7 @@ function analizarSliceInfo(xml) {
     while ((k = reFil.exec(p))) {
       var f = _atributos(k[1]);
       filamentos.push({
+        id: f.id || String(filamentos.length + 1),   /* el cabezal: junta placas (D201) */
         tipo: f.type || '',
         color: _colorCorto(f.color),
         gramos: parseFloat(f.used_g) || 0,
@@ -428,6 +429,41 @@ async function leerArchivoSlicer(archivo, opts) {
   throw _errorSlicer('formato');
 }
 
+/* Todas las placas de un archivo como una sola (D201): un producto que se
+   imprime en varias placas, como el casco de 8. Suma gramos, tiempo y cambios
+   de color, y junta los filamentos por su número (el cabezal), en orden. Los
+   objetos no se juntan: son partes distintas, no copias, y la pieza es una. */
+function juntarPlacas(placas) {
+  placas = placas || [];
+  var porId = {}, orden = [], gramos = 0, tiempoS = 0, cambios = null;
+  placas.forEach(function(p) {
+    gramos  += Number(p.gramos)  || 0;
+    tiempoS += Number(p.tiempoS) || 0;
+    if (p.cambios != null) cambios = (cambios || 0) + Number(p.cambios);
+    (p.filamentos || []).forEach(function(f, n) {
+      var clave = f.id ? String(f.id) : String(n + 1);
+      if (!porId[clave]) {
+        porId[clave] = { id: clave, tipo: f.tipo || '', color: f.color || '', gramos: 0, metros: f.metros != null ? 0 : null };
+        orden.push(clave);
+      }
+      var x = porId[clave];
+      x.gramos = Math.round((x.gramos + (Number(f.gramos) || 0)) * 100) / 100;
+      if (x.metros != null && f.metros != null) x.metros = Math.round((x.metros + Number(f.metros)) * 100) / 100;
+    });
+  });
+  orden.sort(function(a, b) { return (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0); });
+  return {
+    indice: 0, todas: true, cuantas: placas.length,
+    tiempoS: tiempoS, gramos: Math.round(gramos * 100) / 100,
+    filamentos: orden.map(function(k) { return porId[k]; }),
+    objetos: [],
+    impresora: placas[0] ? placas[0].impresora : '',
+    cambios: cambios,
+    miniatura: placas[0] ? placas[0].miniatura : null,
+    medidas: null
+  };
+}
+
 /* Piezas (P130): solo si la placa trae copias del mismo objeto. Objetos
    distintos (cabeza + cuerpo) pueden ser un solo producto, y no se tocan. */
 function piezasDeObjetos(objetos) {
@@ -487,7 +523,7 @@ function formatoDuracion(segundos) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     leerArchivoSlicer: leerArchivoSlicer, analizarGcodeTexto: analizarGcodeTexto,
-    analizarSliceInfo: analizarSliceInfo, piezasDeObjetos: piezasDeObjetos,
+    analizarSliceInfo: analizarSliceInfo, piezasDeObjetos: piezasDeObjetos, juntarPlacas: juntarPlacas,
     cambiosDeColor: cambiosDeColor, impresoraDelArchivo: impresoraDelArchivo,
     descripcionDeArchivo: descripcionDeArchivo, formatoDuracion: formatoDuracion,
     esArchivoSlicer: esArchivoSlicer, ACEPTA_SLICER: ACEPTA_SLICER,
@@ -559,7 +595,8 @@ async function procesarArchivoSlicer(archivo) {
     r.nombre = archivo.name;
     _slicerLeido = r;
     _slicerAntes = _capturarCampos();
-    aplicarPlacaSlicer(0);
+    /* Varias placas: de inicio, todas juntas (D201); se puede elegir una */
+    aplicarPlacaSlicer(r.placas.length > 1 ? -1 : 0);
   } catch (e) {
     console.warn('[Slicer] No se pudo leer:', e);
     /* Lo que llenó una lectura anterior se queda; este error solo se cierra */
@@ -571,15 +608,20 @@ async function procesarArchivoSlicer(archivo) {
 
 function aplicarPlacaSlicer(i) {
   var r = _slicerLeido;
-  if (!r || !r.placas[i]) return;
-  var p = r.placas[i];
+  if (!r) return;
+  /* -1: todas las placas juntas (D201) */
+  var p = i === -1 ? juntarPlacas(r.placas) : r.placas[i];
+  if (!p) return;
   var avisos = [];
 
   _poner('calc-weight', String(Math.round(p.gramos * 100) / 100));
   _poner('calc-time', String(Math.round(p.tiempoS / 36) / 100));
 
   var piezas = piezasDeObjetos(p.objetos);
-  if (piezas) _poner('calc-pieces', String(piezas));
+  if (p.todas) {
+    _poner('calc-pieces', '1');
+    avisos.push('Son las ' + p.cuantas + ' placas juntas, como una sola pieza. Si cada placa es un producto distinto, elige una.');
+  } else if (piezas) _poner('calc-pieces', String(piezas));
   else if (p.objetos.length > 1) avisos.push('La placa trae ' + p.objetos.length + ' objetos distintos: revisa «Piezas».');
 
   var desc = _campo('calc-desc');
@@ -710,24 +752,31 @@ function _pintarResumenSlicer(estado) {
     return;
   }
 
-  var r = estado.resultado, p = r.placas[estado.indice];
+  var r = estado.resultado;
+  var p = estado.indice === -1 ? juntarPlacas(r.placas) : r.placas[estado.indice];
   if (p.miniatura && typeof Blob !== 'undefined') {
     _slicerMiniatura = URL.createObjectURL(new Blob([p.miniatura], { type: 'image/png' }));
   }
   var colores = p.filamentos.length > 1
     ? p.filamentos.length + ' colores'
     : (p.filamentos[0] && p.filamentos[0].tipo ? p.filamentos[0].tipo : '');
+  /* Varias placas (D201): a la vista cuántas son, y se usan todas juntas o una */
   var selector = r.placas.length > 1
-    ? ' · <select class="slicer-placa" onchange="aplicarPlacaSlicer(this.selectedIndex)" aria-label="Placa">' +
-        r.placas.map(function(pl, n) {
-          return '<option' + (n === estado.indice ? ' selected' : '') + '>Placa ' + pl.indice + '</option>';
-        }).join('') + '</select>'
+    ? '<label class="slicer-placas"><span>' + r.placas.length + ' placas</span>' +
+        '<select class="slicer-placa" onchange="aplicarPlacaSlicer(Number(this.value))" aria-label="Qué placas usar">' +
+          '<option value="-1"' + (estado.indice === -1 ? ' selected' : '') + '>Todas juntas</option>' +
+          r.placas.map(function(pl, n) {
+            return '<option value="' + n + '"' + (n === estado.indice ? ' selected' : '') + '>Placa ' + pl.indice +
+                   ' · ' + (Math.round(pl.gramos * 10) / 10) + ' g</option>';
+          }).join('') +
+        '</select></label>'
     : '';
 
   caja.innerHTML =
-    (_slicerMiniatura ? '<img class="slicer-miniatura" src="' + _slicerMiniatura + '" alt="Placa ' + p.indice + '">' : '') +
+    (_slicerMiniatura ? '<img class="slicer-miniatura" src="' + _slicerMiniatura + '" alt="' +
+      (p.todas ? 'Placa 1 de ' + p.cuantas : 'Placa ' + p.indice) + '">' : '') +
     '<div class="slicer-resumen-texto">' +
-      '<div class="slicer-resumen-titulo">' + _escSlicer(r.slicer) + selector + '</div>' +
+      '<div class="slicer-resumen-titulo">' + _escSlicer(r.slicer) + '</div>' + selector +
       '<div class="slicer-resumen-datos num">' + p.gramos.toFixed(2) + ' g · ' + formatoDuracion(p.tiempoS) +
         (colores ? ' · ' + _escSlicer(colores) : '') +
         (p.filamentos.length > 1 && p.cambios != null ? ' · ' + p.cambios.toLocaleString('es-MX') + ' cambios' : '') + '</div>' +
