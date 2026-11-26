@@ -228,11 +228,25 @@ function _renderCostItems(prefix, items) {
   var list = document.getElementById(_COST_GROUPS[prefix].listId);
   if (!list) return;
   items = items || [];
-  if (items.length === 0) { list.innerHTML = ''; return; }
+  if (items.length === 0) { list.innerHTML = ''; _pintarVacioCostos(prefix); return; }
   list.innerHTML = items.map(function(item) {
     return _costItemRow(prefix, item.name, item.amount);
   }).join('');
   _updateCostTotal(prefix);
+  _pintarVacioCostos(prefix);
+}
+
+/* Estado vacío de los gastos fijos (D194): sin categorías y sin total. Con él
+   visible, «+ Categoría» de arriba se esconde: un solo botón para lo mismo. */
+function _pintarVacioCostos(prefix) {
+  if (prefix !== 'fci') return;
+  var total = document.getElementById('cfg-fixed-monthly');
+  var filas = document.querySelectorAll('#fixed-cost-items-list .fci-row').length;
+  var vacio = !filas && !(parseFloat(total && total.value) > 0);
+  var caja = document.getElementById('fixed-cost-vacio');
+  var agregar = document.getElementById('fixed-cost-agregar');
+  if (caja) caja.classList.toggle('hidden', !vacio);
+  if (agregar) agregar.classList.toggle('hidden', vacio);
 }
 
 /* Agrega una fila vacía y enfoca el nombre */
@@ -242,6 +256,7 @@ function _addCostItem(prefix) {
   var div = document.createElement('div');
   div.innerHTML = _costItemRow(prefix, '', '');
   list.appendChild(div.firstChild);
+  _pintarVacioCostos(prefix);
   var nameEl = list.lastElementChild && list.lastElementChild.querySelector('.' + prefix + '-name');
   if (nameEl) nameEl.focus();
 }
@@ -252,6 +267,7 @@ function removeCostItemRow(btn, prefix) {
   if (!row) return;
   row.remove();
   _updateCostTotal(prefix);
+  _pintarVacioCostos(prefix);
 }
 
 /* Lee las filas de un grupo → [{name, amount}] */
@@ -285,7 +301,7 @@ function _updateCostTotal(prefix, manualEdit) {
 /* ── Wrappers por grupo (los usan los oninput del HTML) ── */
 function renderFixedCostItems()             { _renderCostItems('fci', config.fixedCostItems); }
 function addFixedCostItem()                 { _addCostItem('fci'); }
-function updateFixedCostTotal(manualEdit)   { _updateCostTotal('fci', manualEdit); _updateFixedPerHourDisplay(); }
+function updateFixedCostTotal(manualEdit)   { _updateCostTotal('fci', manualEdit); _updateFixedPerHourDisplay(); _pintarVacioCostos('fci'); }
 
 function renderIndirectCostItems()          { _renderCostItems('ici', config.indirectCostItems); }
 function addIndirectCostItem()              { _addCostItem('ici'); }

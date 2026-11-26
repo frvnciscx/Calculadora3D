@@ -64,6 +64,11 @@ function calculate(silent) {
   var postProcCost = r.postProcCost, maintCost    = r.maintCost;
   var wasteCost    = r.wasteCost;
   var baseCost     = r.baseCost,     totalCost    = r.totalCost;
+  /* Precio fijo, como un kit (D187): el precio lo pone el producto y la
+     fórmula solo da lo que cuesta */
+  var fijo = typeof productoFijoActivo === 'function' ? productoFijoActivo() : null;
+  var precioFormula = totalCost;
+  if (fijo) totalCost = Number(fijo.precio) || 0;
 
   document.getElementById('r-mat').textContent     = cur + matCost.toFixed(2);
   document.getElementById('r-energy').textContent   = cur + energyCost.toFixed(2);
@@ -75,7 +80,10 @@ function calculate(silent) {
   document.getElementById('r-waste').textContent    = cur + wasteCost.toFixed(2);
   document.getElementById('result-base').textContent  = cur + baseCost.toFixed(2);
   document.getElementById('result-total').textContent = cur + totalCost.toFixed(0);
-  _pintarNotaRedondeo(baseCost * (1 + margin / 100), totalCost, cur);
+  var heroLbl = document.getElementById('calc-hero-label');
+  if (heroLbl) heroLbl.textContent = fijo ? 'Precio fijo' : 'Costo total sugerido';
+  if (fijo) _pintarNotaPrecioFijo(totalCost, baseCost, margin);
+  else _pintarNotaRedondeo(baseCost * (1 + margin / 100), totalCost, cur);
 
   /* ── Ganancia ── */
   var profitAmt = totalCost - baseCost;
@@ -216,6 +224,10 @@ function calculate(silent) {
     indirectCost:   indirectCost,
     wasteCost,
     baseCost, totalCost,
+    /* Precio fijo (D187): el del producto; precioFormula es el que daría el margen */
+    precioFijo:     fijo ? totalCost : null,
+    productoFijoId: fijo ? fijo.id : null,
+    precioFormula:  precioFormula,
     date: new Date().toISOString()
   });
 }
@@ -981,6 +993,7 @@ function _setFieldState(fieldId, helperId, state, msg) {
    revisar. */
 function llenarCalculadoraConPieza(item) {
   if (typeof enModoProducto === 'function' && enModoProducto()) elegirQueCotizas('pieza');
+  if (typeof productoFijoActivo === 'function' && productoFijoActivo()) elegirQueCotizas('pieza');
   if (typeof limpiarLecturaSlicer === 'function') limpiarLecturaSlicer();
 
   var e = item.entrada || null;
@@ -1064,6 +1077,8 @@ function llenarCalculadoraConPieza(item) {
     v('postproc-primer', pp && pp.primerCost); v('postproc-varnish', pp && pp.varnishCost); v('postproc-time', pp && pp.paintingTimeH);
   }
 
+  /* Si era de un producto de precio fijo, el precio sigue siendo el suyo (D187) */
+  if (e && e.productoFijoId && typeof reactivarProductoFijo === 'function') reactivarProductoFijo(e.productoFijoId);
   calculate(true);
   return avisos;
 }
@@ -1075,9 +1090,33 @@ function llenarCalculadoraConPieza(item) {
 function _pintarNotaRedondeo(sinRedondear, precio, cur) {
   var el = document.getElementById('nota-redondeo-texto');
   if (!el) return;
+  /* La misma nota sirve al precio fijo: se regresa a la del redondeo */
+  if (el.parentElement) {
+    el.parentElement.classList.remove('nota-aviso');
+    var icono = el.parentElement.querySelector('.material-symbols-rounded');
+    if (icono) icono.textContent = 'info';
+  }
   cur = cur || (typeof config !== 'undefined' && config.currency) || '$';
   /* Solo cuando el redondeo cambió el precio (afinado en D171) */
   var cambio = sinRedondear != null && precio > 0 && Math.abs(sinRedondear - precio) > 0.005;
   if (el.parentElement) el.parentElement.classList.toggle('hidden', !cambio);
   el.textContent = cambio ? 'Redondeado de ' + cur + sinRedondear.toFixed(2) + ' (de ' + cur + '5 en ' + cur + '5)' : '';
+}
+
+/* ── Precio fijo, a la vista (D187, D190) ──────────────────────────
+   Lo que se gana al precio del producto. Si queda abajo del margen de la
+   calculadora, avisa; el precio no cambia. Usa la nota del redondeo. */
+function _pintarNotaPrecioFijo(precio, costo, margen) {
+  var el = document.getElementById('nota-redondeo-texto');
+  if (!el) return;
+  var g = gananciaDePrecioFijo(precio, costo, margen);
+  var caja = el.parentElement;
+  if (caja) {
+    caja.classList.remove('hidden');
+    caja.classList.toggle('nota-aviso', g.abajo);
+    var icono = caja.querySelector('.material-symbols-rounded');
+    if (icono) icono.textContent = g.abajo ? 'warning' : 'sell';
+  }
+  el.textContent = 'Margen ' + (g.margen == null ? '—' : g.margen + ' %') +
+    (g.abajo ? ', abajo del ' + Math.round(Number(margen) || 0) + ' % de la calculadora' : '');
 }

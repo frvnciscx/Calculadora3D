@@ -105,7 +105,11 @@ function translateAuthError(error) {
       break;
     case 'auth/operation-not-allowed':
     case 'auth/configuration-not-found':
-      message = 'El método de acceso por Correo/Contraseña no está habilitado en la consola de Firebase.';
+      message = 'Este método de acceso no está habilitado en la consola de Firebase.';
+      break;
+    case 'auth/unauthorized-domain':
+      /* Falta este sitio en Firebase › Authentication › Settings › Authorized domains (D192) */
+      message = 'Entrar con Google todavía no está habilitado en este sitio. Por ahora entra con tu correo.';
       break;
   }
   var err = new Error(message);

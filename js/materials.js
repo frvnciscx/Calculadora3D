@@ -2,11 +2,15 @@
 function renderMaterials() {
   const el = document.getElementById('material-list');
   marcarListaVacia('materials', !materials.length);
+  /* Vacío: el botón es el del estado vacío, no también «+ Material» (D194) */
+  const agregar = document.getElementById('cfg-material-agregar');
+  if (agregar) agregar.classList.toggle('hidden', !materials.length);
   if (!materials.length) {
     el.innerHTML = tplEmptyState('category',
       'Sin materiales',
       'Registra los filamentos y resinas que usas, con su precio por kilo. Sin esto no se puede cotizar.',
-      { label: 'Agregar material', onclick: 'showMaterialModal()', icon: 'add' });
+      { label: 'Agregar material', onclick: 'showMaterialModal()', icon: 'add' },
+      { label: 'Agregar los comunes', onclick: 'agregarMaterialesComunes()' });
     return;
   }
   const cur = config.currency;
@@ -41,6 +45,7 @@ function saveMaterial(editId) {
   sv('materials', materials);
   if (targetMat && typeof dbGuardarMaterial === 'function') dbGuardarMaterial(targetMat);
   closeModal(); renderMaterials();
+  if (typeof populateSelects === 'function') populateSelects();   /* la calculadora lo ve ya */
   snack(editId ? 'Material actualizado' : 'Material agregado');
 }
 
@@ -50,5 +55,24 @@ function deleteMaterial(id) {
     sv('materials', materials);
     if (typeof dbBorrarMaterial === 'function') dbBorrarMaterial(id);
     renderMaterials();
+    if (typeof populateSelects === 'function') populateSelects();
   });
+}
+
+/* «Agregar los comunes» (D195, como pedía D47): PLA, PETG, ABS, TPU y resina
+   con precios de referencia, para cambiarlos por los tuyos. Los que ya tengas
+   con ese nombre no se repiten. */
+function agregarMaterialesComunes() {
+  var tiene = materials.map(function(m) { return String(m.name || '').toLowerCase(); });
+  var base = Date.now();
+  var nuevos = MATERIALS_EJEMPLO
+    .filter(function(m) { return tiene.indexOf(m.name.toLowerCase()) === -1; })
+    .map(function(m, i) { return Object.assign({}, m, { id: String(base + i) }); });
+  if (!nuevos.length) { snack('Ya tienes los materiales comunes'); return; }
+  materials = materials.concat(nuevos);
+  sv('materials', materials);
+  if (typeof dbGuardarMaterial === 'function') nuevos.forEach(function(m) { dbGuardarMaterial(m); });
+  renderMaterials();
+  if (typeof populateSelects === 'function') populateSelects();
+  snack('Agregué ' + nuevos.length + ' materiales. Cambia sus precios por los tuyos');
 }

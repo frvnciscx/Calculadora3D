@@ -13,7 +13,7 @@
    y presiona…") sin que hubiera nada que presionar ahí mismo.
 
    accion (opcional): { label, onclick, icon } */
-function tplEmptyState(icon, titulo, descripcion, accion) {
+function tplEmptyState(icon, titulo, descripcion, accion, secundaria) {
   /* Compatibilidad: las llamadas viejas pasaban (icono, textoUnico) */
   if (descripcion === undefined && accion === undefined) {
     descripcion = titulo;
@@ -33,7 +33,36 @@ function tplEmptyState(icon, titulo, descripcion, accion) {
           accion.label +
         '</button>'
       : '') +
+    /* Una segunda salida, más discreta: «Agregar los comunes» (D195) */
+    (secundaria
+      ? '<button class="btn btn-ghost empty-state-action empty-state-secundaria" onclick="' + secundaria.onclick + '">' +
+          secundaria.label + '</button>'
+      : '') +
   '</div>';
+}
+
+/* Impresoras comunes para elegir (D195, como pedía D47): las de ejemplo de
+   antes, con valores de referencia que después se cambian */
+function tplImpresorasComunes() {
+  var cur = (config && config.currency) || '$';
+  var mil = function(n) { return Number(n || 0).toLocaleString('es-MX'); };
+  return '<div class="m3-scrim" onclick="closeModal()"></div>' +
+    '<div class="m3-bottom-sheet">' +
+      tplSheetHeader('Impresoras comunes') +
+      '<div class="comunes-lista" role="group" aria-label="Impresoras comunes">' +
+        PRINTERS_EJEMPLO.map(function(p, k) {
+          return '<label class="comunes-fila">' +
+            '<input type="checkbox" value="' + k + '">' +
+            '<span class="comunes-texto">' +
+              '<span class="comunes-nombre">' + esc(p.name) + '</span>' +
+              '<span class="comunes-sub">' + esc(p.type) + ' · ' + p.power + ' W · ' + cur + mil(p.cost) +
+                ' · ' + mil(p.lifeHours) + ' h' + (p.multicolor ? ' · ' + p.heads + ' colores' : '') + '</span>' +
+            '</span>' +
+          '</label>';
+        }).join('') +
+      '</div>' +
+      tplSheetActions('closeModal()', 'agregarImpresorasElegidas()', 'Agregar') +
+    '</div>';
 }
 
 function tplIcon(name, size) {

@@ -29,6 +29,90 @@ app y volviendo a entrar.
 
 ---
 
+## 2026-11-26 · caché v137
+
+Agregar los comunes (D195) y la introducción por cuenta (D196). Las v135 y v136 no llegaron a
+subirse: este commit lleva las tres.
+
+### Nuevo
+
+- **«Agregar los comunes»** en Ajustes › Materiales vacío: PLA, PETG, ABS, TPU y resina con
+  precios de referencia, de una vez.
+- **«Elegir de una lista»** en Impresoras vacío: Ender 3 V2, Ender 3 S1 Pro, Bambu Lab A1 + AMS y
+  Elegoo Mars 3, con su consumo, costo y vida útil de referencia; se agregan las marcadas.
+
+### Corregido
+
+- **Una cuenta nueva no veía la introducción** si el equipo ya la había visto. Ahora se ve una vez
+  por cuenta.
+
+### Qué conviene probar en producción
+
+1. Entrar con una cuenta nueva en este equipo: aparece la introducción.
+2. Ajustes › Materiales › «Agregar los comunes»: los 5 materiales.
+3. Impresoras › «Elegir de una lista»: marcar una y agregarla.
+4. En la barra lateral aparece «Versión 137».
+
+---
+
+## 2026-11-26 · caché v136
+
+Empezar vacío (D193) y estados vacíos (D194).
+
+### Cambiado
+
+- **Un equipo o una cuenta nueva empieza vacío:** sin impresoras, sin materiales, con $0 de gastos
+  fijos y sin clientes de ejemplo. Antes recibía los de ejemplo ($2,000 de gastos fijos, 4
+  impresoras y 5 materiales) y los subía a su cuenta. Quien ya usaba la app conserva lo suyo.
+
+### Nuevo
+
+- **Estados vacíos:** «Sin gastos fijos» en Ajustes › Gastos fijos; Materiales e Impresoras con
+  un solo botón para agregar; y en la Calculadora, «Para cotizar, agrega una impresora y un
+  material», con los botones para agregarlos ahí mismo.
+
+### Corregido
+
+- El selector de material decía «Sin materiales para null».
+
+### Qué conviene probar en producción
+
+1. Con una cuenta nueva (o en una ventana de incógnito, sin cuenta): Ajustes › Gastos fijos dice
+   «Sin gastos fijos»; Materiales e Impresoras, sus estados vacíos.
+2. Calculadora: el aviso «Para cotizar…»; agregar una impresora desde ahí y verla en el selector.
+3. Con tu cuenta de siempre: tus impresoras, materiales y gastos siguen igual.
+4. En la barra lateral aparece «Versión 136».
+
+---
+
+## 2026-11-26 · caché v135
+
+Kits a precio fijo (D187–D191) y el mensaje de Google (D192).
+
+### Nuevo
+
+- **Productos de precio fijo**, como el kit de la casita de galleta: en «Mis productos › Nuevo
+  producto», «Precio fijo», con el precio de venta y sus placas, escritas a mano o leídas del
+  slicer (uno o varios `.gcode` o `.3mf`). En la calculadora el precio es el del kit y abajo dice
+  el margen que deja; si queda abajo del de la calculadora, avisa en ámbar. En la orden entra como
+  una línea a su precio y descuenta sus gramos del inventario al aceptarla.
+- 3 pruebas nuevas (`tests/precio-fijo.test.js`): 82 en total.
+
+### Corregido
+
+- **Entrar con Google en la app publicada** mostraba un error de Firebase en inglés. La causa está
+  en la consola de Firebase (falta el dominio de Vercel en los dominios autorizados, D192); la app
+  ahora lo dice en español y propone entrar con correo.
+
+### Qué conviene probar en producción
+
+1. Mis productos › Nuevo producto › Precio fijo: «Kit casita de galleta», $250 y sus placas.
+2. Elegirlo en «¿Qué cotizas?»: arriba dice «Precio fijo» y $250; abajo, «Margen …».
+3. Agregarlo a la orden: una línea de $250.
+4. En la barra lateral aparece «Versión 135».
+
+---
+
 ## 2026-11-25 · caché v134
 
 El color del rollo (D185). Las v130 a v133 no llegaron a subirse: este commit lleva las cinco.

@@ -6,7 +6,8 @@ function renderPrinters() {
     el.innerHTML = tplEmptyState('print',
       'Sin impresoras',
       'Agrega tus impresoras con su consumo y vida útil para que el costo por hora salga bien.',
-      { label: 'Agregar impresora', onclick: 'showPrinterModal()', icon: 'add' });
+      { label: 'Agregar impresora', onclick: 'showPrinterModal()', icon: 'add' },
+      { label: 'Elegir de una lista', onclick: 'elegirImpresorasComunes()' });
     return;
   }
   const cur = config.currency;
@@ -49,6 +50,7 @@ function savePrinter(editId) {
   sv('printers', printers);
   if (targetPrinter && typeof dbGuardarImpresora === 'function') dbGuardarImpresora(targetPrinter);
   closeModal(); renderPrinters();
+  if (typeof populateSelects === 'function') populateSelects();   /* la calculadora la ve ya */
   snack(editId ? 'Impresora actualizada' : 'Impresora agregada');
 }
 
@@ -58,5 +60,31 @@ function deletePrinter(id) {
     sv('printers', printers);
     if (typeof dbBorrarImpresora === 'function') dbBorrarImpresora(id);
     renderPrinters();
+    if (typeof populateSelects === 'function') populateSelects();
   });
+}
+
+/* «Elegir de una lista» (D195, como pedía D47): las impresoras comunes con
+   valores de referencia; se agregan las marcadas */
+function elegirImpresorasComunes() {
+  document.getElementById('modal-container').innerHTML = tplImpresorasComunes();
+}
+
+function agregarImpresorasElegidas() {
+  var marcadas = Array.prototype.map.call(
+    document.querySelectorAll('.comunes-lista input:checked'),
+    function(inp) { return Number(inp.value); });
+  if (!marcadas.length) { snack('Marca al menos una impresora'); return; }
+  var base = Date.now();
+  var nuevas = marcadas.map(function(k, i) {
+    return Object.assign({}, PRINTERS_EJEMPLO[k], { id: String(base + i) });
+  });
+  printers = printers.concat(nuevas);
+  sv('printers', printers);
+  if (typeof dbGuardarImpresora === 'function') nuevas.forEach(function(p) { dbGuardarImpresora(p); });
+  closeModal();
+  renderPrinters();
+  if (typeof populateSelects === 'function') populateSelects();
+  snack((nuevas.length === 1 ? 'Agregué 1 impresora' : 'Agregué ' + nuevas.length + ' impresoras') +
+        '. Cambia su costo y consumo por los tuyos');
 }

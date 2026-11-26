@@ -3,7 +3,7 @@ const DEF_CONFIG = {
   kwhCost: 1.20,
   laborCostPerHour: 50,
   currency: '$',
-  fixedMonthlyCost: 2000,
+  fixedMonthlyCost: 0,      /* antes 2000 de ejemplo (D193) */
   monthlyPrintHours: 200,
   wastePercent: 10,
   maintenancePercent: 5,   /* % sobre costos de máquina — refacciones, boquillas, mantenimiento */
@@ -52,20 +52,46 @@ const DEF_QUOTE_STYLE = {
   footerText: '',
 };
 
-const DEF_PRINTERS = [
+/* Las impresoras y los materiales de ejemplo de antes. Ya no se le dan a quien
+   empieza (D193, como pedía D47): un equipo o una cuenta nueva arranca sin
+   impresoras, materiales, gastos fijos ni clientes, y la app le pide los
+   suyos. Se conservan para quien ya trabajaba con ellos (abajo). */
+const PRINTERS_EJEMPLO = [
   { id:'1', name:'Ender 3 V2',        power:350, type:'FDM',    cost:4500,  lifeHours:3000, multicolor:false, heads:1 },
   { id:'2', name:'Ender 3 S1 Pro',    power:400, type:'FDM',    cost:7000,  lifeHours:3000, multicolor:false, heads:1 },
   { id:'3', name:'Bambu Lab A1 + AMS',power:150, type:'FDM',    cost:12000, lifeHours:5000, multicolor:true,  heads:4 },
   { id:'4', name:'Elegoo Mars 3',     power:55,  type:'Resina', cost:5500,  lifeHours:2000, multicolor:false, heads:1 }
 ];
 
-const DEF_MATERIALS = [
+const MATERIALS_EJEMPLO = [
   { id:'1', name:'PLA', type:'FDM', costPerKg:350, density:1.24 },
   { id:'2', name:'PETG', type:'FDM', costPerKg:400, density:1.27 },
   { id:'3', name:'ABS', type:'FDM', costPerKg:380, density:1.04 },
   { id:'4', name:'TPU', type:'FDM', costPerKg:550, density:1.21 },
   { id:'5', name:'Resina Standard', type:'Resina', costPerKg:600, density:1.10 }
 ];
+
+const DEF_PRINTERS  = [];
+const DEF_MATERIALS = [];
+
+/* Una sola vez por equipo, al llegar esta versión: quien ya usaba la app y
+   nunca guardó sus impresoras o materiales trabajaba con los de ejemplo sin
+   saberlo, y se le guardan para que no desaparezcan. Un equipo nuevo no tiene
+   nada de eso y empieza vacío. Va directo a localStorage, sin sv(): nada sube
+   a la nube por cargar la página. */
+(function _conservarEjemplos() {
+  try {
+    if (localStorage.getItem('c3d_ejemplosRevisados')) return;
+    var yaUsaba = ['onboardingDone', 'config', 'quotes', 'history'].some(function(k) {
+      return localStorage.getItem('c3d_' + k) !== null;
+    });
+    if (yaUsaba) {
+      if (localStorage.getItem('c3d_printers') === null)  localStorage.setItem('c3d_printers', JSON.stringify(PRINTERS_EJEMPLO));
+      if (localStorage.getItem('c3d_materials') === null) localStorage.setItem('c3d_materials', JSON.stringify(MATERIALS_EJEMPLO));
+    }
+    localStorage.setItem('c3d_ejemplosRevisados', '1');
+  } catch (e) { /* sin localStorage: se empieza vacío */ }
+})();
 
 function ld(k, d) {
   try { const v = localStorage.getItem('c3d_' + k); return v ? JSON.parse(v) : d; }
@@ -125,10 +151,9 @@ let quoteCounter = ld('quoteCounter', 0);
 let presets     = ld('presets', []);
 
 /* ── Clients ─────────────────────────────────────────────────────── */
-const DEF_CLIENTS = [
-  { id: 'c1', name: 'Cliente Frecuente 1', phone: '', email: '', notes: 'Modifica aquí los datos del cliente' },
-  { id: 'c2', name: 'Cliente Frecuente 2', phone: '', email: '', notes: 'Modifica aquí los datos del cliente' }
-];
+/* Sin clientes de ejemplo (D47, D193). Antes eran «Cliente Frecuente 1 y 2»,
+   con ids c1 y c2: db.js los sigue sin subir si un equipo los tiene guardados. */
+const DEF_CLIENTS = [];
 let clients = ld('clients', DEF_CLIENTS);
 
 /* ── Filament Inventory ───────────────────────────────────────────── */

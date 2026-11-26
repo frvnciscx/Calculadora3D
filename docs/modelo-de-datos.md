@@ -140,7 +140,7 @@ Lo que hoy es `quoteStyle`, igual: colores, qué secciones se muestran, `termsTe
 | `impresoras` | Los de hoy: `name`, `type`, `power`, `cost`, `lifeHours`, `multicolor`, `heads`. Más `refId`, si salió de la lista de comunes | v100, D47 | Sí |
 | `materiales` | Los de hoy: `name`, `type`, `costPerKg`, `density` | v100 | Sí |
 | `insumos` | `nombre`, `costoUnitario`. Herrajes, imanes, argollas | D61 | Sí |
-| `productos` | Los de hoy: `name`, `variant`, `type` (`cost` o `table`), `designH`, `defaultWeight`, `defaultTimeH`, `defaultMargin`, `priceTable`. Desde v115, los de tabla también `refuerzoTable` (`{ tamaño: monto }`) y `designLevels` (`[{ label, cost }]`); `priceTable` acepta medios centímetros (`"8.5"`). Más `empaque` por pieza | v100, D25, D149, D150 | Sí; `empaque`, después |
+| `productos` | Los de hoy: `name`, `variant`, `type` (`cost` o `table`), `designH`, `defaultWeight`, `defaultTimeH`, `defaultMargin`, `priceTable`. Desde v115, los de tabla también `refuerzoTable` (`{ tamaño: monto }`) y `designLevels` (`[{ label, cost }]`); `priceTable` acepta medios centímetros (`"8.5"`). Desde v135, `type: 'fijo'` (kits a precio fijo) con `precio` y `placas` (`[{ nombre, gramos, horas }]`). Más `empaque` por pieza | v100, D25, D149, D150, D187, D188 | Sí; `empaque`, después |
 
 ### 4.7 `rollos/{id}` — el inventario de filamento
 
@@ -192,7 +192,7 @@ Cuántas cotizaciones tiene y cuánto se le ha cotizado se calcula al abrir su f
 | `weight`, `timeH`, `designH`, `pieces`, `margin` | Por pieza, con las piezas de la placa, como hoy. El tiempo se captura en horas y minutos y se guarda en horas | v100, D58 | Sí |
 | Desglose: `matCost`, `energyCost`, `laborCost`, `deprecCost`, `fixedCost`, `indirectCost`, `maintCost`, `postProcCost`, `ipaCost`, `uvCost`, `wasteCost`, `baseCost` | El costo como se calculó ese día. Si mañana sube el PLA, la cotización no cambia | v100 | Sí |
 | `totalCost`, `autoPrice`, `priceManual` | Precio, precio de la fórmula y si se escribió a mano | v100 | Sí |
-| `entrada` | Lo que se capturó en la calculadora, tal cual, para poder editar la pieza: `{ printerId, materialId, spoolId, plateWeight, plateTimeH, plateDesignH, pieces, margin, ams: { slots, purga, cambios }, postProc: { paints, primerCost, varnishCost, paintingTimeH } }`. Las piezas de antes de v116 no lo traen | D152 | Sí |
+| `entrada` | Lo que se capturó en la calculadora, tal cual, para poder editar la pieza: `{ printerId, productoFijoId, materialId, spoolId, plateWeight, plateTimeH, plateDesignH, pieces, margin, ams: { slots, purga, cambios }, postProc: { paints, primerCost, varnishCost, paintingTimeH } }`. Las piezas de antes de v116 no lo traen | D152 | Sí |
 | `tipo`, `detalleTabla` | `'tabla'` en los productos por tamaño, con lo elegido: `{ productoId, tamano, nivel, diseno, refuerzo, base }`. Sus rubros de costo van en 0 y `baseCost` vacío | D151 | Sí |
 | `spoolId`, `amsColors`, `amsPurgeGrams` | El rollo, o los rollos por color con sus gramos | v100, D74 | Sí |
 | `archivo` | `{ nombre, placa }` del archivo del slicer del que salió | D57, D72 | Sí |
@@ -369,8 +369,8 @@ Firebase avisa en la consola con una liga que crea el índice la primera vez que
 
 | Momento | Qué pasa con los datos | Sale de |
 |---|---|---|
-| Sin cuenta | Los ajustes de prueba (impresoras, materiales, gastos) viven en el teléfono, con las claves de hoy (`c3d_printers`, `c3d_materials`, `c3d_config`). La cotización en curso, también. No se guardan cotizaciones | D39, D84 |
-| Al entrar con una cuenta nueva | En una sola operación: se crean el negocio con la persona como `dueño`, su `usuarios/{uid}`, los ajustes y catálogos de prueba, y la cotización en curso como Borrador. Después se borran del teléfono | D40, D84 |
+| Sin cuenta | Los ajustes (impresoras, materiales, gastos; desde v136 se empieza sin ninguno, D193) viven en el teléfono, con las claves de hoy (`c3d_printers`, `c3d_materials`, `c3d_config`). La cotización en curso, también. No se guardan cotizaciones | D39, D84 |
+| Al entrar con una cuenta nueva | En una sola operación: se crean el negocio con la persona como `dueño`, su `usuarios/{uid}`, los ajustes y catálogos del teléfono (desde v136, vacíos si no se capturó nada, D193), y la cotización en curso como Borrador. Después se borran del teléfono | D40, D84 |
 | Al entrar a una cuenta con datos | Se usan los de la cuenta; los ajustes de prueba se descartan. Solo la cotización en curso se agrega como Borrador: sus partidas llevan copias de los nombres, así que no dependen de los ajustes del teléfono | D86 |
 | En otro dispositivo | Se entra con la misma cuenta y baja lo que pide la pantalla | D49 |
 | Al cerrar sesión | La app espera a que suba lo pendiente (`waitForPendingWrites`). Sin conexión, avisa y no cierra. Después borra la copia del teléfono (`terminate` y `clearIndexedDbPersistence`) | D83 |

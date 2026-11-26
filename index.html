@@ -408,6 +408,21 @@
   <!-- ── Sección 02: Impresora y material ─── -->
   <div class="calc-sec calc-sec-impresora solo-pieza" style="padding:28px 20px 0">
     <div class="rule micro" style="margin-bottom:18px">Impresora y material</div>
+    <!-- Sin impresoras o materiales no se cotiza (D194). Lo llena _avisoSinEquipo (ui.js) -->
+    <div id="calc-sin-equipo" class="calc-sin-equipo hidden" role="status">
+      <span class="material-symbols-rounded" aria-hidden="true">info</span>
+      <div>
+        <p id="calc-sin-equipo-texto">Para cotizar, agrega una impresora y un material.</p>
+        <div class="calc-sin-equipo-botones">
+          <button type="button" class="btn btn-ghost" id="calc-sin-impresora" onclick="showPrinterModal()">
+            <span class="material-symbols-rounded" style="font-size:16px" aria-hidden="true">add</span> Impresora
+          </button>
+          <button type="button" class="btn btn-ghost" id="calc-sin-material" onclick="showMaterialModal()">
+            <span class="material-symbols-rounded" style="font-size:16px" aria-hidden="true">add</span> Material
+          </button>
+        </div>
+      </div>
+    </div>
     <div class="m3-card">
       <div class="m3-field">
         <select id="calc-printer"></select>
@@ -1132,7 +1147,7 @@
     <h1 style="font-size:28px;font-weight:600;letter-spacing:-0.03em;margin:0">Materiales</h1>
   </div>
   <div style="padding:12px 20px 32px">
-    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+    <div id="cfg-material-agregar" style="display:flex;justify-content:flex-end;margin-bottom:12px">
       <button class="link-btn" onclick="showMaterialModal()" style="font-size:12px;color:var(--accent);display:inline-flex;align-items:center;gap:4px">
         <span class="material-symbols-rounded" style="font-size:14px">add</span> Material
       </button>
@@ -1155,11 +1170,20 @@
   <div style="padding:12px 20px 12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <span></span>
-      <button class="link-btn" onclick="addFixedCostItem()" style="font-size:12px;color:var(--accent);display:inline-flex;align-items:center;gap:4px">
+      <button class="link-btn" id="fixed-cost-agregar" onclick="addFixedCostItem()" style="font-size:12px;color:var(--accent);display:inline-flex;align-items:center;gap:4px">
         <span class="material-symbols-rounded" style="font-size:14px">add</span> Categoría
       </button>
     </div>
     <div class="card" style="padding:0 18px;margin-bottom:12px">
+      <!-- Sin gastos fijos (D194). Lo muestra _pintarVacioCostos (config.js) -->
+      <div id="fixed-cost-vacio" class="empty-state hidden">
+        <div class="empty-state-icon"><span class="material-symbols-rounded">receipt_long</span></div>
+        <h3 class="empty-state-title">Sin gastos fijos</h3>
+        <p>Renta, luz, internet: lo que pagas cada mes aunque no imprimas.</p>
+        <button type="button" class="btn btn-primary empty-state-action" onclick="addFixedCostItem()">
+          <span class="material-symbols-rounded" style="font-size:18px">add</span> Agregar gasto
+        </button>
+      </div>
       <div id="fixed-cost-items-list"></div>
       <div class="row" style="border-top:0.5px solid var(--line);margin-top:4px;border-bottom:none">
         <div style="font-size:13px;font-weight:600">Total mensual</div>
@@ -1430,6 +1454,7 @@
 <script src="js/printers.js"></script>
 <script src="js/materials.js"></script>
 <script src="js/precios-tamano.js"></script>
+<script src="js/precio-fijo.js"></script>
 <script src="js/catalog.js"></script>
 <script src="js/quotes.js"></script>
 <script src="js/quote-editor.js"></script>

@@ -164,6 +164,10 @@ producto (tamaño, diseño, refuerzo y cantidad) y el precio sale en el panel de
 tabla y los niveles de diseño y el refuerzo de cada producto. Las cuentas están en
 `js/precios-tamano.js`.
 
+Desde v135 (D187–D191) hay un tercer tipo, «Precio fijo», para los kits: el precio de venta y
+las placas que lo forman (a mano o leídas del slicer). En la calculadora el precio es el del
+producto y abajo se ve el margen que deja. Las cuentas están en `js/precio-fijo.js`.
+
 ### Inventario
 `js/inventory.js` · 111 líneas
 

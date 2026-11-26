@@ -134,7 +134,9 @@ function addItemToDraft() {
     weight:     lastCalc.weight,
     timeH:      lastCalc.timeH,
     designH:    lastCalc.designH || 0,
-    margin:     lastCalc.margin,
+    /* Precio fijo (D187): el margen que resulta de su precio */
+    margin:     lastCalc.precioFijo != null && lastCalc.baseCost > 0
+                  ? Math.round((lastCalc.precioFijo / lastCalc.baseCost - 1) * 100) : lastCalc.margin,
     /* De cuántas piezas era la placa. No entra en ninguna cuenta: queda como
        registro de cómo se imprimió, para poder repetir la corrida. */
     pieces:     lastCalc.pieces || 1,
@@ -1936,6 +1938,7 @@ function _entradaDePieza() {
   var pp = lastCalc.postProc;
   return {
     printerId:    lastCalc.printerId  || '',
+    productoFijoId: lastCalc.productoFijoId || null,
     materialId:   lastCalc.materialId || '',
     spoolId:      lastCalc.spoolId    || '',
     plateWeight:  lastCalc.plateWeight  != null ? lastCalc.plateWeight  : lastCalc.weight,

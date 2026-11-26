@@ -49,6 +49,7 @@ Están en [`firestore.rules`](../firestore.rules), en la raíz. Siguen el §6 de
    - Si dicen `allow read, write: if request.time < timestamp.date(...)`, es el «modo de prueba»: hasta esa fecha, cualquiera con la configuración del proyecto lee y cambia todo. Esa configuración está en `js/auth.js`, que es público.
    - Hoy la app guarda la configuración, así que no están cerradas del todo.
 2. **Revisar los dominios autorizados** en Authentication › Settings: `calculadora3-d-delta.vercel.app` y `localhost`.
+   - **2026-11-26: falta `calculadora3-d-delta.vercel.app`** (D192). La lista trae `localhost`, `calculadora3d-prod.firebaseapp.com` y `calculadora3d-prod.web.app`; por eso entrar con Google no funciona en la app publicada (`auth/unauthorized-domain`). Se ve sin consola: `https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=<apiKey de js/auth.js>` devuelve `authorizedDomains`.
 3. **Opcional:** restringir la clave de la API en Google Cloud › Credenciales a esos dos dominios. La clave es pública por diseño; la restricción evita que se use desde otros sitios.
 
 ### Cómo publicarlas

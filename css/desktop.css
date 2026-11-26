@@ -1311,3 +1311,9 @@
 @media (min-width: 900px) and (max-width: 1099px) {
   .cfg-tab { padding: 10px 9px; }
 }
+
+/* ══ v136: los estados vacíos de Ajustes llevan su botón al centro (D194),
+   no a la derecha como el «Guardar» de las secciones ══ */
+@media (min-width: 900px) {
+  #cfg-subpage-container .empty-state .btn.btn-primary { margin-left: auto; margin-right: auto; }
+}

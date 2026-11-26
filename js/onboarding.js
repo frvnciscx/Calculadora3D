@@ -156,7 +156,7 @@ function _actualizarGate() {
     _pintarAcceso();
     return;
   }
-  if (!ld(ONBOARDING_KEY, false)) {
+  if (!_onboardingVisto()) {
     gate.classList.remove('hidden');
     _obPaso = 0;
     _pintarOnboarding();
@@ -165,6 +165,27 @@ function _actualizarGate() {
   gate.classList.add('hidden');
   gate.innerHTML = '';
   _reflejarUsuario();
+}
+
+/* La introducción se ve una vez por cuenta (D196), no una vez por equipo:
+   antes, una cuenta nueva en un equipo que ya la había visto no la veía. Sin
+   cuenta («Entrar sin cuenta»), una vez por equipo, como antes. */
+function _claveOnboarding() {
+  var u = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  return u && !u.isAnonymous && u.uid ? ONBOARDING_KEY + '_' + u.uid : ONBOARDING_KEY;
+}
+
+function _onboardingVisto() {
+  var clave = _claveOnboarding();
+  if (ld(clave, false)) return true;
+  /* Al llegar esta versión, la cuenta que ya estaba abierta en un equipo que
+     vio la introducción no la vuelve a ver. Una sola vez por equipo: después,
+     cada cuenta nueva la ve. */
+  if (clave !== ONBOARDING_KEY && !ld('onboardingPorCuenta', false)) {
+    sv('onboardingPorCuenta', true);
+    if (ld(ONBOARDING_KEY, false)) { sv(clave, true); return true; }
+  }
+  return false;
 }
 
 /* Pone el nombre del usuario donde corresponda */
@@ -560,6 +581,7 @@ function obAnterior() {
 }
 
 function terminarOnboarding() {
+  sv(_claveOnboarding(), true);
   sv(ONBOARDING_KEY, true);
   _actualizarGate();
   if (typeof renderDashboard === 'function') renderDashboard();

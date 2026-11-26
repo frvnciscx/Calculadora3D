@@ -107,12 +107,17 @@ function _dinero(n) {
    campos de la pieza; se recuerda para marcarlo mientras sea esa pieza. */
 var _modoProducto    = null;
 var _productoCostoId = null;
+/* El producto de precio fijo que se está cotizando, como un kit (D187) */
+var _productoFijoId  = null;
 
 function enModoProducto() {
   return !!(_modoProducto && _productoPorId(_modoProducto.id));
 }
 
 function _subtituloProducto(p) {
+  if (p.type === 'fijo') {
+    return (p.variant ? p.variant + ' · ' : '') + 'Precio fijo' + (Number(p.precio) > 0 ? ' · ' + _dinero(Number(p.precio)) : '');
+  }
   if (p.type !== 'table') return (p.variant ? p.variant + ' · ' : '') + 'Por peso y tiempo';
   var tams = tamanosDe(p);
   if (!tams.length) return (p.variant ? p.variant + ' · ' : '') + 'Sin precios todavía';
@@ -149,14 +154,17 @@ function renderQueCotizas() {
 function elegirQueCotizas(id) {
   if (id === 'pieza') {
     _productoCostoId = null;
+    _soltarProductoFijo();
     salirModoProducto();
     renderQueCotizas();
     return;
   }
   var p = _productoPorId(id);
   if (!p) return;
+  _soltarProductoFijo();
   if (p.type === 'table') { entrarModoProducto(p); return; }
   salirModoProducto();
+  if (p.type === 'fijo') { _cargarProductoFijo(p); renderQueCotizas(); return; }
   _cargarProductoCosto(p);
   renderQueCotizas();
 }
@@ -173,8 +181,60 @@ function cotizarProducto(i) {
 
 /* La pieza ya se agregó a la orden: el producto por costo deja de estar marcado */
 function alAgregarPieza() {
+  _soltarProductoFijo();
   if (!_productoCostoId) return;
   _productoCostoId = null;
+  renderQueCotizas();
+}
+
+/* ── Producto de precio fijo, como un kit (D187–D189) ──────────────
+   Llena la pieza con la suma de sus placas: la fórmula da lo que cuesta y el
+   precio es el del producto (calculate lo pinta con productoFijoActivo). Se
+   imprime como cualquier pieza: impresora, material y rollo los de siempre. */
+function productoFijoActivo() {
+  var p = _productoFijoId ? _productoPorId(_productoFijoId) : null;
+  return p && p.type === 'fijo' ? p : null;
+}
+
+function _cargarProductoFijo(p) {
+  _productoCostoId = p.id;
+  _productoFijoId  = p.id;
+  var t = totalesDePlacas(p);
+  var poner = function(id, v) { var el = document.getElementById(id); if (el) el.value = v; };
+  poner('calc-desc', p.name + (p.variant ? ' ' + p.variant : ''));
+  poner('calc-weight', t.gramos || '');
+  poner('calc-time', t.horas || '');
+  poner('calc-design-time', 0);
+  poner('calc-pieces', 1);
+  calculate(true);
+  if (!t.placas) snack(p.name + ': agrégale sus placas en «Mis productos › Editar»');
+}
+
+/* Deja de cotizarse a precio fijo: la etiqueta y la nota vuelven, y si la
+   pieza sigue en los campos, su precio vuelve a ser el de la fórmula */
+function _soltarProductoFijo() {
+  if (!_productoFijoId) return;
+  _productoFijoId = null;
+  var lbl = document.getElementById('calc-hero-label');
+  if (lbl) lbl.textContent = 'Costo total sugerido';
+  var nota = document.getElementById('nota-redondeo-texto');
+  if (nota && nota.parentElement) {
+    nota.textContent = '';
+    nota.parentElement.classList.add('hidden');
+    nota.parentElement.classList.remove('nota-aviso');
+  }
+  /* Ya se agregó a la orden (campos vacíos): el panel vuelve a cero */
+  var peso = document.getElementById('calc-weight');
+  if (!(parseFloat(peso && peso.value) > 0)) _reiniciarResultado();
+  else if (typeof calculate === 'function') calculate(true);
+}
+
+/* Editar en la orden una pieza que era de un producto de precio fijo */
+function reactivarProductoFijo(id) {
+  var p = _productoPorId(id);
+  if (!p || p.type !== 'fijo') return;
+  _productoCostoId = p.id;
+  _productoFijoId  = p.id;
   renderQueCotizas();
 }
 
@@ -565,13 +625,20 @@ function _htmlListaCatalogo() {
     var tams = porTamano ? tamanosDe(p) : [];
     var badge = porTamano
       ? '<span class="catalog-badge">Por tamaño</span>'
-      : '<span class="catalog-badge catalog-badge-cost">Por costo</span>';
+      : p.type === 'fijo'
+        ? '<span class="catalog-badge catalog-badge-cost">Precio fijo</span>'
+        : '<span class="catalog-badge catalog-badge-cost">Por costo</span>';
     var pistas;
     if (porTamano) {
       pistas = tams.length
         ? (p.variant ? esc(p.variant) + ' · ' : '') + tams.length + (tams.length === 1 ? ' tamaño' : ' tamaños') +
           ' · ' + esc(_dinero(precioDeTamano(p, tams[0]))) + (tams.length > 1 ? ' a ' + esc(_dinero(precioDeTamano(p, tams[tams.length - 1]))) : '')
         : (p.variant ? esc(p.variant) + ' · ' : '') + '<span class="catalogo-falta">Sin precios todavía</span>';
+    } else if (p.type === 'fijo') {
+      var tk = totalesDePlacas(p);
+      pistas = tk.placas
+        ? esc([_dinero(Number(p.precio) || 0), tk.placas + (tk.placas === 1 ? ' placa' : ' placas'), tk.gramos + ' g', tk.horas + ' h'].join(' · '))
+        : esc(_dinero(Number(p.precio) || 0)) + ' · <span class="catalogo-falta">Sin placas todavía</span>';
     } else {
       var dh = parseFloat(p.designH);
       pistas = esc(['Diseño: ' + (isNaN(dh) ? 1 : dh) + ' h', p.defaultWeight ? p.defaultWeight + ' g' : '', p.defaultTimeH ? p.defaultTimeH + ' h de impresión' : ''].filter(Boolean).join(' · '));
@@ -633,7 +700,9 @@ function showAddCatalogModal(editIndex, desde) {
   var isEdit = editIndex !== undefined && editIndex !== null && editIndex >= 0 && !!catalogItems[editIndex];
   var p = isEdit ? catalogItems[editIndex]
                  : { name: '', type: 'cost', designH: 1, defaultWeight: '', defaultTimeH: '', defaultMargin: '' };
-  _tipoEditor = p.type === 'table' ? 'table' : 'cost';
+  _tipoEditor = p.type === 'table' || p.type === 'fijo' ? p.type : 'cost';
+  var placasEditor = (p.placas || []).slice();
+  if (!placasEditor.length) placasEditor = [{}];
   var volver = _editorDesde === 'panel' ? 'closeModal()' : 'showCatalogModal()';
 
   /* Las filas de un producto viejo traen el refuerzo de la regla de antes,
@@ -659,6 +728,7 @@ function showAddCatalogModal(editIndex, desde) {
         '<div class="pe-tipo seg" role="radiogroup" aria-label="Cómo se cotiza">' +
           '<button type="button" role="radio" data-tipo="table" onclick="editorTipo(\'table\')">Por tamaño</button>' +
           '<button type="button" role="radio" data-tipo="cost" onclick="editorTipo(\'cost\')">Por peso y tiempo</button>' +
+          '<button type="button" role="radio" data-tipo="fijo" onclick="editorTipo(\'fijo\')">Precio fijo</button>' +
         '</div>' +
         '<div class="m3-field" id="cp-name-field">' +
           '<input type="text" id="cp-name" placeholder=" " value="' + esc(p.name || '') + '" aria-describedby="cp-name-error">' +
@@ -721,6 +791,28 @@ function showAddCatalogModal(editIndex, desde) {
           '</div>' +
         '</div>' +
 
+        /* Precio fijo (D187, D188): el precio de venta y las placas que lo
+           forman, leídas del slicer o escritas a mano */
+        '<div id="cp-fijo-fields">' +
+          '<div class="m3-field" id="cp-precio-field">' +
+            '<input type="text" id="cp-precio" placeholder=" " inputmode="decimal" autocomplete="off" value="' +
+              esc(p.precio != null ? String(p.precio) : '') + '" aria-describedby="cp-precio-error">' +
+            '<label for="cp-precio">Precio de venta</label>' +
+            '<span class="m3-helper hidden" id="cp-precio-error">Escribe el precio de venta</span>' +
+          '</div>' +
+          '<h3 class="pe-subtitulo">Placas</h3>' +
+          '<div class="pe-encabezados pe-encabezados-placa" aria-hidden="true"><span>Placa</span><span>Gramos</span><span>Horas</span><span></span></div>' +
+          '<div id="pe-placas">' + placasEditor.map(_filaPlacaHTML).join('') + '</div>' +
+          '<div class="pe-botones">' +
+            '<button type="button" class="m3-btn-text m3-btn-sm" onclick="editorAgregarPlaca()">' +
+              '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">add</span> Agregar placa</button>' +
+            '<label class="m3-btn-text m3-btn-sm pe-leer">' +
+              '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">upload_file</span> Leer del slicer' +
+              '<input type="file" class="pe-leer-archivo" multiple' + _aceptaSlicer() + ' onchange="editorLeerPlacas(this)">' +
+            '</label>' +
+          '</div>' +
+        '</div>' +
+
         (isEdit
           ? '<button type="button" class="m3-btn-text pe-eliminar" onclick="deleteCatalogProduct(' + editIndex + ')">' +
               '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">delete</span> Eliminar producto</button>'
@@ -737,7 +829,7 @@ function showAddCatalogModal(editIndex, desde) {
 }
 
 function editorTipo(t) {
-  _tipoEditor = t === 'table' ? 'table' : 'cost';
+  _tipoEditor = t === 'table' || t === 'fijo' ? t : 'cost';
   document.querySelectorAll('.pe-tipo button').forEach(function(b) {
     var on = b.dataset.tipo === _tipoEditor;
     b.classList.toggle('active', on);
@@ -747,6 +839,79 @@ function editorTipo(t) {
   var costo = document.getElementById('cp-cost-fields');
   if (tabla) tabla.classList.toggle('hidden', _tipoEditor !== 'table');
   if (costo) costo.classList.toggle('hidden', _tipoEditor !== 'cost');
+  var fijo = document.getElementById('cp-fijo-fields');
+  if (fijo) fijo.classList.toggle('hidden', _tipoEditor !== 'fijo');
+}
+
+/* ── Placas de un producto de precio fijo (D188) ─────────────────── */
+function _filaPlacaHTML(pl) {
+  pl = pl || {};
+  var v = function(x) { return x != null && x !== '' && Number(x) !== 0 ? String(x) : ''; };
+  return '<div class="pe-fila">' +
+    '<div class="pe-celdas pe-celdas-placa">' +
+      '<input type="text" class="pe-placa" autocomplete="off" placeholder="Placa" value="' + esc(pl.nombre || '') + '" aria-label="Nombre de la placa">' +
+      '<input type="text" class="pe-gramos" inputmode="decimal" autocomplete="off" placeholder="g" value="' + esc(v(pl.gramos)) + '" aria-label="Gramos">' +
+      '<input type="text" class="pe-horas" inputmode="decimal" autocomplete="off" placeholder="h" value="' + esc(v(pl.horas)) + '" aria-label="Horas">' +
+      '<button type="button" class="pe-quitar" onclick="editorQuitarFila(this)" aria-label="Quitar esta placa">' +
+        '<span class="material-symbols-rounded" aria-hidden="true">close</span></button>' +
+    '</div>' +
+    '<p class="pe-error hidden"></p>' +
+  '</div>';
+}
+
+function editorAgregarPlaca(pl) {
+  var c = document.getElementById('pe-placas'); if (!c) return;
+  c.insertAdjacentHTML('beforeend', _filaPlacaHTML(pl));
+  if (!pl) { var n = c.lastElementChild.querySelector('.pe-placa'); if (n) n.focus(); }
+}
+
+function _leerFilasPlacas() {
+  return Array.prototype.map.call(document.querySelectorAll('#pe-placas .pe-fila'), function(f) {
+    return { nombre: f.querySelector('.pe-placa').value, gramos: f.querySelector('.pe-gramos').value, horas: f.querySelector('.pe-horas').value };
+  });
+}
+
+/* En el teléfono no se filtra por tipo: Android deja en gris los .gcode (D162) */
+function _aceptaSlicer() {
+  var ua = navigator.userAgent || '';
+  var telefono = /Android|iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  return telefono || typeof ACEPTA_SLICER === 'undefined' ? '' : ' accept="' + ACEPTA_SLICER + '"';
+}
+
+/* Cada placa del archivo es una fila: llena primero las vacías */
+async function editorLeerPlacas(input) {
+  var archivos = Array.prototype.slice.call(input.files || []);
+  input.value = '';
+  var c = document.getElementById('pe-placas');
+  if (!c || !archivos.length) return;
+  var leidas = 0;
+  for (var i = 0; i < archivos.length; i++) {
+    var a = archivos[i];
+    if (typeof esArchivoSlicer === 'function' && !esArchivoSlicer(a.name)) {
+      snack('«' + a.name + '» no es un archivo del slicer (.gcode o .3mf)');
+      continue;
+    }
+    try {
+      var r = await leerArchivoSlicer(a, { densidad: 1.24 });
+      var base = (typeof descripcionDeArchivo === 'function' ? descripcionDeArchivo(a.name) : '') || 'Placa';
+      (r.placas || []).forEach(function(pl, k) {
+        var datos = {
+          nombre: base + (r.placas.length > 1 ? ' · placa ' + (pl.indice || k + 1) : ''),
+          gramos: Math.round((pl.gramos || 0) * 10) / 10,
+          horas:  Math.round((pl.tiempoS || 0) / 36) / 100
+        };
+        var vacia = Array.prototype.find.call(c.querySelectorAll('.pe-fila'), function(f) {
+          return !f.querySelector('.pe-placa').value.trim() && !f.querySelector('.pe-gramos').value.trim() &&
+                 !f.querySelector('.pe-horas').value.trim();
+        });
+        if (vacia) vacia.outerHTML = _filaPlacaHTML(datos); else editorAgregarPlaca(datos);
+        leidas++;
+      });
+    } catch (e) {
+      snack((e && e.message) || ('No se pudo leer «' + a.name + '»'));
+    }
+  }
+  if (leidas) snack(leidas === 1 ? 'Se leyó 1 placa' : 'Se leyeron ' + leidas + ' placas');
 }
 /* Nombre de antes, por si algo lo llama */
 function toggleCatalogType() { editorTipo(_tipoEditor === 'table' ? 'cost' : 'table'); }
@@ -868,7 +1033,7 @@ function saveCatalogProduct(editIndex) {
   var variantEl = document.getElementById('cp-variant');
   if (variantEl && variantEl.value.trim()) product.variant = variantEl.value.trim();
 
-  var sinPrecios = false;
+  var sinPrecios = false, sinPlacas = false;
   if (type === 'table') {
     var precios = validarFilasPrecios(_leerFilasPrecios());
     var niveles = validarNiveles(_leerNiveles());
@@ -886,6 +1051,26 @@ function saveCatalogProduct(editIndex) {
     product.refuerzoTable = precios.refuerzos;
     product.designLevels  = niveles.niveles;
     sinPrecios = !Object.keys(precios.tabla).length;
+  } else if (type === 'fijo') {
+    var datosFijo = validarPrecioFijo(document.getElementById('cp-precio').value, _leerFilasPlacas());
+    var errPrecio = datosFijo.errores.some(function(e) { return e.campo === 'precio'; });
+    var precioEl = document.getElementById('cp-precio');
+    var precioField = document.getElementById('cp-precio-field');
+    var precioErr = document.getElementById('cp-precio-error');
+    if (precioField) precioField.classList.toggle('m3-field-error', errPrecio);
+    if (precioErr) precioErr.classList.toggle('hidden', !errPrecio);
+    if (errPrecio) precioEl.setAttribute('aria-invalid', 'true'); else precioEl.removeAttribute('aria-invalid');
+    var errPlacas = datosFijo.errores.filter(function(e) { return e.fila >= 0; });
+    var primeraPlaca = _marcarErrores('pe-placas', errPlacas, { gramos: '.pe-gramos', horas: '.pe-horas' });
+    if (errPrecio || errPlacas.length) {
+      (errPrecio ? precioEl : primeraPlaca).focus();
+      snack(errPrecio ? 'Escribe el precio de venta'
+                      : (errPlacas.length === 1 ? 'Revisa la placa marcada' : 'Revisa las ' + errPlacas.length + ' placas marcadas'));
+      return;
+    }
+    product.precio = datosFijo.precio;
+    product.placas = datosFijo.placas;
+    sinPlacas = !datosFijo.placas.length;
   } else {
     var dh = parseFloat(document.getElementById('cp-design').value);
     product.designH       = isNaN(dh) ? 1 : dh;
@@ -902,13 +1087,18 @@ function saveCatalogProduct(editIndex) {
 
   /* Si se estaba cotizando este producto y ya no es por tamaño, regresa a la pieza */
   if (_modoProducto && String(_modoProducto.id) === String(product.id) && product.type !== 'table') salirModoProducto();
+  /* Si se estaba cotizando este producto de precio fijo, se recalcula con lo nuevo */
+  if (_productoFijoId && String(_productoFijoId) === String(product.id)) {
+    if (product.type === 'fijo') _cargarProductoFijo(product); else _productoFijoId = null;
+  }
   if (_editorDesde === 'panel') closeModal(); else showCatalogModal();
   renderQueCotizas();
   /* El botón que abrió el editor se volvió a dibujar: el foco va a su reemplazo */
   var editar = _editorDesde === 'panel' && document.querySelector('#calc-producto .pt-editar, #calc-producto .pt-vacio .btn');
   if (editar) editar.focus({ preventScroll: true });
   snack(sinPrecios ? 'Guardado. Agrégale precios para poder cotizarlo'
-                   : (anterior ? 'Producto actualizado' : 'Producto agregado'));
+       : sinPlacas ? 'Guardado. Agrégale sus placas para saber cuánto te cuesta'
+       : (anterior ? 'Producto actualizado' : 'Producto agregado'));
 }
 
 /* ── Eliminar ─────────────────────────────────────────────────── */

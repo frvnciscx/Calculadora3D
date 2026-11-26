@@ -357,7 +357,9 @@ function populateSelects() {
   const ms = document.getElementById('calc-material');
   const pv = ps.value, mv = ms.value;
 
-  ps.innerHTML = printers.map(p => `<option value="${p.id}">${p.name} (${p.power}W)</option>`).join('');
+  ps.innerHTML = printers.length
+    ? printers.map(p => `<option value="${p.id}">${p.name} (${p.power}W)</option>`).join('')
+    : '<option value="">Sin impresoras</option>';
 
   /* Preselección: lo que había en pantalla, o la última impresora usada.
      config.lastPrinterId se venía guardando desde siempre y nadie lo leía:
@@ -369,6 +371,23 @@ function populateSelects() {
   /* Filtrar materiales según tipo de impresora seleccionada */
   const mDeseado = mv || config.lastMaterialId;
   _filterMaterials(mDeseado);
+  _avisoSinEquipo();
+}
+
+/* Sin impresoras o sin materiales no se puede cotizar (D194): la calculadora
+   lo dice arriba de los selectores, con el botón para agregar lo que falta */
+function _avisoSinEquipo() {
+  var aviso = document.getElementById('calc-sin-equipo');
+  if (!aviso) return;
+  var sinImp = !printers.length, sinMat = !materials.length;
+  aviso.classList.toggle('hidden', !sinImp && !sinMat);
+  var texto = document.getElementById('calc-sin-equipo-texto');
+  if (texto) texto.textContent = 'Para cotizar, agrega ' +
+    (sinImp && sinMat ? 'una impresora y un material.' : sinImp ? 'una impresora.' : 'un material.');
+  var bi = document.getElementById('calc-sin-impresora');
+  var bm = document.getElementById('calc-sin-material');
+  if (bi) bi.classList.toggle('hidden', !sinImp);
+  if (bm) bm.classList.toggle('hidden', !sinMat);
 }
 
 /* Filtra el select de materiales según el tipo de la impresora activa */
@@ -387,7 +406,7 @@ function _filterMaterials(keepMaterialId) {
 
   ms.innerHTML = filtered.length
     ? filtered.map(m => `<option value="${m.id}">${m.name} (${config.currency}${m.costPerKg}/kg)</option>`).join('')
-    : `<option value="">Sin materiales para ${printerType}</option>`;
+    : `<option value="">${printerType ? 'Sin materiales para ' + esc(printerType) : 'Sin materiales'}</option>`;
 
   /* Intentar conservar la selección previa si sigue siendo compatible */
   if (keepMaterialId && filtered.some(m => m.id === keepMaterialId)) {
