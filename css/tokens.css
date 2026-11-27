@@ -96,6 +96,10 @@
   --ok-tint: var(--mint-a10);
   --warn:    var(--status-warning);  /* #E3B53E */
   --danger:  var(--status-danger);   /* #E0564E */
+  /* Enviada (D224): azul, para no confundirla con Aceptada (verde) · 7.8:1 sobre --bg-elev */
+  --info:        #7AB0F5;
+  --info-tint:   rgba(122, 176, 245, 0.12);
+  --info-border: rgba(122, 176, 245, 0.32);
 
   /* Radios */
   --r-s: 10px;
@@ -262,6 +266,9 @@
   --ok-tint: rgba(0, 98, 69, 0.08);
   --warn:    #A05D00;            /* antes #c27f00 (3.3:1, no cumplía) · 4.9 / 5.2 / 4.6 */
   --danger:  #c0392b;
+  --info:        #1D5FB8;          /* 6.2:1 sobre --bg-elev */
+  --info-tint:   rgba(29, 95, 184, 0.08);
+  --info-border: rgba(29, 95, 184, 0.28);
 
   /* MD3 aliases — light */
   --md-primary:                  var(--emerald-800);
@@ -320,12 +327,17 @@
 
 /* Colores de las series de las gráficas (D180). Paleta probada para daltonismo
    (validate_palette: separación entre vecinos y contraste) contra --bg-elev de
-   cada tema; un paso por tema, no el mismo color. «Otros» va en gris. */
+   cada tema; un paso por tema, no el mismo color. «Otros» va en gris.
+   --serie-5 (magenta) y --serie-7 (violeta) entran con la barra del costo
+   (D256); la 6 (verde) y la 8 (rojo) no se usan: el verde es de la ganancia
+   y lo aceptado (D224) y el rojo de las pérdidas. */
 :root {
   --serie-1: #3987e5;
   --serie-2: #d95926;
   --serie-3: #199e70;
   --serie-4: #c98500;
+  --serie-5: #d55181;
+  --serie-7: #9085e9;
   --serie-otros: #5F6963;
 }
 :root[data-theme="light"] {
@@ -333,5 +345,23 @@
   --serie-2: #eb6834;
   --serie-3: #1baf7a;
   --serie-4: #eda100;
+  --serie-5: #e87ba4;
+  --serie-7: #6250d6;
   --serie-otros: #8B968F;
+}
+
+/* Un color por rubro del costo (D256), en el orden de la barra: azul, gris,
+   naranja, aqua, amarillo, magenta, violeta. Validado con validate_palette en
+   claro (#FFFFFF) y oscuro (#151C18): vecinos ΔE ≥ 8.4 para daltonismo y ≥ 18
+   con vista normal. El gris de Desperdicio es neutro a propósito, como «Otros».
+   Costos fijos, Mantenimiento e Indirectos comparten el magenta: son los gastos
+   del taller; los distingue su nombre en el desglose. */
+:root {
+  --costo-material:     var(--serie-1);
+  --costo-desperdicio:  var(--serie-otros);
+  --costo-energia:      var(--serie-2);
+  --costo-diseno:       var(--serie-3);
+  --costo-depreciacion: var(--serie-4);
+  --costo-taller:       var(--serie-5);
+  --costo-post:         var(--serie-7);
 }

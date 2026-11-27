@@ -207,6 +207,17 @@ var COLORES_FILAMENTO = [
   { nombre: 'Rosa',     hex: '#E8679E' }
 ];
 
+/* ¿Cómo va un rollo? 'agotado' sin gramos, 'bajo' con 20 % o menos, 'ok'.
+   Una sola regla para Inventario, Materiales e Inicio (D257): antes
+   Materiales avisaba con menos de 150 g y los otros con 20 %. */
+function estadoDeStock(rollo) {
+  var total = parseFloat(rollo && rollo.totalG) || 0;
+  var resto = Math.max(0, parseFloat(rollo && rollo.remainingG) || 0);
+  if (total > 0 && resto > total) resto = total;
+  if (resto <= 0) return 'agotado';
+  return total > 0 && resto / total * 100 <= 20 ? 'bajo' : 'ok';
+}
+
 /* El color con que se pinta un rollo: el que se eligió o, en los rollos de
    antes, el de la lista si su nombre coincide («Blanco»). Solo devuelve un hex
    válido, porque va dentro de un style. Sin color, ''. */

@@ -235,3 +235,35 @@
   font-weight: 700;
   letter-spacing: 0.04em;
 }
+
+/* ══ v153 ══════════════════════════════════════════════════════════════ */
+/* El color del rollo junto al material (D252). Borde y no sombra: la imagen
+   de la cotización (html2canvas) dibuja bien los bordes. */
+.qf-punto {
+  display: inline-block; width: 8px; height: 8px; margin-right: 3px;
+  border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.25); vertical-align: 0;
+}
+/* La hoja angosta (vista previa de la Orden, panel, teléfono): la tabla cabe
+   sin cortar el importe (D253). Antes la columna Subtotal se salía del papel.
+   El PDF y la imagen se hacen a lo ancho y no cambian. */
+.qf { container-type: inline-size; }
+@container (max-width: 420px) {
+  .qf-table { font-size: 12px; }
+  .qf-table thead th,
+  .qf-table tbody td { padding: 7px 5px; }
+  .qf-table thead th:first-child,
+  .qf-table tbody td:first-child { padding-left: 8px; }
+  .qf-td-right { white-space: nowrap; }
+  .qf-td-left { overflow-wrap: anywhere; hyphens: auto; }
+  .qf-title { font-size: 22px; }
+}
+/* Muy angosta: sin la columna «Precio unit.», como el visor del cliente en el
+   teléfono (quote.html); la cantidad y el subtotal la dicen */
+@container (max-width: 300px) {
+  .qf-table { font-size: 11px; }
+  .qf-table thead th { font-size: 11px; }
+  .qf-table thead th,
+  .qf-table tbody td { padding: 6px 4px; }
+  .qf-table thead th:nth-child(3),
+  .qf-table tbody td:nth-child(3) { display: none; }
+}

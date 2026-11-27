@@ -219,6 +219,7 @@ Cuántas cotizaciones tiene y cuánto se le ha cotizado se calcula al abrir su f
 |---|---|---|---|
 | `anticipoPct`, `anticipo` | Porcentaje y monto. 0 % es que no lo pide | D14 | Sí |
 | `plazoDias` | Plazo en días hábiles | D15 | Sí |
+| `enviadaEn` | Cuándo se mandó: se pone al pasar a Enviada y se borra (null) al volver a Borrador. Lo usa «Para hoy» del Inicio. Hoy se llama `enviadaAt` (desde v156, 2026-11-27) | D261 | Sí |
 | `aceptadaEn` | Cuándo se aceptó. Hoy se llama `acceptedAt` | D8, D20 | Sí |
 | `fechaEntrega` | Vacía hasta que se cubre el anticipo, o desde que se acepta si no lo pide | D15, D20, D75 | Sí |
 | `fechaEntregaEditada` | Si se cambió a mano, para no recalcularla encima | D15 | Sí |

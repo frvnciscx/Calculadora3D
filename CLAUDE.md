@@ -24,7 +24,7 @@ Estos documentos viven en el repo del Asistente y se leen de ahí: no se copian 
 
 | Documento | Qué tiene |
 |---|---|
-| [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) | Ciclo de vida de la cotización, anticipo, entrega, IVA, comisiones, empaque, cuentas, tiendas y qué entra a la primera versión. Es el **único registro de decisiones** (D1–D202 al 2026-11-26), también de las que salen de `flujos.md`, `modelo-de-datos.md` y `competencia.md`. Manda sobre los demás documentos cuando se contradigan |
+| [`docs/reglas-de-negocio.md`](docs/reglas-de-negocio.md) | Ciclo de vida de la cotización, anticipo, entrega, IVA, comisiones, empaque, cuentas, tiendas y qué entra a la primera versión. Es el **único registro de decisiones** (D1–D263 al 2026-11-27), también de las que salen de `flujos.md`, `modelo-de-datos.md` y `competencia.md`. Manda sobre los demás documentos cuando se contradigan |
 | [`docs/flujos.md`](docs/flujos.md) | Los flujos de la primera versión, con diagramas HTML en `docs/flujos/`. **Hechos los 7**, con sus preguntas respondidas, al 2026-11-03 |
 | [`docs/competencia.md`](docs/competencia.md) | Qué ofrecen las apps y plataformas que compiten, qué tienen y no tiene la app, y cómo proceder (2026-10-16) |
 | [`docs/modelo-de-datos.md`](docs/modelo-de-datos.md) | Qué guarda la app en Firebase, organizado por negocio, con su diagrama (2026-11-03). Sus preguntas, respondidas: D89–D98 |
@@ -75,7 +75,10 @@ Derivadas de los documentos de arriba. Si chocan, mandan ellos.
   - `tests/conexiones.test.js`: que existan las funciones y las listas que `js/db.js` usa por su nombre, y que la caché de `sw.js` y `.vercelignore` tengan lo que cargan las páginas.
   - `tests/gcode.test.js`: el lector de archivos del slicer (`js/gcode.js`, D133, y sus medidas, D168), con las fichas de archivos reales en `tests/muestras/`.
   - `tests/estados.test.js`: los estados de la cotización (`js/estados.js`, D6–D9, D18, D140–D144).
+  - `tests/pendientes.test.js`: «Para hoy» del Inicio (`pendientesDeHoy` en `js/estados.js`, D258).
   - `tests/precios-tamano.test.js`: los productos por tamaño, como los cortadores (`js/precios-tamano.js`, D148–D150).
   - `tests/uso-material.test.js`: la tarjeta «Material usado» de Inventario (`js/uso-material.js`, D180).
   - `tests/precio-fijo.test.js`: los productos de precio fijo, como los kits (`js/precio-fijo.js`, D187–D191).
+  - `tests/margen.test.js`: el margen y la ganancia, con una sola definición (`js/costing.js`, D213, D30).
+  - `tests/dinero.test.js`: el dinero con un solo formato, «$1,250.00» (`formatoDinero` en `js/costing.js`, D237).
 - La lista de caché de `sw.js` debe coincidir con los `<script>` y `<link>` de `index.html`, y `CACHE_NAME` sube en cada despliegue.

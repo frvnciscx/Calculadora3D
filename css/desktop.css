@@ -907,46 +907,52 @@
     border-bottom: 0.5px solid var(--line);
   }
   .review-items-head .m3-btn-text { width: auto; }
-  .review-table-wrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-  .review-table { width: 100%; border-collapse: collapse; }
-  .review-table th {
-    position: sticky;            /* el encabezado de la tabla no se va al desplazar */
-    top: 0;
-    z-index: 1;
-    background: var(--bg-elev);
-    padding: 10px 12px;
-    text-align: left;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    border-bottom: 0.5px solid var(--line);
-  }
-  .review-table td {
-    padding: 12px;
-    vertical-align: middle;
+  /* Cada producto en dos renglones, sin desplazamiento lateral (D222).
+     Antes era una tabla de 848 px en una caja de 637: el precio, el importe
+     y «Quitar» quedaban detrás de una barra de desplazamiento. Arriba qué es
+     y sus acciones; abajo la cuenta, con el importe a la derecha: los
+     importes de todos los productos quedan en una columna. */
+  .review-lista-wrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+  .review-lista { list-style: none; margin: 0; padding: 0; }
+  .review-fila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "info acciones" "cuenta cuenta";
+    gap: 10px 12px;
+    padding: 14px 12px 14px 20px;
     border-bottom: 0.5px solid var(--line-2);
   }
-  .review-table tr:last-child td { border-bottom: 0; }
-  .review-table th:first-child,
-  .review-table td:first-child { padding-left: 20px; }
-  .review-table .num-col { text-align: right; white-space: nowrap; }
-  .review-qty { display: flex; align-items: center; gap: 6px; }
-  .review-table .draft-price-wrap { margin-left: 0; width: 120px; }
-
-  /* La tabla se adapta a su propio ancho. Con poco espacio: sin botones
-     − / + (el campo de cantidad sigue) y sin la columna Importe, que ya
-     se lee en la línea «× 3 = $135» bajo cada producto. */
-  @container (max-width: 600px) {
-    .review-table .draft-qty-btn { display: none; }
-    .review-table .num-col { display: none; }
-    .review-table .draft-price-wrap { width: 88px; padding: 0 6px; }
-    .review-table th,
-    .review-table td { padding-left: 6px; padding-right: 6px; }
-    .review-table th:first-child,
-    .review-table td:first-child { padding-left: 14px; }
+  .review-fila:last-child { border-bottom: 0; }
+  .review-fila-info { grid-area: info; min-width: 0; }
+  .review-fila-datos { margin-top: 2px; font-size: 12px; line-height: 1.45; color: var(--ink-3); }
+  .review-fila-datos .draft-item-sub,
+  .review-fila-datos .draft-item-calc {
+    display: inline; margin: 0; white-space: normal;
+    font: inherit; color: inherit;
+  }
+  .review-fila-datos .draft-item-calc:not(:empty)::before { content: " · "; }
+  .review-fila-acciones { grid-area: acciones; display: flex; align-items: center; gap: 2px; margin-top: -6px; }
+  .review-fila .draft-item-editar { margin: 0; padding: 0 10px; border-radius: 999px; }
+  .review-fila .draft-item-editar:hover { background: var(--bg-sunk); text-decoration: none; }
+  .review-fila .draft-remove-btn { position: static; width: 36px; height: 36px; color: var(--ink-3); }
+  .review-fila .draft-remove-btn:hover { background: var(--bg-sunk); color: var(--danger); }
+  .review-fila-cuenta { grid-area: cuenta; display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .review-qty { display: flex; align-items: center; gap: 4px; }
+  .review-fila .draft-qty-btn { width: 36px; height: 36px; }
+  .review-fila .draft-qty-val { width: 48px; height: 36px; min-height: 36px; }
+  .review-fila .draft-price-wrap { margin-left: 0; height: 36px; }
+  .review-fila input.draft-item-price { height: 34px; min-height: 34px; }
+  .review-fila-signo,
+  .review-fila-cu { font-size: 13px; color: var(--ink-3); }
+  .review-fila-importe {
+    margin-left: auto; padding-left: 8px;
+    font-size: 15px; font-weight: 600; color: var(--ink);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  /* Angosta: sin − / + (el campo de cantidad sigue) ni «c/u» */
+  @container (max-width: 400px) {
+    .review-fila .draft-qty-btn,
+    .review-fila-cu { display: none; }
   }
 
   /* Resumen y botón, abajo de la tabla. Con espacio, el botón va a un lado
@@ -983,6 +989,14 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
+    white-space: nowrap;   /* «Generar cotización» se partía en dos renglones */
+  }
+  .review-footer-acciones > .review-cancelar { flex: 0 0 auto; padding: 0 20px; }
+  /* Columna angosta: uno arriba del otro, «Generar cotización» primero */
+  @container (max-width: 400px) {
+    .review-footer-acciones { flex-direction: column-reverse; }
+    .review-footer-acciones > *,
+    .review-footer-acciones > .review-cancelar { flex: none; width: 100%; }
   }
   /* Con espacio, los botones van a la derecha con su ancho, no estirados */
   @container (min-width: 560px) {
@@ -1326,4 +1340,82 @@
   }
   #ayuda-temas .ayuda-tema { margin: 0; }
   .ayuda-buscar { max-width: 520px; }
+}
+
+/* ══ v141: el Dashboard y la Ayuda parejos (D205, D206) ══════════════
+   Dashboard: dos columnas del mismo ancho y, en cada fila, las tarjetas del
+   mismo alto. Ayuda: las preguntas de una fila, del mismo alto. */
+@media (min-width: 900px) {
+  #dash-content { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+  #dash-content > .dash-seccion { display: flex; flex-direction: column; }
+  #dash-content > .dash-seccion > .card,
+  #dash-content > .dash-seccion > .uso-material { flex: 1; margin-bottom: 0; }
+  #ayuda-temas { align-items: stretch; grid-auto-rows: 1fr; }   /* todas del alto de la más alta */
+}
+
+/* ══ v141: páginas centradas (D207) ═══════════════════════════════
+   D173 limitó el ancho a 1240 px pero no lo centró: en pantallas anchas todo
+   quedaba cargado a la izquierda, con un hueco a la derecha. Ajustes ya iba
+   centrado; ahora todas igual. Solo los márgenes de los lados. */
+@media (min-width: 900px) {
+  #page-ayuda > * { max-width: 1240px; }
+  #page-dashboard > *, #page-quotes > *, #page-catalog > *, #page-history > *, #page-ayuda > * {
+    margin-left: auto !important; margin-right: auto !important;
+  }
+}
+
+/* ══ v146: «Tu ganancia» en el pie de la orden, debajo del total (D213) ══ */
+@media (min-width: 900px) {
+  .review-footer { grid-template-areas: "sub" "desc" "com" "total" "gan" "acciones"; }
+  .review-footer .draft-ganancia-row { grid-area: gan; }
+}
+
+/* ══ v147: Cotizaciones en escritorio (D224, D225) ═════════════════════ */
+@media (min-width: 900px) {
+  /* Con poco ancho, la tabla suelta Productos y luego Fecha. Antes la
+     columna Productos se quedaba en 0 y su encabezado se encimaba con «Fecha»
+     (a 1112 px de pantalla). Se mide la lista, no la pantalla (D225). */
+  #quotes-list { container: lista-cot / inline-size; }
+  @container lista-cot (max-width: 1079px) {
+    .quote-tabla-cabeza,
+    #quotes-list .quote-card { grid-template-columns: minmax(180px, 1fr) minmax(110px, 1fr) 0 96px 90px 252px; }
+    .quote-tabla-cabeza span:nth-child(3) { visibility: hidden; overflow: hidden; }
+    #quotes-list .quote-card .hist-chips { display: none; }
+  }
+  @container lista-cot (max-width: 819px) {
+    .quote-tabla-cabeza,
+    #quotes-list .quote-card { grid-template-columns: minmax(180px, 1fr) minmax(110px, 1fr) 0 0 90px 252px; }
+    .quote-tabla-cabeza span:nth-child(4) { visibility: hidden; overflow: hidden; }
+    #quotes-list .quote-card .hist-date { display: none; }
+  }
+
+  /* Las acciones de cada renglón, sin relleno (D224): antes las píldoras
+     negras «Enviar» y «Aceptar» pesaban más que el total */
+  #quotes-list .quote-card .accion-principal {
+    background: transparent; color: var(--ink); border-color: var(--line-strong);
+  }
+  #quotes-list .quote-card .accion-principal:hover { background: var(--bg-elev); border-color: var(--ink-3); }
+  #quotes-list .quote-card .accion-secundaria { border-color: transparent; color: var(--ink-2); }
+  #quotes-list .quote-card .accion-secundaria:hover { background: var(--bg-elev); color: var(--ink); }
+  #quotes-list .quote-card .hist-total { font-weight: 600; color: var(--ink); }
+}
+
+/* ══ v152: estilo de taller, etiquetas sin mayúsculas (D244) ══════════ */
+@media (min-width: 900px) {
+  .sidebar-section {
+    font-family: var(--font-sans); font-size: 12px; font-weight: 600;
+    letter-spacing: 0; text-transform: none;
+  }
+  .calc-summary #breakdown-detail::before {
+    font-family: var(--font-sans); font-size: 13px; font-weight: 600;
+    letter-spacing: 0; text-transform: none;
+  }
+}
+
+/* ══ v155: Para hoy, a todo el ancho y en renglón (D258) ══════════════ */
+@media (min-width: 900px) {
+  #dash-content > .para-hoy-seccion,
+  #dash-content > .para-hoy-seccion + * { grid-column: 1 / -1; }
+  .para-hoy { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .para-hoy-fila + .para-hoy-fila { border-top: 0; border-left: 0.5px solid var(--line); border-radius: 0; }
 }

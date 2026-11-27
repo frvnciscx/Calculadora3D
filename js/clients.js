@@ -111,7 +111,7 @@ function renderClients() {
           '</div>' +
         '</div>' +
         '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">' +
-          '<div class="num" style="font-size:13px;font-weight:500">' + (totalSpent > 0 ? cur + totalSpent.toFixed(0) : '—') + '</div>' +
+          '<div class="num" style="font-size:13px;font-weight:500">' + (totalSpent > 0 ? formatoDinero(totalSpent, cur) : '—') + '</div>' +
           '<span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-4)">chevron_right</span>' +
         '</div>' +
       '</button>';
@@ -347,20 +347,20 @@ function showClientDetail(i) {
     var qDate    = new Date(q.quoteDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
     var qTotal   = q.grandTotal != null ? q.grandTotal : (q.totalWithQty != null ? q.totalWithQty : 0);
     var status   = estadoDe(q);
-    var statusColor = status === 'aceptada' ? 'var(--ok)' : status === 'rechazada' ? 'var(--danger)' : 'var(--ink-3)';
+    var statusColor = colorDeEstado(status);   /* D224 */
     var nItems   = q.items ? q.items.length : 1;
     return '<button onclick="verCotizacionDeCliente(' + qi + ',' + i + ')" style="width:100%;text-align:left;background:transparent;padding:14px 0;display:flex;align-items:center;gap:12px;border-bottom:0.5px solid var(--line)">' +
       '<div style="flex:1;min-width:0">' +
         '<div style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px">' +
           '<span class="num">' + esc(q.quoteNum || '—') + '</span>' +
-          '<span style="font-size:12px;font-family:var(--font-mono);color:' + statusColor + ';text-transform:uppercase;letter-spacing:0.06em">' + etiquetaEstado(status) + '</span>' +
+          tplEstado(status) +   /* el mismo estado que en la lista (D224, D245) */
         '</div>' +
         '<div style="font-size:12px;color:var(--ink-3);margin-top:2px">' +
           qDate + ' · ' + nItems + ' producto' + (nItems !== 1 ? 's' : '') +
         '</div>' +
       '</div>' +
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">' +
-        '<span class="num" style="font-size:13px;font-weight:500">' + cur + qTotal.toFixed(0) + '</span>' +
+        '<span class="num" style="font-size:13px;font-weight:500">' + formatoDinero(qTotal, cur) + '</span>' +
         '<span class="material-symbols-rounded" style="font-size:14px;color:var(--ink-4)">chevron_right</span>' +
       '</div>' +
     '</button>';
@@ -395,14 +395,14 @@ function showClientDetail(i) {
           initials +
         '</div>' +
         '<div style="font-size:22px;font-weight:600;letter-spacing:-0.02em">' + esc(c.name) + '</div>' +
-        (c.tag ? '<div style="display:inline-block;margin-top:8px;padding:3px 10px;border-radius:20px;border:0.5px solid ' + tagColor + ';font-size:12px;color:' + tagColor + ';letter-spacing:0.06em;text-transform:uppercase">' + esc(c.tag) + '</div>' : '') +
+        (c.tag ? '<div style="display:inline-block;margin-top:8px;padding:3px 10px;border-radius:20px;border:0.5px solid ' + tagColor + ';font-size:12px;color:' + tagColor + '">' + esc(c.tag) + '</div>' : '') +
       '</div>' +
 
       /* Stats row */
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);margin:0 20px 24px;border-radius:12px;overflow:hidden">' +
         _statCell(String(cQuotes.length), 'cotizaciones') +
-        _statCell(totalSpent > 0 ? cur + totalSpent.toFixed(0) : '—', 'total compra') +
-        _statCell(avgOrder > 0 ? cur + avgOrder.toFixed(0) : '—', 'promedio') +
+        _statCell(totalSpent > 0 ? formatoDinero(totalSpent, cur) : '—', 'total compra') +
+        _statCell(avgOrder > 0 ? formatoDinero(avgOrder, cur) : '—', 'promedio') +
       '</div>' +
 
       /* Contacto */
@@ -434,6 +434,7 @@ var _panelCliente = null;
 function _pintarClienteEnPanel(i, c, cur, cQuotes, totalSpent, avgOrder, lastDate, quotesHTML) {
   var dock = document.getElementById('quote-dock');
   if (!dock) return;
+  var yaAbierto = document.body.classList.contains('dock-open');
   if (typeof _dockQuoteNum !== 'undefined') _dockQuoteNum = null;   /* ya no muestra una cotización */
   _panelCliente = i;
   dock.innerHTML =
@@ -450,8 +451,8 @@ function _pintarClienteEnPanel(i, c, cur, cQuotes, totalSpent, avgOrder, lastDat
     '<div class="dock-body cliente-panel">' +
       '<div class="cliente-panel-datos">' +
         _statCell(String(cQuotes.length), 'cotizaciones') +
-        _statCell(totalSpent > 0 ? cur + totalSpent.toFixed(0) : '—', 'total') +
-        _statCell(avgOrder > 0 ? cur + avgOrder.toFixed(0) : '—', 'promedio') +
+        _statCell(totalSpent > 0 ? formatoDinero(totalSpent, cur) : '—', 'total') +
+        _statCell(avgOrder > 0 ? formatoDinero(avgOrder, cur) : '—', 'promedio') +
       '</div>' +
       (c.social ? '<div class="cliente-panel-social">' + esc(c.social) + '</div>' : '') +
       '<div class="cliente-panel-lista">' +
@@ -460,6 +461,8 @@ function _pintarClienteEnPanel(i, c, cur, cQuotes, totalSpent, avgOrder, lastDat
       '</div>' +
     '</div>';
   document.body.classList.add('dock-open');
+  /* Al abrirse, el foco entra al panel (D214) */
+  if (!yaAbierto && typeof _enfocarDock === 'function') _enfocarDock();
 }
 
 /* Desde el detalle del cliente: abre la cotización y deja cómo regresar */
@@ -470,6 +473,6 @@ function verCotizacionDeCliente(qi, ci) {
 function _statCell(value, label) {
   return '<div style="background:var(--bg-elev);padding:14px 8px;text-align:center">' +
     '<div class="num" style="font-size:18px;font-weight:600;letter-spacing:-0.02em">' + value + '</div>' +
-    '<div style="font-size:12px;color:var(--ink-3);margin-top:3px;letter-spacing:0.04em;text-transform:uppercase">' + label + '</div>' +
+    '<div style="font-size:12px;color:var(--ink-3);margin-top:3px">' + label + '</div>' +
   '</div>';
 }

@@ -152,13 +152,22 @@ function getPageDirection(from, to) {
       nextEl.style.transform  = 'translateX(0)';
     });
 
-    /* Limpiar estilos inline al terminar */
-    nextEl.addEventListener('transitionend', function cleanup() {
+    /* Limpiar estilos inline al terminar. También con un reloj: si la
+       transición no corre (pestaña oculta, movimiento reducido), el
+       «translateX(0)» se quedaba pegado, y una página con transform atrapa
+       a lo que va fijo en pantalla: la barra de abajo de la Calculadora
+       aparecía al final de la página, no sobre la navegación (D215). */
+    var limpio = false;
+    function cleanup() {
+      if (limpio) return;
+      limpio = true;
       nextEl.style.transition = '';
       nextEl.style.opacity    = '';
       nextEl.style.transform  = '';
       nextEl.removeEventListener('transitionend', cleanup);
-    });
+    }
+    nextEl.addEventListener('transitionend', cleanup);
+    setTimeout(cleanup, 400);
   };
 })();
 

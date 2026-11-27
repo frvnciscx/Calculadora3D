@@ -46,13 +46,16 @@ function clearDraftQuote() {
 
 /* Actualiza el botón Cotizar según contexto:
    - Sin draft ni cálculo: "Agregar a orden" (addItemToDraft)
-   - Draft con ítems y sin cálculo activo: "Generar cotización" (generateQuote)
+   - Draft con ítems y sin cálculo activo: "Revisar orden" (generateQuote, D223)
    - Cálculo activo (con o sin draft): "Agregar a orden" + badge */
 function refreshDraftIndicator() {
   var hasDraft = draftQuote && draftQuote.items && draftQuote.items.length > 0;
-  /* En modo producto siempre hay algo que agregar: el botón no cambia a «Generar» */
+  /* En modo producto siempre hay algo que agregar: el botón no cambia a «Revisar orden» */
   var enProducto = typeof enModoProducto === 'function' && enModoProducto();
   var hasCalc  = !!lastCalc || enProducto;
+  /* ¿Hay un precio que agregar? Sin él, el botón se ve apagado y al tocarlo
+     dice qué falta (D212) */
+  var listo = !!lastCalc || (enProducto && typeof productoConPrecio === 'function' && productoConPrecio());
 
   /* Toggle «Costo de la pieza | Orden» del encabezado (escritorio): Orden
      queda deshabilitado hasta que haya al menos un producto */
@@ -73,7 +76,7 @@ function refreshDraftIndicator() {
       /* Si es la edición de una cotización guardada, lo dice (D167) */
       var qEd = _editQuoteIndex != null && typeof quotes !== 'undefined' ? quotes[_editQuoteIndex] : null;
       if (tiraTexto) tiraTexto.textContent = (qEd ? 'Editando ' + qEd.quoteNum : 'Orden') + ' · ' + nItems + (nItems === 1 ? ' producto' : ' productos');
-      if (tiraTotal) tiraTotal.textContent = (config.currency || '$') + suma.toFixed(2);
+      if (tiraTotal) tiraTotal.textContent = formatoDinero(suma, config.currency || '$');
     }
   }
 
@@ -88,6 +91,8 @@ function refreshDraftIndicator() {
 
   var btn = document.getElementById('btn-cotizar');
   if (!btn) return;
+  btn.removeAttribute('aria-disabled');
+  btn.removeAttribute('aria-label');
 
   if (iEd != null) {
     btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px">check</span> Guardar cambios';
@@ -99,7 +104,10 @@ function refreshDraftIndicator() {
   if (hasDraft && !hasCalc) {
     /* Modo: hay productos en borrador pero nada nuevo que agregar → ir a cotizar */
     var n = draftQuote.items.length;
-    btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px">receipt_long</span> Generar cotización <span class="draft-badge">' + n + '</span>';
+    /* «Revisar orden», no «Generar cotización»: este botón solo abre la
+       revisión; el que guarda es el de la revisión (D223) */
+    btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px">receipt_long</span> Revisar orden <span class="draft-badge">' + n + '</span>';
+    btn.setAttribute('aria-label', 'Revisar orden, ' + n + (n === 1 ? ' producto' : ' productos'));
     btn.onclick = generateQuote;
     btn.className = 'btn btn-primary';
   } else {
@@ -107,7 +115,8 @@ function refreshDraftIndicator() {
     btn.innerHTML = '<span class="material-symbols-rounded" style="font-size:16px">add_shopping_cart</span>'
       + (hasDraft ? ' Agregar a orden <span class="draft-badge">' + draftQuote.items.length + '</span>' : ' Agregar a orden');
     btn.onclick = addItemToDraft;
-    btn.className = 'btn btn-primary';
+    btn.className = 'btn btn-primary' + (listo ? '' : ' is-inactivo');
+    if (!listo) btn.setAttribute('aria-disabled', 'true');
   }
 }
 
@@ -124,10 +133,21 @@ function resaltarOrden() {
 function addItemToDraft() {
   /* Producto por tamaño (D148): lo arma catalog.js con lo elegido */
   if (typeof enModoProducto === 'function' && enModoProducto()) { agregarProductoTabla(); return; }
-  if (!lastCalc) { snack('Primero calcula un costo'); return; }
+  if (!lastCalc) {
+    /* Sin precio: el cálculo explícito marca el campo que falta y lo dice (D212) */
+    calculate(false);
+    if (!lastCalc) {
+      var falta = document.querySelector('#field-weight.m3-field-error input, #field-time.m3-field-error input');
+      if (falta) falta.focus();
+      return;
+    }
+  }
+  /* La descripción, tal como está escrita ahora (D212) */
+  var descEl = document.getElementById('calc-desc');
+  var descAhora = descEl && descEl.value.trim();
 
   var newItem = {
-    desc:       lastCalc.desc,
+    desc:       descAhora || lastCalc.desc,
     printer:    lastCalc.printer,
     material:   lastCalc.material,
     /* Por pieza — lastCalc ya dividió entre las piezas de la placa */
@@ -197,6 +217,8 @@ function _limpiarCalculadora() {
   _setFieldState('field-weight', 'helper-weight', 'neutral', '');
   _setFieldState('field-time', 'helper-time', 'neutral', '');
   clearLastCalc();
+  /* Y el precio de esa pieza deja la pantalla (D212) */
+  if (typeof _limpiarResultado === 'function') _limpiarResultado();
   /* El resumen del archivo del slicer también se va: era de la pieza que se agregó */
   if (typeof limpiarLecturaSlicer === 'function') limpiarLecturaSlicer();
   /* El producto por costo que se estaba cotizando deja de estar marcado */
@@ -266,7 +288,7 @@ function generateQuote() {
 /* ── Orden multi-producto ─────────────────────────────────────── */
 /* Teléfono: la orden es un panel que sale desde abajo.
    Escritorio: la calculadora cambia al modo «Orden» (review) con el toggle
-   del encabezado o con «Generar cotización»: cliente, tabla de productos y
+   del encabezado o con «Revisar orden» (D223): cliente, productos y
    totales a la izquierda; vista previa en vivo a la derecha. «Orden» está
    deshabilitado mientras la orden está vacía.
    Todos los caminos pasan por aquí: generar, editar una cotización de la
@@ -428,9 +450,10 @@ function onCommissionChange() {
   var amtEl     = document.getElementById('draft-discount-amt');
   var commAmtEl = document.getElementById('draft-commission-amt');
   var totalEl   = document.getElementById('draft-grand-total');
-  if (amtEl)     amtEl.textContent     = discountAmt > 0 ? '−' + cur + discountAmt.toFixed(2) : '—';
-  if (commAmtEl) commAmtEl.textContent = commAmt     > 0 ? '+' + cur + commAmt.toFixed(2)     : '—';
-  if (totalEl)   totalEl.textContent   = cur + finalTotal.toFixed(2);
+  if (amtEl)     amtEl.textContent     = discountAmt > 0 ? '−' + formatoDinero(discountAmt, cur) : '—';
+  if (commAmtEl) commAmtEl.textContent = commAmt     > 0 ? '+' + formatoDinero(commAmt, cur)     : '—';
+  if (totalEl)   totalEl.textContent   = formatoDinero(finalTotal, cur);
+  _pintarGananciaOrden();
   _programarVistaPrevia();
 }
 
@@ -484,7 +507,7 @@ function draftItemPriceSet(i, valor) {
 
   if (item.baseCost > 0 && p < item.baseCost) {
     snack('Ese precio queda por debajo del costo: ' +
-          (config.currency || '$') + item.baseCost.toFixed(2));
+          formatoDinero(item.baseCost, config.currency || '$'));
   }
 }
 
@@ -511,20 +534,21 @@ function _repintarDraftTotales(i) {
     /* Son <input>, no <span>: textContent no los actualiza. */
     if (qtyEl)   qtyEl.value      = item.qty;
     if (priceEl) priceEl.value    = (item.totalCost || 0).toFixed(2);
-    if (calcEl)  calcEl.innerHTML = tplDraftItemCalc(item, cur);
-    /* Importe de la fila en la tabla de escritorio (tplReviewRow) */
+    if (calcEl)  calcEl.innerHTML = tplDraftItemCalc(item, cur, calcEl.hasAttribute('data-sin-importe'));
+    /* Importe del producto en la Orden de escritorio (tplReviewRow) */
     var lineEl  = document.getElementById('dql-' + i);
-    if (lineEl)  lineEl.textContent = cur + ((item.totalCost || 0) * item.qty).toFixed(2);
+    if (lineEl)  lineEl.textContent = formatoDinero((item.totalCost || 0) * item.qty, cur);
   }
 
   var subEl      = document.getElementById('draft-subtotal');
   var amtEl      = document.getElementById('draft-discount-amt');
   var commAmtEl  = document.getElementById('draft-commission-amt');
   var totalEl    = document.getElementById('draft-grand-total');
-  if (subEl)     subEl.textContent     = cur + subtotal.toFixed(2);
-  if (amtEl)     amtEl.textContent     = discAmt > 0 ? '−' + cur + discAmt.toFixed(2) : '—';
-  if (commAmtEl) commAmtEl.textContent = commAmt > 0 ? '+' + cur + commAmt.toFixed(2) : '—';
-  if (totalEl)   totalEl.textContent   = cur + grandTotal.toFixed(2);
+  if (subEl)     subEl.textContent     = formatoDinero(subtotal, cur);
+  if (amtEl)     amtEl.textContent     = discAmt > 0 ? '−' + formatoDinero(discAmt, cur) : '—';
+  if (commAmtEl) commAmtEl.textContent = commAmt > 0 ? '+' + formatoDinero(commAmt, cur) : '—';
+  if (totalEl)   totalEl.textContent   = formatoDinero(grandTotal, cur);
+  _pintarGananciaOrden();
   _programarVistaPrevia();
 }
 
@@ -730,6 +754,7 @@ function saveQuote() {
     existing.totalBaseCost = totalBaseCost;
     /* Editar una enviada la regresa a Borrador (D9); una vieja «pendiente» se guarda como borrador */
     existing.status        = estadoAlEditar(existing);
+    if (existing.status === 'borrador') existing.enviadaAt = null;   /* D261 */
     if (typeof dbGuardarCotizacion === 'function') dbGuardarCotizacion(existing);
     sv('quotes', quotes);
     var editada = _editQuoteIndex;
@@ -949,6 +974,14 @@ function _aplicarEstado(i, status, opts) {
   if (estadoDe({ status: status }) !== estadoDe(q)) q.estadoAnterior = estadoDe(q);
   q.status = status;
 
+  /* Cuándo se mandó (D261), para «Para hoy»: al pasar a Enviada. Al volver a
+     Borrador (Deshacer, Regresar un paso) se borra; Aceptada y Rechazada la
+     conservan. null y no undefined: Firestore no acepta campos sin valor. */
+  if (estadoDe({ status: status }) === 'enviada' && estadoDe({ status: prevStatus }) !== 'enviada') {
+    q.enviadaAt = new Date().toISOString();
+  }
+  if (estadoDe({ status: status }) === 'borrador') q.enviadaAt = null;
+
   if (status === 'aceptada' && prevStatus !== 'aceptada') {
     /* Fecha de aceptaci\u00f3n: el panel reportaba el ingreso en el mes en que se
        CRE\u00d3 la cotizaci\u00f3n. Cotizar en septiembre y cobrar en octubre pon\u00eda el
@@ -1043,13 +1076,13 @@ function whatsappQuote(i) {
     var qty = it.qty || 1;
     var sub = it.totalCost * qty;
     txt += '\u2022 *' + it.desc + '*';
-    if (it.material && it.material !== '—') txt += ' (' + it.material + ')';
-    txt += '\n  Precio: ' + cur + it.totalCost.toFixed(2);
-    if (qty > 1) txt += ' x' + qty + ' = ' + cur + sub.toFixed(2);
+    if (it.material && it.material !== '—') txt += ' (' + it.material + (textoColores(it) ? ' ' + textoColores(it) : '') + ')';
+    txt += '\n  Precio: ' + formatoDinero(it.totalCost, cur);
+    if (qty > 1) txt += ' x' + qty + ' = ' + formatoDinero(sub, cur);
     txt += '\n';
   });
 
-  txt += '\n*TOTAL: ' + cur + grandTotal.toFixed(2) + '*';
+  txt += '\n*TOTAL: ' + formatoDinero(grandTotal, cur) + '*';
   if (q.notes) txt += '\n\nNotas: ' + q.notes;
   if (config.bizPhone) txt += '\n\nContacto: ' + config.bizPhone;
 
@@ -1060,6 +1093,19 @@ function whatsappQuote(i) {
 }
 
 /* ── Link público de cotización ───────────────────────────────── */
+/* Debajo de cada producto, en la cotización del cliente: material, color del
+   rollo con su punto y gramos («PLA · ● Rojo · 10g», D252) */
+function _subDeCotizacion(item) {
+  var partes = [];
+  if (item.material && item.material !== '—') partes.push(esc(item.material));
+  var cols = coloresDeItem(item).map(function(c) {
+    return '<span class="qf-punto" style="background:' + c.hex + '"></span>' + esc(c.nombre);
+  });
+  if (cols.length) partes.push(cols.join(' '));
+  if (item.weight) partes.push(item.weight + 'g');
+  return partes.join(' &middot; ');
+}
+
 function sharePublicLink(i) {
   var q = quotes[i]; if (!q) return;
   var total = q.grandTotal != null ? q.grandTotal
@@ -1068,7 +1114,9 @@ function sharePublicLink(i) {
     quoteNum:   q.quoteNum,
     client:     q.client   || '',
     quoteDate:  q.quoteDate,
-    items:      q.items    || [{ desc: q.desc || '', material: q.material || '', qty: 1, totalCost: q.totalCost || 0 }],
+    /* Con el color de cada rollo: el visor no tiene el inventario (D252) */
+    items:      (q.items   || [{ desc: q.desc || '', material: q.material || '', qty: 1, totalCost: q.totalCost || 0 }])
+                  .map(function(it) { var c = coloresDeItem(it); return c.length ? Object.assign({}, it, { colores: c }) : it; }),
     grandTotal: total,
     discount:   q.discount || 0,
     notes:      q.notes    || '',
@@ -1124,6 +1172,7 @@ function duplicateQuote(i) {
      Notion la daba por sincronizada y nunca subía. */
   dup.status         = 'borrador';
   dup.acceptedAt     = null;
+  dup.enviadaAt      = null;   /* D261 */
   delete dup.notionPageId;
   delete dup.notionSyncedAt;
   dup.inventarioDescontado = false;
@@ -1187,11 +1236,11 @@ function buildQuoteHTML(q, qrDataURL) {
     return '<tr style="background:' + _tinteHex(s.primaryColor, n % 2 ? 0.03 : 0.06) + '">' +
       '<td class="qf-td-left">' + esc(item.desc) +
         /* Los productos por tamaño no llevan material («—» en los de antes de v115) */
-        '<div class="qf-td-sub">' + (item.material && item.material !== '—' ? esc(item.material) : '') + (item.weight ? ' &middot; ' + item.weight + 'g' : '') + '</div>' +
+        '<div class="qf-td-sub">' + _subDeCotizacion(item) + '</div>' +
       '</td>' +
       '<td class="qf-td-center">' + qty + '</td>' +
-      '<td class="qf-td-right">' + cur + item.totalCost.toFixed(2) + '</td>' +
-      '<td class="qf-td-right qf-td-bold">' + cur + subtotal.toFixed(2) + '</td>' +
+      '<td class="qf-td-right">' + formatoDinero(item.totalCost, cur) + '</td>' +
+      '<td class="qf-td-right qf-td-bold">' + formatoDinero(subtotal, cur) + '</td>' +
     '</tr>';
   }).join('');
 
@@ -1226,7 +1275,7 @@ function buildQuoteHTML(q, qrDataURL) {
           rubros.map(function(r) {
             return '<div class="qf-breakdown-row">' +
               '<span>' + r.label + '</span>' +
-              '<span>' + cur + r.val.toFixed(2) + '</span>' +
+              '<span>' + formatoDinero(r.val, cur) + '</span>' +
             '</div>';
           }).join('') +
         '</div>';
@@ -1280,16 +1329,16 @@ function buildQuoteHTML(q, qrDataURL) {
        no aparecía en ningún lado — el cliente nunca se enteraba. */
     '<div class="qf-totals">' +
       (_tieneAjustes
-        ? '<div class="qf-total-sub"><span>Subtotal</span><span>' + cur + (q.subtotal || 0).toFixed(2) + '</span></div>' +
+        ? '<div class="qf-total-sub"><span>Subtotal</span><span>' + formatoDinero(q.subtotal || 0, cur) + '</span></div>' +
           (q.discountAmt > 0
             ? '<div class="qf-total-sub"><span>Descuento (' + q.discount + '%)</span>' +
-              '<span>&minus;' + cur + q.discountAmt.toFixed(2) + '</span></div>' : '') +
+              '<span>&minus;' + formatoDinero(q.discountAmt, cur) + '</span></div>' : '') +
           (q.commissionAmt > 0
             ? '<div class="qf-total-sub"><span>Comisión (' + q.commission + '%)</span>' +
-              '<span>' + cur + q.commissionAmt.toFixed(2) + '</span></div>' : '')
+              '<span>' + formatoDinero(q.commissionAmt, cur) + '</span></div>' : '')
         : '') +
       '<div class="qf-total-line" style="color:' + s.primaryColor + '">' +
-        '<span>TOTAL</span><span>' + cur + grandTotal.toFixed(2) + '</span>' +
+        '<span>TOTAL</span><span>' + formatoDinero(grandTotal, cur) + '</span>' +
       '</div>' +
     '</div>' +
 
@@ -1340,6 +1389,8 @@ function viewQuote(i, desdeCliente) {
   /* Escritorio: en el contenedor de la derecha (tipo VS Code), sin
      oscurecer la pantalla; la página se angosta para darle lugar. */
   if (_mqEscritorio.matches) {
+    /* Si ya estaba abierta esta misma, solo se vuelve a pintar: el foco no se mueve */
+    var yaVisible = document.body.classList.contains('dock-open') && _dockQuoteNum === q.quoteNum;
     _dockQuoteNum = q.quoteNum;
     getQRDataURL().then(function(qrDataURL) {
       var dock = document.getElementById('quote-dock');
@@ -1352,6 +1403,7 @@ function viewQuote(i, desdeCliente) {
             tplIcon('chevron_left', 18) + esc(clients[_volverACliente].name) + '</button>');
       }
       document.body.classList.add('dock-open');
+      if (!yaVisible) _enfocarDock();
     });
     return;
   }
@@ -1362,13 +1414,20 @@ function viewQuote(i, desdeCliente) {
       '<div class="m3-bottom-sheet">' +
         '<div class="m3-drag-handle"></div>' +
         '<div id="quote-render-area">' + buildQuoteHTML(q, qrDataURL) + '</div>' +
+        /* «Enviar» también aquí (D254): antes la hoja de un borrador solo
+           ofrecía PDF e imagen, y para mandarla había que volver a la lista */
+        '<div class="hoja-cot-descargar">' +
+          '<button class="m3-btn-text" id="btn-export-pdf-' + i + '" onclick="exportQuotePDF(' + i + ')">' +
+            '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">picture_as_pdf</span> PDF' +
+          '</button>' +
+          '<button class="m3-btn-text" id="btn-export-img-' + i + '" onclick="exportQuoteImage(' + i + ')">' +
+            imgBtnLabel +
+          '</button>' +
+        '</div>' +
         '<div class="m3-sheet-actions">' +
           '<button class="m3-btn-outlined" onclick="closeModal()">Cerrar</button>' +
-          '<button class="m3-btn-text" id="btn-export-pdf-' + i + '" onclick="exportQuotePDF(' + i + ')" style="flex:none;width:auto;padding:0 16px">' +
-            '<span class="material-symbols-rounded" style="font-size:18px">picture_as_pdf</span> PDF' +
-          '</button>' +
-          '<button class="m3-btn-tonal" id="btn-export-img-' + i + '" onclick="exportQuoteImage(' + i + ')" style="width:auto;flex:none;padding:0 20px">' +
-            imgBtnLabel +
+          '<button class="m3-btn-filled" onclick="showSendQuoteModal(' + i + ',\'enviar\')">' +
+            '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">send</span> Enviar' +
           '</button>' +
         '</div>' +
       '</div>';
@@ -1396,8 +1455,37 @@ function closeQuoteDock() {
   _volverACliente = null;
   if (typeof _panelCliente !== 'undefined') _panelCliente = null;
   var dock = document.getElementById('quote-dock');
+  /* Si el foco estaba en el panel, regresa a donde estaba antes (D214) */
+  var conFoco = dock && dock.contains(document.activeElement);
   if (dock) dock.innerHTML = '';
   document.body.classList.remove('dock-open');
+  var volver = _dockOrigen;
+  _dockOrigen = null;
+  if (conFoco && volver && document.contains(volver) && volver.focus) volver.focus({ preventScroll: true });
+}
+
+/* ── El panel de la cotización y el teclado (D214) ───────────────────
+   Al abrirse recibe el foco; Esc lo cierra si no hay otro panel encima. */
+var _dockOrigen = null;
+function _enfocarDock() {
+  var dock = document.getElementById('quote-dock');
+  if (!dock) return;
+  if (!dock.contains(document.activeElement)) _dockOrigen = document.activeElement;
+  dock.setAttribute('tabindex', '-1');
+  dock.focus({ preventScroll: true });
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Escape' || e.defaultPrevented) return;
+  if (!document.body.classList.contains('dock-open')) return;
+  if (document.querySelector('#modal-container .m3-scrim, .capa-encima, .driver-popover')) return;
+  e.preventDefault();
+  closeQuoteDock();
+});
+
+/* Tu ganancia en la orden, después del descuento y sin la comisión (D213) */
+function _pintarGananciaOrden() {
+  var el = document.getElementById('draft-ganancia-row');
+  if (el && draftQuote) el.innerHTML = tplGananciaOrden(draftQuote, config.currency);
 }
 
 /* ── Compartir como texto (sin costos internos) ───────────────── */
@@ -1417,14 +1505,14 @@ function shareQuote(i) {
     var qty = it.qty || 1;
     var sub = it.totalCost * qty;
     txt += it.desc + '\n';
-    txt += '  Material: ' + it.material + (it.weight ? ' | ' + it.weight + 'g' : '') + '\n';
-    txt += '  Precio: ' + cur + it.totalCost.toFixed(2);
-    if (qty > 1) txt += ' x' + qty + ' = ' + cur + sub.toFixed(2);
+    txt += '  Material: ' + it.material + (textoColores(it) ? ' · ' + textoColores(it) : '') + (it.weight ? ' | ' + it.weight + 'g' : '') + '\n';
+    txt += '  Precio: ' + formatoDinero(it.totalCost, cur);
+    if (qty > 1) txt += ' x' + qty + ' = ' + formatoDinero(sub, cur);
     txt += '\n\n';
   });
 
   var grandTotal = q.grandTotal != null ? q.grandTotal : (q.totalWithQty != null ? q.totalWithQty : items[0].totalCost);
-  txt += 'TOTAL: ' + cur + grandTotal.toFixed(2) + '\n';
+  txt += 'TOTAL: ' + formatoDinero(grandTotal, cur) + '\n';
 
   if (q.notes && quoteStyle.showNotas) txt += '\nNotas: ' + q.notes + '\n';
   if (quoteStyle.termsText) txt += '\n' + quoteStyle.termsText + '\n';
@@ -1835,7 +1923,9 @@ function abrirMenuCotizacion(ev, i) {
   menu.innerHTML = accionesDelMenu(q).map(function(id) {
     var a = _ACCIONES_COTIZACION[id];
     var etiqueta = id === 'regresar' ? 'Regresar a ' + etiquetaEstado(estadoAnterior(q)).toLowerCase() : a.etiqueta;
-    return '<button type="button" role="menuitem" class="menu-cotizacion-item' + (a.peligro ? ' peligro' : '') + '" data-accion="' + id + '">' +
+    /* «Borrar» va aparte, con una raya arriba: estaba pegado a «Compartir texto» (D232) */
+    return (a.peligro ? '<div class="menu-cotizacion-raya" role="separator"></div>' : '') +
+      '<button type="button" role="menuitem" class="menu-cotizacion-item' + (a.peligro ? ' peligro' : '') + '" data-accion="' + id + '">' +
       '<span class="material-symbols-rounded" aria-hidden="true">' + a.icono + '</span>' + esc(etiqueta) +
     '</button>';
   }).join('');
@@ -2007,8 +2097,8 @@ function _terminarEdicion(puesto) {
   var msg = 'Producto actualizado';
   var antes = puesto.viejo, ahora = puesto.nuevo;
   if (antes && antes.priceManual && Math.abs((antes.totalCost || 0) - (ahora.totalCost || 0)) > 0.005) {
-    msg += '. Tenía un precio escrito a mano (' + cur + (antes.totalCost || 0).toFixed(2) +
-           '); ahora es el calculado, ' + cur + (ahora.totalCost || 0).toFixed(2);
+    msg += '. Tenía un precio escrito a mano (' + formatoDinero(antes.totalCost || 0, cur) +
+           '); ahora es el calculado, ' + formatoDinero(ahora.totalCost || 0, cur);
   }
   renderDraftModal();
   snack(msg);

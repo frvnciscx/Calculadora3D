@@ -55,7 +55,7 @@ function tplImpresorasComunes() {
             '<input type="checkbox" value="' + k + '">' +
             '<span class="comunes-texto">' +
               '<span class="comunes-nombre">' + esc(p.name) + '</span>' +
-              '<span class="comunes-sub">' + esc(p.type) + ' · ' + p.power + ' W · ' + cur + mil(p.cost) +
+              '<span class="comunes-sub">' + esc(p.type) + ' · ' + p.power + ' W · ' + formatoDinero(p.cost, cur) +
                 ' · ' + mil(p.lifeHours) + ' h' + (p.multicolor ? ' · ' + p.heads + ' colores' : '') + '</span>' +
             '</span>' +
           '</label>';
@@ -65,9 +65,17 @@ function tplImpresorasComunes() {
     '</div>';
 }
 
+/* El precio grande con los centavos más chicos (D237): «$1,250.00» con el
+   «.00» a menos de la mitad, para que a 72 px se lea «$1,250» de un vistazo */
+function tplDinero(n, cur) {
+  var s = formatoDinero(n, cur), k = s.lastIndexOf('.');
+  return esc(s.slice(0, k)) + '<span class="centavos">' + s.slice(k) + '</span>';
+}
+
 function tplIcon(name, size) {
   size = size || 18;
-  return '<span class="material-symbols-rounded" style="font-size:' + size + 'px">' + name + '</span>';
+  /* aria-hidden: el lector de pantalla no lee el nombre del ícono («edit», «delete»), D214 */
+  return '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:' + size + 'px">' + name + '</span>';
 }
 
 function tplSheetHeader(title, closeFn) {
@@ -100,20 +108,20 @@ function tplHistoryItem(h, i, cur) {
           new Date(h.date).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) +
         '</div>' +
       '</div>' +
-      '<div class="hist-total">' + cur + h.totalCost.toFixed(2) + '</div>' +
+      '<div class="hist-total">' + formatoDinero(h.totalCost, cur) + '</div>' +
     '</div>' +
     '<div class="hist-chips">' +
       '<span class="hist-chip">' + esc(h.printer)  + '</span>' +
       '<span class="hist-chip">' + esc(h.material) + '</span>' +
       '<span class="hist-chip">' + h.weight + 'g</span>' +
       '<span class="hist-chip">' + h.timeH  + 'hrs</span>' +
-      '<span class="hist-chip">Margen ' + h.margin + '%</span>' +
+      '<span class="hist-chip">+' + (Number(h.margin) || 0) + ' % sobre costo</span>' +
     '</div>' +
     '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
       '<button class="m3-btn-text m3-btn-sm" onclick="reuseCalc(' + i + ')">' +
         tplIcon('replay', 16) + ' Reusar' +
       '</button>' +
-      '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteHistoryItem(' + i + ')">' +
+      '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteHistoryItem(' + i + ')" aria-label="Borrar ' + esc(h.desc) + '">' +
         tplIcon('delete', 16) +
       '</button>' +
     '</div>' +
@@ -136,14 +144,14 @@ function tplPrinterItem(p, cur) {
       '<h3 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(p.name) + '</h3>' +
       (multiTag ? '<div>' + multiTag + '</div>' : '') +
       '<p>' + p.power + 'W &middot; ' + esc(p.type) + ' &middot; ' +
-        cur + (p.cost || 0).toLocaleString() + ' &middot; ' + (p.lifeHours || 0) + 'hrs vida' +
+        formatoDinero(p.cost, cur) + ' &middot; ' + (p.lifeHours || 0) + 'hrs vida' +
       '</p>' +
     '</div>' +
     '<div class="actions">' +
-      '<button class="m3-btn-text m3-btn-sm" onclick="showPrinterModal(\'' + p.id + '\')">' +
+      '<button class="m3-btn-text m3-btn-sm" onclick="showPrinterModal(\'' + p.id + '\')" aria-label="Editar ' + esc(p.name) + '">' +
         tplIcon('edit') +
       '</button>' +
-      '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deletePrinter(\'' + p.id + '\')">' +
+      '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deletePrinter(\'' + p.id + '\')" aria-label="Borrar ' + esc(p.name) + '">' +
         tplIcon('delete') +
       '</button>' +
     '</div>' +
@@ -188,7 +196,7 @@ function tplPrinterModal(e, editId) {
       '</div>' +
       /* ── Toggle multicolor ─────────────────────────── */
       '<div style="margin-top:4px">' +
-        '<div style="font-size:12px;color:var(--ink-3);margin-bottom:8px;letter-spacing:0.04em;text-transform:uppercase;font-family:var(--font-mono)">Impresión multicolor</div>' +
+        '<div class="etiqueta" style="margin-bottom:8px">Impresión multicolor</div>' +
         '<div class="seg" style="display:flex;width:100%">' +
           '<button type="button" id="mod-p-multi-no"  onclick="_printerMultiToggle(false)" style="flex:1"' + (!isMulti ? ' class="active"' : '') + '>Un color</button>' +
           '<button type="button" id="mod-p-multi-yes" onclick="_printerMultiToggle(true)"  style="flex:1"' + (isMulti  ? ' class="active"' : '') + '>Multicolor</button>' +
@@ -207,6 +215,19 @@ function tplPrinterModal(e, editId) {
 
 /* ── MATERIALS ──────────────────────────────────────────────────── */
 
+/* El aviso de un rollo (D257): «Por acabarse» en ámbar y «Agotado» en rojo,
+   con ícono y palabra, no solo color. Antes: ⚠ rojo en Inventario y ↓ roja en
+   Materiales, y en una tarjeta «TPU Rojo» el rojo decía cuatro cosas. */
+function tplAvisoStock(estado) {
+  if (estado === 'bajo')    return '<span class="aviso-stock">' + tplIcon('warning', 13) + 'Por acabarse</span>';
+  if (estado === 'agotado') return '<span class="aviso-stock agotado">' + tplIcon('block', 13) + 'Agotado</span>';
+  return '';
+}
+/* La barra de lo que queda: neutra; ámbar cuando se acaba (D257) */
+function colorBarraStock(estado) {
+  return estado === 'ok' ? 'var(--ink-3)' : 'var(--warn)';
+}
+
 function tplMaterialItem(m, cur, invItems) {
   /* Color chips from inventory */
   var colorChips = '';
@@ -218,13 +239,14 @@ function tplMaterialItem(m, cur, invItems) {
           ? 'background:' + hexRollo + ';border:1px solid rgba(127,127,127,.45)'
           : 'background:var(--bg-sunk);border:0.5px solid var(--line)';
         var label = it.color || 'Sin color';
-        var remain = (it.remainingG || 0);
-        var low    = remain > 0 && remain < 150;
-        var out    = remain <= 0;
+        var estado = estadoDeStock(it);
+        var low    = estado === 'bajo';
+        var out    = estado === 'agotado';
         return '<span class="mat-color-chip"' + (out ? ' style="opacity:0.35"' : '') + '>' +
           '<span style="width:10px;height:10px;border-radius:50%;flex-shrink:0;display:inline-block;' + dot + '"></span>' +
           esc(label) +
-          (low ? '<span style="color:var(--md-error);font-size:12px"> ↓</span>' : '') +
+          (low ? '<span class="material-symbols-rounded aviso-stock-icono" aria-hidden="true" title="Por acabarse">warning</span><span class="sr-only">, por acabarse</span>' : '') +
+          (out ? '<span class="sr-only">, agotado</span>' : '') +
           '</span>';
       }).join('') +
     '</div>';
@@ -235,13 +257,13 @@ function tplMaterialItem(m, cur, invItems) {
       '<div class="leading">' + tplIcon('category') + '</div>' +
       '<div class="content">' +
         '<h3>' + esc(m.name) + '</h3>' +
-        '<p>' + cur + m.costPerKg + '/kg &middot; ' + esc(m.type) + ' &middot; ' + m.density + ' g/cm³</p>' +
+        '<p>' + formatoDinero(m.costPerKg, cur) + '/kg &middot; ' + esc(m.type) + ' &middot; ' + m.density + ' g/cm³</p>' +
       '</div>' +
       '<div class="actions">' +
-        '<button class="m3-btn-text m3-btn-sm" onclick="showMaterialModal(\'' + m.id + '\')">' +
+        '<button class="m3-btn-text m3-btn-sm" onclick="showMaterialModal(\'' + m.id + '\')" aria-label="Editar ' + esc(m.name) + '">' +
           tplIcon('edit') +
         '</button>' +
-        '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteMaterial(\'' + m.id + '\')">' +
+        '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteMaterial(\'' + m.id + '\')" aria-label="Borrar ' + esc(m.name) + '">' +
           tplIcon('delete') +
         '</button>' +
       '</div>' +
@@ -309,7 +331,7 @@ function tplClientCard(c, i, quoteCount, totalSpent, cur) {
       '<div class="client-stats">' +
         '<div class="client-stat-val">' + quoteCount + '</div>' +
         '<div class="client-stat-lbl">cotizaciones</div>' +
-        (totalSpent > 0 ? '<div class="client-stat-total">' + cur + totalSpent.toFixed(0) + '</div>' : '') +
+        (totalSpent > 0 ? '<div class="client-stat-total">' + formatoDinero(totalSpent, cur) + '</div>' : '') +
       '</div>' +
     '</div>' +
     (c.notes ? '<div class="client-notes">' + esc(c.notes) + '</div>' : '') +
@@ -319,7 +341,7 @@ function tplClientCard(c, i, quoteCount, totalSpent, cur) {
       '<button class="m3-btn-text m3-btn-sm" onclick="showClientModal(' + i + ')">' +
         tplIcon('edit', 16) + ' Editar' +
       '</button>' +
-      '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteClient(' + i + ')">' +
+      '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error)" onclick="deleteClient(' + i + ')" aria-label="Borrar ' + esc(c.name) + '">' +
         tplIcon('delete', 16) +
       '</button>' +
     '</div>' +
@@ -348,7 +370,7 @@ function tplClientQuoteRow(q, qi, cur) {
       '<span class="cq-row-date">' + date + '</span>' +
     '</div>' +
     '<div class="cq-row-right">' +
-      '<span class="cq-row-total">' + cur + total.toFixed(2) + '</span>' +
+      '<span class="cq-row-total">' + formatoDinero(total, cur) + '</span>' +
       '<button class="m3-btn-text m3-btn-sm" onclick="viewQuote(' + qi + ')" style="padding:0 6px;height:28px">' +
         tplIcon('visibility', 14) +
       '</button>' +
@@ -432,10 +454,9 @@ function tplInventoryCard(item, i, cur) {
   if (remain > total) remain = total;
   var pct      = total > 0 ? Math.round((remain / total) * 100) : 0;
   var used     = total - remain;
-  var barColor = pct > 50 ? 'var(--accent-mint)' : pct > 20 ? '#F9A825' : 'var(--md-error)';
-  var alertIcon = pct <= 20
-    ? '<span class="material-symbols-rounded" style="color:var(--md-error);font-size:16px;margin-left:4px" title="Stock bajo">warning</span>'
-    : '';
+  var estado    = estadoDeStock(item);   /* D257 */
+  var barColor  = colorBarraStock(estado);
+  var alertIcon = tplAvisoStock(estado);
 
   var hexRollo = colorDeRollo(item);   /* D185 */
   return '<div class="inv-card">' +
@@ -459,7 +480,7 @@ function tplInventoryCard(item, i, cur) {
     '<div class="inv-stats">' +
       '<span>' + pct + '% restante</span>' +
       '<span>' + used.toFixed(0) + 'g usado</span>' +
-      (item.costPerKg ? '<span>' + cur + ((remain / 1000) * item.costPerKg).toFixed(2) + ' en stock</span>' : '') +
+      (item.costPerKg ? '<span>' + formatoDinero((remain / 1000) * item.costPerKg, cur) + ' en stock</span>' : '') +
     '</div>' +
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">' +
       '<div style="display:flex;gap:8px">' +
@@ -470,7 +491,7 @@ function tplInventoryCard(item, i, cur) {
           tplIcon('edit', 16) + ' Editar' +
         '</button>' +
       '</div>' +
-      '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error);padding:4px 8px" onclick="deleteInventory(' + i + ')">' +
+      '<button class="m3-btn-text m3-btn-sm" style="color:var(--md-error);padding:4px 8px" onclick="deleteInventory(' + i + ')" aria-label="Borrar el rollo de ' + esc(nombreMaterialDeRollo(item)) + '">' +
         tplIcon('delete', 16) +
       '</button>' +
     '</div>' +
@@ -560,6 +581,21 @@ function tplDeductModal(item, i) {
     '</div>';
 }
 
+/* ── Estado de una cotización (D224) ─────────────────────────────────
+   Cada estado con su color y su ícono, para no depender solo del color:
+   Borrador ámbar, Enviada azul, Aceptada verde, Rechazada rojo. El verde
+   queda para lo aceptado y la ganancia; antes Enviada y Aceptada eran el
+   mismo verde de los botones y los folios. */
+function tplEstado(estado) {
+  var e = estadoDe({ status: estado });
+  return '<span class="status-badge status-' + e + '">' +
+    tplIcon(ESTADOS_COTIZACION[e].icono, 14) + esc(etiquetaEstado(e)) + '</span>';
+}
+function colorDeEstado(estado) {
+  return { borrador: 'var(--warn)', enviada: 'var(--info)', aceptada: 'var(--ok)',
+           rechazada: 'var(--danger)' }[estadoDe({ status: estado })];
+}
+
 /* ── QUOTES — card individual ───────────────────────────────────── */
 
 /* Tarjeta de cotización (D143): tocarla la abre, tiene una sola acción principal
@@ -579,7 +615,7 @@ function tplQuoteCard(q, i, cur) {
     : '<span class="hist-chip">' + esc(firstItem.desc     || q.desc     || '') + '</span>' +
       _chipMaterial(firstItem.material || q.material || '');
 
-  var statusHTML = '<span class="status-badge status-' + estado + '">' + esc(etiquetaEstado(estado)) + '</span>';
+  var statusHTML = tplEstado(estado);
 
   var botones = {
     enviar:   '<button type="button" class="accion-principal" onclick="showSendQuoteModal(' + i + ',\'enviar\')">' + tplIcon('send', 16) + ' Enviar</button>',
@@ -592,7 +628,8 @@ function tplQuoteCard(q, i, cur) {
     '<div class="hist-header">' +
       '<div class="quote-card-meta">' +
         '<div style="display:flex;align-items:center;gap:8px;">' +
-          '<div style="font-size:12px;color:var(--md-primary);font-weight:500">' + esc(q.quoteNum) + '</div>' +
+          /* El folio sin verde: el verde es de lo aceptado (D224) */
+          '<div class="quote-folio">' + esc(q.quoteNum) + '</div>' +
           statusHTML +
         '</div>' +
         '<div class="hist-desc">' + esc(q.client) + '</div>' +
@@ -600,7 +637,7 @@ function tplQuoteCard(q, i, cur) {
           new Date(q.quoteDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) +
         '</div>' +
       '</div>' +
-      '<div class="hist-total">' + cur + total.toFixed(2) + '</div>' +
+      '<div class="hist-total">' + formatoDinero(total, cur) + '</div>' +
     '</div>' +
     '<div class="hist-chips">' + chipsHTML + '</div>' +
     '<div class="quote-acciones">' +
@@ -619,19 +656,21 @@ function tplQuoteCard(q, i, cur) {
    El margen es justo el dato que se pierde al fijar un precio a mano, así que
    es el que hay que devolver a la vista — y en rojo cuando queda negativo,
    porque vender bajo costo sin que nada lo diga es el peor final posible. */
-function tplDraftItemCalc(item, cur) {
+function tplDraftItemCalc(item, cur, sinImporte) {
   var qty    = item.qty || 1;
   var linea  = (item.totalCost || 0) * qty;
   var partes = [];
   var perdida = false;
 
-  if (qty > 1) partes.push('× ' + qty + ' = ' + cur + linea.toFixed(2));
+  /* En la Orden de escritorio el importe ya va en su renglón (D222) */
+  if (qty > 1 && !sinImporte) partes.push('× ' + qty + ' = ' + formatoDinero(linea, cur));
   /* baseCost null = producto de tabla de precios, sin costo real conocido.
      Ahí no hay margen que calcular y se calla en vez de inventar un número. */
   if (item.baseCost > 0) {
-    var m = ((item.totalCost / item.baseCost) - 1) * 100;
-    perdida = m < 0;
-    partes.push('margen ' + m.toFixed(0) + '%');
+    /* Margen: la parte del precio que es ganancia (D213) */
+    var m = margenDePrecio(item.totalCost, item.baseCost);
+    perdida = (item.totalCost || 0) < item.baseCost;
+    if (m != null) partes.push('margen ' + m + ' %');
   }
   if (item.priceManual) partes.push('precio escrito');
 
@@ -646,7 +685,37 @@ function tplDraftItemCalc(item, cur) {
    productos de tabla (D148; los de antes de v115 traían «—»). */
 function _subLineaItem(item) {
   if (item.tipo === 'tabla' || item.printer === '—' || (!item.printer && !item.material)) return 'Precio por tamaño';
-  return esc(item.printer) + ' &middot; ' + esc(item.material);
+  return esc(item.printer) + ' &middot; ' + _puntosDeRollo(item) + esc(item.material);
+}
+
+/* Los colores de los rollos de un producto: [{ nombre, hex }], uno por
+   color en el AMS. Sin rollo elegido o sin color guardado, [] (D247, D252). */
+function coloresDeItem(item) {
+  if (!item || typeof inventory === 'undefined' || typeof colorDeRollo !== 'function') return [];
+  var ids = item.amsColors && item.amsColors.length
+    ? item.amsColors.map(function(c) { return c.spoolId; })
+    : [item.spoolId];
+  var lista = [];
+  ids.slice(0, 4).forEach(function(id) {
+    var r = id ? inventory.find(function(x) { return x.id === id; }) : null;
+    var hex = r ? colorDeRollo(r) : '';
+    if (hex) lista.push({ nombre: String(r.color || '').trim(), hex: hex });
+  });
+  return lista;
+}
+
+/* «Rojo», «Blanco y Negro»: para los textos que se comparten (D252) */
+function textoColores(item) {
+  var n = coloresDeItem(item).map(function(c) { return c.nombre; }).filter(Boolean);
+  return n.length > 1 ? n.slice(0, -1).join(', ') + ' y ' + n[n.length - 1] : (n[0] || '');
+}
+
+/* El color del rollo junto al material, uno por color en el AMS (D247) */
+function _puntosDeRollo(item) {
+  return coloresDeItem(item).map(function(c) {
+    var tono = esc(c.nombre || 'Color del rollo');
+    return '<span class="punto-rollo" style="background:' + c.hex + '" role="img" aria-label="' + tono + '" title="' + tono + '"></span>';
+  }).join('');
 }
 
 /* La etiqueta del material en la tarjeta: los productos por tamaño no tienen */
@@ -719,7 +788,7 @@ function tplDraftModal(draft, cur) {
       tplDraftClient(draft) +
       '<div class="draft-items-section">' +
         '<div class="draft-items-header">' +
-          '<span>PRODUCTOS (' + draft.items.length + ')</span>' +
+          '<span>Productos (' + draft.items.length + ')</span>' +
           '<button class="m3-btn-text" style="font-size:13px;width:auto;padding:0 8px;height:36px" onclick="addMoreToQuote()">' +
             tplIcon('add', 16) + ' Agregar producto' +
           '</button>' +
@@ -755,61 +824,67 @@ function tplReviewMain(draft, cur) {
 }
 
 function tplReviewItems(draft, cur) {
-  var rows = draft.items.map(function(item, i) { return tplReviewRow(item, i, cur); }).join('');
+  var filas = draft.items.map(function(item, i) { return tplReviewRow(item, i, cur); }).join('');
   return '<div class="review-client">' + tplDraftClient(draft) + '</div>' +
     '<div class="review-items">' +
       '<div class="review-items-head">' +
-        '<span class="micro">Productos (' + draft.items.length + ')</span>' +
+        '<span class="micro" id="review-items-titulo">Productos (' + draft.items.length + ')</span>' +
         '<button class="m3-btn-text m3-btn-sm" onclick="addMoreToQuote()">' +
           tplIcon('add', 16) + ' Agregar producto' +
         '</button>' +
       '</div>' +
-      '<div class="review-table-wrap">' +
-        '<table class="review-table">' +
-          '<thead><tr>' +
-            '<th>Producto</th><th>Cantidad</th><th>Precio por pieza</th>' +
-            '<th class="num-col">Importe</th><th><span class="sr-only">Quitar</span></th>' +
-          '</tr></thead>' +
-          '<tbody>' + rows + '</tbody>' +
-        '</table>' +
+      /* Una lista, no una tabla (D222) */
+      '<div class="review-lista-wrap">' +
+        '<ul class="review-lista" aria-labelledby="review-items-titulo">' + filas + '</ul>' +
       '</div>' +
     '</div>';
 }
 
-/* Un producto como fila. Mismos id y funciones que la tarjeta del teléfono
-   (tplDraftItem), más dql-i: el importe de la fila (precio × cantidad). */
+/* Un producto en dos renglones (D222). Arriba, qué es y sus acciones; abajo
+   la cuenta: cantidad × precio por pieza, y el importe a la derecha. Antes
+   era una fila de tabla de 848 px en una caja de 637: el precio, el importe
+   y «Quitar» quedaban detrás de una barra de desplazamiento lateral.
+   Mismos id y funciones que la tarjeta del teléfono (tplDraftItem), más
+   dql-i: el importe. dqc-i lleva data-sin-importe: ahí no se repite. */
 function tplReviewRow(item, i, cur) {
-  var qty = item.qty || 1;
-  return '<tr>' +
-    '<td>' +
+  var qty    = item.qty || 1;
+  var nombre = esc(item.desc || ('Producto ' + (i + 1)));
+  return '<li class="review-fila">' +
+    '<div class="review-fila-info">' +
       '<div class="draft-item-desc">' + esc(item.desc) + '</div>' +
-      '<div class="draft-item-sub">' + _subLineaItem(item) + '</div>' +
-      '<div class="draft-item-calc" id="dqc-' + i + '">' + tplDraftItemCalc(item, cur) + '</div>' +
-      '<button type="button" class="draft-item-editar" onclick="editarProductoDeOrden(' + i + ')" aria-label="Editar ' + esc(item.desc) + '">' +
+      '<div class="review-fila-datos">' +
+        '<span class="draft-item-sub">' + _subLineaItem(item) + '</span>' +
+        '<span class="draft-item-calc" id="dqc-' + i + '" data-sin-importe>' + tplDraftItemCalc(item, cur, true) + '</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="review-fila-acciones">' +
+      '<button type="button" class="draft-item-editar" onclick="editarProductoDeOrden(' + i + ')" aria-label="Editar ' + nombre + '">' +
         tplIcon('edit', 16) + ' Editar' +
       '</button>' +
-    '</td>' +
-    '<td>' +
+      '<button type="button" class="draft-remove-btn" onclick="removeDraftItem(' + i + ')" title="Quitar" aria-label="Quitar ' + nombre + '">' +
+        tplIcon('close', 18) +
+      '</button>' +
+    '</div>' +
+    '<div class="review-fila-cuenta">' +
       '<div class="review-qty">' +
-        '<button class="draft-qty-btn" onclick="draftItemQty(' + i + ',-1)" aria-label="Quitar uno">&#8722;</button>' +
+        '<button type="button" class="draft-qty-btn" onclick="draftItemQty(' + i + ',-1)" aria-label="Quitar uno">&#8722;</button>' +
         '<input type="number" class="draft-qty-val" id="dqi-' + i + '" value="' + qty + '" ' +
-          'min="1" step="1" inputmode="numeric" aria-label="Cantidad" ' +
+          'min="1" step="1" inputmode="numeric" aria-label="Cantidad de ' + nombre + '" ' +
           'onchange="draftItemQtySet(' + i + ', this.value)">' +
-        '<button class="draft-qty-btn" onclick="draftItemQty(' + i + ',1)" aria-label="Agregar uno">&#43;</button>' +
+        '<button type="button" class="draft-qty-btn" onclick="draftItemQty(' + i + ',1)" aria-label="Agregar uno">&#43;</button>' +
       '</div>' +
-    '</td>' +
-    '<td>' +
+      '<span class="review-fila-signo" aria-hidden="true">&times;</span>' +
       '<label class="draft-price-wrap">' +
         '<span class="draft-price-cur">' + cur + '</span>' +
         '<input type="number" class="draft-item-price" id="dqp-' + i + '" ' +
           'value="' + (item.totalCost || 0).toFixed(2) + '" min="0" step="0.01" ' +
-          'inputmode="decimal" aria-label="Precio por pieza" ' +
+          'inputmode="decimal" aria-label="Precio por pieza de ' + nombre + '" ' +
           'onchange="draftItemPriceSet(' + i + ', this.value)">' +
       '</label>' +
-    '</td>' +
-    '<td class="num-col num" id="dql-' + i + '">' + cur + ((item.totalCost || 0) * qty).toFixed(2) + '</td>' +
-    '<td><button class="draft-remove-btn" onclick="removeDraftItem(' + i + ')" title="Quitar" aria-label="Quitar ' + esc(item.desc) + '">&#10005;</button></td>' +
-  '</tr>';
+      '<span class="review-fila-cu" aria-hidden="true">c/u</span>' +
+      '<span class="review-fila-importe num" id="dql-' + i + '">' + formatoDinero((item.totalCost || 0) * qty, cur) + '</span>' +
+    '</div>' +
+  '</li>';
 }
 
 /* ── Después de generar: modal para enviar la cotización ──────────
@@ -841,7 +916,7 @@ function tplSendQuoteModal(q, i, modo) {
         '<span class="send-check">' + tplIcon(modo === 'enviar' ? 'send' : 'check', 22) + '</span>' +
         '<div>' +
           '<h2 id="send-title">' + titulo + '</h2>' +
-          '<p>' + esc(q.client) + ' · ' + cur + (q.grandTotal || 0).toFixed(2) + '</p>' +
+          '<p>' + esc(q.client) + ' · ' + formatoDinero(q.grandTotal || 0, cur) + '</p>' +
         '</div>' +
       '</div>' +
       '<button type="button" class="m3-btn-filled send-whatsapp" onclick="whatsappQuote(' + i + ')">' +
@@ -874,6 +949,7 @@ function tplQuoteDock(q, i, quoteHTML) {
   return '<div class="dock-head">' +
       '<div>' +
         '<div class="dock-title">' + esc(q.quoteNum) + ' · ' + esc(q.client || '') + '</div>' +
+        _lineaGananciaDock(q) +
       '</div>' +
       '<button class="sheet-close-btn" onclick="closeQuoteDock()" aria-label="Cerrar">' + tplIcon('close', 20) + '</button>' +
     '</div>' +
@@ -927,7 +1003,7 @@ function tplDraftTotals(draft, cur) {
       /* Subtotal + descuento */
       '<div class="draft-subtotal-row">' +
         '<span>Subtotal</span>' +
-        '<span id="draft-subtotal">' + cur + subtotal.toFixed(2) + '</span>' +
+        '<span id="draft-subtotal">' + formatoDinero(subtotal, cur) + '</span>' +
       '</div>' +
       '<div class="draft-discount-row">' +
         '<label for="q-discount" style="display:flex;align-items:center;gap:6px">' +
@@ -938,7 +1014,7 @@ function tplDraftTotals(draft, cur) {
             'value="' + discount + '" inputmode="decimal" oninput="onDiscountChange()">' +
           '<span style="font-size:13px;color:var(--md-on-surface-variant)">%</span>' +
           '<span id="draft-discount-amt" class="discount-amount">' +
-            (discountAmt > 0 ? '−' + cur + discountAmt.toFixed(2) : '—') +
+            (discountAmt > 0 ? '−' + formatoDinero(discountAmt, cur) : '—') +
           '</span>' +
         '</div>' +
       '</div>' +
@@ -956,25 +1032,60 @@ function tplDraftTotals(draft, cur) {
             (!commEnabled ? ' disabled style="opacity:0.4"' : '') + '>' +
           '<span style="font-size:13px;color:var(--md-on-surface-variant)">%</span>' +
           '<span id="draft-commission-amt" class="discount-amount">' +
-            (commissionAmt > 0 ? '+' + cur + commissionAmt.toFixed(2) : '—') +
+            (commissionAmt > 0 ? '+' + formatoDinero(commissionAmt, cur) : '—') +
           '</span>' +
         '</div>' +
       '</div>' +
       '<div class="draft-total-row">' +
-        '<span>TOTAL</span>' +
-        '<span id="draft-grand-total">' + cur + grandTotal.toFixed(2) + '</span>' +
-      '</div>';
+        '<span>Total</span>' +
+        '<span id="draft-grand-total">' + formatoDinero(grandTotal, cur) + '</span>' +
+      '</div>' +
+      /* Lo que ganas, a la vista donde se aplican descuento y comisión (D213) */
+      '<div class="draft-ganancia-row" id="draft-ganancia-row">' + tplGananciaOrden(draft, cur) + '</div>';
+}
+
+/* Tu ganancia con la orden (D213). Después del descuento; la comisión del
+   recomendador no es tuya (D30). Sin el costo de algún producto, no se inventa. */
+function tplGananciaOrden(draft, cur) {
+  var g = gananciaDeOrden(draft.items, draft.discount);
+  if (g.ganancia == null) {
+    return '<span>Tu ganancia</span><span class="draft-ganancia-nota">Falta el costo de algún producto</span>';
+  }
+  var perdida = g.ganancia < 0;
+  return '<span>Tu ganancia</span>' +
+    '<span class="draft-ganancia-valor' + (perdida ? ' es-perdida' : '') + '">' +
+      (perdida ? '−' : '+') + formatoDinero(Math.abs(g.ganancia), cur) +
+      (g.margen != null ? '<span class="draft-ganancia-nota"> · margen ' + g.margen + ' %</span>' : '') +
+    '</span>';
+}
+
+/* En el panel de la cotización: lo que ganas, solo para ti (D213) */
+function _lineaGananciaDock(q) {
+  if (!q.items || !q.items.length) return '';
+  var g = gananciaDeOrden(q.items, q.discount);
+  if (g.ganancia == null) return '';
+  var cur = (config && config.currency) || '$';
+  var perdida = g.ganancia < 0;
+  return '<div class="dock-ganancia">Ganancia <strong' + (perdida ? ' class="es-perdida"' : '') + '>' +
+      (perdida ? '−' : '+') + formatoDinero(Math.abs(g.ganancia), cur) + '</strong>' +
+      (g.margen != null ? ' · margen ' + g.margen + ' %' : '') + ' · solo la ves tú</div>';
 }
 
 /* ── Material usado en el mes (D180) ──────────────────────────────
    La barra partida en el color de cada material y la lista con el porcentaje y
    los gramos. Los 4 colores (--serie-1 a --serie-4) pasaron la prueba de
    daltonismo en claro y oscuro; «Otros» va en gris. Siempre abierta, sin
-   acordeón. opts.sinTitulo: el Dashboard le pone su título afuera (D182). */
+   acordeón. opts.sinTitulo: el Dashboard le pone su título afuera (D182).
+   opts.colorDe(nombre): el color real del rollo («PLA · Rojo» en rojo); las
+   partes sin color guardado usan la paleta (D246). El nombre va junto a cada
+   color, así no se depende solo del color. */
 function tplUsoMaterial(u, opts) {
   var sinTitulo = !!(opts && opts.sinTitulo);
   var anterior = MESES_CORTOS[(u.mes + 11) % 12];
-  var color = function(p, i) { return p.otros ? 'var(--serie-otros)' : 'var(--serie-' + (i + 1) + ')'; };
+  var colorDe = opts && opts.colorDe;
+  var real = function(p) { return !p.otros && colorDe ? colorDe(p.nombre) : ''; };
+  var color = function(p, i) { return p.otros ? 'var(--serie-otros)' : (real(p) || 'var(--serie-' + (i + 1) + ')'); };
+  var clase = function(p) { return real(p) ? ' class="color-real"' : ''; };
   var cambio = u.cambio == null ? '' :
     '<span class="uso-material-cambio">' + (u.cambio > 0 ? '+' : u.cambio < 0 ? '\u2212' : '') +
       Math.abs(u.cambio) + '%</span><span class="uso-material-vs">vs ' + anterior + '</span>';
@@ -984,14 +1095,14 @@ function tplUsoMaterial(u, opts) {
   var cuerpo = u.partes.length
     ? '<div class="uso-material-barra" role="img" aria-label="' + esc(resumen) + '">' +
         u.partes.map(function(p, i) {
-          return '<span style="flex-grow:' + p.gramos.toFixed(1) + ';background:' + color(p, i) + '" title="' +
+          return '<span' + clase(p) + ' style="flex-grow:' + p.gramos.toFixed(1) + ';background:' + color(p, i) + '" title="' +
             esc(p.nombre + ' \u00b7 ' + formatoGramos(p.gramos) + ' \u00b7 ' + p.pct + '%') + '"></span>';
         }).join('') +
       '</div>' +
       '<ul class="uso-material-lista">' +
         u.partes.map(function(p, i) {
           return '<li>' +
-            '<span class="uso-material-punto" style="background:' + color(p, i) + '"></span>' +
+            '<span class="uso-material-punto' + (real(p) ? ' color-real' : '') + '" style="background:' + color(p, i) + '"></span>' +
             '<span class="uso-material-nombre">' + esc(p.nombre) + '</span>' +
             '<span class="uso-material-pct">' + p.pct + '%</span>' +
             '<span class="uso-material-gramos">' + formatoGramos(p.gramos) + '</span>' +

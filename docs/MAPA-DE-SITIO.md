@@ -40,8 +40,9 @@ lista de lo que se puede añadir.
 **Barra lateral** (solo en escritorio; al día con v108, D118, D122, D123): arriba, el logo de
 Ajustes › Diseño y el nombre del negocio · Negocio (Dashboard, Calculadora, Cotizaciones,
 Historial) · Catálogo (Impresoras, Inventario, Clientes; Materiales está en Ajustes desde v131, D179) · Cuenta (Ajustes, y
-debajo el interruptor de modo oscuro) · abajo, la cuenta y «Cerrar sesión». En el teléfono no
-hay barra lateral: el tema y «Cerrar sesión» están en Ajustes › Otros. El tema se guarda en
+debajo el interruptor de modo oscuro) · abajo, la cuenta y «Cerrar sesión» («Iniciar sesión» si
+se entró sin cuenta, D226). En el teléfono no hay barra lateral: el tema y «Cerrar sesión» están
+en Ajustes › Otros. El tema se guarda en
 cada navegador y empieza en automático.
 
 ---
@@ -86,6 +87,13 @@ pinta. Cambiar un texto, una ilustración o el orden es editar ese arreglo.
 
 Desde **Ajustes → Otros parámetros** se puede volver a ver la introducción y cerrar sesión.
 
+**Configurar al empezar** (D208, v142) — si no hay impresoras ni materiales, al terminar o
+saltar la introducción: «Tu impresora» (las comunes u «Otra») y «Tus materiales» (con su precio
+por kilo). Sin gastos fijos, también «Tus gastos del mes» (D209, v143): el total y las horas que
+se imprimen al mes. «Ahora no» los deja para después. Desde v144 (D210), en escritorio la lista
+va a la izquierda y lo que se escribe a la derecha: impresoras y materiales propios, varios, y
+los gastos uno por renglón.
+
 **Recorrido guiado** (D198, v138) — al terminar o saltar la introducción, Driver.js señala en
 la pantalla Impresoras, Inventario, Ajustes, Cotizar y Cotizaciones. Se baja de jsDelivr solo
 en ese momento. Los pasos están en `_pasosRecorrido()` de `onboarding.js`.
@@ -94,7 +102,8 @@ en ese momento. Los pasos están en `_pasosRecorrido()` de `onboarding.js`.
 `index.html` (`#page-ayuda`) · `js/onboarding.js` (`verRecorrido`, `filtrarAyuda`)
 
 Desde v139 (D200): en la barra lateral, debajo de Ajustes; en el teléfono, en la lista de
-Ajustes. «Ver el recorrido», «Ver la introducción», un buscador y 8 preguntas frecuentes. Las
+Ajustes. Desde v140 (D203), en dos secciones: «Recorrido» («Ver el recorrido» y «Ver la
+introducción») y «Guía» (un buscador y 8 preguntas frecuentes). Las
 preguntas están escritas en `index.html`: para cambiar una, se edita ahí.
 
 ### Inicio (Dashboard)
@@ -104,15 +113,17 @@ Panel de métricas del mes en curso.
 
 | Elemento | De dónde sale |
 |---|---|
-| Ingresos aceptados del mes | Suma de `grandTotal` de cotizaciones con estado `aceptada` |
+| Encabezado (solo escritorio, D234) | «Inicio», el mes y «Nueva cotización» (no sale sin cotizaciones) |
+| Para hoy (D258) | Enviadas que esperan respuesta, borradores sin mandar y rollos por reponer; cada renglón lleva a donde se resuelve. Sin nada pendiente no sale |
+| Ingresos aceptados del mes | Suma de `grandTotal` de cotizaciones con estado `aceptada`, sin la comisión del recomendador (D218), con «Sin $X de comisiones» debajo |
 | Barras de 6 meses | Mismo cálculo, mes por mes |
-| Margen y ganancia del mes | Ingresos − `totalBaseCost` |
+| Margen y ganancia del mes | Ingresos sin comisión − `totalBaseCost` (D213) |
 | Tasa de aceptación | Aceptadas ÷ total de cotizaciones del mes |
 | Piezas impresas | Conteo de partidas *(tiene un error, ver auditoría)* |
 | Horas de impresión + % de capacidad | Suma de `timeH × qty`, contra `monthlyPrintHours` |
-| Cotizaciones recientes | Las 4 más nuevas |
-| Material usado del mes (D182) | La misma tarjeta de Inventario (D180, `js/uso-material.js`) |
-| Filamento (D182) | Lo que queda en los rollos, su valor y los 4 con menos porcentaje |
+| Cotizaciones recientes | Las 4 más nuevas; cada una abre su cotización (D231), con su estado en su color (D224) |
+| Material usado del mes (D182) | La misma tarjeta de Inventario (D180, `js/uso-material.js`), por rollo de color y con el color real del filamento (D246) |
+| Filamento (D182) | Lo que queda en los rollos, su valor y los 4 con menos porcentaje; con más de 4 lo dice (D233) |
 | Pantalla de bienvenida | Se muestra si no hay impresoras o materiales |
 
 ### Calculadora

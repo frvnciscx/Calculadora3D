@@ -200,7 +200,7 @@ Mientras no llega el anticipo, la tarjeta muestra el plazo y no una fecha («5 d
 |---|---|---|
 | Olvidé mi contraseña | En la pantalla de acceso, «Olvidé mi contraseña»; Firebase manda un correo para crear una nueva | Firebase Auth (derivada) |
 | Entrar en otro dispositivo | Se entra con la misma cuenta y la app baja los datos. Sin conexión, sigue trabajando con la copia del teléfono | D49, §4.10 de las reglas |
-| Cerrar sesión | Ajustes › Cuenta › «Cerrar sesión». Los datos se borran del teléfono y siguen en la cuenta; si hay cambios sin subir, la app avisa y no cierra sesión hasta subirlos | D83 |
+| Cerrar sesión | Ajustes › Cuenta › «Cerrar sesión». Los datos se borran del teléfono y siguen en la cuenta; si hay cambios sin subir, la app avisa y no cierra sesión hasta subirlos. Sin cuenta el botón dice «Iniciar sesión» y no borra nada (D226) | D83, D226 |
 | Borrar la cuenta | Ajustes › Cuenta › «Borrar cuenta» → la app ofrece descargar el respaldo → se confirma → si se entró hace mucho, pide entrar otra vez → se borran los datos y la cuenta → vuelve a la pantalla de acceso. También se puede pedir desde una página web, como exige Google Play | D41, §4.10 y §4.13 de las reglas |
 | ~~Invitado que cambia de teléfono~~ | ~~La app le recuerda que sus datos están solo en ese teléfono y le ofrece crear la cuenta o exportar el respaldo~~. Sin efecto desde D84: sin cuenta no se guardan cotizaciones | ~~D39~~ D84 |
 

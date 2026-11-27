@@ -160,7 +160,60 @@ function computeCost(input, config, printer, material) {
   };
 }
 
+/* ── Margen y ganancia: una sola definición (D213) ─────────────────────
+   «Ganancia sobre el costo» es lo que se le suma al costo: +50 % convierte
+   $100 en $150. «Margen» es la parte del PRECIO que es ganancia: de esos
+   $150, $50 son el 33 %. En toda la app, «margen» quiere decir solo eso. */
+function margenDePrecio(precio, costo) {
+  precio = Number(precio) || 0;
+  costo  = Number(costo)  || 0;
+  if (!(precio > 0)) return null;
+  return Math.round((precio - costo) / precio * 100);
+}
+
+/* Lo que gana una orden: lo que se cobra después del descuento, menos lo
+   que cuesta. La comisión del recomendador no entra: no es del negocio
+   (D30). Si algún producto no tiene costo conocido (los de tabla de
+   precios), la ganancia no se sabe: null, no un número inventado. */
+function gananciaDeOrden(items, descuentoPct) {
+  items = items || [];
+  var subtotal = items.reduce(function(s, it) { return s + (Number(it.totalCost) || 0) * (it.qty || 1); }, 0);
+  var d = Math.min(100, Math.max(0, Number(descuentoPct) || 0));
+  var ingreso = subtotal * (1 - d / 100);
+  var sinCosto = !items.length || items.some(function(it) { return it.baseCost == null; });
+  if (sinCosto) return { ingreso: ingreso, costo: null, ganancia: null, margen: null };
+  var costo = items.reduce(function(s, it) { return s + (Number(it.baseCost) || 0) * (it.qty || 1); }, 0);
+  return { ingreso: ingreso, costo: costo, ganancia: ingreso - costo, margen: margenDePrecio(ingreso, costo) };
+}
+
+/* El ingreso de una cotización guardada, sin la comisión del recomendador
+   (D30): el total la trae sumada después del descuento. */
+function ingresoSinComision(total, comisionPct) {
+  total = Number(total) || 0;
+  var c = Number(comisionPct) || 0;
+  return c > 0 ? total / (1 + c / 100) : total;
+}
+
 /* Exportar para los tests en Node. En el navegador no existe module. */
+/* ── Dinero con un solo formato en toda la app (D237) ────────────────
+   «$1,250.00»: comas de miles, punto y dos decimales, como en México. Antes
+   había tres formatos: «$1,000» y «$1000» en el Inicio, «$1000.00» en la
+   Orden, «$27» en los productos por tamaño. Primero se redondea a centavos
+   (999.9999 salía «$1000.00»). Los negativos llevan el signo menos antes de
+   la moneda: «−$12.50». Los campos donde se escribe un precio no lo usan:
+   un campo de número no acepta comas. */
+function formatoDinero(n, cur) {
+  n = Math.round((Number(n) || 0) * 100) / 100;
+  if (cur == null) cur = (typeof config !== 'undefined' && config && config.currency) || '$';
+  var partes = Math.abs(n).toFixed(2).split('.');
+  partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return (n < 0 ? '\u2212' : '') + cur + partes.join('.');
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { computeCost: computeCost, roundUpToFive: roundUpToFive };
+  module.exports = {
+    computeCost: computeCost, roundUpToFive: roundUpToFive,
+    margenDePrecio: margenDePrecio, gananciaDeOrden: gananciaDeOrden, ingresoSinComision: ingresoSinComision,
+    formatoDinero: formatoDinero
+  };
 }

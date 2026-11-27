@@ -93,12 +93,9 @@ function _indiceProducto(id) {
   return -1;
 }
 
-/* $27 o $27.50: los precios de tabla casi siempre son enteros */
-function _dinero(n) {
-  var cur = (typeof config !== 'undefined' && config.currency) || '$';
-  n = Number(n) || 0;
-  return cur + (Math.round(n) === n ? String(n) : n.toFixed(2));
-}
+/* Los precios de tabla, con el formato de toda la app: «$27.00» (D237).
+   Antes «$27» o «$27.50». */
+function _dinero(n) { return formatoDinero(n); }
 
 /* ══ ¿Qué cotizas? ══════════════════════════════════════════════ */
 
@@ -312,13 +309,12 @@ function salirModoProducto() {
 function _reiniciarResultado() {
   var cur = (config && config.currency) || '$';
   var lbl = document.getElementById('calc-hero-label');
-  if (lbl) lbl.textContent = 'Costo total sugerido';
-  var tot = document.getElementById('result-total');
-  if (tot) tot.textContent = cur + '0.00';
-  var base = document.getElementById('result-base');
-  if (base) base.textContent = cur + '0.00';
-  var gan = document.getElementById('result-profit');
-  if (gan) gan.textContent = '+' + cur + '0.00';
+  if (lbl) lbl.textContent = 'Precio sugerido';
+  /* Sin cálculo, «—»: nunca un $0.00 que parezca un precio (D212) */
+  ['result-total', 'result-base', 'result-profit', 'result-margen'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = '—';
+  });
   var rp = document.getElementById('result-producto');
   if (rp) rp.innerHTML = '';
   if (typeof _pintarNotaRedondeo === 'function') _pintarNotaRedondeo(null);
@@ -478,9 +474,16 @@ function ptDescAutomatica() {
 }
 
 /* El precio en el panel de resultado: el mismo lugar que el de la pieza */
+/* ¿El producto elegido ya tiene precio? Lo pregunta el botón «Agregar a orden» (D212) */
+function productoConPrecio() {
+  var m = _modoProducto, p = m && _productoPorId(m.id);
+  return !!(p && tamanosDe(p).length && m.size != null);
+}
+
 function pintarProducto() {
   var m = _modoProducto, p = m && _productoPorId(m.id);
   if (!p) return;
+  if (typeof refreshDraftIndicator === 'function') refreshDraftIndicator();
   var lbl = document.getElementById('calc-hero-label');
   var tot = document.getElementById('result-total');
   var rp  = document.getElementById('result-producto');
@@ -495,7 +498,7 @@ function pintarProducto() {
 
   var r = totalProductoTabla(p, m);
   if (lbl) lbl.textContent = r.qty > 1 ? 'Precio de ' + r.qty : 'Precio';
-  if (tot) tot.textContent = _dinero(r.total);
+  if (tot) tot.innerHTML = tplDinero(r.total);
   if (rp) {
     var filas = [['Tamaño ' + formatoTamano(m.size) + ' cm', _dinero(r.base)]];
     if (r.diseno > 0)   filas.push(['Diseño ' + String(r.nivel).toLowerCase(), '+' + _dinero(r.diseno)]);
@@ -786,7 +789,7 @@ function showAddCatalogModal(editIndex, desde) {
             '</div>' +
             '<div class="m3-field optional">' +
               '<input type="number" id="cp-margin" placeholder=" " min="0" step="1" inputmode="decimal" value="' + esc(p.defaultMargin || '') + '">' +
-              '<label for="cp-margin">Margen típico (%)</label>' +
+              '<label for="cp-margin">Ganancia sobre el costo (%)</label>' +
             '</div>' +
           '</div>' +
         '</div>' +

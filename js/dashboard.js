@@ -13,6 +13,13 @@ function renderDashboard() {
   if (monthLabel) {
     monthLabel.textContent = 'Estudio · ' + _MES_ES[now.getMonth()] + ' ' + now.getFullYear();
   }
+  /* ── Encabezado de escritorio: el mes y «Nueva cotización» (D234) ─── */
+  var dashResumen = document.getElementById('dash-resumen');
+  if (dashResumen) dashResumen.textContent = _MES_LARGO[now.getMonth()] + ' de ' + now.getFullYear();
+  var dashNueva = document.getElementById('dash-btn-nueva');
+  /* Sin cotizaciones, el estado vacío de Ingresos ya trae el botón (D205) */
+  if (dashNueva) dashNueva.style.display = quotes.length ? '' : 'none';
+
   /* ── Nombre del usuario ─── */
   var userNameEl = document.getElementById('dash-user-name');
   if (userNameEl && config.bizName) {
@@ -47,16 +54,17 @@ function renderDashboard() {
   /* ── Calcular datos del mes ─── */
   var monthQuotes   = quotes.filter(function(q) { return new Date(q.quoteDate) >= monthStart; });
   var monthAccepted = monthQuotes.filter(function(q) { return q.status === 'aceptada'; });
-  var monthRevenue  = monthAccepted.reduce(function(s, q) {
-    return s + (q.grandTotal != null ? q.grandTotal : (q.totalWithQty || 0));
-  }, 0);
+  /* Lo que entra al negocio: sin la comisión del recomendador, que es de él
+     (D30, D218). La comisión del mes se dice aparte, abajo del número. */
+  var monthRevenue  = monthAccepted.reduce(function(s, q) { return s + _ingresoDe(q); }, 0);
+  var monthComision = monthAccepted.reduce(function(s, q) { return s + _totalDe(q); }, 0) - monthRevenue;
 
   /* Ganancia y margen */
   var monthWithCost      = monthAccepted.filter(function(q) { return q.totalBaseCost != null; });
   var monthBaseCost      = monthWithCost.reduce(function(s, q) { return s + (q.totalBaseCost || 0); }, 0);
-  var monthRevWithCost   = monthWithCost.reduce(function(s, q) {
-    return s + (q.grandTotal != null ? q.grandTotal : (q.totalWithQty || 0));
-  }, 0);
+  /* La ganancia y el margen, sin la comisión del recomendador: no es del
+     negocio (D30). El mismo margen que la Calculadora y la Orden (D213). */
+  var monthRevWithCost   = monthWithCost.reduce(function(s, q) { return s + _ingresoDe(q); }, 0);
   var monthProfit    = monthRevWithCost - monthBaseCost;
   var monthMarginPct = monthRevWithCost > 0 ? Math.round((monthProfit / monthRevWithCost) * 100) : null;
   var hasMarginData  = monthWithCost.length > 0;
@@ -75,10 +83,8 @@ function renderDashboard() {
       var qd = new Date(q.quoteDate);
       return qd >= bS && qd <= bE && q.status === 'aceptada';
     });
-    var bRev  = bAcc.reduce(function(s, q) {
-      return s + (q.grandTotal != null ? q.grandTotal : (q.totalWithQty || 0));
-    }, 0);
-    bars.push({ label: _MES_ES[bd.getMonth()].toUpperCase(), rev: bRev });
+    var bRev  = bAcc.reduce(function(s, q) { return s + _ingresoDe(q); }, 0);
+    bars.push({ label: _MES_ES[bd.getMonth()], rev: bRev });   /* «Nov», no «NOV» (D244) */
   }
   var maxRev = Math.max.apply(null, bars.map(function(b) { return b.rev; })) || 1;
 
@@ -120,14 +126,16 @@ function renderDashboard() {
   /* ── Cotizaciones recientes ─── */
   var recent      = quotes.slice(0, 4);
   var recentRows  = recent.length === 0
-    ? '<div style="padding:20px;text-align:center;font-size:13px;color:var(--ink-3)">Sin cotizaciones aún</div>'
+    ? _dashVacio('receipt_long', 'Sin cotizaciones', 'Aquí verás las 4 más recientes.')
     : recent.map(function(q) {
         var total  = q.grandTotal != null ? q.grandTotal : (q.totalWithQty || 0);
         var status = estadoDe(q);
-        var statusColor = status === 'aceptada' ? 'var(--ok)' : status === 'rechazada' ? 'var(--danger)' : status === 'enviada' ? 'var(--accent)' : 'var(--ink-4)';
+        var statusColor = colorDeEstado(status);   /* D224 */
         var statusDot   = '● ' + etiquetaEstado(status).toLowerCase();
         var num = q.quoteNum ? q.quoteNum.replace('COT-','') : '?';
-        return '<div class="row" style="padding:14px 0;cursor:pointer" onclick="showPage(\'quotes\')">' +
+        /* Abre esa cotización, no la lista (D231) */
+        return '<div class="row dash-reciente" role="button" tabindex="0" onclick="abrirCotizacionReciente(' + quotes.indexOf(q) + ')" ' +
+                 'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}">' +
           '<div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">' +
             '<div style="width:32px;height:32px;border-radius:6px;background:var(--bg-sunk);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;color:var(--ink-2);flex-shrink:0">' + num + '</div>' +
             '<div style="flex:1;min-width:0">' +
@@ -138,33 +146,51 @@ function renderDashboard() {
               '</div>' +
             '</div>' +
           '</div>' +
-          '<div class="num" style="font-size:14px;font-weight:500">' + cur + total.toFixed(0) + '</div>' +
+          '<div class="num" style="font-size:14px;font-weight:500">' + formatoDinero(total, cur) + '</div>' +
         '</div>';
       }).join('');
 
   /* ── Armar todo el contenido ─── */
+  /* Cuenta nueva, sin ninguna cotización: estados vacíos en lugar de ceros (D205) */
+  var sinCotizaciones = !quotes.length;
+  var uso = typeof usoDeMaterial === 'function' ? usoDeMaterial(quotes, now, _nombreParaUso) : null;
+
   dashContent.innerHTML =
+
+    /* 0. Lo que te necesita hoy (D258): solo si hay algo */
+    _tplParaHoy(pendientesDeHoy(quotes, inventory, now, estadoDeStock)) +
 
     /* 1. Hero stat card */
     '<div style="padding:0 20px">' +
       '<div class="card" style="padding:22px;position:relative;overflow:hidden">' +
+        (sinCotizaciones
+          ? '<div class="micro">Ingresos aceptados · ' + _MES_ES[now.getMonth()].toLowerCase() + '</div>' +
+            _dashVacio('payments', 'Aún no hay ingresos',
+              'Cuando un cliente acepte una cotización, aquí verás lo que entra cada mes.',
+              { label: 'Nueva cotización', onclick: 'nuevaCotizacion()', primario: true })
+          :
         '<div style="margin-bottom:18px">' +
-          '<div class="micro">Ingresos aceptados · ' + _MES_ES[now.getMonth()] + '</div>' +
+          '<div class="micro">Ingresos aceptados · ' + _MES_ES[now.getMonth()].toLowerCase() + '</div>' +
           '<div class="display" style="font-size:48px;margin-top:8px;line-height:1">' +
-            cur + '<span style="font-variant-numeric:tabular-nums">' + formatNum(monthRevenue) + '</span>' +
+            '<span style="font-variant-numeric:tabular-nums">' + tplDinero(monthRevenue, cur) + '</span>' +
           '</div>' +
           '<div style="display:flex;gap:16px;margin-top:10px;font-size:12px;color:var(--ink-2)">' +
             '<span class="num">' + monthAccepted.length + (monthAccepted.length === 1 ? ' cotización' : ' cotizaciones') + '</span>' +
+            (monthComision >= 0.005
+              ? '<span class="num">Sin ' + formatoDinero(monthComision, cur) + ' de comisiones</span>'
+              : '') +
             (monthMarginPct !== null
               ? '<span><span class="num" style="color:var(--ok)">' + monthMarginPct + '% margen</span></span>'
               : '') +
           '</div>' +
         '</div>' +
-        '<div style="display:flex;align-items:flex-end;gap:8px">' + barsHTML + '</div>' +
+        '<div style="display:flex;align-items:flex-end;gap:8px">' + barsHTML + '</div>') +
       '</div>' +
     '</div>' +
 
-    /* 2. Accesos rápidos: en escritorio los da la barra lateral (D171) */
+    /* 2. Accesos rápidos: en escritorio los da la barra lateral (D171). Sin
+       cotizaciones no van: el estado vacío de arriba ya trae «Nueva cotización» (D205) */
+    (sinCotizaciones ? '' :
     '<div class="solo-movil" style="padding:24px 20px 0">' +
       '<div class="micro" style="margin-bottom:10px">Accesos rápidos</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
@@ -183,10 +209,10 @@ function renderDashboard() {
           '</div>' +
         '</button>' +
       '</div>' +
-    '</div>' +
+    '</div>') +
 
     /* 3. Cotizaciones recientes */
-    '<div style="padding:24px 20px 0">' +
+    '<div class="dash-seccion" style="padding:24px 20px 0">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
         '<div class="micro">Cotizaciones recientes</div>' +
         '<button class="link-btn" onclick="showPage(\'quotes\')" style="font-size:12px;color:var(--ink-2)">Ver todo →</button>' +
@@ -195,12 +221,16 @@ function renderDashboard() {
     '</div>' +
 
     /* 4. Salud del negocio */
-    '<div style="padding:24px 20px 0">' +
+    '<div class="dash-seccion" style="padding:24px 20px 0">' +
       '<div class="micro" style="margin-bottom:10px;min-height:44px;display:flex;align-items:center">Salud del negocio</div>' +
       '<div class="card" style="padding:0 16px">' +
+      (sinCotizaciones
+        ? _dashVacio('monitoring', 'Sin números del mes',
+            'La ganancia, la aceptación, las piezas y las horas aparecen con tus cotizaciones.')
+        :
         '<div class="row" style="padding:14px 0">' +
           '<div class="row-label">Ganancia del mes</div>' +
-          '<div class="row-value">' + (hasMarginData ? cur + formatNum(monthProfit) : '—') + '</div>' +
+          '<div class="row-value">' + (hasMarginData ? formatoDinero(monthProfit, cur) : '—') + '</div>' +
         '</div>' +
         '<div class="row" style="padding:14px 0">' +
           '<div class="row-label">Tasa de aceptación</div>' +
@@ -220,20 +250,21 @@ function renderDashboard() {
               ? ' <span style="font-size:12px;color:' + (hoursUsePct >= 90 ? 'var(--danger)' : hoursUsePct >= 70 ? 'var(--accent)' : 'var(--ink-3)') + '">· ' + hoursUsePct + '% cap.</span>'
               : '') +
           '</div>' +
-        '</div>' +
+        '</div>') +
       '</div>' +
     '</div>' +
 
     /* 5. Material usado en el mes (D182, la misma tarjeta de Inventario, D180) */
-    '<div style="padding:24px 20px 0">' +
-      '<div class="micro" style="margin-bottom:10px;min-height:44px;display:flex;align-items:center">Material usado · ' + _MES_ES[now.getMonth()] + '</div>' +
-      (typeof usoDeMaterial === 'function'
-        ? tplUsoMaterial(usoDeMaterial(quotes, now, _nombreParaUso), { sinTitulo: true })
-        : '') +
+    '<div class="dash-seccion" style="padding:24px 20px 0">' +
+      '<div class="micro" style="margin-bottom:10px;min-height:44px;display:flex;align-items:center">Material usado · ' + _MES_ES[now.getMonth()].toLowerCase() + '</div>' +
+      (uso && uso.hayDatos
+        ? tplUsoMaterial(uso, { sinTitulo: true, colorDe: _colorParaUso })
+        : '<div class="card">' + _dashVacio('donut_large', 'Sin material usado',
+            'Al aceptar cotizaciones, aquí ves qué material gastas más.') + '</div>') +
     '</div>' +
 
     /* 6. Filamento: lo que queda y los rollos más vacíos (D182) */
-    '<div style="padding:24px 20px 0">' +
+    '<div class="dash-seccion" style="padding:24px 20px 0">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
         '<div class="micro">Filamento</div>' +
         '<button class="link-btn" onclick="showPage(\'inventory\')" style="font-size:12px;color:var(--ink-2)">Ver inventario →</button>' +
@@ -245,12 +276,7 @@ function renderDashboard() {
     '<div class="dash-espacio" style="height:100px"></div>';
 }
 
-function formatNum(n) {
-  if (n >= 1000) {
-    return n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  }
-  return n.toFixed(2);
-}
+/* formatNum salió en v149: el dinero se escribe con formatoDinero (js/costing.js, D237) */
 
 /* ── Filamento en el Dashboard (D182) ────────────────────────────────
    Cuánto queda en todos los rollos y los 4 con menos porcentaje, con su barra.
@@ -259,10 +285,9 @@ function formatNum(n) {
 function _tplFilamentoDashboard(cur) {
   if (!inventory.length) {
     return '<div class="card dash-filamento">' +
-      '<div class="dash-filamento-vacio">Sin rollos registrados</div>' +
-      '<button class="link-btn" onclick="showPage(\'inventory\');showInventoryModal()" style="font-size:12px;color:var(--accent)">' +
-        '<span class="material-symbols-rounded" style="font-size:14px">add</span> Filamento' +
-      '</button>' +
+      _dashVacio('inventory_2', 'Sin rollos',
+        'Regístralos y se descuentan solos al aceptar una cotización.',
+        { label: 'Agregar filamento', onclick: "showPage('inventory');showInventoryModal()" }) +
     '</div>';
   }
 
@@ -280,14 +305,15 @@ function _tplFilamentoDashboard(cur) {
 
   var renglones = filas.slice(0, 4).map(function(f) {
     var r = f.r;
-    var color = f.pct > 50 ? 'var(--ok)' : f.pct > 20 ? 'var(--warn)' : 'var(--danger)';
+    var estado = estadoDeStock(r);   /* D257 */
+    var color = colorBarraStock(estado);
     var hexRollo = colorDeRollo(r);
     var muestra = hexRollo
       ? 'background:' + hexRollo + ';box-shadow:inset 0 0 0 1px rgba(127,127,127,.45)'
       : 'background:var(--bg-sunk);box-shadow:inset 0 0 0 0.5px var(--line-strong)';
-    var aviso = f.pct <= 20
-      ? '<span class="material-symbols-rounded dash-rollo-aviso" title="Por acabarse">warning</span>'
-      : '';
+    var aviso = estado === 'ok' ? '' :
+      '<span class="material-symbols-rounded dash-rollo-aviso' + (estado === 'agotado' ? ' agotado' : '') + '" aria-hidden="true" title="' + (estado === 'agotado' ? 'Agotado' : 'Por acabarse') + '">' + (estado === 'agotado' ? 'block' : 'warning') + '</span>' +
+      '<span class="sr-only">, ' + (estado === 'agotado' ? 'agotado' : 'por acabarse') + '</span>';
     return '<div class="dash-rollo">' +
       '<span class="dash-rollo-muestra" style="' + muestra + '"></span>' +
       '<div class="dash-rollo-info">' +
@@ -300,12 +326,91 @@ function _tplFilamentoDashboard(cur) {
   }).join('');
 
   var n = inventory.length;
+  /* Con más de 4 rollos dice cuáles se ven: decía «en 5 rollos» y mostraba 4 (D233) */
+  var nota = n > 4
+    ? '<div class="dash-filamento-nota">Los 4 más vacíos \u00b7 ' + (n - 4) + (n - 4 === 1 ? ' rollo más' : ' rollos más') + ' en Inventario</div>'
+    : '';
   return '<div class="card dash-filamento">' +
     '<div class="dash-filamento-cifra">' +
       '<span class="dash-filamento-total">' + formatoGramos(gramos) + '</span>' +
       '<span class="dash-filamento-sub">en ' + n + (n === 1 ? ' rollo' : ' rollos') +
-        (valor > 0 ? ' \u00b7 ' + cur + formatNum(valor) : '') + '</span>' +
+        (valor > 0 ? ' \u00b7 ' + formatoDinero(valor, cur) : '') + '</span>' +
     '</div>' +
+    nota +
     renglones +
   '</div>';
+}
+
+/* ── Estado vacío de una tarjeta del Dashboard (D205) ────────────────
+   Más chico que el de una página. El botón va solo donde hay algo que
+   hacer: «Nueva cotización» arriba y «Agregar filamento» en Filamento. */
+function _dashVacio(icono, titulo, texto, accion) {
+  return '<div class="dash-vacio">' +
+    '<span class="material-symbols-rounded dash-vacio-icono" aria-hidden="true">' + icono + '</span>' +
+    '<div class="dash-vacio-titulo">' + titulo + '</div>' +
+    (texto ? '<p>' + texto + '</p>' : '') +
+    (accion
+      ? '<button type="button" class="btn ' + (accion.primario ? 'btn-primary' : 'btn-ghost') + '" onclick="' + accion.onclick + '">' +
+          '<span class="material-symbols-rounded" style="font-size:16px" aria-hidden="true">add</span> ' + accion.label +
+        '</button>'
+      : '') +
+  '</div>';
+}
+
+/* El total de una cotización y la parte que es del negocio: sin la comisión
+   del recomendador (D30, D218) */
+function _totalDe(q) { return q.grandTotal != null ? q.grandTotal : (q.totalWithQty || 0); }
+function _ingresoDe(q) { return ingresoSinComision(_totalDe(q), q.commission); }
+
+var _MES_LARGO = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto',
+                  'Septiembre','Octubre','Noviembre','Diciembre'];
+
+/* Una cotización reciente del Inicio abre esa cotización (D231). En
+   escritorio se abre en el panel de Cotizaciones; en el teléfono, en la
+   hoja de siempre, sin salir del Inicio. */
+function abrirCotizacionReciente(i) {
+  if (!quotes[i]) return;
+  if (typeof _mqEscritorio !== 'undefined' && _mqEscritorio.matches) showPage('quotes');
+  viewQuote(i);
+}
+
+/* ── Para hoy (D258) ──────────────────────────────────────────────────
+   Arriba del Inicio, lo que te necesita: enviadas que esperan respuesta,
+   borradores sin mandar y rollos por reponer. Cada renglón lleva a donde se
+   resuelve. Sin nada pendiente no sale. */
+function _hace(dias) {
+  if (dias == null) return '';
+  return dias === 0 ? 'de hoy' : 'de hace ' + dias + (dias === 1 ? ' día' : ' días');
+}
+function _tplParaHoy(p) {
+  if (!p || !p.hay) return '';
+  var filas = [];
+  if (p.enviadas) filas.push(_filaParaHoy('send', 'var(--info)',
+    p.enviadas + (p.enviadas === 1 ? ' enviada espera respuesta' : ' enviadas esperan respuesta'),
+    (p.enviadas === 1 ? 'Es ' : 'La más vieja es ') + _hace(p.diasEnviadaMasVieja),
+    "showPage('quotes');_setQuoteFilter('enviada')"));
+  if (p.borradores) filas.push(_filaParaHoy('edit_note', 'var(--warn)',
+    p.borradores + (p.borradores === 1 ? ' borrador sin mandar' : ' borradores sin mandar'),
+    (p.borradores === 1 ? 'Es ' : 'El más viejo es ') + _hace(p.diasBorradorMasViejo),
+    "showPage('quotes');_setQuoteFilter('borrador')"));
+  var rollos = p.rollosBajos + p.rollosAgotados;
+  if (rollos) filas.push(_filaParaHoy('inventory_2', 'var(--warn)',
+    rollos + (rollos === 1 ? ' rollo por reponer' : ' rollos por reponer'),
+    [p.rollosBajos ? p.rollosBajos + ' por acabarse' : '',
+     p.rollosAgotados ? p.rollosAgotados + (p.rollosAgotados === 1 ? ' agotado' : ' agotados') : ''].filter(Boolean).join(' \u00b7 '),
+    "showPage('inventory')"));
+  return '<section class="para-hoy-seccion" aria-labelledby="para-hoy-titulo" style="padding:0 20px 24px">' +
+    '<h2 class="micro" id="para-hoy-titulo" style="margin:0 0 10px">Para hoy</h2>' +
+    '<div class="card para-hoy">' + filas.join('') + '</div>' +
+  '</section>';
+}
+function _filaParaHoy(icono, color, titulo, detalle, accion) {
+  return '<button type="button" class="para-hoy-fila" onclick="' + accion + '">' +
+    '<span class="material-symbols-rounded para-hoy-icono" aria-hidden="true" style="color:' + color + '">' + icono + '</span>' +
+    '<span class="para-hoy-texto">' +
+      '<span class="para-hoy-titulo">' + titulo + '</span>' +
+      (detalle ? '<span class="para-hoy-detalle">' + detalle + '</span>' : '') +
+    '</span>' +
+    '<span class="material-symbols-rounded para-hoy-ir" aria-hidden="true">chevron_right</span>' +
+  '</button>';
 }

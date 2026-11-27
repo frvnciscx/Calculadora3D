@@ -84,8 +84,7 @@ function _updateFixedPerHourDisplay() {
   var dispEl  = document.getElementById('cfg-fixed-per-hour-display');
   if (!dispEl) return;
   if (hours > 0 && fixed > 0) {
-    var perH = (fixed / hours).toFixed(2);
-    dispEl.innerHTML = cur + perH + ' / hr';
+    dispEl.innerHTML = formatoDinero(fixed / hours, cur) + ' / hr';
   } else {
     dispEl.innerHTML = '—';
   }
@@ -215,7 +214,7 @@ function _costItemRow(prefix, name, amount) {
             'font-size:16px;font-weight:600;color:var(--ink);text-align:left;width:100px">' +
         '<span style="font-family:var(--font-mono);font-size:12px;color:var(--ink-3)">/mes</span>' +
       '</div>' +
-      '<button onclick="removeCostItemRow(this,\'' + prefix + '\')"' +
+      '<button onclick="removeCostItemRow(this,\'' + prefix + '\')" aria-label="Quitar este gasto"' +
         ' style="display:flex;align-items:center;background:none;border:none;cursor:pointer;padding:4px;flex-shrink:0">' +
         '<span class="material-symbols-rounded" style="font-size:18px;color:var(--md-error)">delete</span>' +
       '</button>' +
@@ -325,7 +324,7 @@ function _updateIndirectPerHourDisplay() {
   var hours   = hoursEl ? (parseFloat(hoursEl.value) || 0) : (config.monthlyPrintHours  || 0);
   var cur     = (config && config.currency) ? config.currency : '$';
 
-  if (dispEl) dispEl.textContent = (hours > 0 && total > 0) ? cur + (total / hours).toFixed(2) : '—';
+  if (dispEl) dispEl.textContent = (hours > 0 && total > 0) ? formatoDinero(total / hours, cur) : '—';
   if (refEl)  refEl.textContent  = hours > 0 ? hours + ' hrs/mes' : 'sin definir';
 }
 
@@ -494,6 +493,46 @@ function _limpiarAjustesSinGuardar() {
 
 function guardarAjustes() { saveConfig(); }   /* si guarda, saveConfig quita la barra */
 
+/* Salir de Ajustes con cambios sin guardar (D238; en el teléfono, D240).
+   Antes se perdían sin aviso al ir a otra página. Guardar y seguir, salir
+   sin guardar o quedarse. */
+function avisarAjustesSinGuardar(seguir) {
+  var mc = document.getElementById('modal-container');
+  if (!mc) { seguir(); return; }
+  mc.innerHTML =
+    '<div class="m3-scrim"></div>' +
+    '<div class="m3-dialog aviso-ajustes" role="alertdialog" aria-modal="true" aria-labelledby="ajustes-aviso-titulo" aria-describedby="ajustes-aviso-texto">' +
+      '<span class="material-symbols-rounded" aria-hidden="true" style="font-size:24px;color:var(--accent);margin-bottom:16px">edit_note</span>' +
+      '<h3 id="ajustes-aviso-titulo" style="font-size:24px;font-weight:400;margin-bottom:12px">Tienes cambios sin guardar</h3>' +
+      '<div id="ajustes-aviso-texto" style="font-size:13px;color:var(--ink-3);line-height:1.6;text-align:left">' +
+        'Si sales sin guardar, se pierde lo que cambiaste en Ajustes.' +
+      '</div>' +
+      '<div class="m3-dialog-actions">' +
+        '<button type="button" class="m3-btn-text" data-r="quedar">Seguir editando</button>' +
+        '<button type="button" class="m3-btn-text" data-r="descartar">Salir sin guardar</button>' +
+        '<button type="button" class="m3-btn-filled" style="width:auto;padding:0 24px" data-r="guardar">Guardar</button>' +
+      '</div>' +
+    '</div>';
+  var quedar = function() { closeModal(); };
+  mc.querySelector('.m3-scrim').onclick = quedar;
+  mc.querySelector('[data-r="quedar"]').onclick = quedar;
+  mc.querySelector('[data-r="descartar"]').onclick = function() {
+    closeModal(); _limpiarAjustesSinGuardar(); loadConfig(); seguir();
+  };
+  mc.querySelector('[data-r="guardar"]').onclick = function() {
+    closeModal(); saveConfig();
+    if (!_ajustesSinGuardar) seguir();   /* si no se pudo guardar, te quedas para corregir */
+  };
+  mc.querySelector('[data-r="guardar"]').focus();
+}
+
+/* Cerrar o recargar la pestaña con cambios sin guardar: el navegador pregunta (D238) */
+if (typeof window !== 'undefined' && window.addEventListener) {
+  window.addEventListener('beforeunload', function(e) {
+    if (_ajustesSinGuardar) { e.preventDefault(); e.returnValue = ''; }
+  });
+}
+
 function descartarAjustes() {
   _limpiarAjustesSinGuardar();
   loadConfig();
@@ -503,8 +542,10 @@ function descartarAjustes() {
 (function _vigilarAjustes() {
   if (typeof document === 'undefined' || !document.addEventListener) return;
   var marcar = function(e) {
-    var cont = document.getElementById('cfg-subpage-container');
-    if (!cont || !e.target || !cont.contains(e.target)) return;
+    /* En escritorio las secciones viven en el contenedor de Ajustes; en el
+       teléfono cada una es su página (page-config-…): las dos cuentan (D240) */
+    var t = e.target;
+    if (!t || !t.closest || !(t.closest('#cfg-subpage-container') || t.closest('[id^="page-config-"]'))) return;
     if (e.target.closest && e.target.closest('#page-quote-editor')) return;   /* Diseño se guarda solo */
     if (e.type === 'click' && !(e.target.closest && e.target.closest('[onclick*="setCurrencyUI"], [onclick*="CostItem"]'))) return;
     _marcarAjustesSinGuardar();

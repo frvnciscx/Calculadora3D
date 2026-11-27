@@ -23,10 +23,16 @@ function renderInventory() {
 
 /* ── Material usado en el mes (D180) ─────────────────────────────── */
 /* El nombre vigente: el material del rollo en el AMS, si no el de la pieza */
+/* «Material usado» va por rollo de color: «PLA · Rojo», no solo «PLA», para
+   pintar cada parte con el color real del filamento (D246). Sin rollo
+   elegido, o sin color en el rollo, va el material. */
 function _nombreParaUso(item, color) {
-  if (color && color.spoolId) {
-    var rollo = inventory.find(function(r) { return r.id === color.spoolId; });
-    if (rollo) return nombreMaterialDeRollo(rollo);
+  var spoolId = color ? color.spoolId : item.spoolId;
+  var rollo = spoolId ? inventory.find(function(r) { return r.id === spoolId; }) : null;
+  if (rollo) {
+    var nombreRollo = nombreMaterialDeRollo(rollo);
+    var tono = String(rollo.color || '').trim();
+    return tono ? nombreRollo + ' \u00b7 ' + tono : nombreRollo;
   }
   var id = item.entrada && item.entrada.materialId;
   var m = id ? materials.find(function(x) { return x.id === id; }) : null;
@@ -36,7 +42,7 @@ function _nombreParaUso(item, color) {
 function _tarjetaUsoMaterial() {
   if (typeof usoDeMaterial !== 'function') return '';
   var u = usoDeMaterial(quotes, new Date(), _nombreParaUso);
-  return u.hayDatos ? tplUsoMaterial(u) : '';
+  return u.hayDatos ? tplUsoMaterial(u, { colorDe: _colorParaUso }) : '';
 }
 
 /* ── Modal alta/edición ──────────────────────────────────────────── */
@@ -180,9 +186,16 @@ function deleteInventory(i) {
 /* ── Resumen de inventario para dashboard ────────────────────────── */
 function getInventorySummary() {
   var total = inventory.length;
-  var lowStock = inventory.filter(function(it) {
-    var pct = it.totalG > 0 ? (it.remainingG / it.totalG) * 100 : 0;
-    return pct <= 20;
-  }).length;
+  var lowStock = inventory.filter(function(it) { return estadoDeStock(it) !== 'ok'; }).length;   /* D257 */
   return { total: total, lowStock: lowStock };
+}
+
+/* El color real de una parte de «Material usado» («PLA · Rojo»), o '' si no
+   hay un rollo con ese nombre y color (D246) */
+function _colorParaUso(nombre) {
+  var r = inventory.find(function(x) {
+    var tono = String(x.color || '').trim();
+    return tono && nombreMaterialDeRollo(x) + ' \u00b7 ' + tono === nombre && colorDeRollo(x);
+  });
+  return r ? colorDeRollo(r) : '';
 }

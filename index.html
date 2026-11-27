@@ -42,39 +42,39 @@
   <nav class="sidebar-nav">
     <div class="sidebar-section">Negocio</div>
     <button class="sidebar-item active" data-page="dashboard" onclick="showPage('dashboard')">
-      <span class="material-symbols-rounded sidebar-icon">home</span> Dashboard
+      <span class="material-symbols-rounded sidebar-icon" aria-hidden="true">home</span> Dashboard
     </button>
     <button class="sidebar-item" data-page="calc" onclick="showPage('calc')">
-      <span class="material-symbols-rounded sidebar-icon">calculate</span> Calculadora
+      <span class="material-symbols-rounded sidebar-icon" aria-hidden="true">calculate</span> Calculadora
     </button>
     <button class="sidebar-item" data-page="quotes" onclick="showPage('quotes')">
-      <span class="material-symbols-rounded sidebar-icon">receipt_long</span> Cotizaciones
+      <span class="material-symbols-rounded sidebar-icon" aria-hidden="true">receipt_long</span> Cotizaciones
     </button>
     <button class="sidebar-item" data-page="history" onclick="showPage('history')">
-      <span class="material-symbols-rounded sidebar-icon">history</span> Historial
+      <span class="material-symbols-rounded sidebar-icon" aria-hidden="true">history</span> Historial
     </button>
 
     <div class="sidebar-section">Catálogo</div>
     <button class="sidebar-item" data-page="catalog" data-tab="printers" onclick="showPage('catalog');showCatalogTab('printers')">
-      <span class="material-symbols-rounded sidebar-icon">print</span> Impresoras
+      <span class="material-symbols-rounded sidebar-icon" aria-hidden="true">print</span> Impresoras
     </button>
     <button class="sidebar-item" data-page="inventory" onclick="showPage('inventory')">
-      <span class="material-symbols-rounded sidebar-icon">inventory_2</span> Inventario
+      <span class="material-symbols-rounded sidebar-icon" aria-hidden="true">inventory_2</span> Inventario
     </button>
     <button class="sidebar-item" data-page="clients" onclick="showPage('clients')">
-      <span class="material-symbols-rounded sidebar-icon">people</span> Clientes
+      <span class="material-symbols-rounded sidebar-icon" aria-hidden="true">people</span> Clientes
     </button>
 
     <div class="sidebar-section">Cuenta</div>
     <button class="sidebar-item" data-page="config" onclick="showPage('config')">
-      <span class="material-symbols-rounded sidebar-icon">settings</span> Ajustes
+      <span class="material-symbols-rounded sidebar-icon" aria-hidden="true">settings</span> Ajustes
     </button>
     <button class="sidebar-item" data-page="ayuda" onclick="showPage('ayuda')">
-      <span class="material-symbols-rounded sidebar-icon">help</span> Ayuda
+      <span class="material-symbols-rounded sidebar-icon" aria-hidden="true">help</span> Ayuda
     </button>
     <!-- Tema: interruptor de claro y oscuro (D122). applyTheme() pone aria-checked -->
     <button class="sidebar-item tema-switch-fila" role="switch" aria-checked="false" onclick="toggleTheme()">
-      <span class="material-symbols-rounded sidebar-icon">dark_mode</span>
+      <span class="material-symbols-rounded sidebar-icon" aria-hidden="true">dark_mode</span>
       <span class="tema-switch-texto">Modo oscuro</span>
       <span class="tema-switch" aria-hidden="true"></span>
     </button>
@@ -82,8 +82,9 @@
 
   <div class="sidebar-footer">
     <div class="sidebar-cuenta" id="sidebar-cuenta"></div>
-    <button class="sidebar-item sidebar-salir" onclick="cerrarSesion()">
-      <span class="material-symbols-rounded sidebar-icon">logout</span> Cerrar sesión
+    <!-- Sin cuenta dice «Iniciar sesión» (D226): botonDeSesion en js/onboarding.js -->
+    <button class="sidebar-item sidebar-salir boton-sesion" onclick="botonDeSesion()">
+      <span class="material-symbols-rounded sidebar-icon sesion-icono" aria-hidden="true">logout</span> <span class="sesion-texto">Cerrar sesión</span>
     </button>
     <div class="sidebar-version app-version"></div>
   </div>
@@ -91,7 +92,7 @@
 
 <!-- OFFLINE BANNER -->
 <div id="offline-banner" class="offline-banner hidden" role="alert" aria-live="polite">
-  <span class="material-symbols-rounded" style="font-size:18px">wifi_off</span>
+  <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">wifi_off</span>
   Sin conexión — los datos se guardan localmente
 </div>
 
@@ -112,12 +113,26 @@
     <div class="micro" style="margin-top:1px;" id="top-bar-subtitle">Estudio</div>
   </div>
   <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
-    <span class="material-symbols-rounded" id="theme-icon-topbar" style="font-size:20px">light_mode</span>
+    <span class="material-symbols-rounded" aria-hidden="true" id="theme-icon-topbar" style="font-size:20px">light_mode</span>
   </button>
 </div>
 
 <!-- ===== PAGE: DASHBOARD ===== -->
 <div id="page-dashboard" class="page active" style="padding-top:28px">
+
+  <!-- Escritorio: título y «Nueva cotización», como Cotizaciones (D234).
+       En el teléfono no se ve: ahí están los accesos rápidos. -->
+  <div class="page-header-row dash-cabeza">
+    <div>
+      <h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98">Inicio</h1>
+      <div class="page-resumen" id="dash-resumen"></div>
+    </div>
+    <div class="page-header-actions" style="display:none">
+      <button class="page-header-btn" id="dash-btn-nueva" onclick="nuevaCotizacion()">
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">add</span> Nueva cotización
+      </button>
+    </div>
+  </div>
 
   <!-- Dynamic content (rendered by dashboard.js) -->
   <div id="dash-content"></div>
@@ -133,17 +148,17 @@
        se habilita con el primer producto (refreshDraftIndicator). -->
   <div class="calc-header">
     <button class="back-btn calc-back solo-movil" onclick="regresarDeCalculadora()">
-      <span class="material-symbols-rounded" style="font-size:18px">arrow_back_ios</span>Regresar
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">arrow_back_ios</span>Regresar
     </button>
     <h1 class="calc-header-title" id="calc-header-title">Calculadora</h1>
     <div class="calc-mode-seg seg" role="tablist" aria-label="Costo de la pieza u orden">
       <button type="button" role="tab" data-mode="calc" class="active" aria-selected="true" onclick="setCalcMode('calc')" title="Costo de la pieza">
-        <span class="material-symbols-rounded" style="font-size:16px">calculate</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">calculate</span>
         <span class="seg-label">Costo de la pieza</span>
       </button>
       <button type="button" role="tab" data-mode="review" id="calc-seg-orden" aria-selected="false" disabled
               onclick="generateQuote()" title="Se habilita al agregar el primer producto">
-        <span class="material-symbols-rounded" style="font-size:16px">receipt_long</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">receipt_long</span>
         <span class="seg-label">Orden</span>
         <span class="calc-seg-count" id="calc-seg-orden-n"></span>
       </button>
@@ -154,7 +169,7 @@
            Queda solo el acceso: en móvil no existe en ningún otro lado. -->
       <button class="icon-btn" onclick="showPage('history')" style="color:var(--ink-3)"
               title="Historial de cálculos" aria-label="Historial de cálculos">
-        <span class="material-symbols-rounded" style="font-size:20px">history</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:20px">history</span>
       </button>
     </div>
   </div>
@@ -182,18 +197,19 @@
   <!-- ── HERO: resultado siempre visible ─── -->
   <div id="calc-result" style="padding:18px 20px 0">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <div class="micro" id="calc-hero-label">Costo total sugerido</div>
+      <div class="micro" id="calc-hero-label">Precio sugerido</div>
     </div>
-    <div class="display" style="font-size:clamp(48px,12vw,72px);line-height:0.9;letter-spacing:-0.03em" id="result-total">$0.00</div>
+    <!-- Sin cálculo, «—»: un $0.00 parecía un precio (D212) -->
+    <div class="display" style="font-size:clamp(48px,12vw,72px);line-height:0.9;letter-spacing:-0.03em" id="result-total">—</div>
     <!-- Modo producto: de qué sale el precio (pintarProducto en catalog.js) -->
     <div id="result-producto" class="result-producto solo-producto"></div>
-    <div class="solo-pieza" style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:var(--ink-2)">
-      <span>Costo base</span>
-      <span class="num" style="color:var(--ink)" id="result-base">$0.00</span>
-      <span style="color:var(--ink-4)">·</span>
-      <span>Ganancia</span>
-      <span class="num" style="color:var(--ok)" id="result-profit">+$0.00</span>
-    </div>
+    <!-- Lo que cuesta, lo que ganas y qué parte del precio es ganancia (D213).
+         Antes la ganancia iba en 12 px junto a «Costo base». -->
+    <dl class="calc-cifras solo-pieza">
+      <div><dt>Costo</dt><dd class="num" id="result-base">—</dd></div>
+      <div><dt>Ganancia</dt><dd class="num calc-cifra-ganancia" id="result-profit">—</dd></div>
+      <div><dt>Margen</dt><dd class="num" id="result-margen">—</dd></div>
+    </dl>
     <!-- El precio sugerido se redondea hacia arriba de 5 en 5 (D161, roundUpToFive en
          costing.js). Lo escribe _pintarNotaRedondeo (calculator.js). -->
     <div class="nota-redondeo solo-pieza hidden">
@@ -201,64 +217,66 @@
       <span id="nota-redondeo-texto"></span>
     </div>
 
-    <!-- Barra de composición de costos -->
-    <div id="cost-composition-bar" class="solo-pieza" style="margin-top:14px;height:4px;border-radius:2px;overflow:hidden;display:flex;background:var(--line)">
-      <div id="ccb-mat"    style="background:var(--ink);flex:0;transition:flex 0.35s"></div>
-      <div id="ccb-energy" style="background:var(--ink-2);flex:0;transition:flex 0.35s"></div>
-      <div id="ccb-design" style="background:var(--accent);flex:0;transition:flex 0.35s"></div>
-      <div id="ccb-deprec" style="background:var(--ink-3);flex:0;transition:flex 0.35s"></div>
-      <div id="ccb-fixed"  style="background:var(--ink-4);flex:0;transition:flex 0.35s"></div>
-      <div id="ccb-maint"    style="background:var(--accent-lavanda);flex:0;transition:flex 0.35s"></div>
-      <div id="ccb-indirect" style="background:var(--accent-mint);flex:0;transition:flex 0.35s"></div>
-      <div id="ccb-waste"  style="background:var(--line);flex:0;transition:flex 0.35s"></div>
-      <div id="ccb-post"   style="background:var(--warn);flex:0;transition:flex 0.35s"></div>
+    <!-- La barra del costo: un color por rubro, en el orden del desglose (D256).
+         Antes casi toda gris, y el rubro más grande (Costos fijos) en el gris más
+         apagado. El detalle con nombres y montos está en «Ver desglose». -->
+    <div id="cost-composition-bar" class="solo-pieza barra-costo" aria-hidden="true">
+      <span id="ccb-mat"      style="background:var(--costo-material)"></span>
+      <span id="ccb-waste"    style="background:var(--costo-desperdicio)"></span>
+      <span id="ccb-energy"   style="background:var(--costo-energia)"></span>
+      <span id="ccb-design"   style="background:var(--costo-diseno)"></span>
+      <span id="ccb-deprec"   style="background:var(--costo-depreciacion)"></span>
+      <span id="ccb-fixed"    style="background:var(--costo-taller)"></span>
+      <span id="ccb-maint"    style="background:var(--costo-taller)"></span>
+      <span id="ccb-indirect" style="background:var(--costo-taller)"></span>
+      <span id="ccb-post"     style="background:var(--costo-post)"></span>
     </div>
 
     <!-- Toggle desglose -->
     <button id="btn-breakdown-toggle" class="solo-pieza" onclick="toggleBreakdown()" style="margin-top:12px;width:100%;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border:0.5px solid var(--line);border-radius:10px;font-size:13px;color:var(--ink-2);background:transparent">
       <span id="breakdown-label">Ver desglose · 6 rubros</span>
-      <span class="material-symbols-rounded" id="breakdown-chev" style="font-size:16px;transition:transform 0.2s">chevron_right</span>
+      <span class="material-symbols-rounded" aria-hidden="true" id="breakdown-chev" style="font-size:16px;transition:transform 0.2s">chevron_right</span>
     </button>
 
     <div id="breakdown-detail" class="hidden solo-pieza">
       <div class="card" style="padding:4px 16px;margin-top:10px">
         <div class="row" style="padding:11px 0">
-          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--ink)"></span><span style="font-size:13px">Material</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--costo-material)"></span><span style="font-size:13px">Material</span></div>
           <div class="num" style="font-size:13px" id="r-mat">$0</div>
         </div>
         <div class="row" style="padding:11px 0">
-          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--ink-2)"></span><span style="font-size:13px">Energía</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--costo-desperdicio)"></span><span style="font-size:13px">Desperdicio</span></div>
+          <div class="num" style="font-size:13px" id="r-waste">$0</div>
+        </div>
+        <div class="row" style="padding:11px 0">
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--costo-energia)"></span><span style="font-size:13px">Energía</span></div>
           <div class="num" style="font-size:13px" id="r-energy">$0</div>
         </div>
         <div class="row" style="padding:11px 0">
-          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--accent)"></span><span style="font-size:13px">Diseño</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--costo-diseno)"></span><span style="font-size:13px">Diseño</span></div>
           <div class="num" style="font-size:13px" id="r-labor">$0</div>
         </div>
         <div class="row" style="padding:11px 0">
-          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--ink-3)"></span><span style="font-size:13px">Depreciación</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--costo-depreciacion)"></span><span style="font-size:13px">Depreciación</span></div>
           <div class="num" style="font-size:13px" id="r-deprec">$0</div>
         </div>
         <div class="row" style="padding:11px 0">
-          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--ink-4)"></span><span style="font-size:13px">Costos fijos</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--costo-taller)"></span><span style="font-size:13px">Costos fijos</span></div>
           <div class="num" style="font-size:13px" id="r-fixed">$0</div>
         </div>
         <div class="row hidden" style="padding:11px 0" id="row-maint">
-          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--accent-lavanda)"></span><span style="font-size:13px">Mantenimiento</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--costo-taller)"></span><span style="font-size:13px">Mantenimiento</span></div>
           <div class="num" style="font-size:13px" id="r-maint">$0</div>
         </div>
         <div class="row hidden" style="padding:11px 0" id="row-indirect">
-          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--accent-mint)"></span><span style="font-size:13px">Indirectos</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--costo-taller)"></span><span style="font-size:13px">Indirectos</span></div>
           <div class="num" style="font-size:13px" id="r-indirect">$0</div>
-        </div>
-        <div class="row" style="padding:11px 0">
-          <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--line)"></span><span style="font-size:13px">Desperdicio</span></div>
-          <div class="num" style="font-size:13px" id="r-waste">$0</div>
         </div>
         <!-- Post-procesado rows (inyectadas por JS) -->
         <div id="r-postproc-block" class="hidden">
           <div id="r-postproc-rows"></div>
           <div class="row" style="padding:11px 0">
-            <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--warn)"></span><span style="font-size:13px">Mano de obra pintado</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><span class="pie" style="background:var(--costo-post)"></span><span style="font-size:13px">Mano de obra pintado</span></div>
             <div class="num" style="font-size:13px" id="r-paint-labor">$0</div>
           </div>
           <div class="row" style="padding:11px 0;font-weight:600">
@@ -292,15 +310,15 @@
   <div class="calc-actions">
     <span class="calc-float-total num" id="calc-float-total" aria-hidden="true">$0</span>
     <button class="btn btn-ghost solo-pieza" onclick="saveCurrentPreset()">
-      <span class="material-symbols-rounded" style="font-size:16px">star</span> Preset
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">star</span> Preset
     </button>
     <!-- Sin este botón, saveToHistory() nunca se llamaba y la pestaña Historial
          no podía tener contenido jamás. -->
     <button class="btn btn-ghost solo-pieza" onclick="saveToHistory()">
-      <span class="material-symbols-rounded" style="font-size:16px">history</span> Guardar
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">history</span> Guardar
     </button>
     <button class="btn btn-primary" id="btn-cotizar" onclick="addItemToDraft()">
-      <span class="material-symbols-rounded" style="font-size:16px">receipt_long</span>
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">receipt_long</span>
       <span id="btn-cotizar-label">Agregar a orden</span>
     </button>
   </div>
@@ -352,8 +370,9 @@
       <input type="text" id="calc-desc" placeholder=" ">
       <label for="calc-desc">Descripción</label>
     </div>
-    <!-- Lo que se captura es la placa, no la pieza: ahora lo dicen las etiquetas
-         («Peso de placa», «Piezas en la placa»), en lugar de un párrafo (D171). -->
+    <!-- Lo que se captura es la placa, no la pieza (D171). Desde D215 lo dice
+         una línea arriba de los cuatro números y las etiquetas son cortas
+         («Peso (g)»): en el teléfono las largas se cortaban justo en la unidad. -->
 
     <!-- Leer el archivo del slicer (D133): llena peso, tiempo y, si son copias, piezas.
          Solo .gcode y .3mf (D162). En la computadora el selector solo muestra esos
@@ -373,23 +392,24 @@
 
     <!-- Los cuatro números de la placa. En el teléfono van de dos en dos;
          en escritorio, con espacio, los cuatro en una fila (desktop.css). -->
+    <p class="calc-datos-nota" id="calc-datos-nota">De la placa completa, como la da el slicer.</p>
     <div class="calc-datos-nums">
     <div class="flex-row" style="margin-bottom:16px">
       <div class="m3-field" id="field-weight">
-        <input type="number" id="calc-weight" placeholder=" " min="0" step="0.1" inputmode="decimal">
-        <label for="calc-weight">Peso de placa (g)</label>
+        <input type="number" id="calc-weight" placeholder=" " min="0" step="0.1" inputmode="decimal" aria-describedby="calc-datos-nota">
+        <label for="calc-weight">Peso (g)</label>
         <span class="m3-helper" id="helper-weight"></span>
       </div>
       <div class="m3-field" id="field-time">
-        <input type="number" id="calc-time" placeholder=" " min="0" step="0.01" inputmode="decimal">
-        <label for="calc-time">Tiempo de placa (h)</label>
+        <input type="number" id="calc-time" placeholder=" " min="0" step="0.01" inputmode="decimal" aria-describedby="calc-datos-nota">
+        <label for="calc-time">Tiempo (h)</label>
         <span class="m3-helper" id="helper-time"></span>
       </div>
     </div>
     <div class="flex-row" style="margin-bottom:16px">
       <div class="m3-field" id="field-pieces">
-        <input type="number" id="calc-pieces" placeholder=" " min="1" step="1" inputmode="numeric" value="1">
-        <label for="calc-pieces">Piezas en la placa</label>
+        <input type="number" id="calc-pieces" placeholder=" " min="1" step="1" inputmode="numeric" value="1" aria-describedby="calc-datos-nota">
+        <label for="calc-pieces">Piezas</label>
         <span class="m3-helper" id="helper-pieces"></span>
       </div>
       <div class="m3-field">
@@ -437,7 +457,7 @@
       </div>
       <!-- Selector visual de color / rollo -->
       <div id="field-spool-wrap" style="padding:4px 0 8px">
-        <div style="font-size:12px;font-family:var(--font-mono);letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px">Color · Rollo</div>
+        <div class="etiqueta" style="margin-bottom:10px">Color · Rollo</div>
         <div id="calc-color-chips" style="display:flex;flex-wrap:wrap;gap:8px">
           <button type="button" class="color-chip active" id="color-chip-any" onclick="_selectColorChip(this,'')">
             <span style="width:12px;height:12px;border-radius:50%;background:var(--bg-sunk);border:1px solid var(--line);flex-shrink:0;display:inline-block"></span>
@@ -451,7 +471,7 @@
     <!-- Params resina — visible solo con impresora Resina -->
     <div id="calc-resin-params" class="hidden m3-card resin-params-card" style="margin-top:10px">
       <div class="resin-params-header">
-        <span class="material-symbols-rounded" style="font-size:18px;color:var(--accent)">water_drop</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px;color:var(--accent)">water_drop</span>
         <span class="m3-card-title" style="margin:0">Post-proceso Resina</span>
       </div>
       <div class="flex-row">
@@ -477,7 +497,7 @@
     <div id="calc-ams-block" class="hidden" style="margin-top:10px">
       <div class="card" style="padding:16px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-          <span class="material-symbols-rounded" style="font-size:18px;color:var(--accent)">palette</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px;color:var(--accent)">palette</span>
           <span style="font-size:13px;font-weight:600;letter-spacing:-0.01em">Multicolor AMS</span>
         </div>
         <div id="ams-color-slots">
@@ -511,7 +531,7 @@
                       aria-label="Cómo saco estos datos del slicer"
                       style="display:flex;align-items:center;justify-content:center;padding:4px;
                              background:none;border:none;cursor:pointer;color:var(--accent)">
-                <span class="material-symbols-rounded" style="font-size:16px">help</span>
+                <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">help</span>
               </button>
             </div>
             <div class="num" id="ams-purge-summary" style="font-size:13px;color:var(--ink-2)">—</div>
@@ -529,7 +549,7 @@
     <div class="card" style="padding:16px;margin-bottom:10px" id="calc-postproc-card">
       <div class="postproc-header" onclick="togglePostProc(event)">
         <div style="display:flex;align-items:center;gap:10px">
-          <span class="material-symbols-rounded" style="font-size:18px;color:var(--ink-2)">palette</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px;color:var(--ink-2)">palette</span>
           <div>
             <div style="font-size:14px;font-weight:500">Pintura</div>
           </div>
@@ -546,7 +566,7 @@
         <div class="postproc-section-label">Colores de pintura</div>
         <div id="paint-colors-list"></div>
         <button class="m3-btn-text m3-btn-sm" onclick="addPaintColor()" style="margin-top:4px;width:auto">
-          <span class="material-symbols-rounded" style="font-size:16px">add</span> Agregar color
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">add</span> Agregar color
         </button>
         <div class="flex-row" style="margin-top:12px">
           <div class="m3-field">
@@ -568,16 +588,19 @@
     </div>
   </div>
 
-  <!-- ── Sección 04: Margen de ganancia ─── -->
+  <!-- ── Ganancia sobre el costo (D213): lo que se le suma al costo. Debajo,
+       qué parte del precio es ganancia: el margen. Antes decía «Margen 50 %»
+       y no lo era: con +50 % el margen es 33 %. ─── -->
   <div class="calc-sec calc-sec-margen solo-pieza" style="padding:28px 20px 0">
-    <div class="rule micro" style="margin-bottom:18px">Margen</div>
+    <div class="rule micro" style="margin-bottom:18px" id="calc-ganancia-titulo">Ganancia sobre el costo</div>
     <div class="card" style="padding:20px">
-      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
+      <div class="calc-ganancia-cabeza">
         <div class="display" style="font-size:44px">
-          <span id="calc-margin-display2">50</span><span style="font-size:22px;color:var(--ink-3)">%</span>
+          +<span id="calc-margin-display2">50</span><span style="font-size:22px;color:var(--ink-3)">%</span>
         </div>
+        <p class="calc-margen-explica" id="calc-margen-explica">Margen: 33 % del precio</p>
       </div>
-      <input class="slider" type="range" id="calc-margin" min="0" max="200" value="50">
+      <input class="slider" type="range" id="calc-margin" min="0" max="200" value="50" aria-labelledby="calc-ganancia-titulo" aria-describedby="calc-margen-explica">
       <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--ink-4);font-family:var(--font-mono)">
         <span>0%</span><span>50%</span><span>100%</span><span>150%</span><span>200%</span>
       </div>
@@ -601,7 +624,7 @@
     </div>
     <div class="page-header-actions" style="display:none;align-items:center;flex-shrink:0">
       <button class="page-header-btn" id="phdr-btn-catalog" onclick="catalogAdd()">
-        <span class="material-symbols-rounded" style="font-size:16px">add</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">add</span>
         <span id="catalog-header-label">Agregar</span>
       </button>
     </div>
@@ -632,18 +655,35 @@
 <div id="page-ayuda" class="page" style="padding-top:0">
   <div class="ayuda-cabeza" style="padding:28px 20px 18px">
     <button class="back-btn solo-movil" onclick="showPage('config')" style="margin-bottom:12px">
-      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">arrow_back_ios</span>Ajustes
     </button>
     <h1 class="display" style="font-size:34px;letter-spacing:-0.035em;line-height:0.98;margin:0">Ayuda</h1>
   </div>
-  <div class="ayuda-acciones" style="padding:0 20px 18px">
-    <button type="button" class="btn btn-primary" onclick="verRecorrido()">
-      <span class="material-symbols-rounded" style="font-size:18px" aria-hidden="true">tour</span> Ver el recorrido
-    </button>
-    <button type="button" class="btn btn-ghost" onclick="verOnboardingDeNuevo()">
-      <span class="material-symbols-rounded" style="font-size:18px" aria-hidden="true">school</span> Ver la introducción
-    </button>
-  </div>
+  <!-- El recorrido y la guía, cada uno en su sección (D203) -->
+  <section class="ayuda-seccion" aria-labelledby="ayuda-recorrido-titulo" style="padding:0 20px 28px">
+    <h2 class="micro ayuda-seccion-titulo" id="ayuda-recorrido-titulo">Recorrido</h2>
+    <div class="ayuda-recorridos">
+      <div class="card ayuda-recorrido">
+        <span class="material-symbols-rounded ayuda-recorrido-icono" aria-hidden="true">tour</span>
+        <div class="ayuda-recorrido-texto">
+          <h3>Por la pantalla</h3>
+          <p>Te señala dónde está cada cosa.</p>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="verRecorrido()">Ver el recorrido</button>
+      </div>
+      <div class="card ayuda-recorrido">
+        <span class="material-symbols-rounded ayuda-recorrido-icono" aria-hidden="true">school</span>
+        <div class="ayuda-recorrido-texto">
+          <h3>Introducción</h3>
+          <p>Por qué cada pieza cuesta lo que cuesta, en 5 pasos.</p>
+        </div>
+        <button type="button" class="btn btn-ghost" onclick="verOnboardingDeNuevo()">Ver la introducción</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="ayuda-seccion" aria-labelledby="ayuda-guia-titulo">
+  <h2 class="micro ayuda-seccion-titulo" id="ayuda-guia-titulo" style="padding:0 20px">Guía</h2>
   <div class="ayuda-buscar" style="padding:0 20px 16px">
     <span class="material-symbols-rounded" aria-hidden="true">search</span>
     <input type="search" id="ayuda-buscar" placeholder="Buscar en la ayuda" autocomplete="off"
@@ -651,39 +691,40 @@
   </div>
   <div id="ayuda-temas" class="ayuda-temas" style="padding:0 20px">
       <article class="card ayuda-tema">
-        <h2>¿Cómo sale el precio?</h2>
+        <h3>¿Cómo sale el precio?</h3>
         <p>Suma el material, la luz, el desgaste de la impresora, las horas de diseño y una parte de tus gastos fijos e indirectos por cada hora de impresión. Encima van el mantenimiento y el desperdicio, y después tu margen. El precio se redondea hacia arriba de $5 en $5.</p>
       </article>
       <article class="card ayuda-tema">
-        <h2>¿Qué necesito antes de cotizar?</h2>
+        <h3>¿Qué necesito antes de cotizar?</h3>
         <p>Una impresora (Catálogo › Impresoras) y un material (Ajustes › Materiales). En Ajustes van también tus gastos fijos, los indirectos y las horas que imprimes al mes: sin ellos, el precio sale más bajo de lo que te cuesta.</p>
       </article>
       <article class="card ayuda-tema">
-        <h2>¿Qué peso y tiempo escribo?</h2>
-        <p>Los de la placa completa, como te los da el slicer, y en «Piezas en la placa» cuántas salen de ella: la app divide. O toca «Leer archivo del slicer» y elige el .gcode o el .3mf.</p>
+        <h3>¿Qué peso y tiempo escribo?</h3>
+        <p>Los de la placa completa, como te los da el slicer, y en «Piezas» cuántas salen de ella: la app divide. O toca «Leer archivo del slicer» y elige el .gcode o el .3mf.</p>
       </article>
       <article class="card ayuda-tema">
-        <h2>¿Cómo cotizo varias piezas juntas?</h2>
-        <p>Calcula cada pieza y toca «Agregar a orden». Cuando estén todas, «Generar cotización»: el cliente, el descuento y la comisión. Después la mandas por WhatsApp, en PDF o como imagen.</p>
+        <h3>¿Cómo cotizo varias piezas juntas?</h3>
+        <p>Calcula cada pieza y toca «Agregar a orden». Cuando estén todas, «Revisar orden»: el cliente, el descuento y la comisión; «Generar cotización» la guarda. Después la mandas por WhatsApp, en PDF o como imagen.</p>
       </article>
       <article class="card ayuda-tema">
-        <h2>¿Cómo cotizo un cortador o un kit?</h2>
+        <h3>¿Cómo cotizo un cortador o un kit?</h3>
         <p>Arriba de la calculadora, en «¿Qué cotizas?», elige el producto. Los cortadores van por tamaño, con su tabla de precios. Un kit va a precio fijo: la app te dice cuánto te cuesta y cuánto ganas. Se crean en «Mis productos».</p>
       </article>
       <article class="card ayuda-tema">
-        <h2>¿Qué significa cada estado?</h2>
+        <h3>¿Qué significa cada estado?</h3>
         <p>Borrador: todavía no la mandas. Enviada: ya la tiene el cliente. Aceptada: va a producción y descuenta los rollos que elegiste. Rechazada: no se hizo. Si te equivocas, en el menú «⋯» está «Regresar a…», y el filamento vuelve al inventario.</p>
       </article>
       <article class="card ayuda-tema">
-        <h2>¿Cómo funciona el inventario?</h2>
+        <h3>¿Cómo funciona el inventario?</h3>
         <p>Registra tus rollos con su peso. En la calculadora elige el rollo con que imprimes; al aceptar la cotización se descuentan sus gramos. Arriba del inventario, «Material usado» te dice qué gastas más en el mes.</p>
       </article>
       <article class="card ayuda-tema">
-        <h2>¿Dónde se guardan mis datos?</h2>
+        <h3>¿Dónde se guardan mis datos?</h3>
         <p>Con cuenta, en la nube: los ves en cualquier equipo donde entres. Sin cuenta, solo en este equipo. En Ajustes, «Exportar» guarda un respaldo en un archivo.</p>
       </article>
   </div>
   <p id="ayuda-nada" class="ayuda-nada hidden" role="status"></p>
+  </section>
   <div class="dash-espacio" style="height:110px"></div>
 </div>
 
@@ -691,7 +732,7 @@
 <div id="page-history" class="page">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
     <button class="m3-btn-text solo-movil" onclick="showPage('calc')" style="width:auto;padding:0 8px" aria-label="Regresar a la calculadora">
-      <span class="material-symbols-rounded">arrow_back</span>
+      <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
     </button>
     <h2 class="page-heading">Historial de cálculos</h2>
     <button class="m3-btn-text m3-btn-sm" onclick="clearHistory()" style="color:var(--md-error)">Limpiar</button>
@@ -710,10 +751,10 @@
     </div>
     <div class="page-header-actions" style="display:none;align-items:center;flex-shrink:0;gap:8px">
       <button class="page-header-btn" id="phdr-btn-quotes" onclick="nuevaCotizacion()">
-        <span class="material-symbols-rounded" style="font-size:16px">add</span> Nueva cotización
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">add</span> Nueva cotización
       </button>
       <button class="page-header-btn" id="phdr-btn-clients" onclick="showClientModal()" style="display:none">
-        <span class="material-symbols-rounded" style="font-size:16px">person_add</span> Nuevo cliente
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">person_add</span> Nuevo cliente
       </button>
     </div>
   </div>
@@ -729,7 +770,7 @@
   <!-- Search bar (estilo prototipo) -->
   <div id="quotes-search-wrap" style="padding:0 20px 12px">
     <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-sunk);border:0.5px solid var(--line);border-radius:10px">
-      <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-3)">search</span>
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px;color:var(--ink-3)">search</span>
       <input id="quote-search" type="text" placeholder="Buscar cotización, cliente o pieza"
              style="flex:1;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans)"
              oninput="onQuoteSearch(this)">
@@ -746,7 +787,7 @@
   <div id="clients-tab-content" style="display:none">
     <div style="padding:0 20px 12px">
       <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-sunk);border:0.5px solid var(--line);border-radius:10px">
-        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-3)">search</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px;color:var(--ink-3)">search</span>
         <input type="text" id="client-search" placeholder="Buscar cliente"
                style="flex:1;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans)"
                oninput="onClientSearch(this)">
@@ -763,8 +804,8 @@
     <button class="page-tab active" onclick="showPage('clients')" data-tab="clients">Clientes</button>
   </div>
   <div id="clients-list"></div>
-  <button class="m3-fab" onclick="showClientModal()" id="fab-clients">
-    <span class="material-symbols-rounded">person_add</span>
+  <button class="m3-fab" onclick="showClientModal()" id="fab-clients" aria-label="Agregar cliente">
+    <span class="material-symbols-rounded" aria-hidden="true">person_add</span>
   </button>
 </div>
 
@@ -774,7 +815,7 @@
   <!-- Cabecera mobile (oculta en desktop) -->
   <div class="cfg-sub-header">
     <button class="back-btn" onclick="showPage('config')">
-      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">arrow_back_ios</span>Ajustes
     </button>
   </div>
 
@@ -791,15 +832,15 @@
   <!-- Logo -->
   <div style="padding:12px 20px 0">
     <div class="card" style="padding:16px 18px">
-      <div style="font-size:12px;font-family:var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px">Logo del negocio</div>
+      <div class="etiqueta" style="margin-bottom:12px">Logo del negocio</div>
       <div class="logo-upload-area" onclick="document.getElementById('logo-input').click()" id="logo-preview-area">
-        <span class="material-symbols-rounded" style="font-size:28px;color:var(--ink-3)">add_photo_alternate</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:28px;color:var(--ink-3)">add_photo_alternate</span>
         <p style="font-size:12px;color:var(--ink-3);margin:6px 0 0">PNG / JPG · máx 500 KB</p>
       </div>
       <input type="file" id="logo-input" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="handleLogoUpload(event)">
       <div style="margin-top:10px;display:flex;justify-content:flex-end">
         <button class="btn btn-ghost" id="qe-quitar-logo" onclick="removeLogo()" style="color:var(--danger);width:auto;padding:0 14px;font-size:13px;height:32px">
-          <span class="material-symbols-rounded" style="font-size:14px">delete</span> Quitar
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:14px">delete</span> Quitar
         </button>
       </div>
     </div>
@@ -888,14 +929,14 @@
 
   <!-- Vista previa -->
   <div class="qe-vista" style="padding:12px 20px 0">
-    <div style="font-size:12px;font-family:var(--font-mono);letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px">Vista previa</div>
+    <div class="etiqueta" style="margin-bottom:8px">Vista previa</div>
     <div id="qe-live-preview" style="overflow-x:auto;border-radius:var(--r-m);border:0.5px solid var(--line)"></div>
   </div>
 
   <!-- Botón Restablecer (alineado igual que Guardar en otras sub-páginas) -->
   <div class="qe-restablecer" style="padding:16px 20px 32px">
     <button class="btn btn-ghost" onclick="resetQuoteStyle()" style="color:var(--danger);width:100%">
-      <span class="material-symbols-rounded" style="font-size:15px">restart_alt</span> Restablecer diseño
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:15px">restart_alt</span> Restablecer diseño
     </button>
   </div>
 
@@ -914,42 +955,42 @@
     <!-- Exportar / Importar solo visible en desktop vía CSS -->
     <div class="cfg-header-actions">
       <button class="page-header-btn" onclick="exportData()">
-        <span class="material-symbols-rounded" style="font-size:16px">download</span> Exportar
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">download</span> Exportar
       </button>
       <button class="page-header-btn" onclick="document.getElementById('import-file').click()">
-        <span class="material-symbols-rounded" style="font-size:16px">upload</span> Importar
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">upload</span> Importar
       </button>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
   </div>
 
   <!-- ── Tab bar horizontal (solo desktop) ─── -->
-  <div class="cfg-tab-bar">
+  <nav class="cfg-tab-bar" aria-label="Secciones de Ajustes">
     <button id="cfg-nav-negocio" class="cfg-tab" onclick="showConfigPage('negocio')">
-      <span class="material-symbols-rounded" style="font-size:17px">storefront</span> Negocio
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:17px">storefront</span> Negocio
     </button>
     <button id="cfg-nav-banco" class="cfg-tab" onclick="showConfigPage('banco')">
-      <span class="material-symbols-rounded" style="font-size:17px">account_balance</span> Banco
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:17px">account_balance</span> Banco
     </button>
     <button id="cfg-nav-electrico" class="cfg-tab" onclick="showConfigPage('electrico')">
-      <span class="material-symbols-rounded" style="font-size:17px">bolt</span> Electricidad
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:17px">bolt</span> Electricidad
     </button>
     <button id="cfg-nav-materiales" class="cfg-tab" onclick="showConfigPage('materiales')">
-      <span class="material-symbols-rounded" style="font-size:17px">category</span> Materiales
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:17px">category</span> Materiales
     </button>
     <button id="cfg-nav-gastos" class="cfg-tab" onclick="showConfigPage('gastos')">
-      <span class="material-symbols-rounded" style="font-size:17px">receipt</span> Gastos fijos
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:17px">receipt</span> Gastos fijos
     </button>
     <button id="cfg-nav-indirectos" class="cfg-tab" onclick="showConfigPage('indirectos')">
-      <span class="material-symbols-rounded" style="font-size:17px">inventory_2</span> Indirectos
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:17px">inventory_2</span> Indirectos
     </button>
     <button id="cfg-nav-otros" class="cfg-tab" onclick="showConfigPage('otros')">
-      <span class="material-symbols-rounded" style="font-size:17px">tune</span> Otros
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:17px">tune</span> Otros
     </button>
     <button id="cfg-nav-quote-editor" class="cfg-tab" onclick="showConfigPage('quote-editor')">
-      <span class="material-symbols-rounded" style="font-size:17px">palette</span> Diseño
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:17px">palette</span> Diseño
     </button>
-  </div>
+  </nav>
 
   <!-- ── Panel de contenido desktop (sub-páginas se mueven aquí via JS) ─── -->
   <div id="cfg-subpage-container" style="display:none"></div>
@@ -971,85 +1012,85 @@
       <div class="card" style="padding:0 18px">
 
         <button class="cfg-nav-row" onclick="showConfigPage('negocio')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
-          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">storefront</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:20px;color:var(--ink-3)">storefront</span>
           <div class="cfg-nav-text">
             <div class="cfg-nav-label">Datos del negocio</div>
             <div class="cfg-nav-sub">Nombre, contacto, redes sociales</div>
           </div>
-          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+          <span class="cfg-nav-chevron material-symbols-rounded" aria-hidden="true" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
         </button>
 
         <button class="cfg-nav-row" onclick="showConfigPage('banco')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
-          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">account_balance</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:20px;color:var(--ink-3)">account_balance</span>
           <div class="cfg-nav-text">
             <div class="cfg-nav-label">Cuenta bancaria</div>
             <div class="cfg-nav-sub">Banco, titular, CLABE</div>
           </div>
-          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+          <span class="cfg-nav-chevron material-symbols-rounded" aria-hidden="true" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
         </button>
 
         <button class="cfg-nav-row" onclick="showConfigPage('electrico')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
-          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">bolt</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:20px;color:var(--ink-3)">bolt</span>
           <div class="cfg-nav-text">
             <div class="cfg-nav-label">Electricidad y trabajo</div>
             <div class="cfg-nav-sub">Costo kWh, hora de diseño</div>
           </div>
-          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+          <span class="cfg-nav-chevron material-symbols-rounded" aria-hidden="true" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
         </button>
 
         <button class="cfg-nav-row" onclick="showConfigPage('materiales')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
-          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">category</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:20px;color:var(--ink-3)">category</span>
           <div class="cfg-nav-text">
             <div class="cfg-nav-label">Materiales</div>
             <div class="cfg-nav-sub">Filamento y resina, precio por kilo</div>
           </div>
-          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+          <span class="cfg-nav-chevron material-symbols-rounded" aria-hidden="true" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
         </button>
 
         <button class="cfg-nav-row" onclick="showConfigPage('gastos')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
-          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">receipt</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:20px;color:var(--ink-3)">receipt</span>
           <div class="cfg-nav-text">
             <div class="cfg-nav-label">Gastos fijos mensuales</div>
             <div class="cfg-nav-sub">Renta, servicios, materiales fijos</div>
           </div>
-          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+          <span class="cfg-nav-chevron material-symbols-rounded" aria-hidden="true" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
         </button>
 
         <button class="cfg-nav-row" onclick="showConfigPage('indirectos')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
-          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">inventory_2</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:20px;color:var(--ink-3)">inventory_2</span>
           <div class="cfg-nav-text">
             <div class="cfg-nav-label">Gastos indirectos</div>
             <div class="cfg-nav-sub">Guantes, lijas, alcohol, empaque</div>
           </div>
-          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+          <span class="cfg-nav-chevron material-symbols-rounded" aria-hidden="true" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
         </button>
 
         <button class="cfg-nav-row" onclick="showConfigPage('otros')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
-          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">tune</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:20px;color:var(--ink-3)">tune</span>
           <div class="cfg-nav-text">
             <div class="cfg-nav-label">Otros parámetros</div>
             <div class="cfg-nav-sub">Moneda, desperdicio, mantenimiento, AMS</div>
           </div>
-          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+          <span class="cfg-nav-chevron material-symbols-rounded" aria-hidden="true" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
         </button>
 
         <button class="cfg-nav-row" onclick="showPage('quote-editor')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;border-bottom:0.5px solid var(--line);background:none;cursor:pointer">
-          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">palette</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:20px;color:var(--ink-3)">palette</span>
           <div class="cfg-nav-text">
             <div class="cfg-nav-label">Diseño de cotización</div>
             <div class="cfg-nav-sub">Logo, colores, campos visibles, textos</div>
           </div>
-          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+          <span class="cfg-nav-chevron material-symbols-rounded" aria-hidden="true" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
         </button>
 
         <!-- Ayuda (D200): en escritorio está en la barra lateral -->
         <button class="cfg-nav-row solo-movil" onclick="showPage('ayuda')" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 0;background:none;cursor:pointer">
-          <span class="material-symbols-rounded" style="font-size:20px;color:var(--ink-3)">help</span>
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:20px;color:var(--ink-3)">help</span>
           <div class="cfg-nav-text">
             <div class="cfg-nav-label">Ayuda</div>
             <div class="cfg-nav-sub">Recorrido, introducción y preguntas</div>
           </div>
-          <span class="cfg-nav-chevron material-symbols-rounded" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
+          <span class="cfg-nav-chevron material-symbols-rounded" aria-hidden="true" style="font-size:16px;color:var(--ink-4)">chevron_right</span>
         </button>
 
       </div>
@@ -1058,15 +1099,15 @@
     <!-- Respaldo (mobile) -->
     <div style="padding:20px 20px 0">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-        <span class="material-symbols-rounded" style="font-size:16px;color:var(--ink-3)">cloud_sync</span>
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px;color:var(--ink-3)">cloud_sync</span>
         <div class="micro">Respaldo de datos</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <button class="btn btn-ghost" onclick="exportData()">
-          <span class="material-symbols-rounded" style="font-size:16px">download</span> Exportar
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">download</span> Exportar
         </button>
         <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">
-          <span class="material-symbols-rounded" style="font-size:16px">upload</span> Importar
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">upload</span> Importar
         </button>
       </div>
       <div style="font-size:12px;color:var(--ink-4);margin-top:8px;padding:0 4px">
@@ -1086,7 +1127,7 @@
 <div id="page-config-negocio" class="page" style="padding-top:0">
   <div class="cfg-sub-header">
     <button class="back-btn" onclick="showPage('config')">
-      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">arrow_back_ios</span>Ajustes
     </button>
     
   </div>
@@ -1096,27 +1137,27 @@
   <div style="padding:12px 20px 24px">
     <div class="card cfg-formulario" style="padding:0 18px">
       <div class="row">
-        <div class="row-label">Nombre del estudio</div>
+        <label class="row-label" for="cfg-biz-name">Nombre del estudio</label>
         <input type="text" id="cfg-biz-name" placeholder="Mi Negocio 3D"
                style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
       </div>
       <div class="row">
-        <div class="row-label">WhatsApp</div>
+        <label class="row-label" for="cfg-biz-phone">WhatsApp</label>
         <input type="tel" id="cfg-biz-phone" placeholder="+52 55 0000 0000" inputmode="tel"
                style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
       </div>
       <div class="row">
-        <div class="row-label">Email</div>
+        <label class="row-label" for="cfg-biz-email">Email</label>
         <input type="email" id="cfg-biz-email" placeholder="hola@studio.mx" inputmode="email"
                style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
       </div>
       <div class="row">
-        <div class="row-label">Instagram / Red social</div>
+        <label class="row-label" for="cfg-biz-social">Instagram / Red social</label>
         <input type="text" id="cfg-biz-social" placeholder="@estudio"
                style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
       </div>
       <div class="row" style="border-bottom:none">
-        <div class="row-label">URL para código QR</div>
+        <label class="row-label" for="cfg-biz-qr">URL para código QR</label>
         <input type="url" id="cfg-biz-qr" placeholder="https://wa.me/..." inputmode="url"
                style="text-align:right;background:transparent;border:none;outline:none;font-size:13px;color:var(--ink-2);font-family:var(--font-sans);flex:1;min-width:0">
       </div>
@@ -1124,7 +1165,7 @@
   </div>
   <div style="padding:0 20px 32px">
     <button class="btn btn-primary cfg-guardar" style="width:100%" onclick="saveConfig()">
-      <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">save</span> Guardar
     </button>
   </div>
 </div>
@@ -1133,7 +1174,7 @@
 <div id="page-config-banco" class="page" style="padding-top:0">
   <div class="cfg-sub-header">
     <button class="back-btn" onclick="showPage('config')">
-      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">arrow_back_ios</span>Ajustes
     </button>
     
   </div>
@@ -1143,17 +1184,17 @@
   <div style="padding:12px 20px 12px">
     <div class="card cfg-formulario" style="padding:0 18px">
       <div class="row">
-        <div class="row-label">Banco</div>
+        <label class="row-label" for="cfg-biz-bank">Banco</label>
         <input type="text" id="cfg-biz-bank" placeholder="Ej: BBVA, Banorte…" maxlength="40"
                style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
       </div>
       <div class="row">
-        <div class="row-label">Titular de la cuenta</div>
+        <label class="row-label" for="cfg-biz-holder">Titular de la cuenta</label>
         <input type="text" id="cfg-biz-holder" placeholder="Nombre completo" maxlength="60"
                style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-sans);flex:1;min-width:0">
       </div>
       <div class="row">
-        <div class="row-label" style="flex-shrink:0">Número de cuenta</div>
+        <label class="row-label" style="flex-shrink:0" for="cfg-biz-account">Número de cuenta</label>
         <input type="text" id="cfg-biz-account" placeholder="18 dígitos (CLABE)" maxlength="22" inputmode="numeric"
                style="text-align:right;background:transparent;border:none;outline:none;font-size:14px;color:var(--ink);font-family:var(--font-mono);flex:1;min-width:0;letter-spacing:0.06em">
       </div>
@@ -1165,7 +1206,7 @@
   </div>
   <div style="padding:0 20px 32px">
     <button class="btn btn-primary cfg-guardar" style="width:100%" onclick="saveConfig()">
-      <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">save</span> Guardar
     </button>
   </div>
 </div>
@@ -1174,7 +1215,7 @@
 <div id="page-config-electrico" class="page" style="padding-top:0">
   <div class="cfg-sub-header">
     <button class="back-btn" onclick="showPage('config')">
-      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">arrow_back_ios</span>Ajustes
     </button>
     
   </div>
@@ -1204,7 +1245,7 @@
   </div>
   <div style="padding:0 20px 32px">
     <button class="btn btn-primary cfg-guardar" style="width:100%" onclick="saveConfig()">
-      <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">save</span> Guardar
     </button>
   </div>
 </div>
@@ -1215,7 +1256,7 @@
 <div id="page-config-materiales" class="page" style="padding-top:0">
   <div class="cfg-sub-header">
     <button class="back-btn" onclick="showPage('config')">
-      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">arrow_back_ios</span>Ajustes
     </button>
   </div>
   <div class="cfg-sub-titulo" style="padding:20px 20px 8px">
@@ -1224,7 +1265,7 @@
   <div style="padding:12px 20px 32px">
     <div id="cfg-material-agregar" style="display:flex;justify-content:flex-end;margin-bottom:12px">
       <button class="link-btn" onclick="showMaterialModal()" style="font-size:12px;color:var(--accent);display:inline-flex;align-items:center;gap:4px">
-        <span class="material-symbols-rounded" style="font-size:14px">add</span> Material
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:14px">add</span> Material
       </button>
     </div>
     <div id="material-list"></div>
@@ -1235,7 +1276,7 @@
 <div id="page-config-gastos" class="page" style="padding-top:0">
   <div class="cfg-sub-header">
     <button class="back-btn" onclick="showPage('config')">
-      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">arrow_back_ios</span>Ajustes
     </button>
     
   </div>
@@ -1246,24 +1287,24 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <span></span>
       <button class="link-btn" id="fixed-cost-agregar" onclick="addFixedCostItem()" style="font-size:12px;color:var(--accent);display:inline-flex;align-items:center;gap:4px">
-        <span class="material-symbols-rounded" style="font-size:14px">add</span> Categoría
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:14px">add</span> Categoría
       </button>
     </div>
     <div class="card" style="padding:0 18px;margin-bottom:12px">
       <!-- Sin gastos fijos (D194). Lo muestra _pintarVacioCostos (config.js) -->
       <div id="fixed-cost-vacio" class="empty-state hidden">
-        <div class="empty-state-icon"><span class="material-symbols-rounded">receipt_long</span></div>
+        <div class="empty-state-icon"><span class="material-symbols-rounded" aria-hidden="true">receipt_long</span></div>
         <h3 class="empty-state-title">Sin gastos fijos</h3>
         <p>Renta, luz, internet: lo que pagas cada mes aunque no imprimas.</p>
         <button type="button" class="btn btn-primary empty-state-action" onclick="addFixedCostItem()">
-          <span class="material-symbols-rounded" style="font-size:18px">add</span> Agregar gasto
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">add</span> Agregar gasto
         </button>
       </div>
       <div id="fixed-cost-items-list"></div>
       <div class="row" style="border-top:0.5px solid var(--line);margin-top:4px;border-bottom:none">
         <div style="font-size:13px;font-weight:600">Total mensual</div>
         <div style="display:flex;align-items:center;gap:6px">
-          <input type="number" id="cfg-fixed-monthly" step="1" min="0" placeholder="0" inputmode="decimal"
+          <input type="number" id="cfg-fixed-monthly" aria-label="Total mensual de gastos fijos" step="1" min="0" placeholder="0" inputmode="decimal"
                  style="text-align:right;background:transparent;border:none;outline:none;font-size:18px;font-weight:600;color:var(--accent);font-family:var(--font-mono);width:90px"
                  oninput="updateFixedCostTotal(true)">
           <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">/mes</span>
@@ -1293,7 +1334,7 @@
   </div>
   <div style="padding:0 20px 32px">
     <button class="btn btn-primary cfg-guardar" style="width:100%" onclick="saveConfig()">
-      <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">save</span> Guardar
     </button>
   </div>
 </div>
@@ -1302,7 +1343,7 @@
 <div id="page-config-indirectos" class="page" style="padding-top:0">
   <div class="cfg-sub-header">
     <button class="back-btn" onclick="showPage('config')">
-      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">arrow_back_ios</span>Ajustes
     </button>
   </div>
   <div class="cfg-sub-titulo" style="padding:20px 20px 8px">
@@ -1312,24 +1353,24 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <button type="button" class="ayuda-btn ayuda-btn-texto" onclick="mostrarAyuda('indirectos')"><span class="material-symbols-rounded" aria-hidden="true">help</span>¿Qué va aquí?</button>
       <button class="link-btn" id="indirect-cost-agregar" onclick="addIndirectCostItem()" style="font-size:12px;color:var(--accent);display:inline-flex;align-items:center;gap:4px">
-        <span class="material-symbols-rounded" style="font-size:14px">add</span> Categoría
+        <span class="material-symbols-rounded" aria-hidden="true" style="font-size:14px">add</span> Categoría
       </button>
     </div>
     <div class="card" style="padding:0 18px;margin-bottom:12px">
       <!-- Sin gastos indirectos (D197). Lo muestra _pintarVacioCostos (config.js) -->
       <div id="indirect-cost-vacio" class="empty-state hidden">
-        <div class="empty-state-icon"><span class="material-symbols-rounded">inventory_2</span></div>
+        <div class="empty-state-icon"><span class="material-symbols-rounded" aria-hidden="true">inventory_2</span></div>
         <h3 class="empty-state-title">Sin gastos indirectos</h3>
         <p>Guantes, lijas, alcohol, empaque: lo que se gasta poco a poco al imprimir.</p>
         <button type="button" class="btn btn-primary empty-state-action" onclick="addIndirectCostItem()">
-          <span class="material-symbols-rounded" style="font-size:18px">add</span> Agregar gasto
+          <span class="material-symbols-rounded" aria-hidden="true" style="font-size:18px">add</span> Agregar gasto
         </button>
       </div>
       <div id="indirect-cost-items-list"></div>
       <div class="row" style="border-top:0.5px solid var(--line);margin-top:4px;border-bottom:none">
         <div style="font-size:13px;font-weight:600">Total mensual</div>
         <div style="display:flex;align-items:center;gap:6px">
-          <input type="number" id="cfg-indirect-monthly" step="1" min="0" placeholder="0" inputmode="decimal"
+          <input type="number" id="cfg-indirect-monthly" aria-label="Total mensual de gastos indirectos" step="1" min="0" placeholder="0" inputmode="decimal"
                  style="text-align:right;background:transparent;border:none;outline:none;font-size:18px;font-weight:600;color:var(--accent);font-family:var(--font-mono);width:90px"
                  oninput="updateIndirectCostTotal(true)">
           <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">/mes</span>
@@ -1356,7 +1397,7 @@
   </div>
   <div style="padding:0 20px 32px">
     <button class="btn btn-primary cfg-guardar" style="width:100%" onclick="saveConfig()">
-      <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">save</span> Guardar
     </button>
   </div>
 </div>
@@ -1365,7 +1406,7 @@
 <div id="page-config-otros" class="page" style="padding-top:0">
   <div class="cfg-sub-header">
     <button class="back-btn" onclick="showPage('config')">
-      <span class="material-symbols-rounded" style="font-size:16px">arrow_back_ios</span>Ajustes
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">arrow_back_ios</span>Ajustes
     </button>
     
   </div>
@@ -1418,7 +1459,7 @@
       <div style="padding:14px 0;border-bottom:0.5px solid var(--line)">
         <div style="font-size:13px;color:var(--ink-2);margin-bottom:4px;display:flex;align-items:center;gap:2px">Purga AMS por cambio de color <button type="button" class="ayuda-btn" onclick="showPurgeHelp()" aria-label="Cómo medir la purga"><span class="material-symbols-rounded" aria-hidden="true">help</span></button></div>
         <div class="row" style="padding:0;border:none">
-          <input type="number" id="cfg-ams-purge" min="0" max="20" step="0.1" inputmode="decimal"
+          <input type="number" id="cfg-ams-purge" aria-label="Purga AMS por cambio de color, en gramos" min="0" max="20" step="0.1" inputmode="decimal"
                  style="background:transparent;border:none;outline:none;font-size:28px;font-weight:600;
                         color:var(--ink);font-family:var(--font-mono);width:80px;padding:0">
           <span style="font-size:12px;color:var(--ink-3);font-family:var(--font-mono)">g por purga</span>
@@ -1431,10 +1472,10 @@
         <div class="solo-movil" style="font-size:12px;color:var(--ink-3);margin-bottom:12px" id="cfg-cuenta-info">—</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn btn-ghost" style="flex:1;min-width:150px" onclick="verOnboardingDeNuevo()">
-            <span class="material-symbols-rounded" style="font-size:16px">school</span> Ver introducción
+            <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">school</span> Ver introducción
           </button>
-          <button class="btn btn-ghost solo-movil" style="flex:1;min-width:150px" onclick="cerrarSesion()">
-            <span class="material-symbols-rounded" style="font-size:16px">logout</span> Cerrar sesión
+          <button class="btn btn-ghost solo-movil boton-sesion" style="flex:1;min-width:150px" onclick="botonDeSesion()">
+            <span class="material-symbols-rounded sesion-icono" aria-hidden="true" style="font-size:16px">logout</span> <span class="sesion-texto">Cerrar sesión</span>
           </button>
         </div>
       </div>
@@ -1444,10 +1485,10 @@
         <div style="font-size:13px;color:var(--ink-2);margin-bottom:10px">Apariencia</div>
         <div class="seg theme-segment" style="width:100%;display:flex">
           <button id="theme-light-btn" data-tema="light" onclick="setTheme('light')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">
-            <span class="material-symbols-rounded" style="font-size:14px">light_mode</span> Claro
+            <span class="material-symbols-rounded" aria-hidden="true" style="font-size:14px">light_mode</span> Claro
           </button>
           <button id="theme-dark-btn" data-tema="dark" onclick="setTheme('dark')" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">
-            <span class="material-symbols-rounded" style="font-size:14px">dark_mode</span> Oscuro
+            <span class="material-symbols-rounded" aria-hidden="true" style="font-size:14px">dark_mode</span> Oscuro
           </button>
           <button id="theme-auto-btn" data-tema="auto" onclick="setTheme('auto')" style="flex:1">Auto</button>
         </div>
@@ -1457,7 +1498,7 @@
   </div>
   <div style="padding:0 20px 32px">
     <button class="btn btn-primary cfg-guardar" style="width:100%" onclick="saveConfig()">
-      <span class="material-symbols-rounded" style="font-size:16px">save</span> Guardar
+      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">save</span> Guardar
     </button>
   </div>
 </div>
@@ -1479,15 +1520,15 @@
 ">
   <!-- Cotizaciones: nueva cotización -->
   <button id="qa-btn-quotes" class="btn btn-ghost" style="width:100%;display:none" onclick="nuevaCotizacion()">
-    <span class="material-symbols-rounded" style="font-size:16px">add</span> Nueva cotización
+    <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">add</span> Nueva cotización
   </button>
   <!-- Cotizaciones: nuevo cliente -->
   <button id="qa-btn-clients" class="btn btn-ghost" style="width:100%;display:none" onclick="showClientModal()">
-    <span class="material-symbols-rounded" style="font-size:16px">person_add</span> Nuevo cliente
+    <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">person_add</span> Nuevo cliente
   </button>
   <!-- Catálogo: agregar ítem -->
   <button id="qa-btn-catalog" class="btn btn-ghost" style="width:100%;display:none" onclick="catalogAdd()">
-    <span class="material-symbols-rounded" style="font-size:16px">add</span>
+    <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px">add</span>
     <span id="catalog-add-label">Agregar</span>
   </button>
 </div>
@@ -1501,16 +1542,16 @@
 <!-- NAV BAR -->
 <nav class="nav-bar" role="navigation" aria-label="Navegación principal">
   <button class="nav-item" onclick="showPage('dashboard')" data-page="dashboard" aria-label="Inicio">
-    <div class="nav-icon-wrap"><span class="material-symbols-rounded">home</span></div>Inicio
+    <div class="nav-icon-wrap"><span class="material-symbols-rounded" aria-hidden="true">home</span></div>Inicio
   </button>
   <button class="nav-item" onclick="showPage('quotes')" data-page="quotes" aria-label="Cotizaciones">
-    <div class="nav-icon-wrap"><span class="material-symbols-rounded">receipt_long</span></div>Cotizaciones
+    <div class="nav-icon-wrap"><span class="material-symbols-rounded" aria-hidden="true">receipt_long</span></div>Cotizaciones
   </button>
   <button class="nav-item" onclick="showPage('catalog')" data-page="catalog" aria-label="Catálogo">
-    <div class="nav-icon-wrap"><span class="material-symbols-rounded">category</span></div>Catálogo
+    <div class="nav-icon-wrap"><span class="material-symbols-rounded" aria-hidden="true">category</span></div>Catálogo
   </button>
   <button class="nav-item" onclick="showPage('config')" data-page="config" aria-label="Ajustes">
-    <div class="nav-icon-wrap"><span class="material-symbols-rounded">settings</span></div>Ajustes
+    <div class="nav-icon-wrap"><span class="material-symbols-rounded" aria-hidden="true">settings</span></div>Ajustes
   </button>
 </nav>
 

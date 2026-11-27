@@ -8,6 +8,7 @@ function calculate(silent) {
   var timeH    = parseFloat(document.getElementById('calc-time').value) || 0;
   var designH  = parseFloat(document.getElementById('calc-design-time').value) || 0;
   var margin   = parseFloat(document.getElementById('calc-margin').value) || 0;
+  _pintarControlGanancia(margin);
   /* Piezas de la placa. Lo capturado arriba es de la corrida completa. */
   var piecesEl = document.getElementById('calc-pieces');
   var pieces   = Math.max(1, Math.round(parseFloat(piecesEl && piecesEl.value) || 1));
@@ -16,7 +17,8 @@ function calculate(silent) {
 
   if (silent) {
     /* Modo live — solo calcula si hay datos válidos, sin errores visuales */
-    if (weight <= 0 || timeH <= 0 || !printer || !material) return;
+    /* Sin datos completos no hay precio: el de antes no se queda en pantalla (D212) */
+    if (weight <= 0 || timeH <= 0 || !printer || !material) { _limpiarResultado(); return; }
     /* Actualizar estados valid en tiempo real */
     _setFieldState('field-weight', 'helper-weight', weight > 0 ? 'valid' : 'neutral', '');
     _setFieldState('field-time',   'helper-time',   timeH  > 0 ? 'valid' : 'neutral', '');
@@ -27,7 +29,12 @@ function calculate(silent) {
     else { _setFieldState('field-weight', 'helper-weight', 'valid', ''); }
     if (timeH <= 0)  { _setFieldState('field-time', 'helper-time', 'error', 'Ingresa el tiempo de impresión'); hasError = true; }
     else { _setFieldState('field-time', 'helper-time', 'valid', ''); }
-    if (hasError) { snack('Ingresa peso y tiempo de impresión'); return; }
+    /* Dice solo lo que falta (D212) */
+    if (hasError) {
+      snack(weight <= 0 && timeH <= 0 ? 'Escribe el peso y el tiempo de la placa'
+          : weight <= 0 ? 'Escribe el peso de la placa' : 'Escribe el tiempo de la placa');
+      return;
+    }
     if (!printer || !material) { snack('Selecciona impresora y material'); return; }
   }
 
@@ -70,28 +77,31 @@ function calculate(silent) {
   var precioFormula = totalCost;
   if (fijo) totalCost = Number(fijo.precio) || 0;
 
-  document.getElementById('r-mat').textContent     = cur + matCost.toFixed(2);
-  document.getElementById('r-energy').textContent   = cur + energyCost.toFixed(2);
-  document.getElementById('r-labor').textContent    = cur + laborCost.toFixed(2);
-  document.getElementById('r-deprec').textContent   = cur + deprecCost.toFixed(2);
-  document.getElementById('r-fixed').textContent    = cur + fixedCost.toFixed(2);
+  document.getElementById('r-mat').textContent     = formatoDinero(matCost, cur);
+  document.getElementById('r-energy').textContent   = formatoDinero(energyCost, cur);
+  document.getElementById('r-labor').textContent    = formatoDinero(laborCost, cur);
+  document.getElementById('r-deprec').textContent   = formatoDinero(deprecCost, cur);
+  document.getElementById('r-fixed').textContent    = formatoDinero(fixedCost, cur);
   _setRubroRow('row-maint',    'r-maint',    maintCost,    cur);
   _setRubroRow('row-indirect', 'r-indirect', indirectCost, cur);
-  document.getElementById('r-waste').textContent    = cur + wasteCost.toFixed(2);
-  document.getElementById('result-base').textContent  = cur + baseCost.toFixed(2);
-  document.getElementById('result-total').textContent = cur + totalCost.toFixed(0);
+  document.getElementById('r-waste').textContent    = formatoDinero(wasteCost, cur);
+  document.getElementById('result-base').textContent  = formatoDinero(baseCost, cur);
+  document.getElementById('result-total').innerHTML = tplDinero(totalCost, cur);
   var heroLbl = document.getElementById('calc-hero-label');
-  if (heroLbl) heroLbl.textContent = fijo ? 'Precio fijo' : 'Costo total sugerido';
+  if (heroLbl) heroLbl.textContent = fijo ? 'Precio fijo' : 'Precio sugerido';
   if (fijo) _pintarNotaPrecioFijo(totalCost, baseCost, margin);
   else _pintarNotaRedondeo(baseCost * (1 + margin / 100), totalCost, cur);
 
   /* ── Ganancia ── */
   var profitAmt = totalCost - baseCost;
-  var profitStr = (profitAmt >= 0 ? '+' : '') + cur + profitAmt.toFixed(2);
+  var profitStr = (profitAmt >= 0 ? '+' : '') + formatoDinero(profitAmt, cur);
   var profitEl  = document.getElementById('result-profit');
   if (profitEl) profitEl.textContent = profitStr;
   var gainEl2 = document.getElementById('result-margin-gain');
   if (gainEl2) gainEl2.textContent = profitStr;
+  _pintarCifras(profitAmt, totalCost, baseCost);
+  /* Con precio, el margen del control es el del precio redondeado: el mismo de arriba */
+  if (!fijo) _pintarControlGanancia(margin, totalCost, baseCost);
 
   /* ── Margen display y label ── */
   var md2 = document.getElementById('calc-margin-display2');
@@ -99,23 +109,12 @@ function calculate(silent) {
   var mlbl = document.getElementById('calc-margin-label');
   if (mlbl) mlbl.textContent = margin + '% margen';
 
-  /* ── Barra de composición de costos (CCB) ── */
-  var ccbParts = [
-    { id: 'ccb-mat',    val: matCost },
-    { id: 'ccb-energy', val: energyCost },
-    { id: 'ccb-design', val: laborCost },
-    { id: 'ccb-deprec', val: deprecCost },
-    { id: 'ccb-fixed',  val: fixedCost },
-    { id: 'ccb-maint',    val: maintCost },
-    { id: 'ccb-indirect', val: indirectCost },
-    { id: 'ccb-waste',  val: wasteCost },
-    { id: 'ccb-post',   val: postProcCost + ipaCost + uvCost },
-  ];
-  var ccbTotal = baseCost || 1; /* evitar ÷0 */
-  ccbParts.forEach(function(p) {
-    var el = document.getElementById(p.id);
-    if (el) el.style.flex = String(Math.max(0, p.val / ccbTotal));
-  });
+  /* ── La barra del costo, un color por rubro (D256) ── */
+  _pintarBarraCosto({
+    'ccb-mat': matCost, 'ccb-waste': wasteCost, 'ccb-energy': energyCost, 'ccb-design': laborCost,
+    'ccb-deprec': deprecCost, 'ccb-fixed': fixedCost, 'ccb-maint': maintCost,
+    'ccb-indirect': indirectCost, 'ccb-post': postProcCost + ipaCost + uvCost
+  }, baseCost, cur);
 
   /* ── Etiqueta de desglose ── */
   var rubroCount = 6; /* mat, energy, labor, deprec, fixed, waste */
@@ -137,7 +136,7 @@ function calculate(silent) {
       perPieceTxt.textContent =
         (weight / pieces).toFixed(1) + ' g · ' +
         (timeH  / pieces).toFixed(2) + ' h · ' +
-        cur + baseCost.toFixed(2) + ' de costo · placa de ' + pieces;
+        formatoDinero(baseCost, cur) + ' de costo · placa de ' + pieces;
       perPieceEl.classList.remove('hidden');
     } else {
       perPieceEl.classList.add('hidden');
@@ -152,7 +151,7 @@ function calculate(silent) {
   if (amsSummaryEl) {
     amsSummaryEl.textContent = amsData
       ? amsData.numPurges + ' × ' + amsData.purgeGrams.toFixed(2) + ' g = ' +
-        (amsData.numPurges * amsData.purgeGrams).toFixed(2) + ' g · ' + cur + amsData.purgeCost.toFixed(2)
+        (amsData.numPurges * amsData.purgeGrams).toFixed(2) + ' g · ' + formatoDinero(amsData.purgeCost, cur)
       : '—';
   }
 
@@ -162,8 +161,8 @@ function calculate(silent) {
     if (isResin) {
       document.getElementById('r-resin-weight').textContent =
         effectiveWeight.toFixed(1) + 'g (' + weight.toFixed(1) + 'g + ' + supportPct + '% soportes)';
-      document.getElementById('r-ipa').textContent   = cur + ipaCost.toFixed(2);
-      document.getElementById('r-uv').textContent    = cur + uvCost.toFixed(2);
+      document.getElementById('r-ipa').textContent   = formatoDinero(ipaCost, cur);
+      document.getElementById('r-uv').textContent    = formatoDinero(uvCost, cur);
       resinBlock.classList.remove('hidden');
     } else {
       resinBlock.classList.add('hidden');
@@ -263,6 +262,18 @@ function initCalcLive() {
     }
   });
 
+  /* La descripción se puede escribir después del peso y el tiempo: se guarda
+     con el cálculo al escribirla, no solo al recalcular (D212) */
+  var descEl = document.getElementById('calc-desc');
+  if (descEl && !descEl._liveDesc) {
+    descEl.addEventListener('input', function() {
+      if (!lastCalc) return;
+      lastCalc.desc = descEl.value.trim() || 'Sin descripción';
+      saveLastCalc(lastCalc);
+    });
+    descEl._liveDesc = true;
+  }
+
   /* Sincronización bidireccional: slider ↔ input numérico de margen */
   var rangeEl  = document.getElementById('calc-margin');
   var numEl    = document.getElementById('calc-margin-num');
@@ -273,6 +284,9 @@ function initCalcLive() {
       if (md2) md2.textContent = v;
       var mlbl = document.getElementById('calc-margin-label');
       if (mlbl) mlbl.textContent = v + '% margen';
+      /* El deslizador recalcula antes de llegar aquí: se usa ese precio */
+      var lc = typeof lastCalc !== 'undefined' && lastCalc && lastCalc.precioFijo == null ? lastCalc : null;
+      _pintarControlGanancia(v, lc && lc.totalCost, lc && lc.baseCost);
     }
     rangeEl.addEventListener('input', function() {
       _syncMarginDisplays(rangeEl.value);
@@ -290,7 +304,8 @@ function initCalcLive() {
 }
 
 /* ── Barra flotante del teléfono ───────────────────────────────────
-   Cuando los botones de la calculadora salen de la pantalla por arriba,
+   Cuando los botones de la calculadora no están a la vista (arriba o, desde
+   D215, también abajo: en el teléfono el precio va después de los datos),
    se fijan abajo, sobre la navegación, con el precio a un lado. Es el mismo
    botón «Agregar a orden», movido con la clase .is-floating
    (components.css), no una copia. En escritorio no se usa: ahí el resumen
@@ -321,9 +336,10 @@ function initCalcFloatingBar() {
 
   new IntersectionObserver(function(entries) {
     var e = entries[0];
-    /* Flota solo si salió por ARRIBA (top < 0). Al cambiar de página el
-       slot se oculta y llega todo en 0: eso la apaga. */
-    setFloating(!e.isIntersecting && e.boundingClientRect.top < 0);
+    /* Flota si no se ve, por arriba o por abajo (D215). Al cambiar de
+       página el slot se oculta y llega todo en 0: eso la apaga. */
+    var r = e.boundingClientRect;
+    setFloating(!e.isIntersecting && (r.width > 0 || r.height > 0));
   }).observe(slot);
 
   /* Si la ventana crece a tamaño escritorio, apagarla */
@@ -696,24 +712,33 @@ function restoreCalcResult() {
   var ms = document.getElementById('calc-material');
   if (lastCalc.printerId)  ps.value = lastCalc.printerId;
   if (lastCalc.materialId) ms.value = lastCalc.materialId;
-  document.getElementById('r-mat').textContent            = cur + lastCalc.matCost.toFixed(2);
-  document.getElementById('r-energy').textContent         = cur + lastCalc.energyCost.toFixed(2);
-  document.getElementById('r-labor').textContent          = cur + lastCalc.laborCost.toFixed(2);
-  document.getElementById('r-deprec').textContent         = cur + lastCalc.deprecCost.toFixed(2);
-  document.getElementById('r-fixed').textContent          = cur + lastCalc.fixedCost.toFixed(2);
+  document.getElementById('r-mat').textContent            = formatoDinero(lastCalc.matCost, cur);
+  document.getElementById('r-energy').textContent         = formatoDinero(lastCalc.energyCost, cur);
+  document.getElementById('r-labor').textContent          = formatoDinero(lastCalc.laborCost, cur);
+  document.getElementById('r-deprec').textContent         = formatoDinero(lastCalc.deprecCost, cur);
+  document.getElementById('r-fixed').textContent          = formatoDinero(lastCalc.fixedCost, cur);
   _setRubroRow('row-maint',    'r-maint',    lastCalc.maintCost    || 0, cur);
   _setRubroRow('row-indirect', 'r-indirect', lastCalc.indirectCost || 0, cur);
-  document.getElementById('r-waste').textContent          = cur + lastCalc.wasteCost.toFixed(2);
-  document.getElementById('result-base').textContent      = cur + lastCalc.baseCost.toFixed(2);
-  document.getElementById('result-total').textContent     = cur + lastCalc.totalCost.toFixed(0);
+  document.getElementById('r-waste').textContent          = formatoDinero(lastCalc.wasteCost, cur);
+  document.getElementById('result-base').textContent      = formatoDinero(lastCalc.baseCost, cur);
+  document.getElementById('result-total').innerHTML      = tplDinero(lastCalc.totalCost, cur);
+  /* La barra del costo también al volver a la Calculadora (antes se quedaba vacía) */
+  _pintarBarraCosto({
+    'ccb-mat': lastCalc.matCost, 'ccb-waste': lastCalc.wasteCost, 'ccb-energy': lastCalc.energyCost,
+    'ccb-design': lastCalc.laborCost, 'ccb-deprec': lastCalc.deprecCost, 'ccb-fixed': lastCalc.fixedCost,
+    'ccb-maint': lastCalc.maintCost, 'ccb-indirect': lastCalc.indirectCost,
+    'ccb-post': (lastCalc.postProcCost || 0) + (lastCalc.ipaCost || 0) + (lastCalc.uvCost || 0)
+  }, lastCalc.baseCost, cur);
   _pintarNotaRedondeo((lastCalc.baseCost || 0) * (1 + (lastCalc.margin || 0) / 100), lastCalc.totalCost, cur);
   /* Ganancia */
   var profitAmt = lastCalc.totalCost - lastCalc.baseCost;
-  var profitStr = (profitAmt >= 0 ? '+' : '') + cur + profitAmt.toFixed(2);
+  var profitStr = (profitAmt >= 0 ? '+' : '') + formatoDinero(profitAmt, cur);
   var profitEl  = document.getElementById('result-profit');
   if (profitEl) profitEl.textContent = profitStr;
   var gainEl2 = document.getElementById('result-margin-gain');
   if (gainEl2) gainEl2.textContent = profitStr;
+  _pintarCifras(profitAmt, lastCalc.totalCost, lastCalc.baseCost);
+  _pintarControlGanancia(savedMargin, lastCalc.precioFijo != null ? null : lastCalc.totalCost, lastCalc.baseCost);
 
   /* Restaurar bloque resina si aplica */
   var resinBlock = document.getElementById('r-resin-block');
@@ -723,8 +748,8 @@ function restoreCalcResult() {
       var sp = lastCalc.supportPct || 20;
       document.getElementById('r-resin-weight').textContent =
         ew.toFixed(1) + 'g (' + lastCalc.weight.toFixed(1) + 'g + ' + sp + '% soportes)';
-      document.getElementById('r-ipa').textContent  = cur + (lastCalc.ipaCost || 0).toFixed(2);
-      document.getElementById('r-uv').textContent   = cur + (lastCalc.uvCost  || 0).toFixed(2);
+      document.getElementById('r-ipa').textContent  = formatoDinero(lastCalc.ipaCost || 0, cur);
+      document.getElementById('r-uv').textContent   = formatoDinero(lastCalc.uvCost  || 0, cur);
       resinBlock.classList.remove('hidden');
     } else {
       resinBlock.classList.add('hidden');
@@ -737,7 +762,7 @@ function restoreCalcResult() {
     if (piezas > 1) {
       ppTxt.textContent = (lastCalc.weight || 0).toFixed(1) + ' g · ' +
         (lastCalc.timeH || 0).toFixed(2) + ' h · ' +
-        cur + (lastCalc.baseCost || 0).toFixed(2) + ' de costo · placa de ' + piezas;
+        formatoDinero(lastCalc.baseCost || 0, cur) + ' de costo · placa de ' + piezas;
       ppEl.classList.remove('hidden');
     } else {
       ppEl.classList.add('hidden');
@@ -922,22 +947,22 @@ function _renderPostProcBlock(pp, cur) {
     pp.paints.forEach(function(p) {
       html += '<div class="resin-detail-row">' +
         '<span class="resin-detail-lbl">🎨 ' + esc(p.name) + '</span>' +
-        '<span class="resin-detail-val">' + cur + p.cost.toFixed(2) + '</span>' +
+        '<span class="resin-detail-val">' + formatoDinero(p.cost, cur) + '</span>' +
       '</div>';
     });
     if (pp.primerCost > 0) html +=
       '<div class="resin-detail-row"><span class="resin-detail-lbl">Primer</span>' +
-      '<span class="resin-detail-val">' + cur + pp.primerCost.toFixed(2) + '</span></div>';
+      '<span class="resin-detail-val">' + formatoDinero(pp.primerCost, cur) + '</span></div>';
     if (pp.varnishCost > 0) html +=
       '<div class="resin-detail-row"><span class="resin-detail-lbl">Barniz</span>' +
-      '<span class="resin-detail-val">' + cur + pp.varnishCost.toFixed(2) + '</span></div>';
+      '<span class="resin-detail-val">' + formatoDinero(pp.varnishCost, cur) + '</span></div>';
     rowsEl.innerHTML = html;
   }
 
   var paintLaborEl  = document.getElementById('r-paint-labor');
   var ppTotalEl     = document.getElementById('r-postproc-total');
-  if (paintLaborEl) paintLaborEl.textContent = cur + pp.paintingLaborCost.toFixed(2);
-  if (ppTotalEl)    ppTotalEl.textContent    = cur + pp.totalPostCost.toFixed(2);
+  if (paintLaborEl) paintLaborEl.textContent = formatoDinero(pp.paintingLaborCost, cur);
+  if (ppTotalEl)    ppTotalEl.textContent    = formatoDinero(pp.totalPostCost, cur);
 
   block.classList.remove('hidden');
 }
@@ -968,7 +993,7 @@ function toggleBreakdown() {
 function _setRubroRow(rowId, valId, val, cur) {
   var row = document.getElementById(rowId);
   var el  = document.getElementById(valId);
-  if (el)  el.textContent = cur + val.toFixed(2);
+  if (el)  el.textContent = formatoDinero(val, cur);
   if (row) row.classList.toggle('hidden', !(val > 0));
 }
 
@@ -1100,7 +1125,7 @@ function _pintarNotaRedondeo(sinRedondear, precio, cur) {
   /* Solo cuando el redondeo cambió el precio (afinado en D171) */
   var cambio = sinRedondear != null && precio > 0 && Math.abs(sinRedondear - precio) > 0.005;
   if (el.parentElement) el.parentElement.classList.toggle('hidden', !cambio);
-  el.textContent = cambio ? 'Redondeado de ' + cur + sinRedondear.toFixed(2) + ' (de ' + cur + '5 en ' + cur + '5)' : '';
+  el.textContent = cambio ? 'Redondeado de ' + formatoDinero(sinRedondear, cur) + ' (de ' + cur + '5 en ' + cur + '5)' : '';
 }
 
 /* ── Precio fijo, a la vista (D187, D190) ──────────────────────────
@@ -1117,6 +1142,76 @@ function _pintarNotaPrecioFijo(precio, costo, margen) {
     var icono = caja.querySelector('.material-symbols-rounded');
     if (icono) icono.textContent = g.abajo ? 'warning' : 'sell';
   }
-  el.textContent = 'Margen ' + (g.margen == null ? '—' : g.margen + ' %') +
-    (g.abajo ? ', abajo del ' + Math.round(Number(margen) || 0) + ' % de la calculadora' : '');
+  /* «Margen» es la parte del precio que es ganancia (D213) */
+  var real = margenDePrecio(precio, costo);
+  el.textContent = 'Margen ' + (real == null ? '—' : real + ' %') +
+    (g.abajo ? ': menos que con +' + Math.round(Number(margen) || 0) + ' % sobre el costo' : '');
+}
+
+/* ── Costo, ganancia y margen bajo el precio (D213) ──────────────────
+   El margen es la parte del precio que es ganancia, ya con el redondeo. */
+function _pintarCifras(ganancia, precio, costo) {
+  var gan = document.getElementById('result-profit');
+  if (gan) gan.classList.toggle('es-perdida', ganancia < 0);
+  var mg = document.getElementById('result-margen');
+  if (mg) {
+    var m = margenDePrecio(precio, costo);
+    mg.textContent = m == null ? '—' : m + ' %';
+  }
+}
+
+/* ── El control de ganancia dice las dos cosas (D213) ────────────────
+   Lo que se suma al costo (+50 %) y qué parte del precio es ganancia
+   (33 %). Con un precio calculado, el margen sale de ese precio ya
+   redondeado, el mismo que se ve junto al precio; sin él, de la cuenta. */
+function _pintarControlGanancia(m, precio, costo) {
+  m = Number(m) || 0;
+  var d = document.getElementById('calc-margin-display2');
+  if (d) d.textContent = m;
+  var ex = document.getElementById('calc-margen-explica');
+  if (!ex) return;
+  var real = precio > 0 ? margenDePrecio(precio, costo) : margenDePrecio(100 + m, 100);
+  ex.textContent = 'Margen: ' + real + ' % del precio';
+}
+
+/* ── Sin precio, el resultado regresa a «—» (D212) ───────────────────
+   Antes, al vaciar un campo o al agregar a la orden, los campos quedaban
+   vacíos y el precio y el desglose anteriores seguían en pantalla. */
+function _limpiarResultado() {
+  var cur = (config && config.currency) || '$';
+  var poner = function(id, t) { var el = document.getElementById(id); if (el) el.textContent = t; };
+  poner('calc-hero-label', 'Precio sugerido');
+  ['result-total', 'result-base', 'result-profit', 'result-margen'].forEach(function(id) { poner(id, '—'); });
+  var gan = document.getElementById('result-profit');
+  if (gan) gan.classList.remove('es-perdida');
+  ['r-mat', 'r-energy', 'r-labor', 'r-deprec', 'r-fixed', 'r-waste'].forEach(function(id) { poner(id, cur + '0.00'); });
+  _setRubroRow('row-maint', 'r-maint', 0, cur);
+  _setRubroRow('row-indirect', 'r-indirect', 0, cur);
+  _pintarBarraCosto({}, 0, cur);
+  var pp = document.getElementById('calc-per-piece');
+  if (pp) pp.classList.add('hidden');
+  _pintarNotaRedondeo(null);
+  if (lastCalc) clearLastCalc();
+}
+
+/* ── La barra del costo (D256) ────────────────────────────────────────
+   Un color por rubro, en el orden del desglose. Las partes en cero no se
+   dibujan: así el hueco de 2 px solo va entre partes que sí están. Al pasar
+   el ratón, cada parte dice su nombre, cuánto es y qué parte del costo. */
+var _PARTES_COSTO = [
+  ['ccb-mat', 'Material'], ['ccb-waste', 'Desperdicio'], ['ccb-energy', 'Energía'],
+  ['ccb-design', 'Diseño'], ['ccb-deprec', 'Depreciación'], ['ccb-fixed', 'Costos fijos'],
+  ['ccb-maint', 'Mantenimiento'], ['ccb-indirect', 'Indirectos'], ['ccb-post', 'Post-procesado']
+];
+function _pintarBarraCosto(valores, total, cur) {
+  total = Number(total) || 0;
+  _PARTES_COSTO.forEach(function(p) {
+    var el = document.getElementById(p[0]);
+    if (!el) return;
+    var v = Math.max(0, Number(valores[p[0]]) || 0);
+    var hay = total > 0 && v >= 0.005;
+    el.style.display  = hay ? 'block' : 'none';
+    el.style.flexGrow = hay ? String(v / total) : '0';
+    el.title = hay ? p[1] + ' \u00b7 ' + formatoDinero(v, cur) + ' \u00b7 ' + Math.round(v / total * 100) + ' %' : '';
+  });
 }

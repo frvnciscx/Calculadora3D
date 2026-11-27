@@ -29,6 +29,236 @@ app y volviendo a entrar.
 
 ---
 
+## 2026-11-27 · caché v156
+
+- **Cuándo se mandó cada cotización (D261):** se guarda `enviadaAt` al pasar a Enviada y se borra al
+  volver a Borrador. «Para hoy» cuenta los días desde ahí; las de antes, desde su fecha. Campo nuevo
+  en las cotizaciones de Firebase, sin cambiar las reglas (anotado para Javi en `docs/firebase.md`).
+
+## 2026-11-27 · caché v155
+
+- **«Para hoy» en el Inicio (D258):** arriba, cuántas enviadas esperan respuesta (y de hace cuántos
+  días es la más vieja), cuántos borradores faltan por mandar y cuántos rollos hay que reponer. Cada
+  renglón lleva a donde se resuelve; sin nada pendiente no sale. Pruebas nuevas en
+  `tests/pendientes.test.js`.
+
+## 2026-11-27 · caché v154
+
+- **La barra del costo con un color por rubro (D256):** Material azul, Desperdicio gris, Energía
+  naranja, Diseño aqua, Depreciación amarillo, gastos del taller magenta y Post-procesado violeta,
+  con los mismos colores en el desglose. Paleta validada para daltonismo en claro y oscuro. La barra
+  ya no se queda vacía al volver a la Calculadora.
+- **Un solo aviso de stock (D257):** «Por acabarse» (20 % o menos) en ámbar y «Agotado» en rojo, con
+  ícono y palabra, igual en Inventario, Materiales e Inicio. Barras neutras.
+
+## 2026-11-27 · caché v153
+
+Lo que quedaba de la crítica (D251–D255).
+
+- **El color del rollo en la cotización del cliente (D252):** «PLA · ● Rojo · 10g» en la vista
+  previa, el panel, el PDF, la imagen y el enlace; con palabras en los textos para compartir.
+- **La hoja angosta (D253):** la tabla de la cotización ya no se sale del papel; con menos de
+  300 px se quita «Precio unit.». El PDF y la imagen no cambian.
+- **«Enviar» en la hoja del teléfono (D254)**, junto a «Cerrar»; PDF e Imagen arriba.
+- **«Configurar después» (D255)** en lugar de «Ahora no», con contorno y 44 px de alto.
+
+## 2026-11-27 · caché v152
+
+Primera vuelta del estilo de taller (D243–D248).
+
+- **Sin mayúsculas (D244, D245):** títulos de sección, nombres de campos, la barra lateral, los meses
+  de la gráfica y las etiquetas de estado en letra normal con mayúscula inicial. La letra de máquina
+  se queda en números, folios y gramos. La cotización del cliente no cambia.
+- **El color del filamento (D246, D247):** «Material usado» va por rollo de color («PLA · Rojo») y
+  cada parte lleva el color real del rollo, con contorno para el blanco y el negro. En la Orden, un
+  punto del color junto al material.
+- El verde de la marca se queda (D248).
+
+## 2026-11-27 · caché v151
+
+- **«Continuar con Google» con la «G» de Google (D242)** en la pantalla de acceso, en lugar de un
+  ícono genérico de persona.
+
+## 2026-11-27 · caché v150
+
+- **Aviso de Ajustes en el teléfono (D240):** salir de Ajustes con cambios sin guardar pregunta lo
+  mismo que en escritorio, con los botones uno debajo de otro. Las respuestas P182–P184 confirman
+  los centavos chicos (D239) y que sigue el estilo de taller (D241).
+
+## 2026-11-27 · caché v149
+
+Un solo formato de dinero (D237) y aviso al salir de Ajustes con cambios sin guardar (D238). La
+respuesta P180 confirma D231 (D235).
+
+- **Dinero (D237):** «$1,250.00» en toda la app, también en la cotización, el PDF, la imagen y el
+  texto para compartir. Antes había «$1,000», «$1000», «$1000.00» y «$27». En los precios grandes
+  los centavos van más chicos. Una sola función, `formatoDinero` en `js/costing.js`, con pruebas en
+  `tests/dinero.test.js`.
+- **Ajustes (D238):** al ir a otra página con cambios sin guardar, la app pregunta «Seguir
+  editando», «Salir sin guardar» o «Guardar»; al cerrar o recargar la pestaña pregunta el navegador.
+
+## 2026-11-27 · caché v148
+
+Arreglos rápidos de la crítica de diseño (D231–D234). Las respuestas P176–P179 confirman D224,
+D218 y D225 (D227–D230).
+
+- **Recientes que abren su cotización (D231):** en el Inicio, tocar una reciente abre esa
+  cotización (en escritorio, en Cotizaciones con su panel), no la lista. También con el teclado.
+- **«Borrar» aparte (D232):** en el menú «⋯», debajo de una raya, lejos de «Compartir texto».
+- **Filamento (D233):** con más de 4 rollos dice «Los 4 más vacíos · N más en Inventario».
+- **Inicio de escritorio (D234):** título, el mes y «Nueva cotización» arriba. El número de ingresos
+  se redondea a centavos antes de darle formato. En Cotizaciones, Productos se oculta desde 1080 px
+  de lista.
+
+## 2026-11-27 · caché v147
+
+El P2 de la crítica de diseño (D221–D225), los ingresos sin la comisión (D218) e «Iniciar sesión»
+sin cuenta (D226). Las respuestas P171–P175 confirman D212, D213 y D215 (D217–D221).
+
+- **La Orden de escritorio en dos renglones (D222):** cada producto arriba con «Editar» y ✕, y abajo
+  cantidad × precio por pieza con el importe a la derecha. Ya no hay desplazamiento lateral. En una
+  columna angosta, «Cancelar» y «Generar cotización» van uno arriba del otro.
+- **«Revisar orden» (D223):** el botón de la Calculadora ya no dice «Generar cotización» cuando solo
+  abre la revisión.
+- **Un color por estado (D224):** Borrador ámbar, Enviada azul, Aceptada verde y Rechazada roja,
+  cada una con su ícono. Folios en gris. En la tabla de escritorio, las acciones sin relleno y el
+  total en negritas.
+- **Cotizaciones con poco ancho (D225):** se ocultan Productos y luego Fecha; el encabezado
+  «Productos» ya no se encima con «Fecha».
+- **Ingresos sin comisión (D218):** «Ingresos aceptados» y la gráfica de 6 meses sin la comisión del
+  recomendador, con «Sin $X de comisiones» debajo.
+- **Sin cuenta, «Iniciar sesión» (D226):** abre la pantalla de acceso sin borrar nada del equipo;
+  antes «Cerrar sesión» borraba lo configurado.
+
+## 2026-11-27 · caché v146
+
+Los cuatro problemas P1 de la crítica de diseño (D212–D215). Las decisiones de estilo quedan para
+otra vuelta (D216).
+
+- **La Calculadora no muestra un precio viejo (D212):** la descripción se guarda aunque se escriba
+  después del peso y el tiempo; al vaciar un campo o al agregar a la orden, el precio y el desglose
+  regresan a «—»; sin precio, «Agregar a orden» se ve apagado y al tocarlo dice qué falta.
+- **Una sola definición de margen (D213):** el control se llama «Ganancia sobre el costo» y dice el
+  margen que resulta; «Precio sugerido» en lugar de «Costo total sugerido», con Costo, Ganancia y
+  Margen debajo; «Tu ganancia» en la Orden y en el panel de la cotización; el Dashboard ya no cuenta
+  la comisión del recomendador en la ganancia (D30). Pruebas nuevas en `tests/margen.test.js`.
+- **Accesibilidad (D214):** íconos ocultos al lector de pantalla, botones de ícono con nombre,
+  etiquetas ligadas en Ajustes, pestañas y segmentos que dicen cuál está elegido, foco y Esc en el
+  panel de la cotización, contorno de foco de 2 px y el nombre de la pantalla en la pestaña.
+- **Teléfono (D215):** la Calculadora empieza por qué cotizas, peso y tiempo; el precio va después y,
+  mientras no se ve, en la barra de abajo. Etiquetas cortas. Cada página abre arriba. La barra de
+  abajo ya no se queda al final de la página si la animación de cambio de página no termina.
+
+## 2026-11-27 · caché v145
+
+Configurar al empezar: listas con scroll y hojas en el teléfono (D211). Las v140 a v144 no llegaron
+a subirse: este commit lleva las seis.
+
+- **Listas con su propio scroll:** impresoras, materiales y gastos se desplazan dentro; el título y
+  los botones se quedan a la vista en pantallas bajas.
+- **Hojas en el teléfono:** «Agregar otra impresora», «Agregar otro material» y «+ Otro gasto» abren
+  una hoja desde abajo con sus campos, «Cancelar» y «Agregar». En escritorio, el formulario sigue a
+  la derecha.
+
+### Qué conviene probar en producción
+
+1. En una pantalla baja: con varias impresoras, la lista se desplaza y «Siguiente» se ve.
+2. En el teléfono: «Agregar otra impresora» abre la hoja; al agregar, se cierra y aparece en la lista.
+3. En la barra lateral aparece «Versión 145».
+
+---
+
+## 2026-11-27 · caché v144
+
+Configurar al empezar, rehecho con lo que salió al probarlo (D210).
+
+- **Lo que se escribe, a la derecha:** en escritorio, la lista a la izquierda y el formulario en
+  un panel a la derecha, a la vista en cualquier pantalla. En el teléfono, debajo.
+- **Varias impresoras propias:** «¿No está la tuya?» con «Agregar impresora», las que hagan falta.
+- **Materiales propios:** «¿Otro material?» con nombre, tipo, precio por kilo y densidad.
+- **Gastos uno por renglón:** Renta, Luz e Internet de inicio, «+ Agua», «+ Teléfono», «+ Software»
+  y «+ Otro gasto», con el total y lo que le toca a cada hora a la derecha. Quedan como las
+  categorías de Ajustes › Gastos fijos.
+- «Atrás» ya no repite lo que un paso guardó.
+
+### Qué conviene probar en producción
+
+1. Cuenta nueva: agregar dos impresoras propias, un material propio y cuatro gastos.
+2. Ajustes › Gastos fijos: los cuatro renglones y su total.
+3. En la barra lateral aparece «Versión 144».
+
+---
+
+## 2026-11-27 · caché v143
+
+Los gastos del mes al empezar (D209).
+
+- **«Tus gastos del mes»**, tercer paso de la configuración al empezar: el total de gastos fijos y
+  las horas que imprimes al mes, con lo que le toca a cada hora mientras escribes. Sale si no hay
+  gastos fijos; «Ahora no» lo deja para Ajustes.
+
+### Qué conviene probar en producción
+
+1. Con una cuenta nueva: «Configura · 3 de 3», «Tus gastos del mes».
+2. Ajustes › Gastos fijos: el total que escribiste.
+3. En la barra lateral aparece «Versión 143».
+
+---
+
+## 2026-11-27 · caché v142
+
+Configurar al empezar (D208).
+
+- **La introducción termina configurando:** si no hay impresoras ni materiales, después de los 5
+  pasos (o al saltarlos) vienen «Tu impresora» (las 4 comunes para marcar, u «Otra» con sus datos)
+  y «Tus materiales» (los 5 comunes, con lo que cuesta el kilo para cambiarlo ahí mismo). «Ahora
+  no» lo deja para después. Al terminar, el recorrido.
+
+### Qué conviene probar en producción
+
+1. Con una cuenta nueva: la introducción, «Tu impresora», «Tus materiales» y el recorrido.
+2. Calculadora: la impresora y el material elegidos ya están en los selectores.
+3. En la barra lateral aparece «Versión 142».
+
+---
+
+## 2026-11-27 · caché v141
+
+El Dashboard de una cuenta nueva (D205), la Ayuda pareja (D206) y las páginas centradas (D207).
+
+### Cambiado
+
+- **Dashboard sin cotizaciones:** cada tarjeta con su estado vacío en lugar de ceros y guiones:
+  «Aún no hay ingresos» con «Nueva cotización», «Sin cotizaciones», «Sin números del mes», «Sin
+  material usado» y «Sin rollos» con «Agregar filamento». En el teléfono, sin los accesos rápidos
+  repetidos.
+- **Dashboard parejo:** dos columnas del mismo ancho y, en cada fila, tarjetas del mismo alto.
+- **Ayuda:** las 8 preguntas del mismo tamaño.
+- **Páginas centradas en escritorio:** antes quedaban cargadas a la izquierda.
+
+### Qué conviene probar en producción
+
+1. Con una cuenta nueva: el Dashboard con sus estados vacíos.
+2. En una pantalla ancha: Dashboard, Impresoras y Ayuda centrados.
+3. En la barra lateral aparece «Versión 141».
+
+---
+
+## 2026-11-26 · caché v140
+
+La Ayuda en dos secciones (D203).
+
+- **«Recorrido»:** dos tarjetas, «Por la pantalla» con «Ver el recorrido» e «Introducción» con
+  «Ver la introducción».
+- **«Guía»:** el buscador y las 8 preguntas, debajo.
+
+### Qué conviene probar en producción
+
+1. Barra lateral › Ayuda: arriba «Recorrido», abajo «Guía».
+2. En la barra lateral aparece «Versión 140».
+
+---
+
 ## 2026-11-26 · caché v139
 
 La Ayuda (D200) y los archivos de varias placas (D201). La v138 no llegó a subirse: este commit

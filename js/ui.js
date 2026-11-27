@@ -136,6 +136,15 @@ function regresarDeCalculadora() {
 }
 
 function showPage(name) {
+  /* Salir de Ajustes con cambios sin guardar pregunta qué hacer (D238, D240).
+     Pasar de una pestaña de Ajustes a otra no, ni en el teléfono regresar de
+     una sección a la lista de Ajustes: lo escrito se conserva (D175). */
+  if (typeof _ajustesSinGuardar !== 'undefined' && _ajustesSinGuardar &&
+      /^(config|quote-editor)/.test(document.body.dataset.page || '') &&
+      String(name).indexOf('config') !== 0 && typeof avisarAjustesSinGuardar === 'function') {
+    avisarAjustesSinGuardar(function() { showPage(name); });
+    return;
+  }
   /* Cambiar de página cierra el editor que estaba abierto a un lado (D177) */
   if (document.body.classList.contains('panel-abierto')) closeModal();
   /* El panel de la cotización es de Cotizaciones y Clientes: al ir a otra
@@ -169,7 +178,9 @@ function showPage(name) {
     document.querySelectorAll('.nav-item,.sidebar-item').forEach(function(b) { b.classList.remove('active'); });
     var qPage = document.getElementById('page-quotes');
     if (qPage) qPage.classList.add('active');
+    if (document.body.dataset.page !== 'clients') _irArriba();
     document.body.dataset.page = 'clients';
+    _ponerTitulo('clients');
     document.querySelectorAll('[data-page="clients"]').forEach(function(b) { b.classList.add('active'); });
     document.querySelectorAll('.m3-fab').forEach(function(f) { f.style.display = 'none'; });
     _showActionBtn('clients');
@@ -198,7 +209,10 @@ function showPage(name) {
   if (!pageEl) { console.warn('Page not found:', name); return; }
   pageEl.classList.add('active');
 
+  /* Otra página empieza arriba, no donde se quedó la anterior (D215) */
+  if (document.body.dataset.page !== name) _irArriba();
   document.body.dataset.page = name;
+  _ponerTitulo(name);
 
   const navMap = {
     'quote-editor':    'quotes',
@@ -223,7 +237,7 @@ function showPage(name) {
   if (name === 'config' || name.indexOf('config-') === 0) loadConfig();
   if (name === 'config-materiales') renderMaterials();
   /* setCalcMode('calc'): la calculadora siempre abre en modo calcular; la
-     revisión de la cotización (escritorio) solo se abre con «Generar». */
+     revisión de la cotización (escritorio) solo se abre con «Revisar orden». */
   if (name === 'calc')         { setCalcMode('calc'); populateSelects(); if (typeof renderQueCotizas === 'function') renderQueCotizas(); restoreCalcResult(); refreshDraftIndicator(); initCalcLive(); renderPresets(); _updateResinParamsBlock(); _updateAMSBlock(); _updateSpoolSelector(); }
   if (name === 'history')      renderHistory();
   if (name === 'quote-editor') loadQuoteEditor();
@@ -445,6 +459,12 @@ function showConfigPage(name) {
 
     /* 3. Actualizar body.dataset para CSS (highlight de tab activo) */
     document.body.dataset.page = (name === 'quote-editor') ? 'quote-editor' : 'config-' + name;
+    /* La pestaña elegida se anuncia como la página actual (D214) */
+    document.querySelectorAll('.cfg-tab').forEach(function(t) {
+      if (t.id === 'cfg-nav-' + name) t.setAttribute('aria-current', 'page');
+      else t.removeAttribute('aria-current');
+    });
+    _ponerTitulo('config');
 
     /* 4. Mover sub-páginas previas de vuelta al body */
     var container = document.getElementById('cfg-subpage-container');
@@ -595,3 +615,100 @@ function mostrarAyuda(clave) {
       '<p class="ayuda-texto">' + a.texto + '</p>' +
     '</div>';
 }
+
+/* ── Al cambiar de página: arriba y con su nombre en la pestaña (D214, D215) ── */
+function _irArriba() {
+  try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }
+  catch (e) { window.scrollTo(0, 0); }
+}
+var TITULOS_PAGINA = {
+  dashboard: 'Inicio', calc: 'Calculadora', quotes: 'Cotizaciones', clients: 'Clientes',
+  catalog: 'Catálogo', config: 'Ajustes', ayuda: 'Ayuda', history: 'Historial',
+  'quote-editor': 'Diseño de cotización'
+};
+function _ponerTitulo(name) {
+  var t = TITULOS_PAGINA[name] || (String(name).indexOf('config') === 0 ? 'Ajustes' : '');
+  document.title = (t ? t + ' · ' : '') + 'Calculadora de Costos 3D';
+}
+
+/* ── Lector de pantalla: íconos, nombres, campos y segmentos (D214) ───
+   Los íconos son letras de una fuente (Material Symbols): el lector de
+   pantalla leía «edit», «delete»… Aquí se le ocultan, los botones que solo
+   tienen ícono reciben un nombre, los campos de Ajustes se ligan a su texto
+   y los segmentos dicen cuál está elegido. Corre al cargar y con cada cosa
+   que la app dibuja después (MutationObserver avisa cuando cambia la página). */
+(function() {
+  var ICONO = '.material-symbols-rounded';
+  var NOMBRES = {
+    edit: 'Editar', delete: 'Borrar', delete_outline: 'Borrar', close: 'Cerrar',
+    more_vert: 'Más opciones', more_horiz: 'Más opciones', add: 'Agregar',
+    content_copy: 'Duplicar', share: 'Compartir', search: 'Buscar', help: 'Ayuda',
+    arrow_back: 'Atrás', arrow_back_ios: 'Atrás', chevron_left: 'Atrás',
+    history: 'Historial', download: 'Descargar', upload: 'Subir', remove: 'Quitar',
+    visibility: 'Ver', visibility_off: 'Ocultar', settings: 'Ajustes', menu: 'Menú',
+    light_mode: 'Tema claro', dark_mode: 'Tema oscuro', logout: 'Salir', info: 'Información'
+  };
+  var n = 0;
+
+  /* El texto que se ve, sin los nombres de los íconos */
+  function textoVisible(el) {
+    var t = '';
+    el.childNodes.forEach(function(h) {
+      if (h.nodeType === 3) t += h.textContent;
+      else if (h.nodeType === 1 && !h.matches(ICONO) && h.getAttribute('aria-hidden') !== 'true') t += textoVisible(h);
+    });
+    return t.trim();
+  }
+  function nombrarBoton(b) {
+    if (b.hasAttribute('aria-label') || b.hasAttribute('aria-labelledby') || textoVisible(b)) return;
+    var icono = b.querySelector(ICONO);
+    var nombre = b.getAttribute('title') || (icono && NOMBRES[icono.textContent.trim()]);
+    if (nombre) b.setAttribute('aria-label', nombre);
+  }
+  /* Ajustes: «Nombre del estudio» es un texto al lado del campo, no su etiqueta */
+  function ligarCampos(raiz) {
+    var filas = Array.prototype.slice.call(raiz.querySelectorAll('.row'));
+    if (raiz.matches('.row')) filas.push(raiz);
+    filas.forEach(function(fila) {
+      var txt = fila.querySelector(':scope > .row-label');
+      if (!txt || txt.tagName === 'LABEL') return;
+      var campos = fila.querySelectorAll('input:not([type=hidden]):not([type=checkbox]), select, textarea');
+      if (campos.length !== 1) return;
+      var c = campos[0];
+      if ((c.labels && c.labels.length) || c.hasAttribute('aria-label') || c.hasAttribute('aria-labelledby')) return;
+      if (!txt.id) txt.id = 'etiqueta-' + (++n);
+      c.setAttribute('aria-labelledby', txt.id);
+    });
+  }
+  function segmento(b) {
+    if (!b.hasAttribute('role')) b.setAttribute('aria-pressed', b.classList.contains('active') ? 'true' : 'false');
+  }
+  function arreglar(raiz) {
+    if (!raiz || raiz.nodeType !== 1) return;
+    if (raiz.matches(ICONO)) {
+      raiz.setAttribute('aria-hidden', 'true');
+      var b = raiz.closest('button');
+      if (b) nombrarBoton(b);
+      return;
+    }
+    raiz.querySelectorAll(ICONO + ':not([aria-hidden])').forEach(function(i) { i.setAttribute('aria-hidden', 'true'); });
+    if (raiz.matches('button')) nombrarBoton(raiz);
+    raiz.querySelectorAll('button').forEach(nombrarBoton);
+    ligarCampos(raiz);
+    raiz.querySelectorAll('.seg > button').forEach(segmento);
+  }
+  function iniciar() {
+    arreglar(document.body);
+    new MutationObserver(function(cambios) {
+      cambios.forEach(function(c) {
+        if (c.type === 'attributes') {
+          if (c.target.matches && c.target.matches('.seg > button')) segmento(c.target);
+          return;
+        }
+        c.addedNodes.forEach(arreglar);
+      });
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);
+  else iniciar();
+})();

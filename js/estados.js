@@ -75,10 +75,40 @@ function accionesDelMenu(q) {
   return a;
 }
 
+/* Lo que te necesita hoy, para el Inicio (D258): las enviadas que esperan
+   respuesta, los borradores sin mandar y los rollos por acabarse o agotados.
+   Las enviadas cuentan desde que se mandaron (enviadaAt, D261); las de antes
+   de v156, que no lo guardaban, desde la fecha de la cotización. Los
+   borradores, desde que se hicieron. estadoDeRollo(r) da 'ok' | 'bajo' | 'agotado'
+   (estadoDeStock en js/store.js); aquí llega de fuera para probarlo en Node. */
+function pendientesDeHoy(quotes, rollos, hoy, estadoDeRollo) {
+  var r = { enviadas: 0, diasEnviadaMasVieja: null, borradores: 0, diasBorradorMasViejo: null,
+            rollosBajos: 0, rollosAgotados: 0 };
+  var ahora = (hoy instanceof Date ? hoy : new Date(hoy)).getTime();
+  var dias = function(q, fecha) {
+    var t = new Date(fecha || q.quoteDate).getTime();
+    return isNaN(t) ? null : Math.max(0, Math.floor((ahora - t) / 86400000));
+  };
+  var mayor = function(a, b) { return b == null ? a : (a == null || b > a ? b : a); };
+  (quotes || []).forEach(function(q) {
+    var e = estadoDe(q);
+    if (e === 'enviada')  { r.enviadas++;   r.diasEnviadaMasVieja  = mayor(r.diasEnviadaMasVieja, dias(q, q.enviadaAt)); }
+    if (e === 'borrador') { r.borradores++; r.diasBorradorMasViejo = mayor(r.diasBorradorMasViejo, dias(q)); }
+  });
+  (rollos || []).forEach(function(x) {
+    var s = estadoDeRollo ? estadoDeRollo(x) : 'ok';
+    if (s === 'bajo') r.rollosBajos++;
+    else if (s === 'agotado') r.rollosAgotados++;
+  });
+  r.hay = r.enviadas + r.borradores + r.rollosBajos + r.rollosAgotados > 0;
+  return r;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     ESTADOS_COTIZACION: ESTADOS_COTIZACION, estadoDe: estadoDe, etiquetaEstado: etiquetaEstado,
     estadoAlCompartir: estadoAlCompartir, sePuedeEditar: sePuedeEditar, estadoAlEditar: estadoAlEditar,
-    estadoAnterior: estadoAnterior, accionesPrincipales: accionesPrincipales, accionesDelMenu: accionesDelMenu
+    estadoAnterior: estadoAnterior, accionesPrincipales: accionesPrincipales, accionesDelMenu: accionesDelMenu,
+    pendientesDeHoy: pendientesDeHoy
   };
 }

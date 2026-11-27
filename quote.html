@@ -151,6 +151,10 @@
       font-size: 14px;
       font-weight: 500;
     }
+    .q-punto {
+      display: inline-block; width: 8px; height: 8px; margin-right: 3px;
+      border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.25); vertical-align: 0;
+    }
     .q-item-sub {
       font-size: 11px;
       color: var(--ink-3);
@@ -318,7 +322,13 @@
       var itemsHTML = items.map(function(it) {
         var qty     = it.qty || 1;
         var lineAmt = (it.totalCost || 0) * qty;
-        var sub     = it.material ? '<div class="q-item-sub">' + esc(it.material) + '</div>' : '';
+        /* Material y color del rollo (D252). El hex se revisa: viene en el enlace */
+        var cols = (it.colores || []).map(function(c) {
+          var hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c && c.hex) ? c.hex : '';
+          return (hex ? '<span class="q-punto" style="background:' + hex + '"></span>' : '') + esc((c && c.nombre) || '');
+        }).filter(Boolean);
+        var partes  = [it.material ? esc(it.material) : '', cols.join(' ')].filter(Boolean);
+        var sub     = partes.length ? '<div class="q-item-sub">' + partes.join(' · ') + '</div>' : '';
         return '<div class="q-item">' +
           '<div><div class="q-item-name">' + esc(it.desc || '') + '</div>' + sub + '</div>' +
           '<div class="q-item-qty">' + qty + '</div>' +

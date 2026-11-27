@@ -3107,8 +3107,6 @@ span.suffix {
 .driver-popover.recorrido .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: var(--bg-elev); }
 
 /* ══ v139: página de Ayuda (D200) ══════════════════════════════════ */
-.ayuda-acciones { display: flex; flex-wrap: wrap; gap: 10px; }
-.ayuda-acciones .btn { width: auto; }
 .ayuda-buscar { position: relative; }
 .ayuda-buscar .material-symbols-rounded {
   position: absolute; left: 34px; top: 12px; font-size: 20px; color: var(--ink-3); pointer-events: none;
@@ -3121,7 +3119,7 @@ span.suffix {
 }
 .ayuda-buscar input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
 .ayuda-tema { padding: 18px 20px; margin-bottom: 12px; }
-.ayuda-tema h2 { margin: 0 0 6px; font: 600 16px/1.3 var(--font-sans); color: var(--ink); letter-spacing: -0.01em; }
+.ayuda-tema h3 { margin: 0 0 6px; font: 600 16px/1.3 var(--font-sans); color: var(--ink); letter-spacing: -0.01em; }
 .ayuda-tema p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
 .ayuda-nada { padding: 8px 20px; font-size: 14px; color: var(--ink-3); }
 
@@ -3132,3 +3130,282 @@ span.suffix {
 }
 .slicer-placas > span { font-weight: 600; }
 .slicer-placas .slicer-placa { padding: 4px 6px; border-radius: 8px; background: var(--bg); }
+
+/* ══ v140: la Ayuda en dos secciones, recorrido y guía (D203) ══════ */
+.ayuda-seccion-titulo { margin: 0 0 12px; }
+.ayuda-recorridos { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.ayuda-recorrido {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center;
+  gap: 4px 14px; padding: 18px 20px;
+}
+.ayuda-recorrido-icono {
+  grid-row: span 2; align-self: start;
+  width: 40px; height: 40px; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 22px; color: var(--accent); background: var(--accent-tint);
+}
+.ayuda-recorrido-texto h3 { margin: 0 0 2px; font: 600 16px/1.3 var(--font-sans); color: var(--ink); }
+.ayuda-recorrido-texto p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ink-2); }
+.ayuda-recorrido .btn { grid-column: 2; justify-self: start; width: auto; margin-top: 10px; }
+
+/* ══ v141: estados vacíos del Dashboard (D205) ═════════════════════ */
+.dash-vacio {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 6px; padding: 24px 12px;
+}
+.dash-vacio-icono {
+  width: 44px; height: 44px; border-radius: 12px; margin-bottom: 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 22px; color: var(--accent); background: var(--accent-tint);
+}
+.dash-vacio-titulo { font: 600 15px/1.3 var(--font-sans); color: var(--ink); }
+.dash-vacio p { margin: 0; max-width: 340px; font-size: 13px; line-height: 1.45; color: var(--ink-3); }
+.dash-vacio .btn { width: auto; margin-top: 10px; }
+/* La tarjeta con su estado vacío lo centra en todo su alto */
+.card:has(> .dash-vacio) { display: flex; flex-direction: column; justify-content: center; }
+
+/* ══ v146: crítica de diseño (D212–D215) ═════════════════════════════ */
+
+/* Foco visible con el teclado, en claro y oscuro: 2 px del color de acento.
+   :where() no suma especificidad: los componentes con su foco propio
+   (los campos subrayados, los chips) lo conservan (D214). */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* Los campos de Ajustes traen «outline:none» escrito en el HTML */
+.row input:focus-visible,
+.row select:focus-visible,
+.row textarea:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+/* El panel de la cotización recibe el foco al abrirse; el contenedor no se marca */
+#quote-dock:focus { outline: none; }
+
+/* Sin precio, «Agregar a orden» se ve apagado; al tocarlo dice qué falta (D212) */
+.btn.is-inactivo,
+.btn.is-inactivo:hover { opacity: 0.5; box-shadow: none; }
+
+/* Costo, ganancia y margen bajo el precio (D213) */
+.calc-cifras {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0 0;
+}
+.calc-cifras > div { min-width: 0; }
+.calc-cifras dt { font-size: 12px; color: var(--ink-3); }
+.calc-cifras dd {
+  margin: 2px 0 0;
+  font-size: 16px; font-weight: 600; letter-spacing: -0.01em;
+  color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.calc-cifras .calc-cifra-ganancia { color: var(--ok); }
+.calc-cifras .es-perdida,
+.draft-ganancia-row .es-perdida,
+.dock-ganancia .es-perdida { color: var(--md-error); }
+
+/* El control de ganancia: lo que se suma al costo y el margen que resulta */
+.calc-ganancia-cabeza {
+  display: flex; align-items: baseline; justify-content: space-between;
+  flex-wrap: wrap; gap: 4px 12px;
+  margin-bottom: 14px;
+}
+.calc-margen-explica { margin: 0; font-size: 13px; color: var(--ink-2); }
+
+/* Arriba de peso y tiempo: que son de la placa completa (D215) */
+.calc-datos-nota { margin: 4px 0 14px; font-size: 13px; line-height: 1.4; color: var(--ink-3); }
+
+/* Tu ganancia en la orden (D213) */
+.draft-ganancia-row {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: 6px 0 2px;
+  font-size: 13px; color: var(--ink-2);
+}
+.draft-ganancia-valor { font-weight: 600; color: var(--ok); font-variant-numeric: tabular-nums; }
+.draft-ganancia-nota { font-weight: 400; color: var(--ink-3); }
+.dock-ganancia { margin-top: 2px; font-size: 12px; color: var(--ink-3); }
+.dock-ganancia strong { font-weight: 600; color: var(--ok); }
+
+/* ── Teléfono: la Calculadora empieza por lo que se escribe (D215) ─────
+   Antes arriba iban $0.00, Preset, Guardar, «Agregar a orden» y las
+   tarjetas de producto, y el peso y el tiempo quedaban fuera de la
+   pantalla. Ahora: qué cotizas, los datos de la placa y después el precio,
+   que mientras no se ve va en la barra de abajo. display: contents deja a
+   los hijos de las dos columnas acomodarse en una sola fila con «order». */
+@media (max-width: 899px) {
+  .calc-layout { display: flex; flex-direction: column; }
+  .calc-layout > .calc-summary,
+  .calc-layout > .calc-form { display: contents; }
+  #calc-editando     { order: 0; }
+  #que-cotizas       { order: 1; }
+  #calc-producto     { order: 2; }
+  .calc-sec-datos    { order: 3; }
+  #calc-result       { order: 4; }
+  #calc-actions-slot { order: 5; }
+  #orden-tira        { order: 6; }
+  #calc-presets      { order: 7; }
+  .calc-sec-impresora { order: 8; }
+  .calc-sec-post     { order: 9; }
+  .calc-sec-margen   { order: 10; }
+  #calc-review-preview,
+  #calc-review-main  { order: 11; }
+  #calc-result { margin: 28px 20px 0; padding: 18px 0 0 !important; border-top: 0.5px solid var(--line); }
+
+  /* ¿Qué cotizas? en un solo renglón que se desliza de lado */
+  .qc-opciones {
+    display: flex; gap: 8px;
+    overflow-x: auto; scroll-snap-type: x proximity;
+    margin: 0 -20px; padding: 2px 20px 6px;
+    scroll-padding-inline: 20px;   /* sin esto, el imán pegaba la primera tarjeta al borde */
+    scrollbar-width: none;
+  }
+  .qc-opciones::-webkit-scrollbar { display: none; }
+  .qc-opcion { flex: 0 0 auto; width: 152px; scroll-snap-align: start; }
+}
+
+/* ══ v147: el P2 de la crítica (D222–D225) ═══════════════════════════ */
+
+/* Estados con su color y su ícono (D224): Enviada azul, Aceptada verde */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  white-space: nowrap; vertical-align: middle;
+}
+.status-badge .material-symbols-rounded { font-size: 14px; margin-left: -2px; }
+.status-enviada  { background: var(--info-tint); color: var(--info); border: 1px solid var(--info-border); }
+.status-aceptada {
+  background: var(--ok-tint); color: var(--ok);
+  border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent);
+}
+
+/* El folio sin verde: el verde es de lo aceptado y la ganancia (D224) */
+.quote-folio { font-size: 12px; font-weight: 500; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+/* ══ v148: arreglos rápidos de la crítica (D231–D234) ════════════════ */
+.dash-cabeza { display: none; }
+@media (min-width: 900px) {
+  .dash-cabeza {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
+    padding: 0 20px 18px;
+  }
+}
+/* Las recientes del Inicio se tocan para abrir su cotización (D231) */
+.dash-reciente { cursor: pointer; margin: 0 -10px; padding: 14px 10px !important; border-radius: 8px; }
+.dash-reciente:hover { background: var(--bg-sunk); }
+/* Filamento: cuáles rollos se ven (D233) */
+.dash-filamento-nota { margin: -2px 0 8px; font-size: 12px; color: var(--ink-3); }
+/* Menú «⋯»: una raya antes de «Borrar» (D232) */
+.menu-cotizacion-raya { height: 0.5px; margin: 6px 4px; background: var(--line-strong); }
+
+/* ══ v149: un solo formato de dinero (D237) ══════════════════════════ */
+/* Los centavos del precio grande, a menos de la mitad */
+.centavos { font-size: 0.45em; letter-spacing: 0; color: var(--ink-3); }
+
+/* El aviso de Ajustes en el teléfono: un botón debajo de otro, «Guardar» arriba (D240) */
+@media (max-width: 899px) {
+  .aviso-ajustes .m3-dialog-actions { flex-direction: column-reverse; align-items: stretch; }
+  .aviso-ajustes .m3-dialog-actions > * { width: 100% !important; justify-content: center; }
+}
+
+/* ══ v152: estilo de taller (D244–D247) ══════════════════════════════
+   Las etiquetas ya no van en mayúsculas de letra de máquina («INGRESOS
+   ACEPTADOS · NOV»): letra normal con mayúscula inicial («Ingresos
+   aceptados · nov»). La letra de máquina se queda en números, folios y
+   gramos (D244). La cotización que recibe el cliente (quote.css) no cambia. */
+.micro,
+.page-heading-eyebrow,
+.page-header .eyebrow,
+.rule,
+.config-section-title,
+.postproc-section-label,
+.resin-block-title,
+.draft-items-header,
+.m3-card-title,
+.result-subtitle,
+.dash-stat-label,
+.client-stat-lbl,
+.etiqueta {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-3);
+}
+/* Los nombres de los campos */
+.m3-field label,
+.field label {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+/* Píldoras y etiquetas cortas; los estados también (D245) */
+.status-badge,
+.tag,
+.catalog-badge,
+.breakdown-chip .lbl,
+.ph,
+.dash-recent-num,
+.draft-total-row {
+  text-transform: none;
+  letter-spacing: 0;
+}
+.tag, .ph { font-family: var(--font-sans); }
+.status-badge { font-weight: 600; }
+
+/* El color del rollo junto al material (D247) */
+.punto-rollo {
+  display: inline-block; width: 9px; height: 9px; margin-right: 5px;
+  border-radius: 50%; vertical-align: -1px;
+  box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.45);
+}
+.punto-rollo + .punto-rollo { margin-left: -2px; }
+/* «Material usado» con el color de cada rollo: contorno para que el blanco y
+   el negro se vean sobre el fondo (D246) */
+.uso-material-barra > span.color-real,
+.uso-material-punto.color-real { box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.45); }
+
+/* La hoja de la cotización en el teléfono: descargar arriba, «Enviar» abajo (D254) */
+.hoja-cot-descargar { display: flex; justify-content: center; gap: 8px; padding: 8px 16px 0; }
+.hoja-cot-descargar .m3-btn-text { width: auto; flex: none; padding: 0 16px; }
+
+/* ══ v154: la barra del costo y un solo aviso de stock (D256, D257) ══ */
+.barra-costo { display: flex; gap: 2px; height: 8px; margin-top: 14px; }
+.barra-costo > span {
+  display: none; flex: 0 1 0; min-width: 4px;
+  border-radius: 999px; transition: flex-grow 0.35s;
+}
+@media (prefers-reduced-motion: reduce) { .barra-costo > span { transition: none; } }
+
+.aviso-stock {
+  display: inline-flex; align-items: center; gap: 3px;
+  margin-left: 6px; padding: 1px 7px; vertical-align: 1px;
+  border-radius: 999px;
+  font: 600 11px var(--font-sans); color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+}
+.aviso-stock.agotado { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.aviso-stock .material-symbols-rounded { font-size: 13px; }
+.aviso-stock-icono { font-size: 14px; color: var(--warn); margin-left: 2px; vertical-align: -2px; }
+.dash-rollo-aviso { color: var(--warn); }
+.dash-rollo-aviso.agotado { color: var(--danger); }
+
+/* ══ v155: Para hoy en el Inicio (D258) ═════════════════════════════ */
+.para-hoy { padding: 4px; }
+.para-hoy-fila {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; min-height: 56px; padding: 10px 12px;
+  background: none; border: 0; border-radius: 10px;
+  font: inherit; color: var(--ink); text-align: left; cursor: pointer;
+}
+.para-hoy-fila + .para-hoy-fila { border-top: 0.5px solid var(--line); border-radius: 0 0 10px 10px; }
+.para-hoy-fila:hover { background: var(--bg-sunk); }
+.para-hoy-icono { font-size: 22px; flex-shrink: 0; }
+.para-hoy-texto { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.para-hoy-titulo { font-size: 14px; font-weight: 600; }
+.para-hoy-detalle { margin-top: 2px; font-size: 12px; color: var(--ink-3); }
+.para-hoy-ir { font-size: 20px; color: var(--ink-3); flex-shrink: 0; }

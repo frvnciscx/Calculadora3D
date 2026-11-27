@@ -64,7 +64,7 @@ var OB_PASOS = [
         x += r.w;
       });
       return '<svg viewBox="0 0 220 150" fill="none">' +
-        '<text x="20" y="42" font-size="9" fill="var(--ink-4)" font-family="monospace">COSTO DE UNA PIEZA</text>' +
+        '<text x="20" y="42" font-size="9" fill="var(--ink-4)">Costo de una pieza</text>' +
         barras +
         '<text x="22" y="118" font-size="9" fill="var(--ink-3)" font-family="monospace">material 17%</text>' +
         '<text x="198" y="118" font-size="9" fill="var(--accent)" text-anchor="end" font-family="monospace">fijos 50%</text>' +
@@ -112,8 +112,8 @@ var OB_PASOS = [
         '<rect x="191" y="62" width="12" height="3" rx="1.5" fill="var(--ink-4)"/>' +
         '<rect x="191" y="70" width="12" height="3" rx="1.5" fill="var(--ink-4)"/>' +
         '<rect x="191" y="78" width="8" height="3" rx="1.5" fill="var(--accent)"/>' +
-        '<text x="42" y="120" font-size="8" fill="var(--ink-4)" text-anchor="middle">SLICER</text>' +
-        '<text x="128" y="120" font-size="8" fill="var(--ink-4)" text-anchor="middle">CALCULADORA</text>' +
+        '<text x="42" y="120" font-size="8" fill="var(--ink-4)" text-anchor="middle">Slicer</text>' +
+        '<text x="128" y="120" font-size="8" fill="var(--ink-4)" text-anchor="middle">Calculadora</text>' +
         '<text x="197" y="120" font-size="8" fill="var(--ink-4)" text-anchor="middle">PDF</text>' +
       '</svg>';
     }
@@ -199,6 +199,39 @@ function _reflejarUsuario() {
   /* La cuenta, abajo de la barra lateral, junto a «Cerrar sesión» */
   var cuenta = document.getElementById('sidebar-cuenta');
   if (cuenta) cuenta.textContent = u.email || u.displayName || 'Sin cuenta';
+
+  /* Sin cuenta no hay sesión que cerrar: el botón dice «Iniciar sesión» (D226) */
+  var invitado = !!u.isAnonymous;
+  document.querySelectorAll('.boton-sesion').forEach(function(b) {
+    var icono = b.querySelector('.sesion-icono');
+    var texto = b.querySelector('.sesion-texto');
+    if (icono) icono.textContent = invitado ? 'login' : 'logout';
+    if (texto) texto.textContent = invitado ? 'Iniciar sesión' : 'Cerrar sesión';
+  });
+}
+
+function _esInvitado() {
+  var u = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  return !!(u && u.isAnonymous);
+}
+
+/* El botón de la sesión, abajo de la barra lateral y en Ajustes del teléfono
+   (D226). Sin cuenta («Entrar sin cuenta») abre la pantalla de acceso sin
+   borrar nada de este equipo: al entrar, lo configurado sin cuenta pasa a la
+   cuenta como dicen D40, D84 y D86. Antes decía «Cerrar sesión» y al tocarlo
+   borraba lo del equipo, con un aviso que hablaba de datos en la nube que un
+   invitado no tiene. */
+function botonDeSesion() {
+  if (_esInvitado()) iniciarSesionDesdeInvitado();
+  else cerrarSesion();
+}
+
+function iniciarSesionDesdeInvitado() {
+  var gate = document.getElementById('auth-gate');
+  if (!gate) return;
+  _authModo = 'login';
+  gate.classList.remove('hidden');
+  _pintarAcceso();
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -325,14 +358,23 @@ function _pintarAcceso() {
 
       '<div class="gate-or">o</div>' +
 
-      '<button class="btn btn-ghost" style="width:100%;margin-bottom:10px" onclick="entrarConGoogle()">' +
-        '<span class="material-symbols-rounded" style="font-size:16px">account_circle</span> ' +
+      /* La «G» de Google en sus cuatro colores, como pide Google para sus
+         botones de acceso; antes era un ícono genérico de persona (D242) */
+      '<button class="btn btn-ghost gate-google" style="width:100%;margin-bottom:10px" onclick="entrarConGoogle()">' +
+        '<svg class="gate-google-logo" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true" focusable="false">' +
+          '<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>' +
+          '<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>' +
+          '<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>' +
+          '<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>' +
+        '</svg> ' +
         'Continuar con Google' +
       '</button>' +
 
-      '<button class="btn btn-ghost" style="width:100%" onclick="entrarSinCuenta()">' +
-        'Entrar sin cuenta' +
-      '</button>' +
+      /* Si ya entraste sin cuenta y viniste a iniciar sesión, este botón te
+         regresa a la app como estabas (D226) */
+      (_esInvitado()
+        ? '<button class="btn btn-ghost" style="width:100%" onclick="_actualizarGate()">Seguir sin cuenta</button>'
+        : '<button class="btn btn-ghost" style="width:100%" onclick="entrarSinCuenta()">Entrar sin cuenta</button>') +
     '</div>';
 
   /* El correo recordado, puesto con .value y no dentro del HTML */
@@ -549,7 +591,7 @@ function _pintarOnboarding() {
   }).join('');
 
   document.getElementById('auth-gate').innerHTML =
-    '<button class="ob-skip" onclick="terminarOnboarding()">' +
+    '<button class="ob-skip" onclick="obIrAConfiguracion()">' +
       (ultimo ? '' : 'Saltar') +
     '</button>' +
     '<div class="gate-inner">' +
@@ -565,8 +607,8 @@ function _pintarOnboarding() {
           ? '<button class="btn btn-ghost" onclick="obAnterior()">Atrás</button>'
           : '') +
         '<button class="btn btn-primary" onclick="' +
-          (ultimo ? 'terminarOnboarding()' : 'obSiguiente()') + '">' +
-          (ultimo ? 'Empezar' : 'Siguiente') +
+          (ultimo ? 'obIrAConfiguracion()' : 'obSiguiente()') + '">' +
+          (ultimo && !_faltaConfigurar() ? 'Empezar' : 'Siguiente') +
         '</button>' +
       '</div>' +
     '</div>';
@@ -730,4 +772,545 @@ function filtrarAyuda(texto) {
     nada.classList.toggle('hidden', visibles > 0);
     nada.textContent = visibles ? '' : 'Nada coincide con «' + String(texto).trim() + '».';
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Configurar al empezar (D208, como pedía D88)
+
+   Después de las explicaciones, una cuenta o un equipo sin impresoras ni
+   materiales los agrega ahí mismo: primero su impresora (de la lista de
+   comunes o «Otra», con sus datos) y luego sus materiales, con lo que le
+   cuesta el kilo. «Configurar después» (antes «Ahora no», D255) deja todo para después: el Dashboard y la
+   Calculadora lo vuelven a pedir con sus estados vacíos. Quien ya tiene
+   impresoras y materiales (o vuelve a ver la introducción) no ve estos pasos.
+   ══════════════════════════════════════════════════════════════════ */
+
+function _faltaConfigurar() {
+  return !printers.length || !materials.length || _faltanGastos();
+}
+
+/* Sin gastos fijos (ni total ni categorías): una cuenta nueva empieza en $0 (D193) */
+function _faltanGastos() {
+  return !(Number(config.fixedMonthlyCost) > 0) && !((config.fixedCostItems || []).length);
+}
+
+/* Cuántos pasos de configuración van y en cuál se está, para «1 de 2» */
+function _pasosConfig() {
+  var p = [];
+  if (!printers.length || _configHizoImpresora) p.push('impresora');
+  if (!materials.length || _configHizoMateriales) p.push('materiales');
+  if (_faltanGastos() || _configHizoGastos) p.push('gastos');
+  return p;
+}
+var _configHizoImpresora = false, _configHizoMateriales = false, _configHizoGastos = false;
+
+function obIrAConfiguracion() {
+  _configHizoImpresora = false;
+  _configHizoMateriales = false;
+  _configHizoGastos = false;
+  _obReiniciarEleccion();
+  if (!printers.length) { _pintarConfigImpresora(); return; }
+  if (!materials.length) { _pintarConfigMateriales(); return; }
+  if (_faltanGastos()) { _pintarConfigGastos(); return; }
+  terminarOnboarding();
+}
+
+function _cabezaConfig(paso) {
+  var pasos = _pasosConfig();
+  var n = pasos.indexOf(paso) + 1;
+  return (pasos.length > 1 ? '<div class="ob-config-paso micro">Configura · ' + n + ' de ' + pasos.length + '</div>' : '');
+}
+
+/* ── Lo que se va eligiendo en la configuración (D210) ────────────────
+   Se recuerda mientras dura, para que «Atrás» no lo pierda y para que, al
+   volver a guardar un paso, se reemplace lo que ese paso ya había guardado
+   en lugar de repetirlo. */
+var _obImp    = { comunes: [], propias: [], ids: [] };
+var _obMat    = { marcados: null, precios: {}, propios: [], ids: [] };
+var _obGastos = null;
+
+function _obReiniciarEleccion() {
+  _obImp    = { comunes: [], propias: [], ids: [] };
+  _obMat    = { marcados: null, precios: {}, propios: [], ids: [] };
+  _obGastos = null;
+}
+
+/* La forma de los tres pasos: la lista a la izquierda y, a la derecha, lo
+   que se escribe (en el teléfono, debajo) */
+function _layoutConfig(paso, titulo, cuerpo, izquierda, derecha, acciones) {
+  /* «Configurar después», no «Ahora no»: deja los tres pasos, no solo este,
+     y medía 74 × 31 (D255) */
+  return '<button class="ob-skip ob-skip-config" onclick="terminarOnboarding()">Configurar después</button>' +
+    '<div class="gate-inner ob-config ob-config-ancho">' +
+      '<div class="ob-step">' +
+        _cabezaConfig(paso) +
+        '<div class="ob-title">' + titulo + '</div>' +
+        '<div class="ob-body">' + cuerpo + '</div>' +
+        '<div class="ob-config-cuerpo">' +
+          '<div class="ob-config-izq">' + izquierda + '</div>' +
+          '<aside class="ob-config-der">' + derecha + '</aside>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ob-actions">' + acciones + '</div>' +
+    '</div>';
+}
+
+function _obCampo(id, etiqueta, tipo, extra) {
+  return '<div class="m3-field"><input type="' + (tipo || 'text') + '" id="' + id + '" placeholder=" " autocomplete="off"' + (extra || '') + '>' +
+    '<label for="' + id + '">' + etiqueta + '</label></div>';
+}
+
+function _obVal(id) { return ((document.getElementById(id) || {}).value || '').trim(); }
+
+function _obQuitarBoton(fn, nombre) {
+  return '<button type="button" class="ob-quitar" onclick="' + fn + '" aria-label="Quitar ' + esc(nombre) + '">' +
+    '<span class="material-symbols-rounded" aria-hidden="true">close</span></button>';
+}
+
+/* En el teléfono, lo nuevo se escribe en una hoja que sube desde abajo (D211).
+   Va dentro de #auth-gate, que está encima de todo (las hojas de la app
+   quedarían debajo). Se cierra con «Cancelar», tocando fuera o con Esc. */
+function _obEsMovil() { return window.innerWidth < 900; }
+
+function _obAbrirSheet(titulo, campos, accion) {
+  _obCerrarSheet();
+  var gate = document.getElementById('auth-gate');
+  gate.insertAdjacentHTML('beforeend',
+    '<div class="ob-sheet-velo" onclick="_obCerrarSheet()"></div>' +
+    '<div class="ob-sheet" role="dialog" aria-modal="true" aria-labelledby="ob-sheet-titulo">' +
+      '<div class="ob-sheet-asa" aria-hidden="true"></div>' +
+      '<div class="ob-sheet-titulo" id="ob-sheet-titulo">' + titulo + '</div>' +
+      campos +
+      '<div class="ob-sheet-acciones">' +
+        '<button type="button" class="btn btn-ghost" onclick="_obCerrarSheet()">Cancelar</button>' +
+        '<button type="button" class="btn btn-primary" onclick="' + accion + '">Agregar</button>' +
+      '</div>' +
+    '</div>');
+  var primero = gate.querySelector('.ob-sheet input');
+  if (primero) primero.focus();
+  document.addEventListener('keydown', _obEscSheet);
+}
+
+function _obEscSheet(e) { if (e.key === 'Escape') _obCerrarSheet(); }
+
+function _obCerrarSheet() {
+  document.querySelectorAll('#auth-gate .ob-sheet, #auth-gate .ob-sheet-velo').forEach(function(el) { el.remove(); });
+  document.removeEventListener('keydown', _obEscSheet);
+}
+
+function _obBotonAgregarMovil(texto, fn) {
+  return '<button type="button" class="btn btn-ghost ob-agregar-movil" onclick="' + fn + '">' +
+    '<span class="material-symbols-rounded" style="font-size:18px" aria-hidden="true">add</span> ' + texto + '</button>';
+}
+
+/* ── Paso 1: las impresoras ─────────────────────────────────────────── */
+function _filasImpresoras() {
+  var cur = (config && config.currency) || '$';
+  var mil = function(n) { return Number(n || 0).toLocaleString('es-MX'); };
+  var sub = function(p) {
+    return esc(p.type) + ' · ' + p.power + ' W · ' + formatoDinero(p.cost, cur) + (p.multicolor ? ' · ' + p.heads + ' colores' : '');
+  };
+  return PRINTERS_EJEMPLO.map(function(p, k) {
+      var on = _obImp.comunes.indexOf(k) !== -1;
+      return '<label class="comunes-fila">' +
+        '<input type="checkbox" class="ob-imp" value="' + k + '"' + (on ? ' checked' : '') + ' onchange="_obMarcarImp(this)">' +
+        '<span class="comunes-texto"><span class="comunes-nombre">' + esc(p.name) + '</span>' +
+          '<span class="comunes-sub">' + sub(p) + '</span></span>' +
+      '</label>';
+    }).join('') +
+    _obImp.propias.map(function(p, i) {
+      return '<div class="comunes-fila ob-propia">' +
+        '<span class="material-symbols-rounded ob-propia-icono" aria-hidden="true">check_circle</span>' +
+        '<span class="comunes-texto"><span class="comunes-nombre">' + esc(p.name) + '<span class="ob-tuya">Tuya</span></span>' +
+          '<span class="comunes-sub">' + sub(p) + '</span></span>' +
+        _obQuitarBoton('_obQuitarImp(' + i + ')', p.name) +
+      '</div>';
+    }).join('');
+}
+
+function _obMarcarImp(inp) {
+  var k = Number(inp.value), i = _obImp.comunes.indexOf(k);
+  if (inp.checked && i === -1) _obImp.comunes.push(k);
+  if (!inp.checked && i !== -1) _obImp.comunes.splice(i, 1);
+}
+
+function _obQuitarImp(i) {
+  _obImp.propias.splice(i, 1);
+  document.getElementById('ob-lista-imp').innerHTML = _filasImpresoras();
+}
+
+function _camposImpresora() {
+  var cur = (config && config.currency) || '$';
+  return _obCampo('ob-otra-nombre', 'Nombre') +
+    '<div class="flex-row">' +
+      _obCampo('ob-otra-watts', 'Consumo (W)', 'number', ' min="1" inputmode="decimal"') +
+      _obCampo('ob-otra-costo', 'Costo (' + cur + ')', 'number', ' min="0" inputmode="decimal"') +
+    '</div>' +
+    '<div class="flex-row">' +
+      _obCampo('ob-otra-vida', 'Vida útil (h)', 'number', ' min="1" inputmode="decimal" value="3000"') +
+      '<div class="m3-field"><select id="ob-otra-tipo"><option value="FDM">FDM</option><option value="Resina">Resina</option></select>' +
+        '<label for="ob-otra-tipo">Tipo</label></div>' +
+    '</div>';
+}
+
+function _obSheetImpresora() {
+  _obAbrirSheet('¿No está la tuya?', _camposImpresora(), 'if (obAgregarImpresora()) _obCerrarSheet()');
+}
+
+function _pintarConfigImpresora() {
+  var movil = _obEsMovil();
+  /* Escritorio: el formulario a la derecha. Teléfono: un botón abre la hoja */
+  var derecha = movil ? '' :
+    '<div class="ob-panel">' +
+      '<div class="ob-panel-titulo">¿No está la tuya?</div>' +
+      _camposImpresora() +
+      '<button type="button" class="btn btn-ghost ob-panel-agregar" onclick="obAgregarImpresora()">' +
+        '<span class="material-symbols-rounded" style="font-size:18px" aria-hidden="true">add</span> Agregar impresora</button>' +
+    '</div>';
+  document.getElementById('auth-gate').innerHTML = _layoutConfig('impresora',
+    'Tus impresoras',
+    'Marca las tuyas o agrega las que no estén. Su consumo y lo que costaron los cambias después.',
+    '<div class="comunes-lista ob-config-lista" id="ob-lista-imp" role="group" aria-label="Impresoras">' + _filasImpresoras() + '</div>' +
+      (movil ? _obBotonAgregarMovil('Agregar otra impresora', '_obSheetImpresora()') : ''),
+    derecha,
+    '<button class="btn btn-ghost" onclick="_obPaso = OB_PASOS.length - 1; _pintarOnboarding()">Atrás</button>' +
+    '<button class="btn btn-primary" onclick="obGuardarImpresoras()">Siguiente</button>');
+}
+
+/* Lee el formulario de la derecha. vacío: nada escrito; error: el campo que falta */
+function _obLeerImpresora() {
+  var nombre = _obVal('ob-otra-nombre');
+  var watts = parseFloat(_obVal('ob-otra-watts')), costo = parseFloat(_obVal('ob-otra-costo')), vida = parseFloat(_obVal('ob-otra-vida'));
+  if (!nombre && !_obVal('ob-otra-watts') && !_obVal('ob-otra-costo')) return { vacio: true };
+  var falta = !nombre ? 'ob-otra-nombre' : !(watts > 0) ? 'ob-otra-watts' : !(costo >= 0) ? 'ob-otra-costo' : !(vida > 0) ? 'ob-otra-vida' : '';
+  if (falta) return { error: falta };
+  return { impresora: { name: nombre, power: watts, type: _obVal('ob-otra-tipo') || 'FDM', cost: costo, lifeHours: vida, multicolor: false, heads: 1 } };
+}
+
+function obAgregarImpresora() {
+  var r = _obLeerImpresora();
+  if (r.vacio || r.error) {
+    snack('Completa los datos de tu impresora');
+    var el = document.getElementById(r.error || 'ob-otra-nombre'); if (el) el.focus();
+    return false;
+  }
+  _obImp.propias.push(r.impresora);
+  document.getElementById('ob-lista-imp').innerHTML = _filasImpresoras();
+  ['ob-otra-nombre', 'ob-otra-watts', 'ob-otra-costo'].forEach(function(id) { var e = document.getElementById(id); if (e) e.value = ''; });
+  snack(r.impresora.name + ' agregada');
+  var n = document.getElementById('ob-otra-nombre'); if (n) n.focus();
+  return true;
+}
+
+function obGuardarImpresoras() {
+  /* Lo que quedó escrito a la derecha sin tocar «Agregar» también cuenta */
+  var pendiente = _obLeerImpresora();
+  if (pendiente.error) { snack('Completa los datos de tu impresora'); document.getElementById(pendiente.error).focus(); return; }
+  if (pendiente.impresora) _obImp.propias.push(pendiente.impresora);
+
+  var elegidas = _obImp.comunes.slice().sort().map(function(k) { return PRINTERS_EJEMPLO[k]; }).concat(_obImp.propias);
+  if (!elegidas.length) { snack('Marca o agrega tu impresora, o toca «Configurar después»'); return; }
+
+  /* Si se regresó a este paso, lo que guardó antes se reemplaza, no se repite */
+  if (_obImp.ids.length) {
+    printers = printers.filter(function(p) { return _obImp.ids.indexOf(p.id) === -1; });
+    if (typeof dbBorrarImpresora === 'function') _obImp.ids.forEach(function(id) { dbBorrarImpresora(id); });
+  }
+  var base = Date.now();
+  var nuevas = elegidas.map(function(p, i) { return Object.assign({}, p, { id: String(base + i) }); });
+  _obImp.ids = nuevas.map(function(p) { return p.id; });
+  printers = printers.concat(nuevas);
+  sv('printers', printers);
+  if (typeof dbGuardarImpresora === 'function') nuevas.forEach(function(p) { dbGuardarImpresora(p); });
+  if (typeof renderPrinters === 'function') renderPrinters();
+  if (typeof populateSelects === 'function') populateSelects();
+  _configHizoImpresora = true;
+
+  if (!materials.length || _configHizoMateriales) _pintarConfigMateriales();
+  else if (_faltanGastos() || _configHizoGastos) _pintarConfigGastos();
+  else terminarOnboarding();
+}
+
+/* ── Paso 2: los materiales, con lo que cuesta el kilo ─────────────── */
+function _filasMateriales() {
+  var cur = (config && config.currency) || '$';
+  if (_obMat.marcados == null) {
+    var conResina = printers.some(function(p) { return p.type === 'Resina'; });
+    _obMat.marcados = [];
+    MATERIALS_EJEMPLO.forEach(function(m, k) { if (m.name === 'PLA' || (conResina && m.type === 'Resina')) _obMat.marcados.push(k); });
+  }
+  var precio = function(clase, attrs, valor, nombre, accion) {
+    return '<span class="ob-precio">' + cur +
+      '<input type="number" class="' + clase + '" ' + attrs + ' value="' + valor + '" min="1" inputmode="decimal" ' +
+        'oninput="' + accion + '" aria-label="Precio por kilo de ' + esc(nombre) + '">' +
+      '<span>/kg</span></span>';
+  };
+  return MATERIALS_EJEMPLO.map(function(m, k) {
+      var on = _obMat.marcados.indexOf(k) !== -1;
+      var valor = _obMat.precios[k] != null ? _obMat.precios[k] : m.costPerKg;
+      return '<div class="comunes-fila ob-material">' +
+        '<label class="ob-material-nombre">' +
+          '<input type="checkbox" class="ob-mat" value="' + k + '"' + (on ? ' checked' : '') + ' onchange="_obMarcarMat(this)">' +
+          '<span class="comunes-texto"><span class="comunes-nombre">' + esc(m.name) + '</span>' +
+            '<span class="comunes-sub">' + esc(m.type) + '</span></span>' +
+        '</label>' +
+        precio('ob-precio-kg', 'data-k="' + k + '"', valor, m.name, '_obMat.precios[' + k + '] = this.value') +
+      '</div>';
+    }).join('') +
+    _obMat.propios.map(function(m, i) {
+      return '<div class="comunes-fila ob-material ob-propia">' +
+        '<span class="ob-material-nombre">' +
+          '<span class="material-symbols-rounded ob-propia-icono" aria-hidden="true">check_circle</span>' +
+          '<span class="comunes-texto"><span class="comunes-nombre">' + esc(m.name) + '<span class="ob-tuya">Tuyo</span></span>' +
+            '<span class="comunes-sub">' + esc(m.type) + '</span></span>' +
+        '</span>' +
+        precio('ob-precio-propio', 'data-i="' + i + '"', m.costPerKg, m.name, '_obMat.propios[' + i + '].costPerKg = this.value') +
+        _obQuitarBoton('_obQuitarMat(' + i + ')', m.name) +
+      '</div>';
+    }).join('');
+}
+
+function _obMarcarMat(inp) {
+  var k = Number(inp.value), i = _obMat.marcados.indexOf(k);
+  if (inp.checked && i === -1) _obMat.marcados.push(k);
+  if (!inp.checked && i !== -1) _obMat.marcados.splice(i, 1);
+}
+
+function _obQuitarMat(i) {
+  _obMat.propios.splice(i, 1);
+  document.getElementById('ob-lista-mat').innerHTML = _filasMateriales();
+}
+
+function _camposMaterial() {
+  var cur = (config && config.currency) || '$';
+  return _obCampo('ob-mat-nombre', 'Nombre, como «PLA Silk»') +
+    '<div class="flex-row">' +
+      '<div class="m3-field"><select id="ob-mat-tipo"><option value="FDM">FDM</option><option value="Resina">Resina</option></select>' +
+        '<label for="ob-mat-tipo">Tipo</label></div>' +
+      _obCampo('ob-mat-precio', 'Precio/kg (' + cur + ')', 'number', ' min="1" inputmode="decimal"') +
+    '</div>' +
+    _obCampo('ob-mat-densidad', 'Densidad (g/cm³)', 'number', ' min="0.1" step="0.01" inputmode="decimal" value="1.24"');
+}
+
+function _obSheetMaterial() {
+  _obAbrirSheet('¿Otro material?', _camposMaterial(), 'if (obAgregarMaterial()) _obCerrarSheet()');
+}
+
+function _pintarConfigMateriales() {
+  var movil = _obEsMovil();
+  var derecha = movil ? '' :
+    '<div class="ob-panel">' +
+      '<div class="ob-panel-titulo">¿Otro material?</div>' +
+      _camposMaterial() +
+      '<button type="button" class="btn btn-ghost ob-panel-agregar" onclick="obAgregarMaterial()">' +
+        '<span class="material-symbols-rounded" style="font-size:18px" aria-hidden="true">add</span> Agregar material</button>' +
+    '</div>';
+  document.getElementById('auth-gate').innerHTML = _layoutConfig('materiales',
+    'Tus materiales',
+    'Marca los que usas y escribe lo que te cuesta el kilo. Si usas otro, agrégalo.',
+    '<div class="comunes-lista ob-config-lista" id="ob-lista-mat" role="group" aria-label="Materiales">' + _filasMateriales() + '</div>' +
+      (movil ? _obBotonAgregarMovil('Agregar otro material', '_obSheetMaterial()') : ''),
+    derecha,
+    '<button class="btn btn-ghost" onclick="' + (_configHizoImpresora ? '_pintarConfigImpresora()' : '_obPaso = OB_PASOS.length - 1; _pintarOnboarding()') + '">Atrás</button>' +
+    '<button class="btn btn-primary" onclick="obGuardarMateriales()">' + (_faltanGastos() || _configHizoGastos ? 'Siguiente' : 'Listo') + '</button>');
+}
+
+function _obLeerMaterial() {
+  var nombre = _obVal('ob-mat-nombre');
+  var precio = parseFloat(_obVal('ob-mat-precio')), densidad = parseFloat(_obVal('ob-mat-densidad'));
+  if (!nombre && !_obVal('ob-mat-precio')) return { vacio: true };
+  var falta = !nombre ? 'ob-mat-nombre' : !(precio > 0) ? 'ob-mat-precio' : !(densidad > 0) ? 'ob-mat-densidad' : '';
+  if (falta) return { error: falta };
+  return { material: { name: nombre, type: _obVal('ob-mat-tipo') || 'FDM', costPerKg: precio, density: densidad } };
+}
+
+function obAgregarMaterial() {
+  var r = _obLeerMaterial();
+  if (r.vacio || r.error) {
+    snack('Completa el nombre y el precio por kilo');
+    var el = document.getElementById(r.error || 'ob-mat-nombre'); if (el) el.focus();
+    return false;
+  }
+  _obMat.propios.push(r.material);
+  document.getElementById('ob-lista-mat').innerHTML = _filasMateriales();
+  ['ob-mat-nombre', 'ob-mat-precio'].forEach(function(id) { var e = document.getElementById(id); if (e) e.value = ''; });
+  snack(r.material.name + ' agregado');
+  var n = document.getElementById('ob-mat-nombre'); if (n) n.focus();
+  return true;
+}
+
+function obGuardarMateriales() {
+  var pendiente = _obLeerMaterial();
+  if (pendiente.error) { snack('Completa el nombre y el precio por kilo'); document.getElementById(pendiente.error).focus(); return; }
+  if (pendiente.material) _obMat.propios.push(pendiente.material);
+
+  var malo = null;
+  var elegidos = _obMat.marcados.slice().sort().map(function(k) {
+    var el = document.querySelector('.ob-precio-kg[data-k="' + k + '"]');
+    var precio = parseFloat(el && el.value);
+    if (!(precio > 0) && !malo) malo = el;
+    return Object.assign({}, MATERIALS_EJEMPLO[k], { costPerKg: precio });
+  }).concat(_obMat.propios.map(function(m, i) {
+    var el = document.querySelector('.ob-precio-propio[data-i="' + i + '"]');
+    var precio = parseFloat(el ? el.value : m.costPerKg);
+    if (!(precio > 0) && !malo) malo = el;
+    return Object.assign({}, m, { costPerKg: precio });
+  }));
+  if (malo) { snack('Escribe lo que te cuesta el kilo'); malo.focus(); return; }
+  if (!elegidos.length) { snack('Marca o agrega al menos un material, o toca «Configurar después»'); return; }
+
+  if (_obMat.ids.length) {
+    materials = materials.filter(function(m) { return _obMat.ids.indexOf(m.id) === -1; });
+    if (typeof dbBorrarMaterial === 'function') _obMat.ids.forEach(function(id) { dbBorrarMaterial(id); });
+  }
+  var base = Date.now();
+  var nuevos = elegidos.map(function(m, i) { return Object.assign({}, m, { id: String(base + i) }); });
+  _obMat.ids = nuevos.map(function(m) { return m.id; });
+  materials = materials.concat(nuevos);
+  sv('materials', materials);
+  if (typeof dbGuardarMaterial === 'function') nuevos.forEach(function(m) { dbGuardarMaterial(m); });
+  if (typeof renderMaterials === 'function') renderMaterials();
+  if (typeof populateSelects === 'function') populateSelects();
+  _configHizoMateriales = true;
+
+  if (_faltanGastos() || _configHizoGastos) _pintarConfigGastos();
+  else terminarOnboarding();
+}
+
+/* ── Paso 3: los gastos del mes, uno por renglón (D209, D210) ──────────
+   Cada gasto con su nombre y su monto, como en Ajustes › Gastos fijos; el
+   total y lo que le toca a cada hora se ven a la derecha. */
+var GASTOS_SUGERIDOS = ['Renta', 'Luz', 'Internet', 'Agua', 'Teléfono', 'Software'];
+
+function _obLeerGastosDom() {
+  var filas = document.querySelectorAll('#ob-lista-gastos .ob-gasto');
+  if (!filas.length && _obGastos) return;
+  _obGastos = Array.prototype.map.call(filas, function(f) {
+    return { name: f.querySelector('.ob-gasto-nombre').value, amount: f.querySelector('.ob-gasto-monto').value };
+  });
+}
+
+function _filasGastos() {
+  return _obGastos.map(function(g, i) {
+    return '<div class="ob-gasto">' +
+      '<input type="text" class="ob-gasto-nombre" value="' + esc(g.name || '') + '" placeholder="Gasto" aria-label="Nombre del gasto" oninput="_obTotalGastos()">' +
+      '<input type="number" class="ob-gasto-monto" value="' + (g.amount != null ? esc(String(g.amount)) : '') + '" placeholder="0" min="0" inputmode="decimal" ' +
+        'aria-label="Monto al mes de ' + esc(g.name || 'este gasto') + '" oninput="_obTotalGastos()">' +
+      _obQuitarBoton('_obQuitarGasto(' + i + ')', g.name || 'este gasto') +
+    '</div>';
+  }).join('');
+}
+
+function _sugeridosGastos() {
+  var tiene = (_obGastos || []).map(function(g) { return String(g.name || '').trim().toLowerCase(); });
+  return GASTOS_SUGERIDOS.filter(function(n) { return tiene.indexOf(n.toLowerCase()) === -1; })
+    .map(function(n) { return '<button type="button" class="ob-sugerido" onclick="_obAgregarGasto(\'' + n + '\')">+ ' + n + '</button>'; })
+    .join('') +
+    '<button type="button" class="ob-sugerido" onclick="_obOtroGasto()">+ Otro gasto</button>';
+}
+
+function _obRepintarGastos(enfocar) {
+  document.getElementById('ob-lista-gastos').innerHTML = _filasGastos();
+  document.getElementById('ob-sugeridos').innerHTML = _sugeridosGastos();
+  _obTotalGastos();
+  if (enfocar) {
+    var filas = document.querySelectorAll('#ob-lista-gastos .ob-gasto');
+    var ultima = filas[filas.length - 1];
+    var campo = ultima && (ultima.querySelector('.ob-gasto-nombre').value ? ultima.querySelector('.ob-gasto-monto') : ultima.querySelector('.ob-gasto-nombre'));
+    if (campo) campo.focus();
+  }
+}
+
+function _obAgregarGasto(nombre) {
+  _obLeerGastosDom();
+  _obGastos.push({ name: nombre, amount: '' });
+  _obRepintarGastos(true);
+}
+
+/* Escritorio: un renglón vacío. Teléfono: la hoja con nombre y monto (D211) */
+function _obOtroGasto() {
+  if (!_obEsMovil()) { _obAgregarGasto(''); return; }
+  var cur = (config && config.currency) || '$';
+  _obAbrirSheet('Otro gasto',
+    _obCampo('ob-gasto-nuevo-nombre', 'Nombre, como «Seguro»') +
+    _obCampo('ob-gasto-nuevo-monto', 'Al mes (' + cur + ')', 'number', ' min="0" inputmode="decimal"'),
+    '_obAgregarGastoSheet()');
+}
+
+function _obAgregarGastoSheet() {
+  var nombre = _obVal('ob-gasto-nuevo-nombre');
+  if (!nombre) { snack('Escribe el nombre del gasto'); document.getElementById('ob-gasto-nuevo-nombre').focus(); return; }
+  _obLeerGastosDom();
+  _obGastos.push({ name: nombre, amount: _obVal('ob-gasto-nuevo-monto') });
+  _obCerrarSheet();
+  _obRepintarGastos(false);
+}
+
+function _obQuitarGasto(i) {
+  _obLeerGastosDom();
+  _obGastos.splice(i, 1);
+  _obRepintarGastos(false);
+}
+
+/* El total y lo que le toca a cada hora, mientras se escribe */
+function _obTotalGastos() {
+  _obLeerGastosDom();
+  var cur = (config && config.currency) || '$';
+  var total = (_obGastos || []).reduce(function(s, g) { return s + (parseFloat(g.amount) || 0); }, 0);
+  var h = parseFloat(_obVal('ob-horas-mes'));
+  var t = document.getElementById('ob-total-gastos');
+  if (t) t.textContent = formatoDinero(total, cur);
+  var el = document.getElementById('ob-gastos-hora');
+  if (el) el.textContent = h > 0 ? '= ' + formatoDinero(total / h, cur) + ' por hora de impresión' : '';
+}
+
+function _pintarConfigGastos() {
+  if (!_obGastos) {
+    _obGastos = (config.fixedCostItems || []).length
+      ? config.fixedCostItems.map(function(g) { return { name: g.name, amount: g.amount }; })
+      : [{ name: 'Renta', amount: '' }, { name: 'Luz', amount: '' }, { name: 'Internet', amount: '' }];
+  }
+  var atras = _configHizoMateriales ? '_obLeerGastosDom(); _pintarConfigMateriales()'
+            : _configHizoImpresora ? '_obLeerGastosDom(); _pintarConfigImpresora()'
+            : '_obPaso = OB_PASOS.length - 1; _pintarOnboarding()';
+  var izquierda =
+    '<div class="ob-gastos-cabeza" aria-hidden="true"><span>Gasto</span><span>Al mes</span><span></span></div>' +
+    '<div id="ob-lista-gastos">' + _filasGastos() + '</div>' +
+    '<div class="ob-sugeridos" id="ob-sugeridos">' + _sugeridosGastos() + '</div>';
+  var derecha =
+    '<div class="ob-panel">' +
+      '<div class="ob-total-etiqueta">Total al mes</div>' +
+      '<div class="ob-total" id="ob-total-gastos">$0</div>' +
+      _obCampo('ob-horas-mes', 'Horas que imprimes al mes', 'number',
+               ' min="1" step="1" inputmode="decimal" value="' + (Number(config.monthlyPrintHours) || 200) + '" oninput="_obTotalGastos()"') +
+      '<div class="ob-gastos-hora" id="ob-gastos-hora" aria-live="polite"></div>' +
+    '</div>';
+  document.getElementById('auth-gate').innerHTML = _layoutConfig('gastos',
+    'Tus gastos del mes',
+    'Lo que pagas cada mes aunque no imprimas, uno por renglón. Se reparte entre tus horas de impresión.',
+    izquierda, derecha,
+    '<button class="btn btn-ghost" onclick="' + atras + '">Atrás</button>' +
+    '<button class="btn btn-primary" onclick="obGuardarGastos()">Listo</button>');
+  _obTotalGastos();
+}
+
+function obGuardarGastos() {
+  _obLeerGastosDom();
+  var items = (_obGastos || [])
+    .map(function(g) { return { name: String(g.name || '').trim() || 'Sin nombre', amount: parseFloat(g.amount) || 0 }; })
+    .filter(function(g) { return g.amount > 0; });
+  var h = parseFloat(_obVal('ob-horas-mes'));
+  if (!items.length) {
+    snack('Escribe al menos un gasto, o toca «Configurar después»');
+    var monto = document.querySelector('#ob-lista-gastos .ob-gasto-monto'); if (monto) monto.focus();
+    return;
+  }
+  if (!(h > 0)) { snack('Escribe cuántas horas imprimes al mes'); document.getElementById('ob-horas-mes').focus(); return; }
+  config.fixedCostItems    = items;
+  config.fixedMonthlyCost  = items.reduce(function(s, g) { return s + g.amount; }, 0);
+  config.monthlyPrintHours = h;
+  sv('config', config);
+  if (typeof loadConfig === 'function') loadConfig();
+  _configHizoGastos = true;
+  terminarOnboarding();
 }
