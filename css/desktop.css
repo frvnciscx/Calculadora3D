@@ -1272,7 +1272,7 @@
   .cfg-formulario > .row:last-child:nth-child(odd):not(:has(.m3-switch)) { grid-column: 1 / -1; }
 
   /* Editores como paneles laterales sin velo (D177): la página se angosta y se ve */
-  body.panel-abierto { padding-right: 440px; }
+  body.panel-abierto { padding-right: var(--panel-ancho, 440px); }   /* el ancho real del panel (D264) */
   body.panel-abierto .m3-scrim { background: transparent !important; pointer-events: none; }
   body.panel-abierto .m3-bottom-sheet:not(.help-sheet) {
     border-radius: 0 !important;
@@ -1297,7 +1297,7 @@
   /* Ocho pestañas en Ajustes: un poco menos de aire para que quepan */
   .cfg-tab { padding: 10px 12px; }
   /* El editor de material se abre a la derecha: Ajustes se angosta, no queda debajo */
-  body.panel-abierto #page-config { right: 440px !important; }
+  body.panel-abierto #page-config { right: var(--panel-ancho, 440px) !important; }
   body.panel-abierto .cfg-tab .material-symbols-rounded { display: none; }
   /* Su último bloque es la lista, no la fila del «Guardar» que las demás
      secciones alinean a la derecha */

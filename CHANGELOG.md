@@ -29,6 +29,11 @@ app y volviendo a entrar.
 
 ---
 
+## 2026-11-27 · caché v157
+
+- **«Mis productos» ya no tapa la Calculadora (D264):** en escritorio la página deja el ancho real del
+  panel que se abre (480 px en «Mis productos» y el editor de producto), no 440 px fijos.
+
 ## 2026-11-27 · caché v156
 
 - **Cuándo se mandó cada cotización (D261):** se guarda `enviadaAt` al pasar a Enviada y se borra al

@@ -551,6 +551,12 @@ function updateTopBar() {
     /* Escritorio (D177): un editor abierto es un panel a la derecha, sin velo;
        la página se angosta y se sigue viendo (desktop.css, body.panel-abierto) */
     document.body.classList.toggle('panel-abierto', window.innerWidth >= 900 && !!mc.querySelector('.m3-bottom-sheet:not(.help-sheet)'));
+    /* La página deja el ancho del panel que se abrió, no 440 px fijos: «Mis
+       productos» y el editor de producto miden 480 y se encimaban 40 px con
+       el precio de la Calculadora (D264). offsetWidth no cuenta la animación. */
+    var hoja = window.innerWidth >= 900 ? mc.querySelector('.m3-bottom-sheet:not(.help-sheet)') : null;
+    if (hoja && hoja.offsetWidth) document.body.style.setProperty('--panel-ancho', hoja.offsetWidth + 'px');
+    else document.body.style.removeProperty('--panel-ancho');
     var p = panelAbierto();
     if (!p) {
       var foco = document.activeElement;
